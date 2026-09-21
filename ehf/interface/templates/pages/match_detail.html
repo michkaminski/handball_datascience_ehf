@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block tytul %}{% if match %}Match #{{ match.id }}{% else %}Match{% endif %} — Handball EHF{% endblock %}
+
+{% block tresc %}
+<section class="pagehead">
+<div class="crumb">Start › Data › Matches › Details</div>
+<h1>Match details{% if match %} #{{ match.id }}{% endif %}</h1>
+<p>Record from schema ehf.</p>
+</section>
+{% if error %}
+<section class="panel">
+<div class="panel-body"><p class="note">{{ error }}</p></div>
+</section>
+{% elif match %}
+<section class="hero">
+<div class="score-hero">
+<div class="team-box">
+<div class="team-name">{{ match.home_name or "—" }}</div>
+<div class="team-meta">home</div>
+</div>
+<div class="result-box">
+<div class="result-main">{{ match.score_text }}</div>
+{% if match.half_time_home is not none %}<div class="result-sub">HT {{ match.half_time_text }}</div>{% endif %}
+{% if match.result_type and match.result_type != "normal" %}<div class="result-sub">{{ match.result_type }}</div>{% endif %}
+</div>
+<div class="team-box right">
+<div class="team-name">{{ match.away_name or "—" }}</div>
+<div class="team-meta">away</div>
+</div>
+</div>
+<div class="hero-meta">
+{% if match.competition_name %}<span class="meta-chip">{{ match.competition_name }}</span>{% endif %}
+{% if match.season_code %}<span class="meta-chip">{{ match.season_code }}</span>{% endif %}
+{% if match.phase %}<span class="meta-chip">{{ match.phase }}</span>{% endif %}
+{% if match.group_code %}<span class="meta-chip">{{ match.group_code }}</span>{% endif %}
+<span class="meta-chip">{{ match.kickoff_display or (match.kickoff_at.strftime("%Y-%m-%d %H:%M") if match.kickoff_at else "—") }}</span>
+{% if match.venue_name %}<span class="meta-chip">{{ match.venue_name }}{% if match.venue_city %}, {{ match.venue_city }}{% endif %}</span>{% endif %}
+<span class="meta-chip"><span class="badge {{ 'ok' if match.status == 'played' else ('warn' if match.status == 'awarded' else 'plan') }}">{{ match.status }}</span></span>
+{% if match.spectators is not none %}<span class="meta-chip">{{ match.spectators }} spectators</span>{% endif %}
+</div>
+</section>
+<div class="toolbar">
+<div class="left"><a class="btn secondary" href="{{ url_for('panel.match_list') }}">← Back to list</a></div>
+{% if match.source_url %}<div class="right"><a class="btn secondary" href="{{ match.source_url }}" target="_blank" rel="noopener">EHF page</a></div>{% endif %}
+</div>
+
+{% if match.periods %}
+<section class="panel">
+<h2>Periods</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Period</th><th>Home</th><th>Away</th><th>Played</th></tr></thead>
+<tbody>
+{% for period in match.periods %}
+<tr>
+<td>{{ period.label }}</td>
+<td>{{ period.home }}</td>
+<td>{{ period.away }}</td>
+<td>{{ "yes" if period.played else "no" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</section>
+{% endif %}
+
+{% if match.home_stats or match.away_stats or match.metrics %}
+<section class="panel">
+<h2>Team statistics</h2>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Stat</th>
+<th>{{ match.home_name or "Home" }}</th>
+<th>{{ match.away_name or "Away" }}</th>
+</tr>
+</thead>
+<tbody>
+{% if match.home_stats or match.away_stats %}
+<tr><td>Goals</td><td>{{ match.home_stats.goals if match.home_stats else "—" }}</td><td>{{ match.away_stats.goals if match.away_stats else "—" }}</td></tr>
+<tr><td>Shots</td><td>{{ match.home_stats.shots if match.home_stats else "—" }}</td><td>{{ match.away_stats.shots if match.away_stats else "—" }}</td></tr>
+<tr><td>7m goals</td><td>{{ match.home_stats.penalty_goals if match.home_stats else "—" }}</td><td>{{ match.away_stats.penalty_goals if match.away_stats else "—" }}</td></tr>
+<tr><td>7m shots</td><td>{{ match.home_stats.penalty_shots if match.home_stats else "—" }}</td><td>{{ match.away_stats.penalty_shots if match.away_stats else "—" }}</td></tr>
+<tr><td>Yellow</td><td>{{ match.home_stats.yellow_cards if match.home_stats else "—" }}</td><td>{{ match.away_stats.yellow_cards if match.away_stats else "—" }}</td></tr>
+<tr><td>2 min</td><td>{{ match.home_stats.two_min_suspensions if match.home_stats else "—" }}</td><td>{{ match.away_stats.two_min_suspensions if match.away_stats else "—" }}</td></tr>
+<tr><td>Red</td><td>{{ match.home_stats.red_cards if match.home_stats else "—" }}</td><td>{{ match.away_stats.red_cards if match.away_stats else "—" }}</td></tr>
+{% endif %}
+{% for metric in match.metrics %}
+<tr>
+<td>{{ metric.label }}</td>
+<td>{{ metric.home_value if metric.home_value is not none else "—" }}</td>
+<td>{{ metric.away_value if metric.away_value is not none else "—" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</section>
+{% endif %}
+
+<div class="grid2">
+<section class="panel">
+<h2>Lineup — {{ match.home_name or "Home" }}</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>#</th><th>Player</th><th>G</th><th>Sh</th><th>Y</th><th>2'</th><th>R</th><th>Saves</th></tr></thead>
+<tbody>
+{% for player in match.home_lineup %}
+<tr>
+<td>{{ player.shirt_number or "—" }}</td>
+<td>{{ player.name }}{% if player.is_goalkeeper %} <span class="note">GK</span>{% endif %}</td>
+<td>{{ player.goals if player.goals is not none else "—" }}</td>
+<td>{{ player.shots if player.shots is not none else "—" }}</td>
+<td>{{ player.yellow_cards if player.yellow_cards is not none else "—" }}</td>
+<td>{{ player.two_min_suspensions if player.two_min_suspensions is not none else "—" }}</td>
+<td>{{ player.red_cards if player.red_cards is not none else "—" }}</td>
+<td>{{ player.saves if player.saves is not none else "—" }}</td>
+</tr>
+{% else %}
+<tr><td colspan="8" class="note">No lineup.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% if match.home_officials %}
+<p class="note">{% for person in match.home_officials %}{{ person.code }}: {{ person.name }}{% if not loop.last %} · {% endif %}{% endfor %}</p>
+{% endif %}
+</section>
+<section class="panel">
+<h2>Lineup — {{ match.away_name or "Away" }}</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>#</th><th>Player</th><th>G</th><th>Sh</th><th>Y</th><th>2'</th><th>R</th><th>Saves</th></tr></thead>
+<tbody>
+{% for player in match.away_lineup %}
+<tr>
+<td>{{ player.shirt_number or "—" }}</td>
+<td>{{ player.name }}{% if player.is_goalkeeper %} <span class="note">GK</span>{% endif %}</td>
+<td>{{ player.goals if player.goals is not none else "—" }}</td>
+<td>{{ player.shots if player.shots is not none else "—" }}</td>
+<td>{{ player.yellow_cards if player.yellow_cards is not none else "—" }}</td>
+<td>{{ player.two_min_suspensions if player.two_min_suspensions is not none else "—" }}</td>
+<td>{{ player.red_cards if player.red_cards is not none else "—" }}</td>
+<td>{{ player.saves if player.saves is not none else "—" }}</td>
+</tr>
+{% else %}
+<tr><td colspan="8" class="note">No lineup.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% if match.away_officials %}
+<p class="note">{% for person in match.away_officials %}{{ person.code }}: {{ person.name }}{% if not loop.last %} · {% endif %}{% endfor %}</p>
+{% endif %}
+</section>
+</div>
+
+{% if match.officials %}
+<section class="panel">
+<h2>Officials</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Role</th><th>Name</th><th>Country</th></tr></thead>
+<tbody>
+{% for person in match.officials %}
+<tr>
+<td>{{ person.role }}</td>
+<td>{{ person.name }}</td>
+<td>{{ person.country_code or "—" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</section>
+{% endif %}
+{% endif %}
+{% endblock %}

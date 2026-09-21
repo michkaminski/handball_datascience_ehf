@@ -4,6 +4,15 @@ from dataclasses import dataclass
 from datetime import date, datetime
 
 
+def format_score(home: int | None, away: int | None, result_type: str | None = None) -> str:
+    if home is None or away is None:
+        return "—"
+    text = f"{home}:{away}"
+    if result_type and result_type != "normal":
+        return f"{text} ({result_type})"
+    return text
+
+
 @dataclass(frozen=True)
 class MatchFilters:
     season_id: int | None = None
@@ -56,12 +65,7 @@ class MatchListItem:
 
     @property
     def score_text(self) -> str:
-        if self.score_home is None or self.score_away is None:
-            return "—"
-        text = f"{self.score_home}:{self.score_away}"
-        if self.result_type and self.result_type != "normal":
-            return f"{text} ({self.result_type})"
-        return text
+        return format_score(self.score_home, self.score_away, self.result_type)
 
 
 @dataclass(frozen=True)

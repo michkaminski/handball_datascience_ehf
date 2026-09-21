@@ -5,10 +5,12 @@ from pathlib import Path
 from flask import Flask
 
 from ehf.infrastructure.connection import open_connection
+from ehf.infrastructure.match_detail_reader import PsycopgMatchDetailReader
 from ehf.infrastructure.match_list_reader import PsycopgMatchListReader
-from ehf.interface.match_views import MatchListView
+from ehf.interface.match_views import MatchDetailView, MatchListView
 from ehf.interface.navigation import zarejestruj_kontekst_nawigacji
 from ehf.interface.views import utworz_blueprint
+from ehf.services.match_detail import MatchDetailService
 from ehf.services.match_list import MatchListService
 from ehf.settings import Settings
 
@@ -29,10 +31,15 @@ def create_app() -> Flask:
     def connect():
         return open_connection(settings)
 
-    service = MatchListService(PsycopgMatchListReader(connect))
+    list_service = MatchListService(PsycopgMatchListReader(connect))
+    detail_service = MatchDetailService(PsycopgMatchDetailReader(connect))
     blueprint.add_url_rule(
         "/mecze",
-        view_func=MatchListView.as_view("match_list", service=service),
+        view_func=MatchListView.as_view("match_list", service=list_service),
+    )
+    blueprint.add_url_rule(
+        "/mecze/<int:match_id>",
+        view_func=MatchDetailView.as_view("match_detail", service=detail_service),
     )
     app.register_blueprint(blueprint)
     return app

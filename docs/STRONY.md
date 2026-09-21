@@ -34,11 +34,11 @@ Szkic tekstowy każdej listy: `docs/strony/`. Zmianę strony zacznij od szkicu, 
 
 ## Karty (bez pozycji w menu)
 
-| Strona | URL |
-|---|---|
-| Szczegóły meczu | `/mecze/<id>` |
-| Szczegóły zawodnika | `/zawodnicy/<id>` |
-| Szczegóły hali | `/hale/<id>` |
+| Strona | URL | Szkic |
+|---|---|---|
+| Match details | `/mecze/<id>` | [mecz.md](strony/mecz.md) |
+| Szczegóły zawodnika | `/zawodnicy/<id>` | |
+| Szczegóły hali | `/hale/<id>` | |
 
 ## Import i narzędzia
 

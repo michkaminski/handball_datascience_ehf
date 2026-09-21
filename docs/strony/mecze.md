@@ -6,7 +6,7 @@
 | View | `MatchListView` (`pages/matches.html`) |
 | Menu | Data › Matches |
 | Code | `ehf/interface/match_views.py` |
-| Card | `/mecze/<id>` (skeleton) |
+| Card | `/mecze/<id>` — [mecz.md](mecz.md) |
 | Database | `ehf.match`, `ehf.match_period`, `ehf.match_team`, `ehf.club_edition`, `ehf.venue` |
 
 Change the sketch here, then filters in `match_filters.py` and SQL in `match_list_reader.py`.
