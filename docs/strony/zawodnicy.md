@@ -1,30 +1,29 @@
-# Zawodnicy
+# Players
 
 | | |
 |---|---|
 | URL | `/zawodnicy` |
-| Wzor | `lista` |
-| Menu | Dane › Zawodnicy |
-| Kod | `ehf/interface/pages.py` → `klucz="zawodnicy"` |
-| Karta | `/zawodnicy/<id>` |
-| Baza | `ehf.person`, `ehf.player_edition` |
-
-Zmianę strony zacznij tutaj. Potem zsynchronizuj `filtry` / `kolumny` / `opis` w `pages.py`.
+| View | `PlayerListView` (`pages/players.html`) |
+| Menu | Data › Players |
+| Code | `ehf/interface/player_views.py` |
+| Card | `/zawodnicy/<id>` — [zawodnik.md](zawodnik.md) |
+| Database | `ehf.person`, `ehf.match_lineup`, `ehf.match_team`, `ehf.match` |
 
 ```
-Start › Dane › Zawodnicy
-Zawodnicy
-Zawodnicy i statystyki w wybranym zakresie.
+Start › Data › Players
+Players
+Players and match appearances in the selected range.
 
-[ Filtry ]
-  Sezon: [____]  Rozgrywki: [____]  Drużyna: [____]
-  Pozycja: [____]  Rocznik: [____]  Szukaj: [____]
-  [Filtruj]  [Wyczyść]
+[ Filters ]
+  Season: [select]  Competition: [select]  Club: [select]
+  Position: [select]  Birth year: [select]  Search: [text]
+  [Filter]  [Clear]
 
-[ Tabela ]
-  ID | Imię | Nazwisko | Poz. | Drużyny | Rocznik | Wzrost | Waga | Akcje
-  ---+------+----------+------+---------+---------+--------+------+------
-  (pusto: szkielet — baza EHF osobna)
+[ Table ]
+  ID | First name | Last name | Pos. | Teams | Year | Height | Weight | Details
+  click a column header to sort all matching players
+  rows: persons with at least one match_lineup
+  Pos. = GK, LW, CB, …
 
-  Akcje wiersza (docelowo): Szczegóły → /zawodnicy/<id>
+  Details → /zawodnicy/<id>
 ```

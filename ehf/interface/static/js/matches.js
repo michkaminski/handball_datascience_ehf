@@ -52,6 +52,7 @@
         if (!request.signal.aborted) {
           this.body.replaceChildren(detail);
           if (window.EhfMatchTabs) new window.EhfMatchTabs(detail).start();
+          window.EhfTableSort?.prepare(detail);
         }
       } catch {
         if (!request.signal.aborted) {

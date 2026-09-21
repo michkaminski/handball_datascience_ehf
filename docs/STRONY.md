@@ -24,7 +24,7 @@ Szkic tekstowy każdej listy: `docs/strony/`. Zmianę strony zacznij od szkicu, 
 | Sezony | `/sezony` | lista | [sezony.md](strony/sezony.md) |
 | Rozgrywki | `/rozgrywki` | lista | [rozgrywki.md](strony/rozgrywki.md) |
 | Drużyny | `/druzyny` | lista | [druzyny.md](strony/druzyny.md) |
-| Zawodnicy | `/zawodnicy` | lista | [zawodnicy.md](strony/zawodnicy.md) |
+| Players | `/zawodnicy` | player list (live) | [zawodnicy.md](strony/zawodnicy.md) |
 | Składy | `/sklady` | lista | [sklady.md](strony/sklady.md) |
 | Matches | `/mecze` | match list (live) | [mecze.md](strony/mecze.md) |
 | Tabele | `/tabele` | lista | [tabele.md](strony/tabele.md) |
@@ -37,7 +37,7 @@ Szkic tekstowy każdej listy: `docs/strony/`. Zmianę strony zacznij od szkicu, 
 | Strona | URL | Szkic |
 |---|---|---|
 | Match details | `/mecze/<id>` | [mecz.md](strony/mecz.md) |
-| Szczegóły zawodnika | `/zawodnicy/<id>` | |
+| Player details | `/zawodnicy/<id>` | [zawodnik.md](strony/zawodnik.md) |
 | Szczegóły hali | `/hale/<id>` | |
 
 ## Import i narzędzia

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/sort_macros.html" import sort_th %}
 
 {% block tytul %}Matches — Handball EHF{% endblock %}
 
@@ -52,6 +53,8 @@
 </select>
 </label>
 <label>Club<input name="club" value="{{ filters.club_query or '' }}" placeholder="club name..."></label>
+<input type="hidden" name="sort" value="{{ filters.sort.column }}">
+<input type="hidden" name="dir" value="{{ filters.sort.direction }}">
 <label>Date<input type="date" name="date" value="{{ filters.match_date or '' }}"></label>
 <div class="pole-przycisku"><button class="btn small" type="submit">Filter</button></div>
 <div class="pole-przycisku"><a class="btn secondary small" href="{{ url_for('panel.match_list') }}">Clear</a></div>
@@ -74,18 +77,19 @@
 </div>
 </div>
 <div class="table-wrap">
-<table id="matches-table">
+<table id="matches-table" data-remote-sort data-sort-default="date" data-sort-default-dir="desc">
 <thead>
 <tr>
-<th>ID</th>
-<th>Date</th>
-<th>Time</th>
-<th>Season</th>
-<th>Competition</th>
-<th>Home</th>
-<th>Score</th>
-<th>Away</th>
-<th>Venue</th>
+{{ sort_th(filters.sort, "id", "ID") }}
+{{ sort_th(filters.sort, "date", "Date") }}
+{{ sort_th(filters.sort, "time", "Time") }}
+{{ sort_th(filters.sort, "season", "Season") }}
+{{ sort_th(filters.sort, "competition", "Competition") }}
+{{ sort_th(filters.sort, "phase", "Phase") }}
+{{ sort_th(filters.sort, "home", "Home") }}
+{{ sort_th(filters.sort, "score", "Score") }}
+{{ sort_th(filters.sort, "away", "Away") }}
+{{ sort_th(filters.sort, "venue", "Venue") }}
 <th></th>
 </tr>
 </thead>
@@ -97,6 +101,7 @@
 <td>{{ item.kickoff_at.strftime("%H:%M") if item.kickoff_at else "—" }}</td>
 <td>{{ item.season_code or "—" }}</td>
 <td>{{ item.competition_name or "—" }}</td>
+<td>{{ item.stage_text }}</td>
 <td>{{ item.home_name or "—" }}</td>
 <td><span class="score">{{ item.score_text }}</span></td>
 <td>{{ item.away_name or "—" }}</td>
@@ -104,24 +109,14 @@
 <td><a class="icon-link" href="{{ url_for('panel.match_detail', match_id=item.id) }}">Details</a></td>
 </tr>
 {% else %}
-<tr><td colspan="10" class="note">No matches for the selected filters.</td></tr>
+<tr><td colspan="11" class="note">No matches for the selected filters.</td></tr>
 {% endfor %}
 </tbody>
 </table>
 </div>
 </div>
 </section>
-<dialog id="match-detail-dialog" class="match-detail-dialog" aria-labelledby="match-detail-title">
-<div class="modal-head">
-<h2 id="match-detail-title">Match details</h2>
-<button class="close" type="button" data-detail-close aria-label="Close match details" autofocus>×</button>
-</div>
-<div class="modal-body" data-detail-content aria-live="polite"></div>
-<div class="modal-foot">
-<a class="btn secondary" data-detail-tab target="_blank" rel="noopener">Open in new tab</a>
-<button class="btn secondary" type="button" data-detail-close>Close</button>
-</div>
-</dialog>
+{% include "partials/match_detail_dialog.html" %}
 {% endblock %}
 
 {% block scripts %}

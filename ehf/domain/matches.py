@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, datetime
 
+from ehf.domain.sorting import DEFAULT_MATCH_SORT, Sort
+
 
 def format_score(home: int | None, away: int | None, result_type: str | None = None) -> str:
     if home is None or away is None:
@@ -11,6 +13,12 @@ def format_score(home: int | None, away: int | None, result_type: str | None = N
     if result_type and result_type != "normal":
         return f"{text} ({result_type})"
     return text
+
+
+def format_stage(phase: str | None, group_code: str | None) -> str:
+    if phase and group_code:
+        return f"{phase} ({group_code})"
+    return phase or group_code or "—"
 
 
 @dataclass(frozen=True)
@@ -22,6 +30,7 @@ class MatchFilters:
     venue_id: int | None = None
     club_query: str | None = None
     match_date: date | None = None
+    sort: Sort = DEFAULT_MATCH_SORT
     page: int = 1
     page_size: int = 50
 
@@ -66,6 +75,10 @@ class MatchListItem:
     @property
     def score_text(self) -> str:
         return format_score(self.score_home, self.score_away, self.result_type)
+
+    @property
+    def stage_text(self) -> str:
+        return format_stage(self.phase, self.group_code)
 
 
 @dataclass(frozen=True)

@@ -13,6 +13,7 @@ from ehf.domain.matches import (
     MatchListItem,
     MatchListPage,
 )
+from ehf.infrastructure.ordering import order_sql
 
 LIST_SQL = """
 SELECT
@@ -46,6 +47,22 @@ LEFT JOIN ehf.match_team away_team
 LEFT JOIN ehf.venue v ON v.id = m.venue_id
 """
 
+MATCH_ORDER = {
+    "id": ("m.id",),
+    "date": ("m.kickoff_at",),
+    "time": ("(m.kickoff_at::time)",),
+    "season": ("s.code",),
+    "competition": ("c.name",),
+    "phase": ("m.phase", "m.group_code"),
+    "home": ("COALESCE(home_ed.display_name, home_team.display_name)",),
+    "score": (
+        "COALESCE(m.score_home, home_team.goals)",
+        "COALESCE(m.score_away, away_team.goals)",
+    ),
+    "away": ("COALESCE(away_ed.display_name, away_team.display_name)",),
+    "venue": ("v.name",),
+}
+
 
 class PsycopgMatchListReader:
     def __init__(self, connect: Callable[[], Connection]) -> None:
@@ -55,8 +72,7 @@ class PsycopgMatchListReader:
         where, params = self._where(filters)
         count_sql = f"SELECT COUNT(*) FROM ({LIST_SQL} {where}) AS listed"
         page_sql = (
-            f"{LIST_SQL} {where} "
-            "ORDER BY m.kickoff_at DESC NULLS LAST, m.id DESC "
+            f"{LIST_SQL} {where} {order_sql(filters.sort, MATCH_ORDER, 'm.id')} "
             "LIMIT %s OFFSET %s"
         )
         try:

@@ -29,7 +29,9 @@
           this.buttons[next[event.key]].focus();
         });
       });
-      this.select(0);
+      const wanted = new URLSearchParams(window.location.search).get("tab");
+      const index = this.buttons.findIndex((button) => button.dataset.tab === wanted);
+      this.select(index >= 0 ? index : 0);
     }
 
     select(index) {

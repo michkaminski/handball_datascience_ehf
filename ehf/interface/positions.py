@@ -66,7 +66,11 @@ def hue_for_player(player: LineupPlayer) -> int | None:
 
 
 def code_for_player(player: LineupPlayer) -> str | None:
-    style = style_for(player.position, player.is_goalkeeper)
+    return code_for_position(player.position, player.is_goalkeeper)
+
+
+def code_for_position(position: str | None, is_goalkeeper: bool = False) -> str | None:
+    style = style_for(position, is_goalkeeper)
     return None if style is None else style.code
 
 

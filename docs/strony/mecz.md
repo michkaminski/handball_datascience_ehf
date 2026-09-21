@@ -22,6 +22,7 @@ Match details #id
 
 [ Basic data ]
   chips: competition, season, phase, group, kickoff, venue, status, spectators
+  click a column header to sort any table
   [ Periods ]
     Period | Home | Away | Played
   [ Officials ]

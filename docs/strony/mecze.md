@@ -22,7 +22,9 @@ Compact match list. The table is the main element of the page.
   [Filter]  [Clear]
 
 [ Table ]
-  ID | Date | Time | Season | Competition | Home | Score | Away | Venue | Details
+  ID | Date | Time | Season | Competition | Phase | Home | Score | Away | Venue | Details
+  Phase = phase, group in the same cell: "Group Phase (A)", "Last 16"
+  click a column header to sort all matching matches (again = reverse)
   ---+------+------+--------+-------------+------+-------+------+-------+--------
   rows from ehf.match
 

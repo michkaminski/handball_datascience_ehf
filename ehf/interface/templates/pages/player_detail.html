@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% from "partials/sort_macros.html" import sort_th %}
+
+{% block tytul %}{% if profile %}{{ profile.display_name }}{% else %}Player{% endif %} — Handball EHF{% endblock %}
+
+{% block tresc %}
+<section class="pagehead">
+<div class="crumb">Start › Data › Players › Details</div>
+<h1>Player details{% if profile %} #{{ profile.id }}{% endif %}</h1>
+<p>Player card from schema ehf.</p>
+</section>
+{% if error %}
+<section class="panel">
+<div class="panel-body"><p class="note">{{ error }}</p></div>
+</section>
+{% elif profile %}
+<div class="toolbar">
+<div class="left"><a class="btn secondary" href="{{ url_for('panel.lista_zawodnikow') }}">← Back to list</a></div>
+{% if profile.profile_url %}<div class="right"><a class="btn secondary" href="{{ profile.profile_url }}" target="_blank" rel="noopener">EHF profile</a></div>{% endif %}
+</div>
+
+<section class="hero">
+<div class="player-hero">
+{% if profile.photo_url %}
+<img class="player-photo" src="{{ profile.photo_url }}" alt="{{ profile.display_name }}">
+{% endif %}
+<div>
+<div class="team-name">{{ profile.display_name }}</div>
+{% if profile.position %}<div class="team-country">{{ profile.position|position_abbr or profile.position }}</div>{% endif %}
+<div class="hero-meta">
+{% if profile.birth_year %}<span class="meta-chip">{{ profile.birth_year }}</span>{% endif %}
+{% if profile.height_cm is not none %}<span class="meta-chip">{{ profile.height_cm }} cm</span>{% endif %}
+{% if profile.weight_kg is not none %}<span class="meta-chip">{{ profile.weight_kg }} kg</span>{% endif %}
+{% if profile.nationality_text != "—" %}<span class="meta-chip">{{ profile.nationality_text }}</span>{% endif %}
+</div>
+</div>
+</div>
+</section>
+
+<div data-match-detail>
+<div class="match-tabs" role="tablist" aria-label="Player details" data-match-tabs hidden>
+<button type="button" role="tab" id="player-tab-profile" data-tab="profile" aria-controls="player-panel-profile" aria-selected="true">Profile</button>
+<button type="button" role="tab" id="player-tab-seasons" data-tab="seasons" aria-controls="player-panel-seasons" aria-selected="false" tabindex="-1">Seasons &amp; teams</button>
+<button type="button" role="tab" id="player-tab-matches" data-tab="matches" aria-controls="player-panel-matches" aria-selected="false" tabindex="-1">Matches</button>
+</div>
+
+<section class="panel" id="player-panel-profile" data-match-panel aria-labelledby="player-tab-profile">
+<h2>Profile</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td>First name</td><td>{{ profile.first_name or "—" }}</td></tr>
+<tr><td>Last name</td><td>{{ profile.last_name or "—" }}</td></tr>
+<tr><td>Display name</td><td>{{ profile.display_name }}</td></tr>
+<tr><td>Position</td><td>{{ profile.position or "—" }}{% if profile.position|position_abbr %} ({{ profile.position|position_abbr }}){% endif %}</td></tr>
+<tr><td>Birth date</td><td>{{ profile.birth_date or "—" }}</td></tr>
+<tr><td>Birth year</td><td>{{ profile.birth_year or "—" }}</td></tr>
+<tr><td>Birth place</td><td>{{ profile.birth_place or "—" }}</td></tr>
+<tr><td>Height</td><td>{% if profile.height_cm is not none %}{{ profile.height_cm }} cm{% else %}—{% endif %}</td></tr>
+<tr><td>Weight</td><td>{% if profile.weight_kg is not none %}{{ profile.weight_kg }} kg{% else %}—{% endif %}</td></tr>
+<tr><td>Nationalities</td><td>{{ profile.nationality_text }}</td></tr>
+<tr><td>EHF id</td><td>{{ profile.ehf_id or "—" }}</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="panel" id="player-panel-seasons" data-match-panel aria-labelledby="player-tab-seasons">
+<h2>Seasons &amp; teams</h2>
+<div class="table-wrap">
+<table class="player-season-table">
+<thead>
+<tr>
+<th>Season</th><th>Competition</th><th>Team</th><th>M</th><th>G</th><th>Sh</th><th>%</th><th>Y</th><th>2'</th><th>R</th><th>Saves</th><th>Faced</th><th>Save%</th>
+</tr>
+</thead>
+<tbody>
+{% for row in seasons %}
+<tr>
+<td>{{ row.season_code or "—" }}</td>
+<td>{{ row.competition_name or "—" }}</td>
+<td>{{ row.team_name or "—" }}</td>
+<td>{{ row.matches }}</td>
+<td>{{ row.goals if row.goals is not none else "—" }}</td>
+<td>{{ row.shots if row.shots is not none else "—" }}</td>
+<td>{{ row.shot_percentage_text or "—" }}</td>
+<td>{{ row.yellow_cards if row.yellow_cards is not none else "—" }}</td>
+<td>{{ row.two_min_suspensions if row.two_min_suspensions is not none else "—" }}</td>
+<td>{{ row.red_cards if row.red_cards is not none else "—" }}</td>
+<td>{{ row.saves if row.saves is not none else "—" }}</td>
+<td>{{ row.shots_faced if row.shots_faced is not none else "—" }}</td>
+<td>{{ row.save_percentage_text or "—" }}</td>
+</tr>
+{% else %}
+<tr><td colspan="13" class="note">No season appearances.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</section>
+
+<div id="player-panel-matches" data-match-panel aria-labelledby="player-tab-matches">
+<section class="panel">
+<h2>Filters</h2>
+<form class="panel-body filters player-match-filters" method="get">
+<input type="hidden" name="tab" value="matches">
+<input type="hidden" name="sort" value="{{ match_filters.sort.column }}">
+<input type="hidden" name="dir" value="{{ match_filters.sort.direction }}">
+<label>Season
+<select name="season_id">
+<option value="">All</option>
+{% for item in match_options.seasons %}
+<option value="{{ item.value }}" {% if match_filters.season_id is not none and item.value == match_filters.season_id|string %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+</label>
+<label>Competition
+<select name="competition_id">
+<option value="">All</option>
+{% for item in match_options.competitions %}
+<option value="{{ item.value }}" {% if match_filters.competition_id is not none and item.value == match_filters.competition_id|string %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+</label>
+<label>Club
+<select name="club_id">
+<option value="">All</option>
+{% for item in match_options.clubs %}
+<option value="{{ item.value }}" {% if match_filters.club_id is not none and item.value == match_filters.club_id|string %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+</label>
+<label>Date<input type="date" name="date" value="{{ match_filters.match_date or '' }}"></label>
+<div class="pole-przycisku"><button class="btn small" type="submit">Filter</button></div>
+<div class="pole-przycisku"><a class="btn secondary small" href="{{ url_for('panel.player_detail', player_id=profile.id, tab='matches') }}">Clear</a></div>
+</form>
+</section>
+<section class="panel">
+<div class="panel-body">
+<div class="toolbar">
+<span class="note">{{ matches.total }} matches</span>
+<div class="right">
+{% if matches.has_previous %}
+<a class="btn secondary small" href="{{ url_for('panel.player_detail', player_id=profile.id, **dict(request.args, tab='matches', page=match_filters.page - 1)) }}">Previous</a>
+{% endif %}
+{% if matches.has_next %}
+<a class="btn secondary small" href="{{ url_for('panel.player_detail', player_id=profile.id, **dict(request.args, tab='matches', page=match_filters.page + 1)) }}">Next</a>
+{% endif %}
+</div>
+</div>
+<div class="table-wrap">
+<table id="matches-table" class="player-matches-table" data-remote-sort data-sort-default="date" data-sort-default-dir="desc">
+<thead>
+<tr>
+{{ sort_th(match_filters.sort, "date", "Date") }}
+{{ sort_th(match_filters.sort, "season", "Season") }}
+{{ sort_th(match_filters.sort, "competition", "Competition") }}
+{{ sort_th(match_filters.sort, "team", "Team") }}
+{{ sort_th(match_filters.sort, "opponent", "Opponent") }}
+{{ sort_th(match_filters.sort, "score", "Score") }}
+{{ sort_th(match_filters.sort, "goals", "G") }}
+{{ sort_th(match_filters.sort, "shots", "Sh") }}
+{{ sort_th(match_filters.sort, "shot_pct", "%") }}
+{{ sort_th(match_filters.sort, "two_min", "2'") }}
+{{ sort_th(match_filters.sort, "saves", "Saves") }}
+{{ sort_th(match_filters.sort, "faced", "Faced") }}
+{{ sort_th(match_filters.sort, "save_pct", "Save%") }}
+<th></th>
+</tr>
+</thead>
+<tbody>
+{% for item in matches.items %}
+<tr data-href="{{ url_for('panel.match_detail', match_id=item.match_id) }}" title="Double-click to open match details">
+<td>{{ item.kickoff_at.strftime("%Y-%m-%d") if item.kickoff_at else "—" }}</td>
+<td>{{ item.season_code or "—" }}</td>
+<td>{{ item.competition_name or "—" }}</td>
+<td>{{ item.team_name or "—" }}</td>
+<td>{{ item.opponent_name or "—" }}</td>
+<td><span class="score">{{ item.score_text }}</span></td>
+<td>{{ item.goals if item.goals is not none else "—" }}</td>
+<td>{{ item.shots if item.shots is not none else "—" }}</td>
+<td>{{ item.shot_percentage_text or "—" }}</td>
+<td>{{ item.two_min_suspensions if item.two_min_suspensions is not none else "—" }}</td>
+<td>{{ item.saves if item.saves is not none else "—" }}</td>
+<td>{{ item.shots_faced if item.shots_faced is not none else "—" }}</td>
+<td>{{ item.save_percentage_text or "—" }}</td>
+<td><a class="icon-link" href="{{ url_for('panel.match_detail', match_id=item.match_id) }}">Details</a></td>
+</tr>
+{% else %}
+<tr><td colspan="14" class="note">No matches for the selected filters.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</div>
+</div>
+{% include "partials/match_detail_dialog.html" %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/match_detail.js') }}"></script>
+<script src="{{ url_for('static', filename='js/matches.js') }}"></script>
+{% endblock %}
