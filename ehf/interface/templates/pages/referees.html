@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from "partials/sort_macros.html" import sort_th %}
+
+{% block tytul %}Referees — Handball EHF{% endblock %}
+
+{% block tresc %}
+<section class="pagehead">
+<div class="crumb">Start › Data › Referees</div>
+<h1>Referees</h1>
+<p>Officials of EHF matches.</p>
+</section>
+<section class="panel">
+<h2>Filters</h2>
+<form class="panel-body filters venue-filters" method="get">
+<label>Search<input name="q" value="{{ filters.query or '' }}" placeholder="name..."></label>
+<label>Country
+<select name="country">
+<option value="">All</option>
+{% for item in options.countries %}
+<option value="{{ item.value }}" {% if filters.country == item.value %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+</label>
+<input type="hidden" name="sort" value="{{ filters.sort.column }}">
+<input type="hidden" name="dir" value="{{ filters.sort.direction }}">
+<div class="pole-przycisku"><button class="btn small" type="submit">Filter</button></div>
+<div class="pole-przycisku"><a class="btn secondary small" href="{{ url_for('panel.lista_sedziow') }}">Clear</a></div>
+</form>
+</section>
+<section class="panel">
+<div class="panel-body">
+{% if error %}
+<p class="note">{{ error }}</p>
+{% endif %}
+<div class="toolbar">
+<span class="note">{{ page.total }} referees</span>
+<div class="right">
+{% if page.has_previous %}
+<a class="btn secondary small" href="{{ url_for('panel.lista_sedziow', **dict(request.args, page=filters.page - 1)) }}">Previous</a>
+{% endif %}
+{% if page.has_next %}
+<a class="btn secondary small" href="{{ url_for('panel.lista_sedziow', **dict(request.args, page=filters.page + 1)) }}">Next</a>
+{% endif %}
+</div>
+</div>
+<div class="table-wrap">
+<table id="referees-table" data-remote-sort data-sort-default="name" data-sort-default-dir="asc">
+<thead>
+<tr>
+{{ sort_th(filters.sort, "id", "ID") }}
+{{ sort_th(filters.sort, "name", "Name") }}
+{{ sort_th(filters.sort, "country", "Country") }}
+{{ sort_th(filters.sort, "matches", "Matches") }}
+<th></th>
+</tr>
+</thead>
+<tbody>
+{% for item in page.items %}
+<tr>
+<td>{{ item.id }}</td>
+<td>{{ item.display_name }}</td>
+<td>{{ item.country_name or item.country_code or "—" }}</td>
+<td>{{ item.matches }}</td>
+<td><a class="icon-link" href="{{ url_for('panel.referee_detail', referee_id=item.id) }}">Details</a></td>
+</tr>
+{% else %}
+<tr><td colspan="5" class="note">No referees for the selected filters.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</section>
+{% endblock %}

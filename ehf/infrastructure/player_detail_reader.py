@@ -15,6 +15,7 @@ from ehf.domain.players import (
     PlayerProfile,
     PlayerSeasonRow,
 )
+from ehf.infrastructure.kickoff import KICKOFF_AT_SQL
 from ehf.infrastructure.ordering import order_sql
 from ehf.infrastructure.player_list_reader import APPEARANCE_FROM, TEAM_NAME
 
@@ -67,7 +68,7 @@ ORDER BY s.year_start DESC, c.name, {TEAM_NAME}
 MATCH_SELECT = f"""
 SELECT
     m.id AS match_id,
-    m.kickoff_at,
+    {KICKOFF_AT_SQL} AS kickoff_at,
     s.code AS season_code,
     c.name AS competition_name,
     COALESCE(home_ed.display_name, home_team.display_name) AS home_name,
@@ -99,7 +100,7 @@ WHERE l.person_id = %s
 """
 
 PLAYER_MATCH_ORDER = {
-    "date": ("m.kickoff_at",),
+    "date": (KICKOFF_AT_SQL,),
     "season": ("s.code",),
     "competition": ("c.name",),
     "team": (TEAM_NAME,),
@@ -232,7 +233,7 @@ class PsycopgPlayerDetailReader:
             clauses.append("t.club_id = %s")
             params.append(filters.club_id)
         if filters.match_date is not None:
-            clauses.append("m.kickoff_at::date = %s")
+            clauses.append(f"{KICKOFF_AT_SQL}::date = %s")
             params.append(filters.match_date)
         if not clauses:
             return "", params

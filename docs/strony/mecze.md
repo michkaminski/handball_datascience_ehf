@@ -28,6 +28,8 @@ Compact match list. The table is the main element of the page.
   ---+------+------+--------+-------------+------+-------+------+-------+--------
   rows from ehf.match
 
+  Date/Time from kickoff_at, or kickoff_display when kickoff_at is empty
+
   Score: score_home:score_away
   result_type suffix when not normal: walkover | extra_time | penalties
   status: played | awarded | scheduled_or_no_result

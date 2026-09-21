@@ -1,29 +1,26 @@
-# Hale
+# Venues
 
 | | |
 |---|---|
 | URL | `/hale` |
-| Wzor | `lista` |
-| Menu | Dane › Hale |
-| Kod | `ehf/interface/pages.py` → `klucz="hale"` |
-| Karta | `/hale/<id>` |
-| Baza | `ehf.venue` |
-
-Zmianę strony zacznij tutaj. Potem zsynchronizuj `filtry` / `kolumny` / `opis` w `pages.py`.
+| View | `VenueListView` (`pages/venues.html`) |
+| Menu | Data › Venues |
+| Code | `ehf/interface/venue_views.py` |
+| Card | `/hale/<id>` |
+| Database | `ehf.venue` |
 
 ```
-Start › Dane › Hale
-Hale
-Hale i areny meczów EHF.
+Start › Data › Venues
+Venues
+Halls and arenas of EHF matches.
 
-[ Filtry ]
-  Szukaj: [____________]   Miasto: [____________]
-  [Filtruj]  [Wyczyść]
+[ Filters ]
+  Search: [____________]   City: [____________]
+  [Filter]  [Clear]
 
-[ Tabela ]
-  ID | Nazwa | Miasto | Adres | Pojemność | Mecze | Akcje
-  ---+-------+--------+-------+-----------+-------+------
-  (pusto: szkielet — baza EHF osobna)
-
-  Akcje wiersza (docelowo): Szczegóły → /hale/<id>
+[ Table ]
+  ID | Name | City | Country | Matches | Actions
+  click a column header to sort all matching venues
+  Matches = played matches only
+  Actions: Details → /hale/<id>
 ```

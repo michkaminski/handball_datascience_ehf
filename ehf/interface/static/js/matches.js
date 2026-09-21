@@ -64,9 +64,11 @@
     }
   }
 
-  const table = document.getElementById("matches-table");
   const dialog = document.getElementById("match-detail-dialog");
-  if (table && dialog && typeof dialog.showModal === "function") {
-    new MatchDetailDialog(table, dialog, window.fetch.bind(window)).start();
+  const tables = new Set(
+    [...document.querySelectorAll("[data-match-rows]"), document.getElementById("matches-table")].filter(Boolean)
+  );
+  if (dialog && typeof dialog.showModal === "function") {
+    tables.forEach((table) => new MatchDetailDialog(table, dialog, window.fetch.bind(window)).start());
   }
 })();

@@ -68,13 +68,17 @@
       const column = header.dataset.sort;
       if (!table?.hasAttribute("data-remote-sort") || !column) return false;
       const url = new URL(window.location.href);
-      const current = url.searchParams.get("sort") || table.dataset.sortDefault || "";
-      const currentDesc = url.searchParams.has("dir")
-        ? url.searchParams.get("dir") === "desc"
+      const sortKey = table.dataset.sortParam || "sort";
+      const dirKey = table.dataset.dirParam || "dir";
+      const pageKey = table.dataset.pageParam || "page";
+      const current = url.searchParams.get(sortKey) || table.dataset.sortDefault || "";
+      const currentDesc = url.searchParams.has(dirKey)
+        ? url.searchParams.get(dirKey) === "desc"
         : table.dataset.sortDefaultDir === "desc" && current === (table.dataset.sortDefault || "");
-      url.searchParams.set("sort", column);
-      url.searchParams.set("dir", column === current && !currentDesc ? "desc" : "asc");
-      url.searchParams.set("page", "1");
+      url.searchParams.set(sortKey, column);
+      url.searchParams.set(dirKey, column === current && !currentDesc ? "desc" : "asc");
+      url.searchParams.set(pageKey, "1");
+      if (table.dataset.keepTab) url.searchParams.set("tab", table.dataset.keepTab);
       window.location.assign(url);
       return true;
     }

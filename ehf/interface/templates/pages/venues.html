@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% from "partials/sort_macros.html" import sort_th %}
+
+{% block tytul %}Venues — Handball EHF{% endblock %}
+
+{% block tresc %}
+<section class="pagehead">
+<div class="crumb">Start › Data › Venues</div>
+<h1>Venues</h1>
+<p>Halls and arenas of EHF matches.</p>
+</section>
+<section class="panel">
+<h2>Filters</h2>
+<form class="panel-body filters venue-filters" method="get">
+<label>Search<input name="q" value="{{ filters.query or '' }}" placeholder="name or city..."></label>
+<label>City
+<select name="city">
+<option value="">All</option>
+{% for item in options.cities %}
+<option value="{{ item.value }}" {% if filters.city == item.value %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+</label>
+<input type="hidden" name="sort" value="{{ filters.sort.column }}">
+<input type="hidden" name="dir" value="{{ filters.sort.direction }}">
+<div class="pole-przycisku"><button class="btn small" type="submit">Filter</button></div>
+<div class="pole-przycisku"><a class="btn secondary small" href="{{ url_for('panel.lista_hal') }}">Clear</a></div>
+</form>
+</section>
+<section class="panel">
+<div class="panel-body">
+{% if error %}
+<p class="note">{{ error }}</p>
+{% endif %}
+<div class="toolbar">
+<span class="note">{{ page.total }} venues</span>
+<div class="right">
+{% if page.has_previous %}
+<a class="btn secondary small" href="{{ url_for('panel.lista_hal', **dict(request.args, page=filters.page - 1)) }}">Previous</a>
+{% endif %}
+{% if page.has_next %}
+<a class="btn secondary small" href="{{ url_for('panel.lista_hal', **dict(request.args, page=filters.page + 1)) }}">Next</a>
+{% endif %}
+</div>
+</div>
+<div class="table-wrap">
+<table id="venues-table" data-remote-sort data-sort-default="name" data-sort-default-dir="asc">
+<thead>
+<tr>
+{{ sort_th(filters.sort, "id", "ID") }}
+{{ sort_th(filters.sort, "name", "Name") }}
+{{ sort_th(filters.sort, "city", "City") }}
+{{ sort_th(filters.sort, "country", "Country") }}
+{{ sort_th(filters.sort, "matches", "Matches") }}
+<th></th>
+</tr>
+</thead>
+<tbody>
+{% for item in page.items %}
+<tr>
+<td>{{ item.id }}</td>
+<td>{{ item.name }}</td>
+<td>{{ item.city or "—" }}</td>
+<td>{{ item.country_name or item.country_code or "—" }}</td>
+<td>{{ item.matches }}</td>
+<td><a class="icon-link" href="{{ url_for('panel.venue_detail', venue_id=item.id) }}">Details</a></td>
+</tr>
+{% else %}
+<tr><td colspan="6" class="note">No venues for the selected filters.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</section>
+{% endblock %}

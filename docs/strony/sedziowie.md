@@ -1,28 +1,27 @@
-# Sędziowie
+# Referees
 
 | | |
 |---|---|
 | URL | `/sedziowie` |
-| Wzor | `lista` |
-| Menu | Dane › Sędziowie |
-| Kod | `ehf/interface/pages.py` → `klucz="sedziowie"` |
-| Baza | `ehf.match_official` (`role = 'referee'`) |
+| View | `RefereeListView` (`pages/referees.html`) |
+| Menu | Data › Referees |
+| Code | `ehf/interface/referee_views.py` |
+| Card | `/sedziowie/<id>` |
+| Database | `ehf.match_official` (`role = 'referee'`) |
 
-Zmianę strony zacznij tutaj. Potem zsynchronizuj `filtry` / `kolumny` / `opis` w `pages.py`.
+Identity is `(display_name, first_name, last_name, country_code)`. The card id is `MIN(id)` of that group. City is not stored.
 
 ```
-Start › Dane › Sędziowie
-Sędziowie
-Sędziowie spotkań EHF.
+Start › Data › Referees
+Referees
+Officials of EHF matches.
 
-[ Filtry ]
-  Szukaj: [____________]   Miasto: [____________]
-  [Filtruj]  [Wyczyść]
+[ Filters ]
+  Search: [____________]   Country: [____________]
+  [Filter]  [Clear]
 
-[ Tabela ]
-  ID | Nazwisko | Miasto | Mecze | Akcje
-  ---+----------+--------+-------+------
-  (pusto: szkielet — baza EHF osobna)
-
-  Akcje wiersza (docelowo): Mecze
+[ Table ]
+  ID | Name | Country | Matches | Actions
+  click a column header to sort all matching referees
+  Actions: Details → /sedziowie/<id>
 ```

@@ -1,0 +1,78 @@
+{% macro count_bars(series, key, expanded, href_endpoint=none, id_arg=none, track="") %}
+<div class="venue-bars">
+{% for item in series.visible(expanded) %}
+<div class="venue-bar-row">
+<span>
+{% if href_endpoint and item.key %}
+<a href="{{ url_for(href_endpoint, **{id_arg: item.key|int}) }}">{{ item.label }}</a>
+{% else %}
+{{ item.label }}
+{% endif %}
+</span>
+<div class="venue-bar-track {{ track }}" style="--bar-width: {{ series.width(item) }}%"><i></i></div>
+<b>{{ item.value }}</b>
+</div>
+{% else %}
+<p class="note">No data.</p>
+{% endfor %}
+</div>
+{% if series.items|length > 10 %}
+<a class="btn secondary small" href="{{ expand_href(key) }}">{% if expanded %}Show top 10{% else %}Show all ({{ series.items|length }}){% endif %}</a>
+{% endif %}
+{% endmacro %}
+
+{% macro count_table(series, key, expanded, label, href_endpoint=none, id_arg=none) %}
+<div class="table-wrap">
+<table>
+<thead><tr><th>{{ label }}</th><th>Matches</th></tr></thead>
+<tbody>
+{% for item in series.visible(expanded) %}
+<tr>
+<td>
+{% if href_endpoint and item.key %}
+<a href="{{ url_for(href_endpoint, **{id_arg: item.key|int}) }}">{{ item.label }}</a>
+{% else %}
+{{ item.label }}
+{% endif %}
+</td>
+<td>{{ item.value }}</td>
+</tr>
+{% else %}
+<tr><td colspan="2" class="note">No data.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% if series.items|length > 10 %}
+<a class="btn secondary small" href="{{ expand_href(key) }}">{% if expanded %}Show top 10{% else %}Show all ({{ series.items|length }}){% endif %}</a>
+{% endif %}
+{% endmacro %}
+
+{% macro heatmap(map) %}
+{% if map.seasons %}
+<div class="table-wrap venue-heatmap">
+<table>
+<thead>
+<tr><th>Season</th>
+{% for month in ("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec") %}
+<th>{{ month }}</th>
+{% endfor %}
+</tr>
+</thead>
+<tbody>
+{% for season in map.seasons %}
+<tr>
+<th>{{ season }}</th>
+{% for month in range(1, 13) %}
+{% set cell = map.cell(season, month) %}
+<td{% if cell %} data-level="{{ cell.level }}"{% endif %}>{{ cell.value if cell and cell.value else "" }}</td>
+{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="note">No dated matches.</p>
+{% endif %}
+{% endmacro %}

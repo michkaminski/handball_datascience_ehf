@@ -13,12 +13,13 @@ from ehf.domain.matches import (
     MatchListItem,
     MatchListPage,
 )
+from ehf.infrastructure.kickoff import KICKOFF_AT_SQL
 from ehf.infrastructure.ordering import order_sql
 
-LIST_SQL = """
+LIST_SQL = f"""
 SELECT
     m.id,
-    m.kickoff_at,
+    {KICKOFF_AT_SQL} AS kickoff_at,
     s.code AS season_code,
     c.name AS competition_name,
     COALESCE(home_ed.display_name, home_team.display_name) AS home_name,
@@ -49,8 +50,8 @@ LEFT JOIN ehf.venue v ON v.id = m.venue_id
 
 MATCH_ORDER = {
     "id": ("m.id",),
-    "date": ("m.kickoff_at",),
-    "time": ("(m.kickoff_at::time)",),
+    "date": (KICKOFF_AT_SQL,),
+    "time": (f"({KICKOFF_AT_SQL}::time)",),
     "season": ("s.code",),
     "competition": ("c.name",),
     "phase": ("m.phase", "m.group_code"),
@@ -157,7 +158,7 @@ class PsycopgMatchListReader:
             pattern = f"%{filters.club_query}%"
             params.extend((pattern, pattern))
         if filters.match_date is not None:
-            clauses.append("m.kickoff_at::date = %s")
+            clauses.append(f"{KICKOFF_AT_SQL}::date = %s")
             params.append(filters.match_date)
         if not clauses:
             return "", params

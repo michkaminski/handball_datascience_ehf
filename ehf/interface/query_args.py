@@ -27,5 +27,16 @@ def optional_date(value: str | None) -> date | None:
     return date.fromisoformat(text)
 
 
-def sort_from_args(args: Mapping[str, str], allowed: frozenset[str], default: Sort) -> Sort:
-    return resolve_sort(optional_text(args.get("sort")), optional_text(args.get("dir")), allowed, default)
+def sort_from_args(
+    args: Mapping[str, str],
+    allowed: frozenset[str],
+    default: Sort,
+    column_key: str = "sort",
+    direction_key: str = "dir",
+) -> Sort:
+    return resolve_sort(
+        optional_text(args.get(column_key)),
+        optional_text(args.get(direction_key)),
+        allowed,
+        default,
+    )

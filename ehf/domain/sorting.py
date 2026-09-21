@@ -67,6 +67,25 @@ PLAYER_MATCH_SORT_COLUMNS = frozenset(
 )
 
 
+DEFAULT_VENUE_SORT = Sort("name", False)
+DEFAULT_VENUE_MATCH_SORT = Sort("date", True)
+DEFAULT_VENUE_PLAYER_SORT = Sort("matches", True)
+DEFAULT_REFEREE_SORT = Sort("name", False)
+DEFAULT_REFEREE_MATCH_SORT = Sort("date", True)
+
+VENUE_SORT_COLUMNS = frozenset({"id", "name", "city", "country", "matches"})
+VENUE_MATCH_SORT_COLUMNS = frozenset(
+    {"date", "season", "competition", "home", "score", "away"}
+)
+VENUE_PLAYER_SORT_COLUMNS = frozenset(
+    {"name", "matches", "first", "last", "goals", "avg", "teams"}
+)
+REFEREE_SORT_COLUMNS = frozenset({"id", "name", "country", "matches"})
+REFEREE_MATCH_SORT_COLUMNS = frozenset(
+    {"date", "season", "competition", "home", "score", "away", "partner"}
+)
+
+
 def resolve_sort(column: str | None, direction: str | None, allowed: frozenset[str], default: Sort) -> Sort:
     if column not in allowed:
         return default

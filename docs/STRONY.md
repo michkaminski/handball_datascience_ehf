@@ -29,8 +29,8 @@ Szkic tekstowy każdej listy: `docs/strony/`. Zmianę strony zacznij od szkicu, 
 | Matches | `/mecze` | match list (live) | [mecze.md](strony/mecze.md) |
 | Tabele | `/tabele` | lista | [tabele.md](strony/tabele.md) |
 | Strzelcy | `/strzelcy` | lista | [strzelcy.md](strony/strzelcy.md) |
-| Hale | `/hale` | lista | [hale.md](strony/hale.md) |
-| Sędziowie | `/sedziowie` | lista | [sedziowie.md](strony/sedziowie.md) |
+| Venues | `/hale` | venue list (live) | [hale.md](strony/hale.md) |
+| Referees | `/sedziowie` | referee list (live) | [sedziowie.md](strony/sedziowie.md) |
 
 ## Karty (bez pozycji w menu)
 
@@ -38,7 +38,8 @@ Szkic tekstowy każdej listy: `docs/strony/`. Zmianę strony zacznij od szkicu, 
 |---|---|---|
 | Match details | `/mecze/<id>` | [mecz.md](strony/mecz.md) |
 | Player details | `/zawodnicy/<id>` | [zawodnik.md](strony/zawodnik.md) |
-| Szczegóły hali | `/hale/<id>` | |
+| Venue details | `/hale/<id>` | [hala.md](strony/hala.md) |
+| Referee details | `/sedziowie/<id>` | [sedzia.md](strony/sedzia.md) |
 
 ## Import i narzędzia
 

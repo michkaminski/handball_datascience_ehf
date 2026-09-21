@@ -1,0 +1,384 @@
+{% extends "base.html" %}
+{% from "partials/sort_macros.html" import sort_th %}
+{% from "partials/stats_macros.html" import count_bars, count_table, heatmap %}
+
+{% block tytul %}{% if profile %}{{ profile.name }}{% else %}Venue{% endif %} — Handball EHF{% endblock %}
+
+{% block tresc %}
+<section class="pagehead">
+<div class="crumb">Start › Data › Venues › Details</div>
+<h1>Venue details{% if profile %} #{{ profile.id }}{% endif %}</h1>
+<p>Venue card from schema ehf. Statistics use played matches only.</p>
+</section>
+{% if error %}
+<section class="panel">
+<div class="panel-body"><p class="note">{{ error }}</p></div>
+</section>
+{% elif profile %}
+<div class="toolbar">
+<div class="left"><a class="btn secondary" href="{{ url_for('panel.lista_hal') }}">← Back to list</a></div>
+</div>
+
+<section class="hero venue-head">
+<div class="venue-title-row">
+<div>
+<div class="team-name">{{ profile.name }}</div>
+{% if profile.city or profile.country_name or profile.country_code %}
+<div class="team-country">{{ profile.city or "—" }}{% if profile.country_name or profile.country_code %} ({{ profile.country_name or profile.country_code }}){% endif %}</div>
+{% endif %}
+</div>
+</div>
+<div class="hero-meta">
+<span class="meta-chip">{{ profile.played_matches }} played</span>
+<span class="meta-chip">{{ profile.seasons }} seasons</span>
+<span class="meta-chip">{{ profile.competitions }} competitions</span>
+</div>
+</section>
+
+<div data-match-detail>
+<div class="match-tabs" role="tablist" aria-label="Venue details" data-match-tabs hidden>
+<button type="button" role="tab" id="venue-tab-data" data-tab="data" aria-controls="venue-panel-data" aria-selected="true">Data</button>
+<button type="button" role="tab" id="venue-tab-matches" data-tab="matches" aria-controls="venue-panel-matches" aria-selected="false" tabindex="-1">Matches</button>
+<button type="button" role="tab" id="venue-tab-players" data-tab="players" aria-controls="venue-panel-players" aria-selected="false" tabindex="-1">Players</button>
+<button type="button" role="tab" id="venue-tab-statistics" data-tab="statistics" aria-controls="venue-panel-statistics" aria-selected="false" tabindex="-1">Statistics</button>
+</div>
+
+<section class="panel" id="venue-panel-data" data-match-panel aria-labelledby="venue-tab-data">
+<h2>Data</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td>ID</td><td>{{ profile.id }}</td></tr>
+<tr><td>Name</td><td>{{ profile.name }}</td></tr>
+<tr><td>City</td><td>{{ profile.city or "—" }}</td></tr>
+<tr><td>Country</td><td>{{ profile.country_name or profile.country_code or "—" }}</td></tr>
+<tr><td>First match</td><td>{{ profile.first_match_at.strftime("%Y-%m-%d") if profile.first_match_at else "—" }}</td></tr>
+<tr><td>Last match</td><td>{{ profile.last_match_at.strftime("%Y-%m-%d") if profile.last_match_at else "—" }}</td></tr>
+</tbody>
+</table>
+</div>
+<h3 class="section-heading">Summary</h3>
+<div class="venue-summary">
+<div><span>Matches</span><b>{{ profile.matches }}</b></div>
+<div><span>Played matches</span><b>{{ profile.played_matches }}</b></div>
+<div><span>Seasons</span><b>{{ profile.seasons }}</b></div>
+<div><span>Competitions</span><b>{{ profile.competitions }}</b></div>
+<div><span>Teams</span><b>{{ profile.teams }}</b></div>
+<div><span>Players</span><b>{{ profile.players }}</b></div>
+</div>
+<p class="note">Address and capacity are not stored in the source. Played matches exclude walkovers and withdrawn games.</p>
+</section>
+
+<div id="venue-panel-matches" data-match-panel aria-labelledby="venue-tab-matches">
+<section class="panel">
+<h2>Filters</h2>
+<form class="panel-body filters venue-match-filters" method="get">
+<input type="hidden" name="tab" value="matches">
+<input type="hidden" name="sort" value="{{ match_filters.sort.column }}">
+<input type="hidden" name="dir" value="{{ match_filters.sort.direction }}">
+<input type="hidden" name="player_q" value="{{ player_filters.query or '' }}">
+<input type="hidden" name="player_page" value="{{ player_filters.page }}">
+<input type="hidden" name="player_sort" value="{{ player_filters.sort.column }}">
+<input type="hidden" name="player_dir" value="{{ player_filters.sort.direction }}">
+{% if request.args.get("full") %}<input type="hidden" name="full" value="{{ request.args.get('full') }}">{% endif %}
+<label>Season
+<select name="season_id">
+<option value="">All</option>
+{% for item in match_options.seasons %}
+<option value="{{ item.value }}" {% if match_filters.season_id is not none and item.value == match_filters.season_id|string %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+</label>
+<label>Competition
+<select name="competition_id">
+<option value="">All</option>
+{% for item in match_options.competitions %}
+<option value="{{ item.value }}" {% if match_filters.competition_id is not none and item.value == match_filters.competition_id|string %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+</label>
+<label>Club
+<select name="club_id">
+<option value="">All</option>
+{% for item in match_options.clubs %}
+<option value="{{ item.value }}" {% if match_filters.club_id is not none and item.value == match_filters.club_id|string %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+</label>
+<div class="pole-przycisku"><button class="btn small" type="submit">Filter</button></div>
+<div class="pole-przycisku"><a class="btn secondary small" href="{{ url_for('panel.venue_detail', venue_id=profile.id, tab='matches') }}">Clear</a></div>
+</form>
+</section>
+<section class="panel">
+<div class="panel-body">
+<div class="toolbar">
+<span class="note">{{ matches.total }} played matches</span>
+<div class="right">
+{% if matches.has_previous %}
+<a class="btn secondary small" href="{{ url_for('panel.venue_detail', venue_id=profile.id, **dict(request.args, tab='matches', page=match_filters.page - 1)) }}">Previous</a>
+{% endif %}
+{% if matches.has_next %}
+<a class="btn secondary small" href="{{ url_for('panel.venue_detail', venue_id=profile.id, **dict(request.args, tab='matches', page=match_filters.page + 1)) }}">Next</a>
+{% endif %}
+</div>
+</div>
+<div class="table-wrap">
+<table id="matches-table" data-match-rows data-remote-sort data-sort-default="date" data-sort-default-dir="desc" data-keep-tab="matches">
+<thead>
+<tr>
+{{ sort_th(match_filters.sort, "date", "Date") }}
+{{ sort_th(match_filters.sort, "season", "Season") }}
+{{ sort_th(match_filters.sort, "competition", "Competition") }}
+{{ sort_th(match_filters.sort, "home", "Home") }}
+{{ sort_th(match_filters.sort, "score", "Score") }}
+{{ sort_th(match_filters.sort, "away", "Away") }}
+<th></th>
+</tr>
+</thead>
+<tbody>
+{% for item in matches.items %}
+<tr data-href="{{ url_for('panel.match_detail', match_id=item.match_id) }}" title="Double-click to open match details">
+<td>{{ item.kickoff_at.strftime("%Y-%m-%d") if item.kickoff_at else "—" }}</td>
+<td>{{ item.season_code or "—" }}</td>
+<td>{{ item.competition_name or "—" }}</td>
+<td>{{ item.home_name or "—" }}</td>
+<td><span class="score">{{ item.score_text }}</span></td>
+<td>{{ item.away_name or "—" }}</td>
+<td><a class="icon-link" href="{{ url_for('panel.match_detail', match_id=item.match_id) }}">Details</a></td>
+</tr>
+{% else %}
+<tr><td colspan="7" class="note">No played matches for the selected filters.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</div>
+
+<div id="venue-panel-players" data-match-panel aria-labelledby="venue-tab-players">
+<section class="panel">
+<h2>Filters</h2>
+<form class="panel-body filters venue-player-filters" method="get">
+<input type="hidden" name="tab" value="players">
+<input type="hidden" name="player_sort" value="{{ player_filters.sort.column }}">
+<input type="hidden" name="player_dir" value="{{ player_filters.sort.direction }}">
+<input type="hidden" name="season_id" value="{{ match_filters.season_id or '' }}">
+<input type="hidden" name="competition_id" value="{{ match_filters.competition_id or '' }}">
+<input type="hidden" name="club_id" value="{{ match_filters.club_id or '' }}">
+<input type="hidden" name="sort" value="{{ match_filters.sort.column }}">
+<input type="hidden" name="dir" value="{{ match_filters.sort.direction }}">
+<input type="hidden" name="page" value="{{ match_filters.page }}">
+{% if request.args.get("full") %}<input type="hidden" name="full" value="{{ request.args.get('full') }}">{% endif %}
+<label>Search<input name="player_q" value="{{ player_filters.query or '' }}" placeholder="player name..."></label>
+<div class="pole-przycisku"><button class="btn small" type="submit">Filter</button></div>
+<div class="pole-przycisku"><a class="btn secondary small" href="{{ url_for('panel.venue_detail', venue_id=profile.id, tab='players') }}">Clear</a></div>
+</form>
+</section>
+<section class="panel">
+<div class="panel-body">
+<div class="toolbar">
+<span class="note">{{ players.total }} players</span>
+<div class="right">
+{% if players.has_previous %}
+<a class="btn secondary small" href="{{ url_for('panel.venue_detail', venue_id=profile.id, **dict(request.args, tab='players', player_page=player_filters.page - 1)) }}">Previous</a>
+{% endif %}
+{% if players.has_next %}
+<a class="btn secondary small" href="{{ url_for('panel.venue_detail', venue_id=profile.id, **dict(request.args, tab='players', player_page=player_filters.page + 1)) }}">Next</a>
+{% endif %}
+</div>
+</div>
+<div class="table-wrap">
+<table id="venue-players-table" data-remote-sort data-sort-param="player_sort" data-dir-param="player_dir" data-page-param="player_page" data-sort-default="matches" data-sort-default-dir="desc" data-keep-tab="players">
+<thead>
+<tr>
+{{ sort_th(player_filters.sort, "name", "Player") }}
+{{ sort_th(player_filters.sort, "matches", "Matches") }}
+{{ sort_th(player_filters.sort, "first", "First") }}
+{{ sort_th(player_filters.sort, "last", "Last") }}
+{{ sort_th(player_filters.sort, "goals", "Goals") }}
+{{ sort_th(player_filters.sort, "avg", "Avg") }}
+{{ sort_th(player_filters.sort, "teams", "Teams") }}
+<th></th>
+</tr>
+</thead>
+<tbody>
+{% for item in players.items %}
+<tr>
+<td>{{ item.display_name }}</td>
+<td>{{ item.matches }}</td>
+<td>{{ item.first_at.strftime("%Y-%m-%d") if item.first_at else "—" }}</td>
+<td>{{ item.last_at.strftime("%Y-%m-%d") if item.last_at else "—" }}</td>
+<td>{{ item.goals if item.goals is not none else "—" }}</td>
+<td>{{ item.goals_per_match_text }}</td>
+<td class="venue-team-list">{{ item.teams or "—" }}</td>
+<td><a class="icon-link" href="{{ url_for('panel.player_detail', player_id=item.player_id) }}">Details</a></td>
+</tr>
+{% else %}
+<tr><td colspan="8" class="note">No players for the selected filters.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</div>
+
+<section class="panel venue-statistics" id="venue-panel-statistics" data-match-panel aria-labelledby="venue-tab-statistics">
+<h2>Statistics</h2>
+{% if stats %}
+<nav class="venue-analysis-nav" aria-label="Venue statistics">
+<a href="#venue-stat-seasons">Seasons</a>
+<a href="#venue-stat-competitions">Competitions</a>
+<a href="#venue-stat-results">Results</a>
+<a href="#venue-stat-goals">Goals</a>
+<a href="#venue-stat-calendar">Calendar</a>
+<a href="#venue-stat-attendance">Attendance</a>
+<a href="#venue-stat-records">Records</a>
+<a href="#venue-stat-teams">Teams</a>
+<a href="#venue-stat-players">Players</a>
+</nav>
+<p class="note">Played matches only. Charts complement the numbers.</p>
+
+<section class="venue-analysis-section" id="venue-stat-seasons">
+<div class="venue-section-head"><h3>Matches by season</h3></div>
+<div class="venue-analysis-grid">
+<figure class="venue-chart">
+<figcaption>Matches</figcaption>
+{{ count_bars(stats.seasons, "seasons", stats.is_expanded("seasons")) }}
+</figure>
+<div>
+{{ count_table(stats.seasons, "seasons", stats.is_expanded("seasons"), "Season") }}
+</div>
+</div>
+</section>
+
+<section class="venue-analysis-section" id="venue-stat-competitions">
+<div class="venue-section-head"><h3>Matches by competition</h3></div>
+<div class="venue-analysis-grid">
+<figure class="venue-chart">
+<figcaption>Most played competitions</figcaption>
+{{ count_bars(stats.competitions, "competitions", stats.is_expanded("competitions"), track="accent") }}
+</figure>
+<div>
+{{ count_table(stats.competitions, "competitions", stats.is_expanded("competitions"), "Competition") }}
+</div>
+</div>
+</section>
+
+<section class="venue-analysis-section" id="venue-stat-results">
+<div class="venue-section-head"><h3>Result profile</h3></div>
+<div class="venue-analysis-grid">
+<figure class="venue-chart">
+<figcaption>Outcomes</figcaption>
+{{ count_bars(stats.result_profile, "results", true) }}
+</figure>
+<div>
+{{ count_table(stats.result_profile, "results", true, "Result") }}
+</div>
+</div>
+</section>
+
+<section class="venue-analysis-section" id="venue-stat-goals">
+<div class="venue-section-head"><h3>Goals</h3></div>
+<div class="venue-metric-grid compact">
+<div><span>Mean goals</span><b>{% if stats.mean_goals is not none %}{{ "%.1f"|format(stats.mean_goals) }}{% else %}—{% endif %}</b></div>
+<div><span>Median goals</span><b>{% if stats.median_goals is not none %}{{ "%.1f"|format(stats.median_goals) }}{% else %}—{% endif %}</b></div>
+</div>
+<figure class="venue-chart">
+<figcaption>Goal total histogram</figcaption>
+{{ count_bars(stats.histogram, "histogram", true, track="warm") }}
+</figure>
+</section>
+
+<section class="venue-analysis-section" id="venue-stat-calendar">
+<div class="venue-section-head"><h3>Calendar</h3></div>
+<div class="venue-analysis-grid">
+<figure class="venue-chart">
+<figcaption>Matches by month</figcaption>
+{{ count_bars(stats.months, "months", true) }}
+</figure>
+<figure class="venue-chart">
+<figcaption>Matches by weekday</figcaption>
+{{ count_bars(stats.weekdays, "weekdays", true, track="green") }}
+</figure>
+</div>
+<h4 class="section-heading">Season × month</h4>
+{{ heatmap(stats.heatmap) }}
+</section>
+
+<section class="venue-analysis-section" id="venue-stat-attendance">
+<div class="venue-section-head">
+<h3>Attendance</h3>
+<p>Capacity is not in the source, so hall fill is not calculated.</p>
+</div>
+<div class="venue-metric-grid">
+<div><span>Known attendance</span><b>{{ stats.attendance_known }}</b></div>
+<div><span>Played matches</span><b>{{ stats.attendance_total }}</b></div>
+<div><span>Completeness</span><b>{{ stats.completeness_text }}</b></div>
+<div><span>Mean attendance</span><b>{% if stats.mean_attendance is not none %}{{ "%.0f"|format(stats.mean_attendance) }}{% else %}—{% endif %}</b></div>
+<div><span>Hall fill</span><b>—</b></div>
+</div>
+</section>
+
+<section class="venue-analysis-section" id="venue-stat-records">
+<div class="venue-section-head"><h3>Match records</h3></div>
+<div class="venue-close-games">
+<dl>
+{% for record in stats.records %}
+<dt>{{ record.label }}</dt>
+<dd>{% if record.match_id %}<a href="{{ url_for('panel.match_detail', match_id=record.match_id) }}">{{ record.text }}</a>{% else %}{{ record.text }}{% endif %}</dd>
+{% else %}
+<dt>Records</dt>
+<dd>—</dd>
+{% endfor %}
+</dl>
+</div>
+</section>
+
+<section class="venue-analysis-section" id="venue-stat-teams">
+<div class="venue-section-head"><h3>Most frequent teams</h3></div>
+<div class="venue-analysis-grid">
+<figure class="venue-chart">
+<figcaption>Teams</figcaption>
+{{ count_bars(stats.teams, "teams", stats.is_expanded("teams")) }}
+</figure>
+<div>
+{{ count_table(stats.teams, "teams", stats.is_expanded("teams"), "Team") }}
+</div>
+</div>
+</section>
+
+<section class="venue-analysis-section" id="venue-stat-players">
+<div class="venue-section-head"><h3>Players</h3></div>
+<div class="venue-analysis-grid">
+<figure class="venue-chart">
+<figcaption>Most appearances</figcaption>
+{{ count_bars(stats.players, "players", stats.is_expanded("players"), "panel.player_detail", "player_id") }}
+</figure>
+<figure class="venue-chart">
+<figcaption>Most goals</figcaption>
+{{ count_bars(stats.scorers, "scorers", stats.is_expanded("scorers"), "panel.player_detail", "player_id", "warm") }}
+</figure>
+</div>
+<div class="venue-analysis-grid">
+<div>
+{{ count_table(stats.players, "players", stats.is_expanded("players"), "Player", "panel.player_detail", "player_id") }}
+</div>
+<div>
+{{ count_table(stats.scorers, "scorers", stats.is_expanded("scorers"), "Scorer", "panel.player_detail", "player_id") }}
+</div>
+</div>
+</section>
+{% endif %}
+</section>
+</div>
+{% include "partials/match_detail_dialog.html" %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/match_detail.js') }}"></script>
+<script src="{{ url_for('static', filename='js/matches.js') }}"></script>
+{% endblock %}
