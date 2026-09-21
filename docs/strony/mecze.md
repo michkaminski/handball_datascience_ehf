@@ -31,4 +31,5 @@ Compact match list. The table is the main element of the page.
   status: played | awarded | scheduled_or_no_result
 
   Details → /mecze/<id>
+  double-click row → modal with the same match details page
 ```

@@ -44,6 +44,7 @@
     }
   }
 
+  window.EhfMatchTabs = MatchTabs;
   const page = document.querySelector("[data-match-detail]");
   if (page) new MatchTabs(page).start();
 })();

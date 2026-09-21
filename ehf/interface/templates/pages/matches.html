@@ -74,7 +74,7 @@
 </div>
 </div>
 <div class="table-wrap">
-<table>
+<table id="matches-table">
 <thead>
 <tr>
 <th>ID</th>
@@ -91,7 +91,7 @@
 </thead>
 <tbody>
 {% for item in page.items %}
-<tr>
+<tr data-href="{{ url_for('panel.match_detail', match_id=item.id) }}" title="Double-click to open match details">
 <td>{{ item.id }}</td>
 <td>{{ item.kickoff_at.strftime("%Y-%m-%d") if item.kickoff_at else "—" }}</td>
 <td>{{ item.kickoff_at.strftime("%H:%M") if item.kickoff_at else "—" }}</td>
@@ -111,4 +111,20 @@
 </div>
 </div>
 </section>
+<dialog id="match-detail-dialog" class="match-detail-dialog" aria-labelledby="match-detail-title">
+<div class="modal-head">
+<h2 id="match-detail-title">Match details</h2>
+<button class="close" type="button" data-detail-close aria-label="Close match details" autofocus>×</button>
+</div>
+<div class="modal-body" data-detail-content aria-live="polite"></div>
+<div class="modal-foot">
+<a class="btn secondary" data-detail-tab target="_blank" rel="noopener">Open in new tab</a>
+<button class="btn secondary" type="button" data-detail-close>Close</button>
+</div>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/match_detail.js') }}"></script>
+<script src="{{ url_for('static', filename='js/matches.js') }}"></script>
 {% endblock %}

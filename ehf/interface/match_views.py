@@ -6,6 +6,7 @@ from flask.views import MethodView
 from ehf.domain.errors import DataReadError, MatchNotFound
 from ehf.domain.matches import MatchFilterOptions, MatchListPage
 from ehf.interface.match_filters import match_filters_from_args
+from ehf.interface.positions import legend_for_lineups
 from ehf.services.match_detail import MatchDetailService
 from ehf.services.match_list import MatchListService
 
@@ -56,9 +57,13 @@ class MatchDetailView(MethodView):
         except DataReadError as exc:
             match = None
             error = str(exc)
+        legend = ()
+        if match is not None:
+            legend = legend_for_lineups(match.home_lineup, match.away_lineup)
         return render_template(
             "pages/match_detail.html",
             sekcja_aktywna="mecze",
             match=match,
+            position_legend=legend,
             error=error,
         )

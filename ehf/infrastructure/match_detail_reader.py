@@ -30,6 +30,8 @@ SELECT
     v.city AS venue_city,
     COALESCE(home_ed.display_name, home_team.display_name) AS home_name,
     COALESCE(away_ed.display_name, away_team.display_name) AS away_name,
+    home_club.country_code AS home_country,
+    away_club.country_code AS away_country,
     COALESCE(m.score_home, home_team.goals) AS score_home,
     COALESCE(m.score_away, away_team.goals) AS score_away,
     m.half_time_home,
@@ -52,6 +54,8 @@ LEFT JOIN ehf.match_team home_team
     ON home_team.match_id = m.id AND home_team.side = 'home'
 LEFT JOIN ehf.match_team away_team
     ON away_team.match_id = m.id AND away_team.side = 'away'
+LEFT JOIN ehf.club home_club ON home_club.id = COALESCE(m.home_club_id, home_team.club_id)
+LEFT JOIN ehf.club away_club ON away_club.id = COALESCE(m.away_club_id, away_team.club_id)
 LEFT JOIN ehf.venue v ON v.id = m.venue_id
 WHERE m.id = %s
 """
@@ -172,6 +176,8 @@ class PsycopgMatchDetailReader:
             venue_city=header["venue_city"],
             home_name=header["home_name"],
             away_name=header["away_name"],
+            home_country=header["home_country"],
+            away_country=header["away_country"],
             score_home=header["score_home"],
             score_away=header["score_away"],
             half_time_home=header["half_time_home"],
