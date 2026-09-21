@@ -76,6 +76,7 @@ SELECT
     t.side,
     l.shirt_number,
     COALESCE(l.display_name, l.source_name, per.display_name) AS name,
+    COALESCE(pe.profile_position, per.profile_position) AS position,
     l.listed_as_goalkeeper,
     ps.goals,
     ps.shots,
@@ -87,7 +88,17 @@ SELECT
     gk.save_percentage
 FROM ehf.match_lineup l
 JOIN ehf.match_team t ON t.id = l.match_team_id
+JOIN ehf.match m ON m.id = l.match_id
 LEFT JOIN ehf.person per ON per.id = l.person_id
+LEFT JOIN LATERAL (
+    SELECT pe.profile_position
+    FROM ehf.player_edition pe
+    WHERE pe.person_id = l.person_id
+      AND pe.competition_edition_id = m.competition_edition_id
+      AND (t.club_id IS NULL OR pe.club_id = t.club_id)
+    ORDER BY pe.id
+    LIMIT 1
+) pe ON TRUE
 LEFT JOIN ehf.match_player_stat ps ON ps.lineup_id = l.id
 LEFT JOIN ehf.match_goalkeeper_stat gk ON gk.lineup_id = l.id
 WHERE l.match_id = %s
@@ -207,6 +218,7 @@ class PsycopgMatchDetailReader:
         return LineupPlayer(
             shirt_number=row["shirt_number"],
             name=row["name"] or "—",
+            position=row["position"],
             is_goalkeeper=bool(row["listed_as_goalkeeper"]),
             goals=row["goals"],
             shots=row["shots"],

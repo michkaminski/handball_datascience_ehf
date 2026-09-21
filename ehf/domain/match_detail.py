@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 
 from ehf.domain.matches import format_score
@@ -31,6 +31,7 @@ class TeamStats:
 class LineupPlayer:
     shirt_number: str | None
     name: str
+    position: str | None
     is_goalkeeper: bool
     goals: int | None
     shots: int | None
@@ -40,6 +41,25 @@ class LineupPlayer:
     saves: int | None
     shots_faced: int | None
     save_percentage: float | None
+    top_scorer: bool = False
+
+    @property
+    def position_label(self) -> str | None:
+        text = (self.position or "").strip()
+        if text:
+            return text
+        if self.is_goalkeeper:
+            return "Goalkeeper"
+        return None
+
+    @property
+    def save_percentage_text(self) -> str | None:
+        if self.save_percentage is None:
+            return None
+        value = self.save_percentage
+        if value == int(value):
+            return f"{int(value)}%"
+        return f"{value:.1f}%"
 
 
 @dataclass(frozen=True)
@@ -106,3 +126,20 @@ class MatchDetail:
     @property
     def half_time_text(self) -> str:
         return format_score(self.half_time_home, self.half_time_away)
+
+    def with_top_scorers(self) -> MatchDetail:
+        return replace(
+            self,
+            home_lineup=mark_top_scorers(self.home_lineup),
+            away_lineup=mark_top_scorers(self.away_lineup),
+        )
+
+
+def mark_top_scorers(players: tuple[LineupPlayer, ...]) -> tuple[LineupPlayer, ...]:
+    scored = [player.goals for player in players if player.goals is not None]
+    if not scored:
+        return players
+    best = max(scored)
+    if best <= 0:
+        return players
+    return tuple(replace(player, top_scorer=player.goals == best) for player in players)

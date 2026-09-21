@@ -6,7 +6,7 @@
 | View | `MatchDetailView` (`pages/match_detail.html`) |
 | Menu | from Matches list |
 | Code | `ehf/interface/match_views.py` |
-| Database | `ehf.match`, `match_period`, `match_team`, `match_lineup`, `match_player_stat`, `match_goalkeeper_stat`, `match_team_official`, `match_official`, `match_metric` |
+| Database | `ehf.match`, `match_period`, `match_team`, `match_lineup`, `match_player_stat`, `match_goalkeeper_stat`, `match_team_official`, `match_official`, `match_metric`, `person.profile_position`, `player_edition.profile_position` |
 
 ```
 Start › Data › Matches › Details
@@ -20,12 +20,17 @@ Match details #id
 [ Periods ]
   Period | Home | Away | Played
 
+[ Tabs ]
+  Team statistics | Lineup
+
 [ Team statistics ]
   Stat | Home | Away
   goals, shots, 7m, cards + match_metric rows
 
 [ Lineup home | Lineup away ]
-  # | Player | G | Sh | Y | 2' | R | Saves
+  # | Player (position) | G | Sh | Y | 2' | R | Saves | Faced | Save%
+  row tinted by position hue
+  max goals in each team in red (ties too)
   staff codes under the table
 
 [ Officials ]

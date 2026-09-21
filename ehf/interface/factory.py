@@ -9,6 +9,7 @@ from ehf.infrastructure.match_detail_reader import PsycopgMatchDetailReader
 from ehf.infrastructure.match_list_reader import PsycopgMatchListReader
 from ehf.interface.match_views import MatchDetailView, MatchListView
 from ehf.interface.navigation import zarejestruj_kontekst_nawigacji
+from ehf.interface.position_tint import hue_for_player
 from ehf.interface.views import utworz_blueprint
 from ehf.services.match_detail import MatchDetailService
 from ehf.services.match_list import MatchListService
@@ -26,6 +27,7 @@ def create_app() -> Flask:
         static_url_path="/statyczne",
     )
     app.config["SECRET_KEY"] = settings.secret_key
+    app.add_template_filter(hue_for_player, "position_hue")
     zarejestruj_kontekst_nawigacji(app)
     blueprint = utworz_blueprint()
     def connect():

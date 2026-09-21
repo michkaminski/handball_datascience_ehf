@@ -1,8 +1,42 @@
 {% extends "base.html" %}
 
+{% macro lineup_table(players, team_name, officials) %}
+<section class="panel">
+<h2>Lineup — {{ team_name }}</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>#</th><th>Player</th><th>G</th><th>Sh</th><th>Y</th><th>2'</th><th>R</th><th>Saves</th><th>Faced</th><th>Save%</th></tr></thead>
+<tbody>
+{% for player in players %}
+{% set hue = player|position_hue %}
+<tr class="roster-player"{% if hue is not none %} style="--position-hue: {{ hue }}"{% endif %}>
+<td>{{ player.shirt_number or "—" }}</td>
+<td>{{ player.name }}{% if player.position_label %} <span class="note">{{ player.position_label }}</span>{% endif %}</td>
+<td{% if player.top_scorer %} class="top-scorer" title="Most goals in the team"{% endif %}>{{ player.goals if player.goals is not none else "—" }}</td>
+<td>{{ player.shots if player.shots is not none else "—" }}</td>
+<td>{{ player.yellow_cards if player.yellow_cards is not none else "—" }}</td>
+<td>{{ player.two_min_suspensions if player.two_min_suspensions is not none else "—" }}</td>
+<td>{{ player.red_cards if player.red_cards is not none else "—" }}</td>
+<td>{{ player.saves if player.saves is not none else "—" }}</td>
+<td>{{ player.shots_faced if player.shots_faced is not none else "—" }}</td>
+<td>{{ player.save_percentage_text or "—" }}</td>
+</tr>
+{% else %}
+<tr><td colspan="10" class="note">No lineup.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% if officials %}
+<p class="note">{% for person in officials %}{{ person.code }}: {{ person.name }}{% if not loop.last %} · {% endif %}{% endfor %}</p>
+{% endif %}
+</section>
+{% endmacro %}
+
 {% block tytul %}{% if match %}Match #{{ match.id }}{% else %}Match{% endif %} — Handball EHF{% endblock %}
 
 {% block tresc %}
+<div data-match-detail>
 <section class="pagehead">
 <div class="crumb">Start › Data › Matches › Details</div>
 <h1>Match details{% if match %} #{{ match.id }}{% endif %}</h1>
@@ -66,9 +100,14 @@
 </section>
 {% endif %}
 
-{% if match.home_stats or match.away_stats or match.metrics %}
-<section class="panel">
+<div class="match-tabs" role="tablist" aria-label="Match details" data-match-tabs hidden>
+<button type="button" role="tab" id="match-tab-stats" aria-controls="match-panel-stats" aria-selected="true">Team statistics</button>
+<button type="button" role="tab" id="match-tab-lineup" aria-controls="match-panel-lineup" aria-selected="false" tabindex="-1">Lineup</button>
+</div>
+
+<section class="panel" id="match-panel-stats" data-match-panel aria-labelledby="match-tab-stats">
 <h2>Team statistics</h2>
+{% if match.home_stats or match.away_stats or match.metrics %}
 <div class="table-wrap">
 <table>
 <thead>
@@ -98,64 +137,16 @@
 </tbody>
 </table>
 </div>
-</section>
+{% else %}
+<div class="panel-body"><p class="note">No team statistics.</p></div>
 {% endif %}
+</section>
 
+<div id="match-panel-lineup" data-match-panel aria-labelledby="match-tab-lineup">
 <div class="grid2">
-<section class="panel">
-<h2>Lineup — {{ match.home_name or "Home" }}</h2>
-<div class="table-wrap">
-<table>
-<thead><tr><th>#</th><th>Player</th><th>G</th><th>Sh</th><th>Y</th><th>2'</th><th>R</th><th>Saves</th></tr></thead>
-<tbody>
-{% for player in match.home_lineup %}
-<tr>
-<td>{{ player.shirt_number or "—" }}</td>
-<td>{{ player.name }}{% if player.is_goalkeeper %} <span class="note">GK</span>{% endif %}</td>
-<td>{{ player.goals if player.goals is not none else "—" }}</td>
-<td>{{ player.shots if player.shots is not none else "—" }}</td>
-<td>{{ player.yellow_cards if player.yellow_cards is not none else "—" }}</td>
-<td>{{ player.two_min_suspensions if player.two_min_suspensions is not none else "—" }}</td>
-<td>{{ player.red_cards if player.red_cards is not none else "—" }}</td>
-<td>{{ player.saves if player.saves is not none else "—" }}</td>
-</tr>
-{% else %}
-<tr><td colspan="8" class="note">No lineup.</td></tr>
-{% endfor %}
-</tbody>
-</table>
+{{ lineup_table(match.home_lineup, match.home_name or "Home", match.home_officials) }}
+{{ lineup_table(match.away_lineup, match.away_name or "Away", match.away_officials) }}
 </div>
-{% if match.home_officials %}
-<p class="note">{% for person in match.home_officials %}{{ person.code }}: {{ person.name }}{% if not loop.last %} · {% endif %}{% endfor %}</p>
-{% endif %}
-</section>
-<section class="panel">
-<h2>Lineup — {{ match.away_name or "Away" }}</h2>
-<div class="table-wrap">
-<table>
-<thead><tr><th>#</th><th>Player</th><th>G</th><th>Sh</th><th>Y</th><th>2'</th><th>R</th><th>Saves</th></tr></thead>
-<tbody>
-{% for player in match.away_lineup %}
-<tr>
-<td>{{ player.shirt_number or "—" }}</td>
-<td>{{ player.name }}{% if player.is_goalkeeper %} <span class="note">GK</span>{% endif %}</td>
-<td>{{ player.goals if player.goals is not none else "—" }}</td>
-<td>{{ player.shots if player.shots is not none else "—" }}</td>
-<td>{{ player.yellow_cards if player.yellow_cards is not none else "—" }}</td>
-<td>{{ player.two_min_suspensions if player.two_min_suspensions is not none else "—" }}</td>
-<td>{{ player.red_cards if player.red_cards is not none else "—" }}</td>
-<td>{{ player.saves if player.saves is not none else "—" }}</td>
-</tr>
-{% else %}
-<tr><td colspan="8" class="note">No lineup.</td></tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-{% if match.away_officials %}
-<p class="note">{% for person in match.away_officials %}{{ person.code }}: {{ person.name }}{% if not loop.last %} · {% endif %}{% endfor %}</p>
-{% endif %}
-</section>
 </div>
 
 {% if match.officials %}
@@ -178,4 +169,9 @@
 </section>
 {% endif %}
 {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/match_detail.js') }}"></script>
 {% endblock %}

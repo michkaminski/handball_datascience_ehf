@@ -14,4 +14,4 @@ class MatchDetailService:
         self._reader = reader
 
     def get_match(self, match_id: int) -> MatchDetail:
-        return self._reader.fetch(match_id)
+        return self._reader.fetch(match_id).with_top_scorers()
