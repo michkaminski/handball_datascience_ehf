@@ -1,0 +1,9 @@
+{% with komunikaty = get_flashed_messages(with_categories=true) %}
+{% if komunikaty %}
+<div class="komunikaty">
+{% for kategoria, tresc in komunikaty %}
+<div class="notice notice-{{ kategoria }}">{{ tresc }}</div>
+{% endfor %}
+</div>
+{% endif %}
+{% endwith %}

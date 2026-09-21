@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block tresc %}
+<section class="pagehead">
+<div class="crumb">{{ strona.okruszek }}</div>
+<h1>{{ strona.tytul }}{% if identyfikator %} #{{ identyfikator }}{% endif %}</h1>
+<p>{{ strona.opis }}</p>
+</section>
+<section class="panel">
+<h2>Karta</h2>
+<div class="panel-body">
+<p class="note">Szkielet szczegółów. Dane z osobnej bazy EHF.</p>
+</div>
+</section>
+{% endblock %}

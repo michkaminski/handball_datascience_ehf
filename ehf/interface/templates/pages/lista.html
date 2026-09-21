@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block tresc %}
+<section class="pagehead">
+<div class="crumb">{{ strona.okruszek }}</div>
+<h1>{{ strona.tytul }}</h1>
+<p>{{ strona.opis }}</p>
+</section>
+{% if strona.filtry %}
+<section class="panel">
+<h2>Filtry</h2>
+<form class="panel-body filters" method="get">
+{% for filtr in strona.filtry %}
+<label>{{ filtr }}<input disabled placeholder="szkielet"></label>
+{% endfor %}
+<div class="pole-przycisku"><button class="btn small" type="submit" disabled>Filtruj</button></div>
+</form>
+</section>
+{% endif %}
+<section class="panel">
+<div class="panel-body">
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+{% for kolumna in strona.kolumny %}
+<th>{{ kolumna }}</th>
+{% endfor %}
+</tr>
+</thead>
+<tbody>
+<tr><td colspan="{{ strona.kolumny|length }}" class="note">Szkielet — brak danych. Baza EHF będzie osobna.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+{% endblock %}

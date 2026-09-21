@@ -1,0 +1,38 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+from flask import Flask
+
+from ehf.infrastructure.connection import open_connection
+from ehf.infrastructure.match_list_reader import PsycopgMatchListReader
+from ehf.interface.match_views import MatchListView
+from ehf.interface.navigation import zarejestruj_kontekst_nawigacji
+from ehf.interface.views import utworz_blueprint
+from ehf.services.match_list import MatchListService
+from ehf.settings import Settings
+
+INTERFACE_DIR = Path(__file__).resolve().parent
+
+
+def create_app() -> Flask:
+    settings = Settings.from_env()
+    app = Flask(
+        "handball_ehf",
+        template_folder=str(INTERFACE_DIR / "templates"),
+        static_folder=str(INTERFACE_DIR / "static"),
+        static_url_path="/statyczne",
+    )
+    app.config["SECRET_KEY"] = settings.secret_key
+    zarejestruj_kontekst_nawigacji(app)
+    blueprint = utworz_blueprint()
+    def connect():
+        return open_connection(settings)
+
+    service = MatchListService(PsycopgMatchListReader(connect))
+    blueprint.add_url_rule(
+        "/mecze",
+        view_func=MatchListView.as_view("match_list", service=service),
+    )
+    app.register_blueprint(blueprint)
+    return app

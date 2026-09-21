@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block tytul %}{{ strona.tytul }} — Handball EHF{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+<header class="header">
+<div class="header-inner">
+<div class="brand">
+<div class="brand-badge">EH</div>
+<div>
+<strong>Handball EHF</strong>
+<span>Dane rozgrywek europejskich</span>
+</div>
+</div>
+</div>
+</header>
+{% include "partials/navigation.html" %}
+<div class="layout">
+<aside class="sidebar">
+<h3>Panel EHF</h3>
+{% for nazwa_grupy, pozycje in sidebar %}
+<div class="sidegroup">
+<strong>{{ nazwa_grupy }}</strong>
+{% for pozycja in pozycje %}
+<a class="{{ 'active' if pozycja.klucz == sekcja_aktywna else '' }}" href="{{ url_for(pozycja.punkt_koncowy) }}"><span>{{ pozycja.ikona }}</span><span>{{ pozycja.etykieta }}</span></a>
+{% endfor %}
+</div>
+{% endfor %}
+</aside>
+<main class="content">
+<button class="btn secondary mobile-menu" data-mobile-menu type="button">☰ Menu</button>
+{% include "partials/messages.html" %}
+{% block tresc %}{% endblock %}
+</main>
+</div>
+<footer class="footer">
+<div><b>Handball EHF</b></div>
+<div>Flask · osobna baza</div>
+</footer>
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>

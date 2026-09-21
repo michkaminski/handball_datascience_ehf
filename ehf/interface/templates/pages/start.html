@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block tytul %}Start — Handball EHF{% endblock %}
+
+{% block tresc %}
+<section class="pagehead">
+<div class="crumb">{{ strona.okruszek }}</div>
+<h1>{{ strona.tytul }}</h1>
+<p>{{ strona.opis }}</p>
+</section>
+<section class="panel">
+<h2>Filtry</h2>
+<div class="panel-body filters">
+{% for filtr in strona.filtry %}
+<label>{{ filtr }}<select disabled><option>Wszystkie</option></select></label>
+{% endfor %}
+</div>
+</section>
+<section class="panel">
+<div class="panel-body">
+<div class="toolbar">
+<div class="left"><a class="btn secondary" href="{{ url_for('panel.match_list') }}">Full match list</a></div>
+<div class="right"><span class="note">Podgląd na stronie startowej dojdzie po podłączeniu bazy EHF.</span></div>
+</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+{% for kolumna in strona.kolumny %}
+<th>{{ kolumna }}</th>
+{% endfor %}
+</tr>
+</thead>
+<tbody>
+<tr><td colspan="{{ strona.kolumny|length }}" class="note">Szkielet — brak danych. Baza EHF będzie osobna.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+{% endblock %}
