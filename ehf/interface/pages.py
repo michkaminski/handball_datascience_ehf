@@ -23,12 +23,11 @@ STRONY: tuple[Strona, ...] = (
         klucz="start",
         endpoint="start",
         sciezka="/",
-        tytul="Ostatnie mecze i zarządzanie danymi",
-        okruszek="Start › Mecze",
-        opis="Najważniejsza część panelu: lista meczów z szybkim filtrowaniem.",
+        tytul="Aktualności",
+        okruszek="Start › Aktualności",
+        opis="Nadchodzące mecze EHF Champions League w bieżącym sezonie rozgrywek.",
         wzor="start",
-        filtry=("Sezon", "Rozgrywki", "Kolejka", "Drużyna", "Status", "Szukaj"),
-        kolumny=("ID", "Data", "Godz.", "Rozgrywki", "Kol.", "Gospodarz", "Wynik", "Gość", "Status"),
+        uses_skeleton=False,
     ),
     Strona(
         klucz="sezony",
@@ -262,6 +261,8 @@ STRONY: tuple[Strona, ...] = (
         uses_skeleton=False,
     ),
 )
+
+STRONA_START = next(strona for strona in STRONY if strona.klucz == "start")
 
 KLUCZE_DANYCH = frozenset(
     {

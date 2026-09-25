@@ -59,3 +59,62 @@
 [data-player-panel][hidden]{display:none}
 .player-profile{display:flex;gap:20px;align-items:center;flex-wrap:wrap;background:linear-gradient(135deg,rgba(37,99,235,.045),rgba(14,165,233,.025))}.player-profile .player-photo{width:100px;min-height:100px;display:flex;align-items:center;justify-content:center;background:var(--panel);border:1px solid var(--line);border-radius:12px}.player-profile .player-photo img{max-width:100px;max-height:140px;object-fit:contain;border-radius:10px}.player-profile-data{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin:0}.player-profile-data dd{margin:0;overflow-wrap:anywhere}.player-profile-data dt{font-weight:600;color:var(--muted)}.player-profile-value{font-weight:700;color:var(--acc)}.player-note{padding:0 10px 10px}.player-match-filters{grid-template-columns:repeat(3,minmax(0,1fr)) auto auto}.player-match-filters label{min-width:0}.player-match-filters input,.player-match-filters select{min-width:0;width:100%}.player-season-table tbody tr:nth-child(even){background:rgba(37,99,235,.025)}.player-season-table tbody tr:hover{background:rgba(37,99,235,.06)}.player-season-table .player-teams{white-space:normal;overflow-wrap:anywhere;max-width:22rem}.player-season-table .player-stat{font-weight:700;color:var(--acc);text-align:center}.player-season-table .player-penalties{white-space:normal;min-width:13rem}.season-badge{display:inline-block;padding:3px 8px;border-radius:999px;background:rgba(37,99,235,.1);color:var(--acc);font-weight:700;white-space:nowrap}.player-matches-table td{vertical-align:top}.player-matches-table td:nth-child(2),.player-matches-table td:nth-child(3),.player-matches-table td:nth-child(4),.player-matches-table td:nth-child(5){white-space:normal;min-width:9rem;max-width:17rem;overflow-wrap:anywhere}.player-match-entry+.player-match-entry{border-top:1px solid var(--line);margin-top:8px;padding-top:8px}
 @media(max-width:900px){.venue-analysis-grid{grid-template-columns:1fr}.venue-metric-grid{grid-template-columns:repeat(3,minmax(90px,1fr))}}@media(max-width:700px){.player-match-filters,.venue-filters,.venue-match-filters,.venue-player-filters,.referee-match-filters,.catalog-filters,.catalog-filters.compact,.team-catalog-filters{grid-template-columns:1fr 1fr}}.player-profile-data{grid-template-columns:1fr}.player-profile-data dd{margin-bottom:8px}.venue-summary{grid-template-columns:1fr 1fr}.venue-title-row{flex-direction:column}.venue-metric-grid{grid-template-columns:repeat(2,minmax(90px,1fr))}.venue-section-head{flex-direction:column}.venue-bar-row{grid-template-columns:minmax(80px,1fr) minmax(70px,2fr) 38px}.venue-bar-row>small{display:none}}@media(max-width:430px){.player-match-filters,.venue-filters,.venue-match-filters,.venue-player-filters,.referee-match-filters,.catalog-filters,.catalog-filters.compact,.team-catalog-filters{grid-template-columns:1fr}}.venue-summary,.venue-metric-grid,.venue-metric-grid.compact{grid-template-columns:1fr}}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.news-head h1{font-family:Georgia,"Times New Roman",serif;font-size:1.55rem;letter-spacing:.01em;color:#10283f}
+.news-dateline{margin:2px 0 0;padding-top:5px;border-top:1px solid var(--line);color:var(--muted);font-size:.8rem}
+.news-dateline b{color:#173e65}
+.news-layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:12px;align-items:start}
+.news-rubric{margin:2px 0 8px;padding-bottom:4px;border-bottom:3px double #173e65;font-family:Georgia,"Times New Roman",serif;font-size:1.15rem;color:#10283f;letter-spacing:.02em}
+.news-rubric-side{margin-top:0}
+.news-side .news-upcoming{margin-bottom:10px}
+.news-boxes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:10px}
+.news-boxes .news-box{margin-bottom:0}
+.news-ehfcl_women .news-box-head{background:linear-gradient(180deg,#7b2e4a,#5a1f36);border-bottom-color:#c8962d}
+.news-competition{color:#5b6b7b;font-size:.74rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.news-winner{font-weight:700;color:#10283f}
+.news-fact-list{list-style:none;margin:0;padding:0}
+.news-fact-list li{padding:8px 10px;border-bottom:1px dotted #cfd9e2}
+.news-fact-list li:nth-child(even){background:#f7f9fb}
+.news-fact-list li:last-child{border-bottom:0}
+.news-fact-title{display:block;color:#8a5a0f;font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.news-fact-value{display:block;margin:1px 0;font-family:Georgia,"Times New Roman",serif;font-size:1.08rem;color:#10283f}
+.news-fact-text{display:block;color:#4b5b6b;font-size:.78rem;line-height:1.35}
+.news-fact-links{display:flex;gap:10px;margin-top:3px;font-size:.74rem;font-weight:600}
+.news-subhead{margin:0;padding:5px 9px;background:#eef2f6;border-bottom:1px solid #d7e1e8;border-top:1px solid #d7e1e8;color:#173e65;font-size:.74rem;letter-spacing:.05em;text-transform:uppercase}
+.news-scorers .news-subhead:first-of-type{border-top:0}
+.news-scorer-table{width:100%;border-collapse:collapse;font-size:.8rem}
+.news-scorer-table th{padding:3px 7px;color:#8a97a4;font-size:.68rem;font-weight:600;text-align:right;border-bottom:1px solid #e3e9ee}
+.news-scorer-table th:nth-child(2){text-align:left}
+.news-scorer-table td{padding:4px 7px;text-align:right;border-bottom:1px dotted #e0e7ed;font-variant-numeric:tabular-nums}
+.news-scorer-table td:nth-child(2){text-align:left}
+.news-scorer-table td:first-child{width:1%;color:#8a97a4}
+.news-scorer-table tbody tr:first-child td{background:#fbf3df}
+.news-scorer-table small{display:block;color:#8a97a4;font-size:.7rem}
+.news-source{margin:0;padding:6px 9px;background:#f7f9fb;border-top:1px solid #e3e9ee;color:#8a97a4;font-size:.7rem;font-style:italic}
+.news-source-main{margin:-2px 0 10px;padding:0 2px;background:none;border:0}
+.news-main .news-rubric:not(:first-child){margin-top:14px}
+.news-scorer-table td:nth-child(n+3){white-space:nowrap}
+@media(max-width:1100px){.news-layout{grid-template-columns:1fr}}
+@media(max-width:760px){.news-boxes{grid-template-columns:1fr}.news-col-stage,.news-stage,.news-competition{display:none}}
+.news-box{background:#fff;border:1px solid #b9c7d3;box-shadow:0 1px 0 rgba(16,40,63,.06);margin-bottom:10px}
+.news-box-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:5px 9px;background:linear-gradient(180deg,#21557f,#173752);border-bottom:3px solid #c8962d;color:#fff}
+.news-box-head h3{margin:0;font-family:Georgia,"Times New Roman",serif;font-size:.92rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.news-box-head span{font-size:.72rem;color:#d7e3ee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.news-results{width:100%;border-collapse:collapse;font-size:.82rem;table-layout:fixed}
+.news-results td{padding:5px 7px;border-bottom:1px dotted #cfd9e2;vertical-align:middle;border-left:0;border-right:0}
+.news-results tbody tr:nth-child(even) td{background:#f4f7fa}
+.news-results tbody tr:hover td{background:#fbf3df}
+.news-col-date{width:52px}.news-col-score{width:70px}.news-col-stage{width:18%}
+.news-date{width:1%;white-space:nowrap;color:#5b6b7b;font-size:.75rem;font-variant-numeric:tabular-nums}
+.news-date small{display:block;color:#8a97a4;font-size:.68rem}
+.news-team{color:#233a52;overflow:hidden;text-overflow:ellipsis;white-space:normal;line-height:1.2;overflow-wrap:anywhere}
+.news-home{text-align:right;padding-right:4px}
+.news-stage{color:#5b6b7b;font-size:.74rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.news-score{width:1%;text-align:center;white-space:nowrap}
+.news-score a{display:inline-block;min-width:52px;padding:2px 6px;background:#10283f;color:#fff;font-weight:700;letter-spacing:.03em;border-radius:2px}
+.news-score a:hover,.news-score a:focus-visible{background:#c8962d;color:#10283f;text-decoration:none}
+.news-box-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 9px;background:#f1f4f7;border-top:1px solid #d7e1e8;font-size:.72rem;color:var(--muted)}
+.news-box-foot a{font-weight:600;white-space:nowrap}
+.news-empty{margin:0;padding:10px 9px;color:var(--muted);font-size:.8rem;font-style:italic}
+@media(max-width:760px){.news-col-stage,.news-stage{display:none}}

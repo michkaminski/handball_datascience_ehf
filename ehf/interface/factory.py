@@ -8,6 +8,7 @@ from ehf.infrastructure.competition_list_reader import PsycopgCompetitionListRea
 from ehf.infrastructure.connection import open_connection
 from ehf.infrastructure.match_detail_reader import PsycopgMatchDetailReader
 from ehf.infrastructure.match_list_reader import PsycopgMatchListReader
+from ehf.infrastructure.news_reader import PsycopgNewsReader
 from ehf.infrastructure.player_detail_reader import PsycopgPlayerDetailReader
 from ehf.infrastructure.player_list_reader import PsycopgPlayerListReader
 from ehf.infrastructure.referee_detail_reader import PsycopgRefereeDetailReader
@@ -27,12 +28,14 @@ from ehf.interface.positions import code_for_player, code_for_position, hue_for_
 from ehf.interface.referee_views import RefereeDetailView, RefereeListView
 from ehf.interface.scorer_views import ScorerListView
 from ehf.interface.season_views import SeasonListView
+from ehf.interface.start_views import StartView
 from ehf.interface.team_views import TeamListView
 from ehf.interface.venue_views import VenueDetailView, VenueListView
 from ehf.interface.views import utworz_blueprint
 from ehf.services.competition_list import CompetitionListService
 from ehf.services.match_detail import MatchDetailService
 from ehf.services.match_list import MatchListService
+from ehf.services.news import NewsService
 from ehf.services.player_detail import PlayerDetailService
 from ehf.services.player_list import PlayerListService
 from ehf.services.referee_detail import RefereeDetailService
@@ -78,6 +81,11 @@ def create_app() -> Flask:
     competition_list_service = CompetitionListService(PsycopgCompetitionListReader(connect))
     team_list_service = TeamListService(PsycopgTeamListReader(connect))
     scorer_list_service = ScorerListService(PsycopgScorerListReader(connect))
+    news_service = NewsService(PsycopgNewsReader(connect))
+    blueprint.add_url_rule(
+        "/",
+        view_func=StartView.as_view("start", service=news_service),
+    )
     blueprint.add_url_rule(
         "/mecze",
         view_func=MatchListView.as_view("match_list", service=list_service),

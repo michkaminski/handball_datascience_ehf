@@ -1,41 +1,140 @@
 {% extends "base.html" %}
 
-{% block tytul %}Start — Handball EHF{% endblock %}
+{% block tytul %}Aktualności — {{ nazwa_projektu }}{% endblock %}
+
+{% macro wiersz_meczu(mecz) %}
+<tr>
+<td class="news-date">{{ mecz.day }}{% if mecz.time %}<small>{{ mecz.time }}</small>{% endif %}</td>
+<td class="news-team news-home{% if mecz.winner == 'home' %} news-winner{% endif %}" title="{{ mecz.home }}">{{ mecz.home }}</td>
+<td class="news-score"><a href="{{ url_for('panel.match_detail', match_id=mecz.id) }}" title="Szczegóły meczu">{{ mecz.score }}</a></td>
+<td class="news-team{% if mecz.winner == 'away' %} news-winner{% endif %}" title="{{ mecz.away }}">{{ mecz.away }}</td>
+</tr>
+{% endmacro %}
+
+{% macro wiersz_nadchodzacego(mecz) %}
+<tr>
+<td class="news-date">{{ mecz.day }}{% if mecz.time %}<small>{{ mecz.time }}</small>{% endif %}</td>
+<td class="news-team news-home" title="{{ mecz.home }}">{{ mecz.home }}</td>
+<td class="news-score"><a href="{{ url_for('panel.match_detail', match_id=mecz.id) }}" title="Szczegóły meczu">vs</a></td>
+<td class="news-team" title="{{ mecz.away }}">{{ mecz.away }}</td>
+{% if mecz.stage %}<td class="news-stage" title="{{ mecz.stage }}">{{ mecz.stage }}</td>{% endif %}
+</tr>
+{% endmacro %}
 
 {% block tresc %}
-<section class="pagehead">
+<section class="pagehead news-head">
 <div class="crumb">{{ strona.okruszek }}</div>
 <h1>{{ strona.tytul }}</h1>
-<p>{{ strona.opis }}</p>
+{% if aktualnosci.sezon %}
+<p class="news-dateline">Sezon <b>{{ aktualnosci.sezon }}</b> · ostatni wynik w bazie: <b>{{ aktualnosci.stan_danych }}</b> · rozegrane mecze: <b>{{ aktualnosci.liczba_rozegranych }}</b> · bramki: <b>{{ aktualnosci.suma_bramek }}</b></p>
+{% else %}
+<p>Brak rozegranych meczów w bazie.</p>
+{% endif %}
 </section>
-<section class="panel">
-<h2>Filtry</h2>
-<div class="panel-body filters">
-{% for filtr in strona.filtry %}
-<label>{{ filtr }}<select disabled><option>Wszystkie</option></select></label>
-{% endfor %}
-</div>
-</section>
-<section class="panel">
-<div class="panel-body">
-<div class="toolbar">
-<div class="left"><a class="btn secondary" href="{{ url_for('panel.match_list') }}">Full match list</a></div>
-<div class="right"><span class="note">Podgląd na stronie startowej dojdzie po podłączeniu bazy EHF.</span></div>
-</div>
-<div class="table-wrap">
-<table>
-<thead>
-<tr>
-{% for kolumna in strona.kolumny %}
-<th>{{ kolumna }}</th>
-{% endfor %}
-</tr>
-</thead>
-<tbody>
-<tr><td colspan="{{ strona.kolumny|length }}" class="note">Szkielet — brak danych. Baza EHF będzie osobna.</td></tr>
-</tbody>
+
+{% if error %}
+<p class="notice notice-error">{{ error }}</p>
+{% endif %}
+
+{% if aktualnosci.sezon or aktualnosci.nadchodzace_sekcje %}
+<div class="news-layout">
+<div class="news-main">
+{% if aktualnosci.sezon %}
+<h2 class="news-rubric">Ostatnie mecze</h2>
+{% if aktualnosci.sekcje %}
+<div class="news-boxes">
+{% for sekcja in aktualnosci.sekcje %}
+<section class="news-box news-{{ sekcja.klucz }}" aria-labelledby="news-box-{{ sekcja.klucz }}-{{ loop.index }}">
+<header class="news-box-head"><h3 id="news-box-{{ sekcja.klucz }}-{{ loop.index }}">{{ sekcja.etykieta }}</h3><span>6 ostatnich wyników</span></header>
+{% if sekcja.mecze %}
+<table class="news-results">
+<caption class="sr-only">Ostatnie wyniki: {{ sekcja.rozgrywki }}</caption>
+<colgroup><col class="news-col-date"><col><col class="news-col-score"><col></colgroup>
+<thead class="sr-only"><tr><th>Data</th><th>Gospodarz</th><th>Wynik</th><th>Gość</th></tr></thead>
+<tbody>{% for mecz in sekcja.mecze %}{{ wiersz_meczu(mecz) }}{% endfor %}</tbody>
 </table>
-</div>
-</div>
+{% else %}<p class="news-empty">Brak rozegranych meczów w tym sezonie.</p>{% endif %}
+<footer class="news-box-foot"><span>Rozegrane: {{ sekcja.liczba_rozegranych }} · śr. bramek: {{ sekcja.srednia_bramek }}</span><a href="{{ url_for('panel.match_list', season_id=aktualnosci.id_sezon, competition_id=sekcja.id_rozgrywek) }}">wszystkie mecze »</a></footer>
 </section>
+{% endfor %}
+</div>
+{% else %}<p class="news-empty">Brak rozgrywek w bieżącym sezonie.</p>{% endif %}
+
+<h2 class="news-rubric">Najlepsi strzelcy</h2>
+<div class="news-boxes">
+{% for sekcja in aktualnosci.sekcje %}
+<section class="news-box news-scorers news-{{ sekcja.klucz }}" aria-labelledby="news-scorers-{{ sekcja.klucz }}">
+<header class="news-box-head"><h3 id="news-scorers-{{ sekcja.klucz }}">{{ sekcja.etykieta }}</h3><span>top 5 strzelców</span></header>
+{% if sekcja.strzelcy %}
+<table class="news-scorer-table">
+<caption class="sr-only">Najlepsi strzelcy: {{ sekcja.rozgrywki }}</caption>
+<thead><tr><th scope="col">#</th><th scope="col">Zawodnik</th><th scope="col" title="Mecze">M</th><th scope="col" title="Bramki">B</th><th scope="col" title="Średnia bramek na mecz">Śr.</th></tr></thead>
+<tbody>{% for strzelec in sekcja.strzelcy %}<tr><td>{{ strzelec.pozycja }}.</td><td><a href="{{ url_for('panel.player_detail', player_id=strzelec.id_zawodnik) }}">{{ strzelec.zawodnik }}</a><small>{{ strzelec.druzyna }}</small></td><td>{{ strzelec.mecze }}</td><td><b>{{ strzelec.bramki }}</b></td><td>{{ strzelec.srednia }}</td></tr>{% endfor %}</tbody>
+</table>
+{% else %}<p class="news-empty">Brak bramek w protokołach.</p>{% endif %}
+<footer class="news-box-foot"><span>Sezon {{ aktualnosci.sezon }}</span><a href="{{ url_for('panel.lista_strzelcow', season_id=aktualnosci.id_sezon, competition_id=sekcja.id_rozgrywek) }}">ranking strzelców »</a></footer>
+</section>
+{% endfor %}
+</div>
+
+<h2 class="news-rubric">Najlepsi bramkarze</h2>
+<div class="news-boxes">
+{% for sekcja in aktualnosci.sekcje %}
+<section class="news-box news-goalkeepers news-{{ sekcja.klucz }}" aria-labelledby="news-goalkeepers-{{ sekcja.klucz }}">
+<header class="news-box-head"><h3 id="news-goalkeepers-{{ sekcja.klucz }}">{{ sekcja.etykieta }}</h3><span>średnia skuteczność obron</span></header>
+{% if sekcja.bramkarze %}
+<table class="news-scorer-table news-goalkeeper-table">
+<caption class="sr-only">Najlepsi bramkarze: {{ sekcja.rozgrywki }}</caption>
+<thead><tr><th scope="col">#</th><th scope="col">Zawodnik</th><th scope="col" title="Mecze">M</th><th scope="col" title="Suma rzutów w stronę bramki">Rz</th><th scope="col" title="Suma obronionych rzutów">Ob</th><th scope="col" title="Średnia skuteczność">%</th></tr></thead>
+<tbody>{% for bramkarz in sekcja.bramkarze %}<tr><td>{{ bramkarz.pozycja }}.</td><td><a href="{{ url_for('panel.player_detail', player_id=bramkarz.id_zawodnik) }}">{{ bramkarz.zawodnik }}</a><small>{{ bramkarz.druzyna }}</small></td><td>{{ bramkarz.mecze }}</td><td>{{ bramkarz.rzuty }}</td><td><b>{{ bramkarz.obrony }}</b></td><td>{{ bramkarz.skutecznosc }}</td></tr>{% endfor %}</tbody>
+</table>
+{% else %}<p class="news-empty">Brak danych o skuteczności bramkarzy.</p>{% endif %}
+<footer class="news-box-foot"><span>Suma rzutów i obron z protokołów</span><a href="{{ url_for('panel.match_list', season_id=aktualnosci.id_sezon, competition_id=sekcja.id_rozgrywek) }}">mecze rozgrywek »</a></footer>
+</section>
+{% endfor %}
+</div>
+<p class="news-source news-source-main">Strzelcy: suma bramek z wpisów zawodników. Bramkarze: suma rzutów/obron i średnia procentu skuteczności z protokołów EHF.</p>
+{% endif %}
+</div>
+
+<aside class="news-side">
+{% if aktualnosci.nadchodzace_sekcje %}
+<h2 class="news-rubric news-rubric-side">Nadchodzące mecze</h2>
+{% for sekcja in aktualnosci.nadchodzace_sekcje %}
+<section class="news-box news-upcoming news-{{ sekcja.klucz }}" aria-labelledby="news-upcoming-{{ sekcja.klucz }}">
+<header class="news-box-head"><h3 id="news-upcoming-{{ sekcja.klucz }}">{{ sekcja.rozgrywki }}</h3><span>6 najbliższych</span></header>
+<table class="news-results news-upcoming">
+<caption class="sr-only">Nadchodzące mecze: {{ sekcja.rozgrywki }}</caption>
+<colgroup><col class="news-col-date"><col><col class="news-col-score"><col><col class="news-col-stage"></colgroup>
+<thead class="sr-only"><tr><th>Data</th><th>Gospodarz</th><th></th><th>Gość</th><th>Faza</th></tr></thead>
+<tbody>{% for mecz in sekcja.mecze %}{{ wiersz_nadchodzacego(mecz) }}{% endfor %}</tbody>
+</table>
+<footer class="news-box-foot">
+<span>{{ sekcja.mecze|length }} terminów</span>
+<a href="{{ url_for('panel.match_list', competition_id=sekcja.id_rozgrywek, season_id=aktualnosci.id_sezon) }}">wszystkie mecze »</a>
+</footer>
+</section>
+{% endfor %}
+{% endif %}
+
+{% if aktualnosci.sezon %}
+<section class="news-box news-facts" aria-labelledby="news-box-ciekawostki">
+<header class="news-box-head"><h3 id="news-box-ciekawostki">Ciekawostki sezonu</h3></header>
+{% if aktualnosci.ciekawostki %}
+<ul class="news-fact-list">
+{% for ciekawostka in aktualnosci.ciekawostki %}
+<li>
+<span class="news-fact-title">{{ ciekawostka.tytul }}</span>
+<b class="news-fact-value">{{ ciekawostka.wartosc }}</b>
+<span class="news-fact-text">{{ ciekawostka.opis }}</span>
+{% if ciekawostka.id_mecz or ciekawostka.id_zawodnik %}<span class="news-fact-links">{% if ciekawostka.id_mecz %}<a href="{{ url_for('panel.match_detail', match_id=ciekawostka.id_mecz) }}">mecz »</a>{% endif %}{% if ciekawostka.id_zawodnik %}<a href="{{ url_for('panel.player_detail', player_id=ciekawostka.id_zawodnik) }}">zawodnik »</a>{% endif %}</span>{% endif %}
+</li>
+{% endfor %}
+</ul>
+{% else %}<p class="news-empty">Za mało danych na ciekawostki.</p>{% endif %}
+</section>
+{% endif %}
+</aside>
+</div>
+{% endif %}
 {% endblock %}

@@ -1,4 +1,4 @@
-# Warstwy Handball EHF
+# Warstwy — Europejskie puchary oczami danych
 
 Jedna aplikacja Flask, cztery warstwy. Importer w `../imports` nie należy do tej apki.
 

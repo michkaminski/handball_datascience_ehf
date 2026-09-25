@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from flask import Flask
 
+from ehf.interface.branding import NAZWA_PROJEKTU, ODZNAKA_PROJEKTU, PODTYTUL_PROJEKTU
 from ehf.interface.pages import KLUCZE_DANYCH
 
 
@@ -65,4 +66,7 @@ def zarejestruj_kontekst_nawigacji(aplikacja: Flask) -> None:
             "gorny_pasek": GORNY_PASEK,
             "sidebar": SIDEBAR,
             "klucze_danych": KLUCZE_DANYCH,
+            "nazwa_projektu": NAZWA_PROJEKTU,
+            "podtytul_projektu": PODTYTUL_PROJEKTU,
+            "odznaka_projektu": ODZNAKA_PROJEKTU,
         }

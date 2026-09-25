@@ -2,7 +2,7 @@
 {% from "partials/sort_macros.html" import sort_th %}
 {% from "partials/stats_macros.html" import count_bars, count_table, heatmap %}
 
-{% block tytul %}{% if profile %}{{ profile.display_name }}{% else %}Referee{% endif %} — Handball EHF{% endblock %}
+{% block tytul %}{% if profile %}{{ profile.display_name }}{% else %}Referee{% endif %} — {{ nazwa_projektu }}{% endblock %}
 
 {% block tresc %}
 <section class="pagehead">
