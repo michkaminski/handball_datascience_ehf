@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% from "partials/sort_macros.html" import sort_th %}
+
+{% block tytul %}Rozgrywki — Handball EHF{% endblock %}
+
+{% block tresc %}
+<section class="pagehead">
+<div class="crumb">Start › Dane › Rozgrywki</div>
+<h1>Rozgrywki</h1>
+<p>Ligi i puchary EHF w wybranym zakresie.</p>
+</section>
+<section class="panel">
+<h2>Filtry</h2>
+<form class="panel-body filters catalog-filters compact" method="get">
+<label>Szukaj<input name="q" value="{{ filters.query or '' }}" placeholder="nazwa lub kod..."></label>
+<label>Sezon
+<select name="season_id">
+<option value="">Wszystkie</option>
+{% for item in options.seasons %}
+<option value="{{ item.value }}" {% if filters.season_id is not none and item.value == filters.season_id|string %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+</label>
+<input type="hidden" name="sort" value="{{ filters.sort.column }}">
+<input type="hidden" name="dir" value="{{ filters.sort.direction }}">
+<div class="pole-przycisku"><button class="btn small" type="submit">Filtruj</button></div>
+<div class="pole-przycisku"><a class="btn secondary small" href="{{ url_for('panel.lista_rozgrywek') }}">Wyczyść</a></div>
+</form>
+</section>
+<section class="panel">
+<div class="panel-body">
+{% if error %}
+<p class="note">{{ error }}</p>
+{% endif %}
+<div class="toolbar">
+<span class="note">{{ page.total|polish_count("rozgrywka", "rozgrywki", "rozgrywek") }}</span>
+<div class="right">
+{% if page.has_previous %}
+<a class="btn secondary small" href="{{ url_for('panel.lista_rozgrywek', **dict(request.args, page=filters.page - 1)) }}">Poprzednia</a>
+{% endif %}
+{% if page.has_next %}
+<a class="btn secondary small" href="{{ url_for('panel.lista_rozgrywek', **dict(request.args, page=filters.page + 1)) }}">Następna</a>
+{% endif %}
+</div>
+</div>
+<div class="table-wrap">
+<table id="competitions-table" data-remote-sort data-sort-default="season" data-sort-default-dir="desc">
+<thead>
+<tr>
+{{ sort_th(filters.sort, "id", "ID") }}
+{{ sort_th(filters.sort, "season", "Sezon") }}
+{{ sort_th(filters.sort, "name", "Rozgrywki") }}
+{{ sort_th(filters.sort, "gender", "Płeć") }}
+{{ sort_th(filters.sort, "teams", "Drużyny") }}
+{{ sort_th(filters.sort, "matches", "Mecze") }}
+<th></th>
+</tr>
+</thead>
+<tbody>
+{% for item in page.items %}
+<tr>
+<td>{{ item.id }}</td>
+<td>{{ item.season_code }}</td>
+<td>{{ item.name }}</td>
+<td>{{ item.gender_label }}</td>
+<td>{{ item.teams }}</td>
+<td>{{ item.matches }}</td>
+<td class="row-actions">
+<a class="icon-link" href="{{ url_for('panel.match_list', season_id=item.season_id, competition_id=item.competition_id) }}">Mecze</a>
+</td>
+</tr>
+{% else %}
+<tr><td colspan="7" class="note">Brak rozgrywek dla wybranych filtrów.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</section>
+{% endblock %}

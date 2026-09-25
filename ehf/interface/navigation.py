@@ -25,16 +25,16 @@ GORNY_PASEK: tuple[PozycjaMenu, ...] = (
 
 SIDEBAR: tuple[tuple[str, tuple[PozycjaMenu, ...]], ...] = (
     (
-        "Dane",
+        "Data",
         (
-            PozycjaMenu("sezony", "Sezony", "panel.lista_sezonow", "◫"),
-            PozycjaMenu("rozgrywki", "Rozgrywki", "panel.lista_rozgrywek", "⌘"),
-            PozycjaMenu("druzyny", "Drużyny", "panel.lista_druzyn", "▣"),
+            PozycjaMenu("sezony", "Seasons", "panel.lista_sezonow", "◫"),
+            PozycjaMenu("rozgrywki", "Competitions", "panel.lista_rozgrywek", "⌘"),
+            PozycjaMenu("druzyny", "Teams", "panel.lista_druzyn", "▣"),
             PozycjaMenu("zawodnicy", "Players", "panel.lista_zawodnikow", "◎"),
-            PozycjaMenu("sklady", "Składy", "panel.lista_skladow", "☰"),
+            PozycjaMenu("sklady", "Squads", "panel.lista_skladow", "☰"),
             PozycjaMenu("mecze", "Matches", "panel.match_list", "◈"),
-            PozycjaMenu("tabele", "Tabele", "panel.lista_tabel", "▤"),
-            PozycjaMenu("strzelcy", "Strzelcy", "panel.lista_strzelcow", "★"),
+            PozycjaMenu("tabele", "Standings", "panel.lista_tabel", "▤"),
+            PozycjaMenu("strzelcy", "Scorers", "panel.lista_strzelcow", "★"),
             PozycjaMenu("hale", "Venues", "panel.lista_hal", "⌂"),
             PozycjaMenu("sedziowie", "Referees", "panel.lista_sedziow", "⚑"),
         ),

@@ -21,14 +21,14 @@ Szkic tekstowy każdej listy: `docs/strony/`. Zmianę strony zacznij od szkicu, 
 
 | Menu | URL | Wzor | Szkic |
 |---|---|---|---|
-| Sezony | `/sezony` | lista | [sezony.md](strony/sezony.md) |
-| Rozgrywki | `/rozgrywki` | lista | [rozgrywki.md](strony/rozgrywki.md) |
-| Drużyny | `/druzyny` | lista | [druzyny.md](strony/druzyny.md) |
+| Sezony | `/sezony` | season list (live) | [sezony.md](strony/sezony.md) |
+| Rozgrywki | `/rozgrywki` | competition list (live) | [rozgrywki.md](strony/rozgrywki.md) |
+| Drużyny | `/druzyny` | team list (live) | [druzyny.md](strony/druzyny.md) |
 | Players | `/zawodnicy` | player list (live) | [zawodnicy.md](strony/zawodnicy.md) |
 | Składy | `/sklady` | lista | [sklady.md](strony/sklady.md) |
 | Matches | `/mecze` | match list (live) | [mecze.md](strony/mecze.md) |
 | Tabele | `/tabele` | lista | [tabele.md](strony/tabele.md) |
-| Strzelcy | `/strzelcy` | lista | [strzelcy.md](strony/strzelcy.md) |
+| Scorers | `/strzelcy` | scorer list (live) | [strzelcy.md](strony/strzelcy.md) |
 | Venues | `/hale` | venue list (live) | [hale.md](strony/hale.md) |
 | Referees | `/sedziowie` | referee list (live) | [sedziowie.md](strony/sedziowie.md) |
 

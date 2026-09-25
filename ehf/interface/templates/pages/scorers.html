@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% from "partials/sort_macros.html" import sort_th %}
+
+{% block tytul %}Scorers — Handball EHF{% endblock %}
+
+{% block tresc %}
+<section class="pagehead">
+<div class="crumb">Start › Data › Scorers</div>
+<h1>Scorers</h1>
+<p>Goal scorers in the selected season and competition.</p>
+</section>
+<section class="panel">
+<h2>Filters</h2>
+<form class="panel-body filters catalog-filters compact" method="get">
+<label>Season
+<select name="season_id">
+<option value="">All</option>
+{% for item in options.seasons %}
+<option value="{{ item.value }}" {% if filters.season_id is not none and item.value == filters.season_id|string %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+</label>
+<label>Competition
+<select name="competition_id">
+<option value="">All</option>
+{% for item in options.competitions %}
+<option value="{{ item.value }}" {% if filters.competition_id is not none and item.value == filters.competition_id|string %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+</label>
+<input type="hidden" name="sort" value="{{ filters.sort.column }}">
+<input type="hidden" name="dir" value="{{ filters.sort.direction }}">
+<div class="pole-przycisku"><button class="btn small" type="submit">Filter</button></div>
+<div class="pole-przycisku"><a class="btn secondary small" href="{{ url_for('panel.lista_strzelcow') }}">Clear</a></div>
+</form>
+</section>
+<section class="panel">
+<div class="panel-body">
+{% if error %}
+<p class="note">{{ error }}</p>
+{% endif %}
+<div class="toolbar">
+<span class="note">{{ page.total }} scorers</span>
+<div class="right">
+{% if page.has_previous %}
+<a class="btn secondary small" href="{{ url_for('panel.lista_strzelcow', **dict(request.args, page=filters.page - 1)) }}">Previous</a>
+{% endif %}
+{% if page.has_next %}
+<a class="btn secondary small" href="{{ url_for('panel.lista_strzelcow', **dict(request.args, page=filters.page + 1)) }}">Next</a>
+{% endif %}
+</div>
+</div>
+<div class="table-wrap">
+<table id="scorers-table" data-match-rows data-remote-sort data-sort-default="goals" data-sort-default-dir="desc">
+<thead>
+<tr>
+<th>Pos.</th>
+{{ sort_th(filters.sort, "player", "Player") }}
+{{ sort_th(filters.sort, "team", "Team") }}
+{{ sort_th(filters.sort, "goals", "Goals") }}
+{{ sort_th(filters.sort, "matches", "Matches") }}
+<th></th>
+</tr>
+</thead>
+<tbody>
+{% for item in page.items %}
+<tr data-href="{{ url_for('panel.player_detail', player_id=item.player_id) }}" title="Double-click to open player details">
+<td>{{ item.rank }}</td>
+<td><a class="player-link" href="{{ url_for('panel.player_detail', player_id=item.player_id) }}">{{ item.display_name }}</a></td>
+<td class="player-teams">{{ item.teams or "—" }}</td>
+<td class="score">{{ item.goals }}</td>
+<td>{{ item.matches }}</td>
+<td><a class="icon-link" href="{{ url_for('panel.player_detail', player_id=item.player_id) }}">Details</a></td>
+</tr>
+{% else %}
+<tr><td colspan="6" class="note">No scorers for the selected filters.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</section>
+{% include "partials/match_detail_dialog.html" %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/match_detail.js') }}"></script>
+<script src="{{ url_for('static', filename='js/matches.js') }}"></script>
+{% endblock %}

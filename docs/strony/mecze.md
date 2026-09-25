@@ -22,13 +22,15 @@ Compact match list. The table is the main element of the page.
   [Filter]  [Clear]
 
 [ Table ]
-  ID | Date | Time | Season | Competition | Phase | Home | Score | Away | Venue | Details
+  ID | Date | Time | Season | Competition | Phase | Home | Score | Away | Venue | Spectators | Details
   Phase = phase, group in the same cell: "Group Phase (A)", "Last 16"
   click a column header to sort all matching matches (again = reverse)
-  ---+------+------+--------+-------------+------+-------+------+-------+--------
+  ---+------+------+--------+-------------+------+-------+------+-------+------------
   rows from ehf.match
 
   Date/Time from kickoff_at, or kickoff_display when kickoff_at is empty
+
+  Spectators: m.spectators; "—" when null (same field as on [mecz.md](mecz.md))
 
   Score: score_home:score_away
   result_type suffix when not normal: walkover | extra_time | penalties

@@ -90,6 +90,7 @@
 {{ sort_th(filters.sort, "score", "Score") }}
 {{ sort_th(filters.sort, "away", "Away") }}
 {{ sort_th(filters.sort, "venue", "Venue") }}
+{{ sort_th(filters.sort, "spectators", "Spectators") }}
 <th></th>
 </tr>
 </thead>
@@ -106,10 +107,11 @@
 <td><span class="score">{{ item.score_text }}</span></td>
 <td>{{ item.away_name or "—" }}</td>
 <td>{{ item.venue_name or "—" }}</td>
+<td>{% if item.spectators is not none %}{{ item.spectators }}{% else %}—{% endif %}</td>
 <td><a class="icon-link" href="{{ url_for('panel.match_detail', match_id=item.id) }}">Details</a></td>
 </tr>
 {% else %}
-<tr><td colspan="11" class="note">No matches for the selected filters.</td></tr>
+<tr><td colspan="12" class="note">No matches for the selected filters.</td></tr>
 {% endfor %}
 </tbody>
 </table>

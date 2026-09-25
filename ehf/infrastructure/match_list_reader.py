@@ -29,6 +29,7 @@ SELECT
     m.result_type,
     m.status,
     v.name AS venue_name,
+    m.spectators,
     m.phase,
     m.group_code
 FROM ehf.match m
@@ -62,6 +63,7 @@ MATCH_ORDER = {
     ),
     "away": ("COALESCE(away_ed.display_name, away_team.display_name)",),
     "venue": ("v.name",),
+    "spectators": ("m.spectators",),
 }
 
 
@@ -181,6 +183,7 @@ class PsycopgMatchListReader:
             result_type=row["result_type"],
             status=row["status"],
             venue_name=row["venue_name"],
+            spectators=row["spectators"],
             phase=row["phase"],
             group_code=row["group_code"],
         )

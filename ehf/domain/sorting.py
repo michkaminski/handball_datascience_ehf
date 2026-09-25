@@ -34,6 +34,7 @@ MATCH_SORT_COLUMNS = frozenset(
         "score",
         "away",
         "venue",
+        "spectators",
     }
 )
 PLAYER_SORT_COLUMNS = frozenset(
@@ -84,6 +85,17 @@ REFEREE_SORT_COLUMNS = frozenset({"id", "name", "country", "matches"})
 REFEREE_MATCH_SORT_COLUMNS = frozenset(
     {"date", "season", "competition", "home", "score", "away", "partner"}
 )
+
+SEASON_SORT_COLUMNS = frozenset(
+    {"id", "season", "year", "competitions", "matches", "state"}
+)
+COMPETITION_SORT_COLUMNS = frozenset(
+    {"id", "season", "name", "gender", "teams", "matches"}
+)
+TEAM_SORT_COLUMNS = frozenset(
+    {"id", "season", "name", "gender", "city", "matches", "status"}
+)
+SCORER_SORT_COLUMNS = frozenset({"player", "team", "goals", "matches"})
 
 
 def resolve_sort(column: str | None, direction: str | None, allowed: frozenset[str], default: Sort) -> Sort:

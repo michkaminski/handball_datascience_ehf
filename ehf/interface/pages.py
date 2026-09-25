@@ -40,6 +40,7 @@ STRONY: tuple[Strona, ...] = (
         wzor="lista",
         filtry=("Szukaj", "Stan"),
         kolumny=("ID", "Sezon", "Rok rozpoczęcia", "Rozgrywki", "Mecze", "Stan", "Akcje"),
+        uses_skeleton=False,
     ),
     Strona(
         klucz="rozgrywki",
@@ -51,6 +52,7 @@ STRONY: tuple[Strona, ...] = (
         wzor="lista",
         filtry=("Szukaj", "Sezon"),
         kolumny=("ID", "Sezon", "Rozgrywki", "Płeć", "Drużyny", "Mecze", "Akcje"),
+        uses_skeleton=False,
     ),
     Strona(
         klucz="druzyny",
@@ -62,6 +64,7 @@ STRONY: tuple[Strona, ...] = (
         wzor="lista",
         filtry=("Szukaj", "Sezon", "Płeć"),
         kolumny=("ID", "Sezon", "Drużyna", "Płeć", "Miasto", "Mecze", "Status", "Akcje"),
+        uses_skeleton=False,
     ),
     Strona(
         klucz="zawodnicy",
@@ -118,7 +121,8 @@ STRONY: tuple[Strona, ...] = (
         opis="Klasyfikacja strzelców.",
         wzor="lista",
         filtry=("Sezon", "Rozgrywki"),
-        kolumny=("Poz.", "Zawodnik", "Drużyna", "Bramki", "Mecze"),
+        kolumny=("Poz.", "Zawodnik", "Drużyna", "Bramki", "Mecze", "Akcje"),
+        uses_skeleton=False,
     ),
     Strona(
         klucz="hale",

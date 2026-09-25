@@ -69,6 +69,7 @@ class MatchListItem:
     result_type: str | None
     status: str
     venue_name: str | None
+    spectators: int | None
     phase: str | None
     group_code: str | None
 
