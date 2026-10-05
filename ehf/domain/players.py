@@ -154,10 +154,25 @@ class PlayerMatchItem:
     two_min_suspensions: int | None
     saves: int | None
     shots_faced: int | None
+    side: str | None = None
 
     @property
     def score_text(self) -> str:
         return format_score(self.score_home, self.score_away, self.result_type)
+
+    @property
+    def outcome(self) -> str | None:
+        """W / D / L for the player's team by the final score (extra time and penalties included)."""
+        if self.side not in {"home", "away"} or self.score_home is None or self.score_away is None:
+            return None
+        own, other = (
+            (self.score_home, self.score_away) if self.side == "home" else (self.score_away, self.score_home)
+        )
+        return "W" if own > other else ("L" if own < other else "D")
+
+    @property
+    def outcome_label(self) -> str | None:
+        return {"W": "Win", "D": "Draw", "L": "Loss"}.get(self.outcome or "")
 
     @property
     def shot_percentage_text(self) -> str | None:

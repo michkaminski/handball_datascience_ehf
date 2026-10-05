@@ -277,4 +277,5 @@ class PsycopgPlayerDetailReader:
             two_min_suspensions=row["two_min_suspensions"],
             saves=row["saves"],
             shots_faced=row["shots_faced"],
+            side=row["side"],
         )

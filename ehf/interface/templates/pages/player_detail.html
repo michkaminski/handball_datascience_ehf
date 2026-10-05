@@ -171,13 +171,13 @@
 </thead>
 <tbody>
 {% for item in matches.items %}
-<tr data-href="{{ url_for('panel.match_detail', match_id=item.match_id) }}" title="Double-click to open match details">
+<tr data-href="{{ url_for('panel.match_detail', match_id=item.match_id) }}" title="{% if item.outcome_label %}{{ item.outcome_label }} for {{ item.team_name or 'the team' }} · {% endif %}Double-click to open match details"{% if item.outcome %} class="outcome-{{ item.outcome|lower }}"{% endif %}>
 <td>{{ item.kickoff_at.strftime("%Y-%m-%d") if item.kickoff_at else "—" }}</td>
 <td>{{ item.season_code or "—" }}</td>
 <td>{{ item.competition_name or "—" }}</td>
 <td>{{ item.team_name or "—" }}</td>
 <td>{{ item.opponent_name or "—" }}</td>
-<td><span class="score">{{ item.score_text }}</span></td>
+<td><span class="score">{{ item.score_text }}</span>{% if item.outcome %} <span class="outcome-badge outcome-badge-{{ item.outcome|lower }}">{{ item.outcome }}</span>{% endif %}</td>
 <td>{{ item.goals if item.goals is not none else "—" }}</td>
 <td>{{ item.shots if item.shots is not none else "—" }}</td>
 <td>{{ item.shot_percentage_text or "—" }}</td>
