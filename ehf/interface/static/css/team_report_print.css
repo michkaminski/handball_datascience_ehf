@@ -1,0 +1,136 @@
+/* Team report — A4, black-and-white friendly. Portrait pages, the season sheet in landscape. */
+@page{size:A4 portrait;margin:11mm 11mm 10mm}
+@page sheet{size:A4 landscape;margin:9mm 9mm 8mm}
+
+:root{--ink:#111;--soft:#555;--faint:#8a8a8a;--rule:#c9c9c9;--hair:#e2e2e2;--tint:#f2f2f2;--mark:#e3e3e3}
+*{box-sizing:border-box}
+html{font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;font-size:8.4pt;line-height:1.3;color:var(--ink);font-variant-numeric:tabular-nums}
+body{margin:0}
+h1,h2,p{margin:0}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;align-items:center;gap:5mm;padding-bottom:3.5mm;border-bottom:1.6pt solid var(--ink)}
+.logo{width:17mm;height:17mm;object-fit:contain;filter:grayscale(1)}
+.masthead-team{flex:1;min-width:0}
+.kicker{font-size:7pt;letter-spacing:.18em;text-transform:uppercase;color:var(--soft)}
+.masthead h1{font-size:21pt;line-height:1.05;font-weight:700;letter-spacing:-.01em;margin:.6mm 0 1mm}
+.masthead-meta{font-size:8.5pt;color:var(--soft)}
+.masthead-season{text-align:right}
+.masthead-season .season{display:block;font-size:17pt;font-weight:300;letter-spacing:.02em}
+.masthead-season .generated{display:block;font-size:7pt;color:var(--faint);margin-top:.5mm}
+
+.running{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:1.5mm;margin-bottom:3mm;border-bottom:.8pt solid var(--ink);font-size:7.5pt;color:var(--soft)}
+.running-team{font-weight:700;color:var(--ink);font-size:9pt}
+.running-title{letter-spacing:.16em;text-transform:uppercase}
+
+/* ---------- key figures ---------- */
+.kpis{display:grid;grid-template-columns:repeat(7,1fr);margin:3.5mm 0 1mm;border-bottom:.5pt solid var(--rule)}
+.kpis>div{padding:0 2.2mm 2.6mm;border-left:.5pt solid var(--hair)}
+.kpis>div:first-child{border-left:0;padding-left:0}
+.kpis dt{font-size:6.4pt;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+.kpis dd{margin:.8mm 0 0;font-size:12pt;font-weight:600;white-space:nowrap}
+.kpis dd small{font-size:8pt;font-weight:400;color:var(--soft)}
+.kpis .kpi-name{font-size:9pt;white-space:normal;line-height:1.15}
+.kpis .form{letter-spacing:.12em}
+
+/* ---------- sections ---------- */
+.section{display:flex;align-items:baseline;gap:2mm;font-size:10.5pt;font-weight:700;margin:5.5mm 0 1.8mm;padding-bottom:1mm;border-bottom:.5pt solid var(--rule);break-after:avoid}
+.section>span{display:inline-block;min-width:4.6mm;height:4.6mm;line-height:4.6mm;text-align:center;border:.8pt solid var(--ink);border-radius:50%;font-size:7pt}
+.section small{font-size:7.5pt;font-weight:400;color:var(--soft)}
+.running+.section{margin-top:1mm}
+
+/* ---------- tables ---------- */
+.grid{width:100%;border-collapse:collapse}
+.grid th,.grid td{padding:.75mm 1.1mm;text-align:right;vertical-align:middle;white-space:nowrap}
+.grid thead th{font-size:6.6pt;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--soft);border-bottom:.9pt solid var(--ink);padding-top:0}
+.grid tbody td,.grid tbody th{border-bottom:.35pt solid var(--hair)}
+.grid tbody tr{break-inside:avoid}
+.grid .l{text-align:left}
+.grid .small{font-size:7pt}
+.muted{color:var(--faint)}
+.hl{font-weight:700;background:var(--mark);box-shadow:inset 0 0 0 .5pt #9a9a9a}
+.legend{margin-top:1.6mm;font-size:6.6pt;color:var(--soft);line-height:1.4}
+.hl-sample{display:inline-block;padding:0 1.2mm;font-weight:700;background:var(--mark);box-shadow:inset 0 0 0 .5pt #9a9a9a;color:var(--ink)}
+.empty-note{font-style:italic;color:var(--soft)}
+
+/* seasons */
+.seasons .season-row td{font-weight:500}
+.seasons .competition-row td{color:var(--soft);font-size:7.4pt}
+.seasons .competition-row td:nth-child(2){padding-left:4mm}
+.seasons .current td{font-weight:700;background:var(--tint)}
+
+/* players */
+.players{table-layout:fixed}
+.p-no{width:7mm}.p-name{width:auto}.p-yr{width:9mm}.p-pos{width:7mm}.p-stat{width:6.6mm}.p-pct{width:9.4mm}.p-card{width:5mm}.p-saves{width:12.5mm}.p-gap{width:2.5mm}.p-where{width:33mm}
+.players .band th{border-bottom:0;padding-bottom:.4mm;font-size:6.8pt;letter-spacing:.14em;color:var(--ink)}
+.players .band-now{border-bottom:.5pt solid var(--ink)!important;text-align:center}
+.players .band-prev{border-bottom:.5pt solid var(--soft)!important;text-align:center;color:var(--soft)}
+.players .group td{padding:1.6mm 0 .4mm;text-align:left;font-size:6.6pt;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);border-bottom:.5pt solid var(--rule)}
+.players .no{text-align:center;font-weight:700}
+.players .name{font-weight:600;white-space:normal;line-height:1.15}
+.players .pos{text-align:center;color:var(--soft)}
+.players td{overflow:hidden}
+.players .gap{border-bottom:0}
+.players td:nth-child(n+15){color:#333}
+.players .where{font-size:6.8pt;white-space:normal;line-height:1.15;overflow:visible}
+.players .where.moved{font-style:italic;color:var(--ink)}
+
+/* season sheet (landscape) */
+.sheet{table-layout:auto}
+.sheet thead th{text-transform:none;letter-spacing:0;vertical-align:bottom}
+.sheet .sheet-player{text-align:left;font-weight:600;font-size:7.4pt;min-width:34mm;max-width:44mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sheet .sheet-player .no{display:inline-block;min-width:5.5mm;margin-right:1mm;color:var(--soft);font-weight:400;text-align:right}
+.sheet .sheet-pos{text-align:center;color:var(--soft);font-size:7pt}
+.sheet-match{padding:.6mm .3mm!important;text-align:center!important;min-width:6.4mm}
+.vertical{display:inline-block;writing-mode:vertical-rl;transform:rotate(180deg);max-height:30mm;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:6.6pt;font-weight:400;color:var(--soft);text-align:left}
+.vertical b{color:var(--ink);font-weight:600}
+.sheet-place{display:block;margin-top:.8mm;font-size:6.2pt;color:var(--faint)}
+.sheet-score{display:block;font-size:6.6pt;color:var(--ink);font-weight:600}
+.sheet-score.win{text-decoration:underline;text-underline-offset:1.2pt}
+.sheet .cell{text-align:center;padding:.55mm .3mm;line-height:1.1;border-left:.35pt solid var(--hair);white-space:nowrap}
+.sheet .cell sup{font-size:5.6pt;line-height:0;margin-left:.3mm;vertical-align:.45em}
+.sheet .cell b{font-weight:600}
+.sheet .cell.best b{display:inline-block;min-width:4.2mm;padding:0 .4mm;border:.8pt solid var(--ink);font-weight:800}
+.sheet .cell.empty{background:repeating-linear-gradient(135deg,#fff 0 1.2mm,#f0f0f0 1.2mm 2.4mm)}
+.sheet .gk{font-size:6.6pt;color:var(--ink)}
+.sheet .pen{letter-spacing:.02em;font-weight:700}
+.sheet tfoot .gk{display:block;font-size:6pt;color:var(--soft)}
+.sheet.dense .cell,.sheet.dense th,.sheet.dense td{padding-top:.3mm;padding-bottom:.3mm}
+.sheet.dense .sheet-player{font-size:7pt}
+.sheet .sum{text-align:center;font-size:7.4pt;background:var(--tint)}
+.sheet .sum.first{border-left:.9pt solid var(--ink)}
+.sheet thead .sum{background:none}
+.sheet tr.split td,.sheet tr.split th{border-top:.8pt solid var(--rule)}
+.sheet tfoot td,.sheet tfoot th{border-top:.9pt solid var(--ink);padding-top:.8mm;font-size:7.2pt}
+.sheet tfoot .gk{color:var(--soft)}
+
+/* last matches */
+.matches td{padding-top:1mm;padding-bottom:1mm}
+.matches .name{font-weight:600;white-space:normal;max-width:38mm}
+.matches .score{font-weight:700;font-size:8.6pt;text-align:center}
+.matches tr.split td{border-top:.8pt solid var(--rule)}
+.res{display:inline-block;width:4.4mm;height:4.4mm;line-height:4.1mm;text-align:center;border:.6pt solid var(--ink);border-radius:50%;font-size:6.4pt;font-weight:700}
+.res-w{background:var(--ink);color:#fff}
+.res-d{border-style:dashed}
+.res-l{color:var(--ink)}
+.res-x{border-color:var(--faint);color:var(--faint)}
+.matches td.small{white-space:normal;line-height:1.2}
+.colophon{margin-top:6mm;padding-top:1.5mm;border-top:.5pt solid var(--rule);font-size:6.4pt;color:var(--faint);text-align:center}
+
+/* ---------- screen preview ---------- */
+@media screen{
+  html{background:#d6d7dc}
+  body{padding:12px 0 30px}
+  .screen-bar{display:flex;gap:12px;align-items:center;justify-content:center;margin:0 auto 12px;font:13px "Segoe UI",Arial,sans-serif;color:#333}
+  .screen-bar button{font:inherit;padding:6px 14px;border:1px solid #222;border-radius:6px;background:#222;color:#fff;cursor:pointer}
+  .page{margin:0 auto 14px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.18)}
+  .page.portrait{width:210mm;min-height:297mm;padding:11mm}
+  .page.landscape{width:297mm;min-height:210mm;padding:9mm}
+}
+@media print{
+  .screen-bar{display:none}
+  .page{break-after:page}
+  .page:last-child{break-after:auto}
+  .page.landscape{page:sheet}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}

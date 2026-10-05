@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Team report: {{ report.profile.name }} {{ report.season_code }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/team_report_print.css') }}">
+</head>
+{% set groups = {0: "Goalkeepers", 1: "Line players", 2: "Backs", 3: "Wings", 4: "Other players"} %}
+{% macro date_text(match) %}{{ match.kickoff_at.strftime("%d.%m.%y") if match.kickoff_at else "—" }}{% endmacro %}
+{% macro running_head(title) %}
+<header class="running">
+<span class="running-team">{{ report.profile.name }}</span>
+<span class="running-title">{{ title }}</span>
+<span class="running-season">{{ report.season_code }}</span>
+</header>
+{% endmacro %}
+<body>
+<div class="screen-bar">
+<button type="button" onclick="window.print()">Print / save as PDF</button>
+<span>A4 · the season sheet prints in landscape · black-and-white friendly · turn off the browser's headers and footers.</span>
+</div>
+
+{# ================================================================ page 1 #}
+<section class="page portrait">
+<header class="masthead">
+{% if report.profile.logo_url %}<img class="logo" src="{{ report.profile.logo_url }}" alt="">{% endif %}
+<div class="masthead-team">
+<p class="kicker">Team report</p>
+<h1>{{ report.profile.name }}</h1>
+<p class="masthead-meta">{{ report.profile.country_text }} · {{ report.competitions|join(", ") }}</p>
+</div>
+<div class="masthead-season">
+<span class="season">{{ report.season_code }}</span>
+<span class="generated">as of {{ report.generated_text }}</span>
+</div>
+</header>
+
+{% set record = report.record %}
+<dl class="kpis">
+<div><dt>Matches</dt><dd>{{ record.played }}</dd></div>
+<div><dt>W – D – L</dt><dd>{{ record.wins }} – {{ record.draws }} – {{ record.losses }}</dd></div>
+<div><dt>Goals</dt><dd>{{ record.goals_text }} <small>{{ record.difference_text }}</small></dd></div>
+<div><dt>Per match</dt><dd>{{ record.average_for_text }} : {{ record.average_against_text }}</dd></div>
+<div><dt>GK save% / opp.</dt><dd>{{ report.goalkeeping.own.percentage_text }} <small>/ {{ report.goalkeeping.opponents.percentage_text }}</small></dd></div>
+<div><dt>Top scorer</dt><dd class="kpi-name">{% if report.top_scorer %}{{ report.top_scorer.row.name }} <small>{{ report.top_scorer.row.goals }}</small>{% else %}—{% endif %}</dd></div>
+<div><dt>Last 5</dt><dd class="form">{{ report.last_form or "—" }}</dd></div>
+</dl>
+
+<h2 class="section"><span>1</span> Seasons</h2>
+<table class="grid seasons">
+<thead><tr><th class="l">Season</th><th class="l">Competition</th><th>M</th><th>W</th><th>D</th><th>L</th><th>Win%</th><th>Goals</th><th>Diff</th><th>For</th><th>Ag.</th><th class="l">Decided draws</th><th>Spect. home</th></tr></thead>
+<tbody>
+{% for row in report.seasons %}
+<tr class="{{ 'season-row' if row.is_season else 'competition-row' }}{% if row.season_code == report.season_code and row.is_season %} current{% endif %}">
+<td class="l">{% if row.is_season %}{{ row.season_code }}{% endif %}</td>
+<td class="l">{{ row.competition_name }}</td>
+{% set r = row.record %}
+<td>{{ r.played }}</td><td>{{ r.wins }}</td><td>{{ r.draws }}</td><td>{{ r.losses }}</td><td>{{ r.win_rate_text }}</td><td>{{ r.goals_text }}</td><td>{{ r.difference_text }}</td><td>{{ r.average_for_text }}</td><td>{{ r.average_against_text }}</td><td class="l small">{{ r.decided_text }}</td><td>{{ r.home_average_text }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<h2 class="section"><span>2</span> Players <small>season {{ report.season_code }}{% if report.previous_season_code %} and the previous season {{ report.previous_season_code }}{% endif %}</small></h2>
+<table class="grid players">
+<colgroup><col class="p-no"><col class="p-name"><col class="p-yr"><col class="p-pos">{% for _ in range(3) %}<col class="p-stat">{% endfor %}<col class="p-pct">{% for _ in range(3) %}<col class="p-card">{% endfor %}<col class="p-saves"><col class="p-pct"><col class="p-gap">{% for _ in range(3) %}<col class="p-stat">{% endfor %}<col class="p-pct"><col class="p-where"></colgroup>
+<thead>
+<tr class="band"><th colspan="4"></th><th colspan="9" class="band-now">{{ report.season_code }}</th><th></th><th colspan="5" class="band-prev">{{ report.previous_season_code or "Previous season" }}</th></tr>
+<tr><th>No</th><th class="l">Player</th><th>Born</th><th>Pos</th><th>M</th><th>G</th><th>Avg</th><th>Sh%</th><th>2'</th><th>Y</th><th>R</th><th>Saves</th><th>Sv%</th><th></th><th>M</th><th>G</th><th>Avg</th><th>Sv%</th><th class="l">Club · competition</th></tr>
+</thead>
+<tbody>
+{% for p in report.players %}
+{% if loop.first or p.new_group %}<tr class="group"><td colspan="19">{{ groups[p.role.value] }}</td></tr>{% endif %}
+{% set r = p.row %}
+<tr>
+<td class="no">{{ p.number }}</td>
+<td class="l name">{{ r.name }}</td>
+<td>{{ p.birth_year_text }}</td>
+<td class="pos">{{ r.position|position_abbr(p.is_goalkeeper) or "" }}</td>
+<td>{{ r.matches }}</td>
+<td{% if p.top_goals %} class="hl"{% endif %}>{{ r.goals if r.goals is not none else "—" }}</td>
+<td>{{ p.average_text }}</td>
+<td{% if p.top_shooter %} class="hl"{% endif %}>{{ p.shot_text }}</td>
+<td>{{ r.two_min_suspensions or "" }}</td>
+<td>{{ r.yellow_cards or "" }}</td>
+<td>{{ r.red_cards or "" }}</td>
+<td class="small">{{ p.saves_detail }}</td>
+<td{% if p.top_keeper %} class="hl"{% endif %}>{{ p.save_text }}</td>
+<td class="gap"></td>
+{% set prev = p.previous %}
+{% if prev.played %}
+<td>{{ prev.matches }}</td>
+<td{% if p.top_previous %} class="hl"{% endif %}>{{ prev.goals if prev.goals is not none else "—" }}</td>
+<td>{{ prev.average_text }}</td>
+<td>{{ prev.save_text }}</td>
+<td class="l where{% if not prev.same_club %} moved{% endif %}">{{ prev.where }}</td>
+{% else %}
+<td colspan="4" class="muted">—</td><td class="l where muted">no EHF matches</td>
+{% endif %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+<p class="legend"><span class="hl-sample">12</span> top {{ 3 }} scorers, top {{ 3 }} shooters (min. 20 shots), best goalkeeper (min. 50 shots faced) and top {{ 3 }} scorers of the previous season · Sh%: goals / shots · Saves: saves / shots faced · <i>italic club</i>: played for another club in the previous season · stats from EHF match reports; matches without save data are left out of the goalkeeper numbers.</p>
+</section>
+
+{# ================================================================ page 2: season sheet, landscape #}
+{% set sheet = report.sheet %}
+<section class="page landscape">
+{{ running_head("Season sheet") }}
+<h2 class="section"><span>3</span> Season sheet {{ report.season_code }} <small>goals per match · 2′ suspensions · goalkeepers: saves/shots</small></h2>
+{% if sheet.matches %}
+<table class="grid sheet{% if sheet.rows|length > 20 %} dense{% endif %}">
+<thead>
+<tr>
+<th class="l sheet-player">Player</th><th class="sheet-pos">Pos</th>
+{% for match in sheet.matches %}<th class="sheet-match"><span class="vertical"><b>{{ match.opponent_name or "—" }}</b> {{ match.kickoff_at.strftime("%d.%m") if match.kickoff_at else "" }}</span><span class="sheet-place">{{ "H" if match.is_home else "A" }}</span><span class="sheet-score{% if match.outcome == 'W' %} win{% endif %}">{{ match.team_score_text }}</span></th>{% endfor %}
+<th class="sum first">M</th><th class="sum">G</th><th class="sum">Sh%</th><th class="sum">2'</th><th class="sum">Sv%</th>
+</tr>
+</thead>
+<tbody>
+{% for row in sheet.rows %}
+<tr{% if loop.index0 and row.is_goalkeeper != sheet.rows[loop.index0 - 1].is_goalkeeper %} class="split"{% endif %}>
+<th class="l sheet-player">{% if row.numbers %}<span class="no">{{ row.numbers|join(", ") }}</span>{% endif %}{{ row.name }}</th>
+<td class="sheet-pos">{{ row.position|position_abbr(row.is_goalkeeper) or "" }}</td>
+{% for cell in row.cells %}
+{% if cell %}
+{% set best = report.sheet_best[loop.index0] %}
+<td class="cell{% if best and cell.goals == best %} best{% endif %}{% if cell.saves_text %} keeper{% endif %}">{% if cell.saves_text %}<span class="gk">{{ cell.saves_text }}</span>{% if cell.goals %}<sup>+{{ cell.goals }}</sup>{% endif %}{% else %}<b>{{ cell.goals if cell.goals is not none else "–" }}</b>{% endif %}{% if cell.two_min_suspensions or cell.red_cards %}<sup class="pen">{{ "′" * cell.two_min_suspensions if cell.two_min_suspensions < 4 else cell.two_min_suspensions ~ "′" }}{% if cell.red_cards %}R{% endif %}</sup>{% endif %}</td>
+{% else %}
+<td class="cell empty"></td>
+{% endif %}
+{% endfor %}
+<td class="sum first">{{ row.total.matches }}</td><td class="sum"><b>{{ row.total.goals if row.total.goals is not none else "—" }}</b></td><td class="sum">{{ row.total.shot_percentage_text }}</td><td class="sum">{{ row.total.two_min_suspensions or "" }}</td><td class="sum">{% if row.total.saves_text %}{{ row.total.save_percentage_text }}{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+<tfoot>
+<tr><th class="l sheet-player">Team</th><td class="sheet-pos"></td>{% for cell in sheet.match_totals %}<td class="cell"><b>{{ cell.goals if cell.goals is not none else "–" }}</b>{% if cell.saves_text %}<span class="gk">{{ cell.save_percentage_text }}</span>{% endif %}</td>{% endfor %}<td class="sum first">{{ sheet.matches|length }}</td><td class="sum"><b>{{ sheet.total.goals or "—" }}</b></td><td class="sum">{{ sheet.total.shot_percentage_text }}</td><td class="sum">{{ sheet.total.two_min_suspensions or "" }}</td><td class="sum">{{ sheet.total.save_percentage_text }}</td></tr>
+</tfoot>
+</table>
+<p class="legend">Bold number in a box: the match's top scorer for the team · ′ = one 2-minute suspension · goalkeeper cells: saves/shots faced (+goals) · empty cell: not in the lineup · header score: team goals first; underlined = win · team row: goals and goalkeeper save% per match.</p>
+{% else %}
+<p class="empty-note">No lineups for season {{ report.season_code }}.</p>
+{% endif %}
+</section>
+
+{# ================================================================ page 3: last matches #}
+<section class="page portrait">
+{{ running_head("Last matches") }}
+<h2 class="section"><span>4</span> Last {{ report.last_matches|length }} matches</h2>
+<table class="grid matches">
+<thead><tr><th class="l">Date</th><th class="l">Competition</th><th>H/A</th><th class="l">Opponent</th><th>Score</th><th>Res.</th><th title="Goals / shots">G/Sh</th><th title="7-metre goals / throws">7m</th><th>2'</th><th title="Team goalkeepers">GK Sv%</th><th title="Opponent goalkeepers">Opp. Sv%</th><th class="l">Top scorers</th></tr></thead>
+<tbody>
+{% for item in report.last_matches %}
+{% set m = item.match %}
+<tr{% if loop.index0 and m.season_code != report.last_matches[loop.index0 - 1].match.season_code %} class="split"{% endif %}>
+<td class="l">{{ date_text(m) }}</td>
+<td class="l small">{{ m.competition_name|replace("EHF ", "")|replace(" Men", "")|replace(" Women", "") }}<br><span class="muted">{{ m.stage_text }}</span></td>
+<td>{{ "H" if m.is_home else "A" }}</td>
+<td class="l name">{{ m.opponent_name or "—" }}</td>
+<td class="score">{{ m.team_score_text }}{% if m.decided_text %}<br><span class="muted small">{{ m.decided_text }}</span>{% endif %}</td>
+<td><span class="res res-{{ (m.outcome or 'x')|lower }}">{{ m.outcome or "–" }}</span></td>
+<td>{{ item.shots_text }}</td>
+<td>{{ item.penalties_text }}</td>
+<td>{{ item.two_min_text }}</td>
+<td>{{ item.own_saves.percentage_text if item.own_saves else "—" }}</td>
+<td>{{ item.opponent_saves.percentage_text if item.opponent_saves else "—" }}</td>
+<td class="l small">{{ item.scorers_text }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+<p class="legend">Score: team goals first, regular time; decided draws note the winner after extra time or penalties · <span class="res res-w">W</span> win, <span class="res res-d">D</span> draw, <span class="res res-l">L</span> loss · G/Sh: goals / shots · 7m: 7-metre goals / throws · a line separates seasons.</p>
+<footer class="colophon">{{ nazwa_projektu }} · Team report · {{ report.profile.name }} · {{ report.season_code }} · data from EHF match reports as of {{ report.generated_text }}</footer>
+</section>
+</body>
+</html>

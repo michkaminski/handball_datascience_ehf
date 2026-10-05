@@ -112,6 +112,17 @@ STRONY: tuple[Strona, ...] = (
         uses_skeleton=False,
     ),
     Strona(
+        klucz="raport_druzyny",
+        endpoint="team_report",
+        sciezka="/raport-druzyny",
+        tytul="Team report",
+        okruszek="Start › Reports › Team report",
+        opis="Printable team dossier: seasons, squad (this and last season), season sheet, latest matches.",
+        wzor="narzedzie",
+        filtry=("Season", "Team", "Last matches"),
+        uses_skeleton=False,
+    ),
+    Strona(
         klucz="tabele",
         endpoint="lista_tabel",
         sciezka="/tabele",
@@ -301,4 +312,4 @@ KLUCZE_DANYCH = frozenset(
     }
 )
 
-KLUCZE_RAPORTOW = frozenset({"protokol"})
+KLUCZE_RAPORTOW = frozenset({"protokol", "raport_druzyny"})

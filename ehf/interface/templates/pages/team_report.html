@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block tytul %}Team report — {{ nazwa_projektu }}{% endblock %}
+
+{% block tresc %}
+<section class="pagehead">
+<div class="crumb">Start › Reports › Team report</div>
+<h1>Team report</h1>
+<p>A printable team dossier for one season: seasons, squad with this and last season's numbers, the season sheet and the latest matches.</p>
+</section>
+{% if error %}
+<section class="panel"><div class="panel-body"><p class="note">{{ error }}</p></div></section>
+{% endif %}
+
+<section class="panel">
+<h2>Team and season</h2>
+<form class="panel-body filters report-scope" method="get" action="{{ url_for('panel.team_report') }}" data-sheet-scope>
+<label>Season
+<select name="season_id">
+{% for item in options.seasons %}<option value="{{ item.value }}" {% if item.value == season_id|string %}selected{% endif %}>{{ item.label }}</option>{% endfor %}
+</select>
+</label>
+</form>
+<form class="panel-body filters report-form" method="get" action="{{ url_for('panel.team_report_print') }}" target="_blank">
+<input type="hidden" name="season_id" value="{{ season_id or '' }}">
+<label>Team
+<select name="club_id" required>
+<option value="">Choose…</option>
+{% for item in options.teams %}<option value="{{ item.value }}" {% if report_request.club_id is not none and item.value == report_request.club_id|string %}selected{% endif %}>{{ item.label }}</option>{% endfor %}
+</select>
+</label>
+<label>Last matches<input type="number" name="last" min="1" max="40" value="{{ report_request.last_matches }}"></label>
+<div class="pole-przycisku"><button class="btn small" type="submit">Print team report</button></div>
+</form>
+<div class="panel-body">
+<p class="note">The report opens in a new tab: page 1 — key figures, seasons and players (this season and the previous one, with the club and competition they played for); page 2 — the season sheet in landscape; page 3 — the latest matches with results and basic stats. Print it with Ctrl+P or save it as PDF; it is designed for black-and-white printing.</p>
+</div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/match_sheet.js') }}"></script>
+{% endblock %}

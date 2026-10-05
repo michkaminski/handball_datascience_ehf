@@ -235,6 +235,7 @@ class LineupEntry:
     red_cards: int | None
     saves: int | None
     shots_faced: int | None
+    birth_year: int | None = None
 
     @property
     def keeps_goal(self) -> bool:
@@ -514,6 +515,7 @@ class TeamPlayerRow:
     shots_faced: int | None
     seasons: tuple[str, ...]
     last_match: TeamMatch | None
+    birth_year: int | None = None
 
     @property
     def average_text(self) -> str:
@@ -585,6 +587,7 @@ def player_rows(
                 shots_faced=_sum(entry.shots_faced for entry in group),
                 seasons=tuple(dict.fromkeys(match.season_code for match in reversed(played))),
                 last_match=played[-1] if played and played[-1].kickoff_at else None,
+                birth_year=next((entry.birth_year for entry in group if entry.birth_year), None),
             )
         )
     rows.sort(key=lambda row: (-(row.goals or 0), row.name.casefold()))

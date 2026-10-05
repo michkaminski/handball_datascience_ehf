@@ -124,7 +124,7 @@ SELECT
     l.match_id,
     t.side = CASE WHEN {IS_HOME} THEN 'home' ELSE 'away' END AS own,
     l.person_id,
-    COALESCE(l.display_name, l.source_name, per.display_name, '—') AS name,
+    COALESCE(per.display_name, l.display_name, l.source_name, '—') AS name,
     l.shirt_number,
     COALESCE(pe.profile_position, per.profile_position) AS position,
     l.listed_as_goalkeeper AS is_goalkeeper,
@@ -134,7 +134,8 @@ SELECT
     ps.two_min_suspensions,
     ps.red_cards,
     gk.saves,
-    gk.shots_faced
+    gk.shots_faced,
+    EXTRACT(YEAR FROM per.birth_date)::int AS birth_year
 FROM ehf.match_lineup l
 JOIN ehf.match_team t ON t.id = l.match_team_id
 JOIN ehf.match m ON m.id = l.match_id

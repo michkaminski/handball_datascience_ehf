@@ -1,0 +1,34 @@
+# Team report
+
+| | |
+|---|---|
+| URL | `/raport-druzyny` (form), `/raport-druzyny/druk?club_id=&season_id=&last=15` (print, new tab) |
+| View | `TeamReportFormView` (`pages/team_report.html`), `TeamReportPrintView` (`print/team_report.html`, `css/team_report_print.css`) |
+| Menu | Reports › Team report; button "Team report <season>" on the team card |
+| Code | `ehf/domain/team_report.py`, `ehf/infrastructure/team_report_reader.py`, `ehf/services/team_report.py` (+ `team_detail_*` for matches and lineups) |
+| Database | as the team card, plus `match_team` (shots, 7m, 2') and other clubs' lineups of the previous season |
+
+A printable team dossier for one season, designed for black-and-white printing: highlights are bold numbers on light grey, wins are filled circles, top scorers in the sheet are boxed. Missing `club_id`/`season_id`, a team without an edition in the season or `last` outside 1–40 → 400; unknown club → 404.
+
+```
+PAGE 1 (A4 portrait)
+  logo  TEAM REPORT / <Team>                                   <season>
+        country · competitions                                as of <date>
+  ─────────────────────────────────────────────────────────────────────
+  Matches | W–D–L | Goals ±diff | Per match | GK save% / opp. | Top scorer | Last 5
+  (1) Seasons — up to the chosen season; season rows + competition rows; current row shaded
+  (2) Players — groups: Goalkeepers, Line players, Backs, Wings (then shirt number)
+      No | Player | Born | Pos ‖ <season>: M G Avg Sh% 2' Y R Saves Sv% ‖ <previous>: M G Avg Sv% | Club · competition
+      Club · competition: "same club" / "same club · <other competition>" / "<other club> · <competition>" (italic) / "no EHF matches"
+      highlighted: top 3 scorers, top 3 Sh% (min. 20 shots), best Sv% (min. 50 shots faced), top 3 scorers last season
+
+PAGE 2 (A4 landscape)
+  (3) Season sheet — players × matches: goals (′ = 2 min, R = red), GK saves/shots (+goals);
+      match top scorer boxed; header score underlined = win; totals M G Sh% 2' Sv%; team row with GK save%
+
+PAGE 3 (A4 portrait)
+  (4) Last N matches (default 15, up to the end of the season, across seasons)
+      Date | Competition, phase | H/A | Opponent | Score | W/D/L | G/Sh | 7m | 2' | GK Sv% | Opp. Sv% | Top scorers (initial + surname)
+```
+
+Goalkeeper numbers skip matches where every goalkeeper of both teams has 0 saves (import gap).
