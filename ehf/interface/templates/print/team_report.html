@@ -63,7 +63,7 @@
 <td class="no">{{ p.number }}</td>
 <td class="l name">{{ r.name }}</td>
 <td>{{ p.birth_year_text }}</td>
-<td class="nat">{{ p.nationality_text }}</td>
+<td class="nat" title="{{ p.nationality_text }}">{{ p.nationalities[0] if p.nationalities else "" }}{% if p.nationalities|length > 1 %}<sup>+</sup>{% endif %}</td>
 <td class="pos">{{ r.position|position_abbr(p.is_goalkeeper) or "" }}</td>
 <td>{{ r.matches }}</td>
 <td{% if p.top_goals %} class="hl"{% endif %}>{{ r.goals if r.goals is not none else "—" }}</td>
@@ -87,7 +87,7 @@
 {% endfor %}
 </tbody>
 </table>
-<p class="legend"><span class="hl-sample">12</span> top 3 scorers / shooters (min. 20 shots) / best goalkeeper (min. 50 shots) / top 3 scorers last season · Sh% goals/shots · Saves saves/shots faced · <i>italic</i>: another club last season · Nat: IOC code.</p>
+<p class="legend"><span class="hl-sample">12</span> top 3 scorers / shooters (min. 20 shots) / best goalkeeper (min. 50 shots) / top 3 scorers last season · Sh% goals/shots · Saves saves/shots faced · <i>italic</i>: another club last season · Nat: IOC code (<sup>+</sup> another nationality).</p>
 <h2 class="section"><span>2</span> Last {{ report.last_matches|length }} matches</h2>
 <table class="grid matches{% if tight %} tight{% endif %}">
 <colgroup><col class="m-date"><col class="m-comp"><col class="m-ha"><col class="m-opp"><col class="m-score"><col class="m-res"><col class="m-shots"><col class="m-7m"><col class="m-2"><col class="m-sv"><col class="m-sv"><col class="m-scorers"></colgroup>
