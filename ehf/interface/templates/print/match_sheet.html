@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Match sheet: {{ sheet.home.name }} — {{ sheet.away.name }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/match_sheet_print.css') }}">
+<style>.player td{height:{{ sheet.layout.row_mm }}mm;font-size:{{ sheet.layout.font_pt }}pt}</style>
+</head>
+{% set penalties = ["Y", "2'", "2'", "2'", "R", "B"] %}
+<body>
+<div class="screen-bar">
+<button type="button" onclick="window.print()">Print / save as PDF</button>
+<span>A4 portrait · in the print dialog set margins to “None” or “Default” and turn off headers and footers.</span>
+</div>
+<main class="sheet">
+<table class="head">
+<tr>
+<td class="teams">
+<span class="label">A Home team:</span><b class="team">{{ sheet.home.name }}</b>
+<span class="label">B Away team:</span><b class="team">{{ sheet.away.name }}</b>
+</td>
+<td class="event">
+<span class="label">Competition:</span><b>{{ sheet.competition_name or "" }}</b>
+<span class="event-line">{{ sheet.season_code }}</span>
+<span class="event-line"><span class="label">date</span> <b class="fill">{{ sheet.date_text }}</b> <span class="label">time</span> <b class="fill short">{{ sheet.time_text }}</b></span>
+</td>
+<td class="place">
+<span class="label">Venue (address):</span>
+<span class="place-name">{{ sheet.venue_text }}</span>
+<table class="score">
+<tr><td class="box"></td><td class="colon">:</td><td class="box"></td><td class="gap"></td><td class="box"></td><td class="colon">:</td><td class="box"></td><td class="gap"></td><td class="box wide"></td></tr>
+<tr class="score-labels"><td colspan="3">final score</td><td></td><td colspan="3">half-time</td><td></td><td>winner</td></tr>
+</table>
+</td>
+</tr>
+</table>
+
+<table class="main">
+<tr>
+<td class="main-teams">
+{% for team in sheet.teams %}
+<table class="team-table">
+<colgroup><col class="c-nr"><col class="c-name"><col class="c-pos"><col class="c-year"><col class="c-games"><col class="c-goals"><col class="c-avg"><col class="c-pct">{% for _ in penalties %}<col class="c-pen">{% endfor %}</colgroup>
+<tr class="team-name"><th colspan="8"><span class="label">{{ team.letter }} (name)</span> {{ team.name }}{% if team.country_code %} <span class="label">{{ team.country_code }}</span>{% endif %}{% if team.from_roster %} <span class="label source-note">(registered roster, no lineups yet)</span>{% endif %}</th><th colspan="{{ penalties|length }}" class="penalties">Penalties</th></tr>
+<tr class="cols"><th>No</th><th class="name">Player name</th><th class="stat" title="Position">P</th><th class="stat" title="Year of birth">Yr</th><th class="stat" title="Matches in season">M</th><th class="stat" title="Goals in season">G</th><th class="stat" title="Goals per match">Avg</th><th class="stat stat-last" title="Goalkeeper save percentage">Sv%</th>{% for item in penalties %}<th>{{ item }}</th>{% endfor %}</tr>
+{% for p in team.players %}
+<tr class="player{% if p.new_group %} new-group{% endif %}"><td class="nr">{{ p.number }}</td><td class="name">{{ p.name }}</td><td class="stat">{{ p.position }}</td><td class="stat">{{ p.birth_year }}</td><td class="stat">{{ p.matches }}</td><td class="stat{% if p.highlight %} stat-top{% endif %}">{{ p.goals }}</td><td class="stat">{{ p.average }}</td><td class="stat stat-last">{{ p.percentage }}</td>{% for _ in penalties %}<td></td>{% endfor %}</tr>
+{% else %}
+<tr class="player"><td class="nr"></td><td class="name note">No players in this season's lineups</td>{% for _ in range(5) %}<td class="stat"></td>{% endfor %}<td class="stat stat-last"></td>{% for _ in penalties %}<td></td>{% endfor %}</tr>
+{% endfor %}
+<tr class="officials"><td colspan="{{ 8 + penalties|length }}">
+<table class="officials-grid"><tr>
+{% for letter in ["A", "B", "C", "D", "E"] %}<td><b>{{ letter }}</b>{% if loop.first %} <small class="inline">responsible official</small>{% endif %}<small>name — function</small></td>{% endfor %}
+<td class="warning"><b>Y</b></td><td class="warning"><b>2'</b></td><td class="warning"><b>R</b></td>
+</tr></table>
+</td></tr>
+</table>
+{% endfor %}
+</td>
+<td class="main-flow">
+<table class="flow">
+<colgroup>{% for _ in range(2) %}<col class="f-t"><col class="f-team"><col class="f-score"><col class="f-team">{% endfor %}</colgroup>
+<tr class="flow-title"><th colspan="8">Match progress</th></tr>
+<tr class="flow-half"><td></td><th colspan="2">1st half</th><td></td><td></td><th colspan="2">2nd half</th><td></td></tr>
+<tr class="flow-half"><td></td><th colspan="2">time-out</th><td></td><td></td><th colspan="2">time-out</th><td></td></tr>
+<tr class="flow-cols">{% for _ in range(2) %}<th>T</th><th>A</th><th>score</th><th>B</th>{% endfor %}</tr>
+{% for _ in range(sheet.layout.flow_rows) %}
+<tr class="flow-row">{% for _ in range(2) %}<td></td><td></td><td class="flow-score">:</td><td></td>{% endfor %}</tr>
+{% endfor %}
+</table>
+<table class="penalty-shots">
+<tr><th colspan="4">7-metre throws</th></tr>
+<tr><th colspan="2">A — taken / goals</th><th colspan="2">B — taken / goals</th></tr>
+<tr class="penalty-values"><td></td><td></td><td></td><td></td></tr>
+</table>
+</td>
+</tr>
+</table>
+
+<table class="foot">
+<tr>
+<td class="foot-referees">
+<table class="referees">
+<colgroup><col class="r-role"><col class="r-person"><col class="r-label"><col class="r-city"><col class="r-sign-label"><col class="r-sign"></colgroup>
+<tr><th colspan="6" class="referees-title">Officials</th></tr>
+{% for role in ["Referee", "Referee", "EHF Delegate", "Timekeeper", "Scorekeeper"] %}
+<tr><td class="role">{{ role }}</td><td class="person"></td><td class="label">country</td><td class="city"></td><td class="label">sign.:</td><td class="sign"></td></tr>
+{% endfor %}
+</table>
+</td>
+<td class="foot-info">
+<table class="info">
+<tr><td colspan="2">Referees' remarks:</td></tr>
+<tr><td class="check">none ☐</td><td class="check">overleaf ☐</td></tr>
+<tr><td colspan="2">Spectators: <span class="line short"></span></td></tr>
+<tr><td colspan="2">Recording: yes ☐ no ☐</td></tr>
+<tr><td colspan="2">Report: yes ☐ no ☐</td></tr>
+</table>
+</td>
+<td class="foot-verify">
+<table class="verify">
+<tr><td>Final score:</td><td class="box"></td><td class="colon">:</td><td class="box"></td></tr>
+<tr><td>Half-time:</td><td class="box"></td><td class="colon">:</td><td class="box"></td></tr>
+<tr><td>Winner:</td><td class="box" colspan="3"></td></tr>
+</table>
+<table class="medical"><tr><td>Medical staff (stamp and signature)</td></tr></table>
+</td>
+</tr>
+</table>
+<p class="source">{{ nazwa_projektu }} · P: G goalkeeper, B back, W wing, P pivot · Yr: year of birth · M, G, Avg: matches, goals and goals per match in season {{ sheet.season_code }} (bold — the team's top {{ top_scorers }} scorers) · Sv%: goalkeeper save percentage · squads from the season's lineups{% if sheet.stats_until %} before {{ sheet.stats_until.strftime("%d.%m.%Y") }}{% endif %}{% if sheet.home.from_roster or sheet.away.from_roster %}; teams without lineups — registered roster{% endif %}</p>
+</main>
+</body>
+</html>

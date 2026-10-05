@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block tytul %}Match sheet — {{ nazwa_projektu }}{% endblock %}
+
+{% macro select(name, options, current, empty=none, required=false) %}
+<select name="{{ name }}"{% if required %} required{% endif %}>
+{% if empty is not none %}<option value="">{{ empty }}</option>{% endif %}
+{% for item in options %}
+<option value="{{ item.value }}" {% if current is not none and item.value == current|string %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+{% endmacro %}
+
+{% block tresc %}
+<section class="pagehead">
+<div class="crumb">Start › Data › Match sheet</div>
+<h1>Match sheet</h1>
+<p>Choose the two teams; the A4 sheet is filled with their squads and season stats, ready to complete by hand during the match.</p>
+</section>
+{% if error %}
+<section class="panel"><div class="panel-body"><p class="note">{{ error }}</p></div></section>
+{% endif %}
+
+<section class="panel">
+<h2>Season and competition</h2>
+<form class="panel-body filters sheet-scope" method="get" action="{{ url_for('panel.match_sheet') }}" data-sheet-scope>
+<label>Season{{ select("season_id", options.seasons, season_id) }}</label>
+<label>Competition{{ select("competition_id", options.competitions, sheet_request.competition_id, "All") }}</label>
+<div class="pole-przycisku"><button class="btn secondary small" type="submit">Load teams</button></div>
+</form>
+</section>
+
+<section class="panel">
+<h2>Match</h2>
+<form class="panel-body filters sheet-form" method="get" action="{{ url_for('panel.match_sheet_print') }}" target="_blank" data-sheet-form>
+<input type="hidden" name="season_id" value="{{ season_id or '' }}">
+<input type="hidden" name="competition_id" value="{{ sheet_request.competition_id or '' }}">
+<label>A — home team{{ select("home_id", options.teams, sheet_request.home_id, "Choose…", true) }}</label>
+<label>B — away team{{ select("away_id", options.teams, sheet_request.away_id, "Choose…", true) }}</label>
+<label>Venue{{ select("venue_id", options.venues, sheet_request.venue_id, "Home team's usual venue") }}</label>
+<label>Date<input type="date" name="date" value="{{ sheet_request.match_date or '' }}"></label>
+<label>Time<input type="time" name="time" value="{{ sheet_request.kickoff.strftime('%H:%M') if sheet_request.kickoff else '' }}"></label>
+<label>Order
+<select name="order">
+<option value="positions"{% if sheet_request.order.value == "positions" %} selected{% endif %}>position, number</option>
+<option value="numbers"{% if sheet_request.order.value == "numbers" %} selected{% endif %}>shirt number</option>
+</select>
+</label>
+<label class="filter-checkbox" title="Add players from the previous season who have not played in this one"><input type="checkbox" name="previous" value="1"{% if sheet_request.previous_season %} checked{% endif %}> Add previous season squad</label>
+<div class="pole-przycisku"><button class="btn small" type="submit">Print match sheet</button></div>
+</form>
+<div class="panel-body">
+<p class="note" data-sheet-same hidden>Choose two different teams.</p>
+<p class="note">The sheet opens in a new tab; use the browser's Print (Ctrl+P) to print it or save it as PDF (A4, portrait, margins: none or default). Squads come from the team's lineups in the chosen season (all competitions), before the match date when one is given; a team without lineups gets its registered roster. Stats (M, G, Avg, GK save%) are for the same matches.</p>
+</div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/match_sheet.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,116 @@
+@page{size:A4 portrait;margin:7mm 8mm 6mm}
+html{font-family:"DejaVu Sans","Segoe UI",Arial,sans-serif;font-size:8pt;color:#000;line-height:1.15}
+body{margin:0}
+table{border-collapse:collapse;width:100%}
+th,td{padding:0 1.2mm;vertical-align:middle;line-height:1}
+.label{font-size:6.5pt;font-weight:400;color:#222}
+.note{color:#555;font-style:italic}
+.line{display:inline-block;min-width:40mm;border-bottom:.4pt solid #000;height:3mm}
+.line.short{min-width:18mm}
+.vertical{width:5mm;padding:0;font-size:6pt;font-weight:700;text-align:center;letter-spacing:.02em}
+
+.head{border:.8pt solid #000;margin-bottom:1.5mm;table-layout:fixed}
+.head td{border:.6pt solid #000;vertical-align:top;padding:.8mm 1.5mm}
+.head .teams{width:66mm}
+.head .teams .label,.head .event .label:first-child,.head .place>.label{display:block}
+.head .team{display:block;font-size:10pt;text-align:center;margin:.6mm 0 1.2mm}
+.head .event{width:48mm}
+.head .event>b{display:block;font-size:9pt;margin:.5mm 0}
+.event-line{display:block;margin-top:1mm}
+.place-name{display:block;text-align:center;font-size:7.5pt;margin:.6mm 0 1mm;min-height:6mm}
+.score{table-layout:fixed}
+.score td{border:0;padding:0}
+.score .box{border:.6pt solid #000;height:7mm}
+.score .colon{width:3mm;text-align:center;font-size:14pt;font-weight:700}
+.score .gap{width:2mm}
+.score .wide{width:14mm}
+.score-labels td{font-size:6pt;text-align:center;padding-top:.5mm}
+
+.main{table-layout:fixed;margin-bottom:1.5mm}
+.main>tbody>tr>td,.main>tr>td{vertical-align:top;padding:0}
+.main-teams{width:63%;padding-right:1.5mm !important}
+.team-table{table-layout:fixed;border:.8pt solid #000}
+.team-table+.team-table{margin-top:1.5mm}
+.team-table th,.team-table td{border:.4pt solid #000;overflow:hidden;white-space:nowrap}
+.c-nr{width:7mm}
+.c-pen{width:5.4mm}
+.c-pos{width:3.6mm}.c-year{width:4.6mm}.c-games{width:4.6mm}.c-goals{width:5.4mm}.c-avg{width:6.2mm}.c-pct{width:7mm}
+.team-name th{text-align:left;font-size:8.5pt;height:4.6mm;background:#e9e9e9}
+.team-name th.penalties{text-align:center}
+.cols th{font-size:6.5pt;height:3.8mm;text-align:center}
+.cols th.name{text-align:left}
+.player .nr{text-align:center;font-weight:700}
+.player .name{text-align:left}
+.player.new-group td{border-top:1.2pt solid #000}
+.officials>td{padding:0;border:0}
+.officials-grid{table-layout:fixed}
+.officials-grid td{border:.4pt solid #000;vertical-align:top;padding:.4mm .8mm;height:6.2mm;white-space:normal}
+.officials-grid td b{font-size:8pt}
+.officials-grid td .line{display:block;min-width:0;height:3.5mm}
+.officials-grid small{display:block;font-size:4.4pt;line-height:1;color:#333;margin-top:2.4mm}
+.officials-grid small.inline{display:inline;margin:0}
+.officials-grid td.warning{width:9%}
+
+.main-flow{width:37%}
+.main-flow>table{width:99%}
+.flow{table-layout:fixed;border:.8pt solid #000}
+.flow th,.flow td{border:.4pt solid #000;text-align:center;padding:0}
+.f-t{width:7%}.f-team{width:11%}.f-score{width:18%}
+.flow-title th{font-size:10pt;height:5mm;background:#e9e9e9}
+.flow-half td,.flow-half th{height:5mm;font-size:7pt}
+.flow-cols th{font-size:6.5pt;height:4.5mm}
+.flow-row td{height:5.05mm}
+.flow-score{color:#888;font-weight:700}
+.flow td:nth-child(4),.flow th:nth-child(4){border-right-width:1.2pt}
+.flow-half td:nth-child(4),.flow-half th:nth-child(2){border-right-width:.4pt}
+.penalty-shots{table-layout:fixed;border:.8pt solid #000;margin-top:1.5mm}
+.penalty-shots th,.penalty-shots td{border:.4pt solid #000;text-align:center;font-size:6.5pt;height:4mm}
+.penalty-shots tr:first-child th{background:#e9e9e9}
+.penalty-values td{height:7mm}
+
+.foot{table-layout:fixed}
+.foot>tbody>tr>td,.foot>tr>td{vertical-align:top;padding:0}
+.foot-referees{width:55%;padding-right:1.5mm !important}
+.foot-info{width:23%;padding-right:1.5mm !important}
+.referees{border:.8pt solid #000;table-layout:fixed}
+.referees th,.referees td{border:.4pt solid #000;height:4.6mm;white-space:nowrap;overflow:hidden}
+.referees-title{font-size:7pt;background:#e9e9e9;height:4mm !important}
+.r-role{width:20%}.r-person{width:29%}.r-label{width:13%}.r-city{width:20%}.r-sign-label{width:8%}.r-sign{width:10%}
+.referees .role{font-size:6.2pt}
+.referees .person{font-weight:700;font-size:7pt}
+.referees td.label{font-size:5.5pt}
+.referees .city{font-size:6pt;white-space:normal;line-height:1}
+.info{border:.8pt solid #000;table-layout:fixed}
+.info td{border:.4pt solid #000;height:4.4mm;padding:0 1mm;font-size:6.2pt;white-space:nowrap;overflow:hidden}
+.info .check{text-align:center}
+.verify{border:.8pt solid #000;table-layout:fixed;margin-bottom:1.2mm}
+.verify td{border:0;height:5.4mm;font-size:6.5pt;padding:.4mm .8mm}
+.verify td:first-child{width:45%}
+.verify .box{border:.6pt solid #000}
+.verify .colon{width:2.5mm;text-align:center;font-weight:700;padding:0}
+.medical{border:.8pt solid #000}
+.medical td{height:9mm;vertical-align:bottom;text-align:center;font-size:5.5pt}
+.source{margin:1mm 0 0;font-size:5.5pt;color:#777;text-align:right}
+.source-note{font-size:5.5pt;font-style:italic}
+.team-table .stat{padding:0 .4mm;text-align:center;font-size:.8em;background:#f0f0f0;color:#222}
+.team-table th.stat{font-size:6pt;background:#e0e0e0}
+.team-table .stat-last{border-right:1pt solid #000}
+.team-table td.stat-top{font-weight:800;font-size:.95em;background:#d8d8d8}
+.fill{display:inline-block;min-width:16mm;border-bottom:.4pt solid #000;text-align:center}
+.fill.short{min-width:10mm}
+.officials-grid td.warning{width:6%;text-align:center}
+.head .event>b{font-size:8.5pt}
+
+/* screen preview: one A4 sheet on a grey desk */
+@media screen{
+  html{background:#d9dbe1}
+  body{padding:12px 0 24px}
+  .screen-bar{display:flex;gap:12px;align-items:center;justify-content:center;margin:0 auto 10px;font:13px "Segoe UI",Arial,sans-serif;color:#333}
+  .screen-bar button{font:inherit;padding:6px 14px;border:1px solid #4338ca;border-radius:6px;background:#4f46e5;color:#fff;cursor:pointer}
+  .sheet{width:210mm;min-height:297mm;margin:0 auto;padding:7mm 8mm 6mm;box-sizing:border-box;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+}
+@media print{
+  .screen-bar{display:none}
+  .sheet{margin:0;padding:0}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
