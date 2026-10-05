@@ -16,6 +16,7 @@ Match details #id
   Home                    SCORE                 Away
   LUX                     HT / result_type      SRB
   home                                          away
+  Home / Away names → /druzyny/<club_id> (click → modal, double-click → new tab)
 
 [ Tabs ]
   Basic data | Team statistics | Lineup
@@ -35,6 +36,8 @@ Match details #id
 [ Lineup home | Lineup away ]
   # | Player | Pos | G | Sh | % | Y | 2' | R | Saves | Faced | Save%
   Pos = GK, LW, RW, LB, RB, CB, LP, …
+  Player → /zawodnicy/<person_id>, team name in header → /druzyny/<club_id>
+  click → modal, double-click → new tab (plain text when id is missing)
   order and tint by group: GK, LP (pivot), backs, wings
   max goals in each team in red (ties too)
   under each team: GK saves, Shooting, 7m (x/y and %), Short-handed minutes (2' × 2)

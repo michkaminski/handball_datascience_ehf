@@ -30,6 +30,8 @@ SELECT
     v.city AS venue_city,
     COALESCE(home_ed.display_name, home_team.display_name) AS home_name,
     COALESCE(away_ed.display_name, away_team.display_name) AS away_name,
+    home_club.id AS home_club_id,
+    away_club.id AS away_club_id,
     home_club.country_code AS home_country,
     away_club.country_code AS away_country,
     COALESCE(m.score_home, home_team.goals) AS score_home,
@@ -78,6 +80,7 @@ WHERE match_id = %s
 LINEUP_SQL = """
 SELECT
     t.side,
+    l.person_id,
     l.shirt_number,
     COALESCE(l.display_name, l.source_name, per.display_name) AS name,
     COALESCE(pe.profile_position, per.profile_position) AS position,
@@ -176,6 +179,8 @@ class PsycopgMatchDetailReader:
             venue_city=header["venue_city"],
             home_name=header["home_name"],
             away_name=header["away_name"],
+            home_club_id=header["home_club_id"],
+            away_club_id=header["away_club_id"],
             home_country=header["home_country"],
             away_country=header["away_country"],
             score_home=header["score_home"],
@@ -222,6 +227,7 @@ class PsycopgMatchDetailReader:
 
     def _player(self, row: dict) -> LineupPlayer:
         return LineupPlayer(
+            person_id=row["person_id"],
             shirt_number=row["shirt_number"],
             name=row["name"] or "—",
             position=row["position"],

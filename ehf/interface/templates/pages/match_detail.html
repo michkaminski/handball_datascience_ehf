@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% from "partials/detail_links.html" import team_link, player_link %}
 
-{% macro lineup_table(players, team_name, officials, efficiency) %}
+{% macro lineup_table(players, club_id, team_name, officials, efficiency) %}
 <section class="panel">
-<h2>Lineup — {{ team_name }}</h2>
+<h2>Lineup — {{ team_link(club_id, team_name) }}</h2>
 <div class="table-wrap">
 <table>
 <thead><tr><th>#</th><th>Player</th><th>Pos</th><th>G</th><th>Sh</th><th>%</th><th>Y</th><th>2'</th><th>R</th><th>Saves</th><th>Faced</th><th>Save%</th></tr></thead>
@@ -11,7 +12,7 @@
 {% set hue = player|position_hue %}
 <tr class="roster-player"{% if hue is not none %} style="--position-hue: {{ hue }}"{% endif %}>
 <td>{{ player.shirt_number or "—" }}</td>
-<td>{{ player.name }}</td>
+<td>{{ player_link(player.person_id, player.name) }}</td>
 <td>{{ player|position_code or "—" }}</td>
 <td{% if player.top_scorer %} class="top-scorer" title="Most goals in the team"{% endif %}>{{ player.goals if player.goals is not none else "—" }}</td>
 <td>{{ player.shots if player.shots is not none else "—" }}</td>
@@ -70,7 +71,7 @@
 <section class="hero">
 <div class="score-hero">
 <div class="team-box">
-<div class="team-name">{{ match.home_title }}</div>
+<div class="team-name">{{ team_link(match.home_club_id, match.home_name) }}</div>
 {% if match.home_country %}<div class="team-country">{{ match.home_country }}</div>{% endif %}
 <div class="team-meta">home</div>
 </div>
@@ -80,7 +81,7 @@
 {% if match.result_type and match.result_type != "normal" %}<div class="result-sub">{{ match.result_type }}</div>{% endif %}
 </div>
 <div class="team-box right">
-<div class="team-name">{{ match.away_title }}</div>
+<div class="team-name">{{ team_link(match.away_club_id, match.away_name) }}</div>
 {% if match.away_country %}<div class="team-country">{{ match.away_country }}</div>{% endif %}
 <div class="team-meta">away</div>
 </div>
@@ -191,8 +192,8 @@
 
 <div id="match-panel-lineup" data-match-panel aria-labelledby="match-tab-lineup">
 <div class="grid2">
-{{ lineup_table(match.home_lineup, match.home_title, match.home_officials, match.home_efficiency) }}
-{{ lineup_table(match.away_lineup, match.away_title, match.away_officials, match.away_efficiency) }}
+{{ lineup_table(match.home_lineup, match.home_club_id, match.home_name, match.home_officials, match.home_efficiency) }}
+{{ lineup_table(match.away_lineup, match.away_club_id, match.away_name, match.away_officials, match.away_efficiency) }}
 </div>
 {% if position_legend %}
 <p class="roster-legend">{% for item in position_legend %}<strong>{{ item.code }}</strong> {{ item.label }}{% if not loop.last %} · {% endif %}{% endfor %}</p>
@@ -200,8 +201,10 @@
 </div>
 {% endif %}
 </div>
+{% include "partials/match_detail_dialog.html" %}
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/match_detail.js') }}"></script>
+<script src="{{ url_for('static', filename='js/matches.js') }}"></script>
 {% endblock %}

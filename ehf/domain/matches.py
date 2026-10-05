@@ -72,6 +72,8 @@ class MatchListItem:
     spectators: int | None
     phase: str | None
     group_code: str | None
+    home_club_id: int | None = None
+    away_club_id: int | None = None
 
     @property
     def score_text(self) -> str:

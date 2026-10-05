@@ -38,8 +38,11 @@ Szkic tekstowy każdej listy: `docs/strony/`. Zmianę strony zacznij od szkicu, 
 |---|---|---|
 | Match details | `/mecze/<id>` | [mecz.md](strony/mecz.md) |
 | Player details | `/zawodnicy/<id>` | [zawodnik.md](strony/zawodnik.md) |
+| Team details | `/druzyny/<id>` | [druzyna.md](strony/druzyna.md) |
 | Venue details | `/hale/<id>` | [hala.md](strony/hala.md) |
 | Referee details | `/sedziowie/<id>` | [sedzia.md](strony/sedzia.md) |
+
+Linki do kart (`partials/detail_links.html`, `static/js/matches.js`): klik → modal, dwuklik → nowa karta, Ctrl/środkowy klik → domyślnie przeglądarka.
 
 ## Import i narzędzia
 

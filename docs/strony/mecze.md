@@ -36,6 +36,8 @@ Compact match list. The table is the main element of the page.
   result_type suffix when not normal: walkover | extra_time | penalties
   status: played | awarded | scheduled_or_no_result
 
+  Home / Away → link to /druzyny/<club_id> ([druzyna.md](druzyna.md))
+    click → modal with team details, double-click → new tab
   Details → /mecze/<id>
   double-click row → modal with the same match details page
 ```

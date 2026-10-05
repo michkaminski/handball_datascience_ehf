@@ -4,6 +4,7 @@
 {% block tytul %}{% if profile %}{{ profile.display_name }}{% else %}Player{% endif %} — {{ nazwa_projektu }}{% endblock %}
 
 {% block tresc %}
+<div data-match-detail>
 <section class="pagehead">
 <div class="crumb">Start › Data › Players › Details</div>
 <h1>Player details{% if profile %} #{{ profile.id }}{% endif %}</h1>
@@ -37,7 +38,6 @@
 </div>
 </section>
 
-<div data-match-detail>
 <div class="match-tabs" role="tablist" aria-label="Player details" data-match-tabs hidden>
 <button type="button" role="tab" id="player-tab-profile" data-tab="profile" aria-controls="player-panel-profile" aria-selected="true">Profile</button>
 <button type="button" role="tab" id="player-tab-seasons" data-tab="seasons" aria-controls="player-panel-seasons" aria-selected="false" tabindex="-1">Seasons &amp; teams</button>
@@ -196,9 +196,9 @@
 </div>
 </section>
 </div>
+{% endif %}
 </div>
 {% include "partials/match_detail_dialog.html" %}
-{% endif %}
 {% endblock %}
 
 {% block scripts %}

@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+{% from "partials/detail_links.html" import team_link, player_link, detail_link %}
+
+{% block tytul %}{% if profile %}{{ profile.name }}{% else %}Team{% endif %} — {{ nazwa_projektu }}{% endblock %}
+
+{% macro date_text(match) %}{{ match.kickoff_at.strftime("%Y-%m-%d") if match.kickoff_at else "—" }}{% endmacro %}
+
+{% macro select(name, options, current) %}
+<select name="{{ name }}">
+<option value="">All</option>
+{% for item in options %}
+<option value="{{ item.value }}" {% if current is not none and item.value == current|string %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+{% endmacro %}
+
+{% macro filter_form(tab, with_player=false, with_played=false) %}
+<form class="panel-body filters team-filters" method="get" action="{{ url_for('panel.team_detail', club_id=profile.id) }}">
+<input type="hidden" name="tab" value="{{ tab }}">
+<label>Season{{ select("season_id", card.options.seasons, card.filters.season_id) }}</label>
+<label>Competition{{ select("competition_id", card.options.competitions, card.filters.competition_id) }}</label>
+<label>Opponent<input name="opponent" value="{{ card.filters.opponent or '' }}" placeholder="team name..."></label>
+{% if with_player %}<label>Player<input name="player" value="{{ card.filters.player or '' }}" placeholder="player name..."></label>{% endif %}
+{% if with_played %}<label class="filter-checkbox" title="Matches with a result (played or awarded)"><input type="checkbox" name="played" value="1"{% if card.filters.played_only %} checked{% endif %}> Finished only</label>{% endif %}
+<div class="pole-przycisku"><button class="btn small" type="submit">Filter</button></div>
+<div class="pole-przycisku"><a class="btn secondary small" href="{{ url_for('panel.team_detail', club_id=profile.id, tab=tab) }}">Clear</a></div>
+</form>
+{% endmacro %}
+
+{% macro attendance_tiles(attendance) %}
+<div class="team-kpi-grid team-attendance">
+{% for place, label in [(attendance.home, "home"), (attendance.away, "away")] %}
+<div><span>Average spectators {{ label }}</span><b>{{ place.average_text }}</b></div>
+<div><span>Median {{ label }}</span><b>{{ place.median_text }}</b></div>
+<div><span>Total {{ label }}</span><b>{{ place.sum_text }}</b></div>
+<div><span>Record {{ label }}</span><b>{% if place.record %}{{ detail_link(url_for('panel.match_detail', match_id=place.record.match_id), place.record_text) }}{% else %}—{% endif %}</b>{% if place.record_note %}<small>{{ place.record_note }}</small>{% endif %}</div>
+<div><span>{{ label|capitalize }} matches with attendance</span><b>{{ place.coverage_text }}</b></div>
+{% endfor %}
+</div>
+{% endmacro %}
+
+{% macro record_header() %}<th title="Matches played">M</th><th title="Wins (regular time)">W</th><th title="Draws (regular time)">D</th><th title="Losses (regular time)">L</th><th title="Win rate in played matches">Win%</th><th title="Goals for:against">Goals</th><th title="Goal difference">Diff</th><th title="Average goals scored per match">Avg for</th><th title="Average goals conceded per match">Avg ag.</th><th title="Draws decided by extra time or penalties: won / lost">Decided draws</th><th title="Walkovers and matches without result">Other</th><th title="Average spectators in home matches with known attendance">Spect. home avg</th><th title="Average spectators in away matches with known attendance">Spect. away avg</th><th title="Total spectators in home matches">Spect. home sum</th>{% endmacro %}
+
+{% macro record_cells(record) %}<td class="team-num">{{ record.played }}</td><td class="team-num team-w">{{ record.wins }}</td><td class="team-num team-d">{{ record.draws }}</td><td class="team-num team-l">{{ record.losses }}</td><td class="team-num">{{ record.win_rate_text }}</td><td class="team-num">{{ record.goals_text }}</td><td class="team-num">{{ record.difference_text }}</td><td class="team-num">{{ record.average_for_text }}</td><td class="team-num">{{ record.average_against_text }}</td><td class="team-note-cell">{{ record.decided_text }}</td><td class="team-num">{{ record.others_text }}</td><td class="team-num">{{ record.home_average_text }}</td><td class="team-num">{{ record.away_average_text }}</td><td class="team-num">{{ record.home_sum_text }}</td>{% endmacro %}
+
+{% macro sheet_cell(cell) %}{% if cell %}<td class="team-sheet-cell" title="{{ cell.description }}"><b>{{ cell.goals if cell.goals is not none else "—" }}</b>{% if cell.penalties_text %}<span class="team-sheet-pen">{{ cell.penalties_text }}</span>{% endif %}{% if cell.saves_text %}<span class="team-sheet-gk">{{ cell.saves_text }}</span>{% endif %}</td>{% else %}<td class="team-sheet-cell team-sheet-empty" title="Not in the lineup"></td>{% endif %}{% endmacro %}
+
+{% macro sheet_total(cell) %}<td class="team-sheet-sum team-sheet-sum-first">{{ cell.matches }}</td><td class="team-sheet-sum"><b>{{ cell.goals if cell.goals is not none else "—" }}</b></td><td class="team-sheet-sum">{{ cell.shot_percentage_text }}</td><td class="team-sheet-sum team-sheet-pen-sum">{{ cell.penalties_text or "—" }}</td><td class="team-sheet-sum team-sheet-gk-sum">{{ cell.saves_text or "—" }}</td><td class="team-sheet-sum team-sheet-gk-sum">{% if cell.saves_text %}{{ cell.save_percentage_text }}{% else %}—{% endif %}</td>{% endmacro %}
+
+{% block tresc %}
+<div data-match-detail>
+<section class="pagehead">
+<div class="crumb">Start › Data › Teams › Details</div>
+<h1>{% if profile %}{{ profile.name }}{% else %}Team details{% endif %}</h1>
+{% if profile %}<p>Team card #{{ profile.id }} · {{ profile.gender_label }} · seasons {{ card.season_range_text }}</p>{% endif %}
+</section>
+{% if error %}
+<section class="panel">
+<div class="panel-body"><p class="note">{{ error }}</p></div>
+</section>
+{% elif profile %}
+<div class="toolbar" data-detail-navigation>
+<div class="left"><a class="btn secondary" href="{{ url_for('panel.lista_druzyn') }}">← Back to list</a></div>
+{% if profile.profile_url %}<div class="right"><a class="btn secondary" href="{{ profile.profile_url }}" target="_blank" rel="noopener">EHF profile</a></div>{% endif %}
+</div>
+
+<section class="hero">
+<div class="player-hero">
+{% if profile.logo_url %}<img class="player-photo team-logo" src="{{ profile.logo_url }}" alt="{{ profile.name }}">{% endif %}
+<div>
+<div class="team-name">{{ profile.name }}</div>
+{% if profile.country_code %}<div class="team-country">{{ profile.country_text }}</div>{% endif %}
+<div class="hero-meta">
+<span class="meta-chip">{{ card.season_count }} seasons</span>
+<span class="meta-chip">{{ card.all_matches|length }} matches</span>
+{% if card.goalkeeping.has_data %}<span class="meta-chip">GK save% {{ card.goalkeeping.own.percentage_text }}</span>{% endif %}
+</div>
+</div>
+</div>
+</section>
+
+<div class="match-tabs" role="tablist" aria-label="Team details" data-match-tabs hidden>
+{% for key, label in [("basic", "Basic data"), ("seasons", "Seasons"), ("matches", "Matches"), ("players", "Players"), ("goalkeepers", "Goalkeepers"), ("sheet", "Season sheet")] %}
+<button type="button" role="tab" id="team-tab-{{ key }}" data-tab="{{ key }}" aria-controls="team-panel-{{ key }}" aria-selected="{{ 'true' if loop.first else 'false' }}"{% if not loop.first %} tabindex="-1"{% endif %}>{{ label }}</button>
+{% endfor %}
+</div>
+
+{# ---------------------------------------------------------------- basic #}
+<section class="panel" id="team-panel-basic" data-match-panel aria-labelledby="team-tab-basic">
+<h2>Basic data</h2>
+<div class="panel-body">
+<div class="team-kpi-grid">
+<div><span>Seasons in database</span><b>{{ card.season_count }}</b></div>
+<div><span>Season range</span><b>{{ card.season_range_text }}</b></div>
+<div><span>Matches in database</span><b>{{ card.all_matches|length }}</b></div>
+<div><span>Historical names</span><b>{{ card.names|length }}</b></div>
+<div><span>GK save% (all matches)</span><b>{{ card.goalkeeping.own.percentage_text if card.goalkeeping.has_data else "—" }}</b></div>
+<div><span>Opponents' GK save%</span><b>{{ card.goalkeeping.opponents.percentage_text if card.goalkeeping.has_data else "—" }}</b></div>
+</div>
+<section class="team-subpanel"><h3>Attendance, whole history</h3>
+{% if card.attendance.has_data %}{{ attendance_tiles(card.attendance) }}{% else %}<p class="note">No attendance data in the team's matches.</p>{% endif %}
+</section>
+<dl class="team-fields">
+<div><dt>Team ID</dt><dd>{{ profile.id }}</dd></div>
+<div><dt>EHF id</dt><dd>{{ profile.ehf_id }}</dd></div>
+<div><dt>Name (latest)</dt><dd>{{ profile.name }}</dd></div>
+<div><dt>Gender</dt><dd>{{ profile.gender_label }}</dd></div>
+<div><dt>Country</dt><dd>{{ profile.country_text }}</dd></div>
+<div><dt>Address</dt><dd>{{ profile.address or "—" }}</dd></div>
+<div><dt>Website</dt><dd>{% if profile.website %}<a href="{{ profile.website }}" target="_blank" rel="noopener">{{ profile.website }}</a>{% else %}—{% endif %}</dd></div>
+</dl>
+<div class="grid2 team-basic-grid">
+<section class="team-subpanel"><h3>Name history</h3>
+<div class="table-wrap"><table><thead><tr><th>Name</th><th>Seasons</th><th>Number of seasons</th></tr></thead><tbody>
+{% for name in card.names %}<tr><td><b>{{ name.name }}</b></td><td>{{ name.seasons_text }}</td><td class="team-num">{{ name.seasons|length }}</td></tr>{% else %}<tr><td colspan="3" class="note">No season entries.</td></tr>{% endfor %}
+</tbody></table></div></section>
+<section class="team-subpanel"><h3>Home venues</h3>
+<div class="table-wrap"><table><thead><tr><th>Venue</th><th>City</th><th>Matches</th><th>Avg spectators</th></tr></thead><tbody>
+{% for venue in card.venues %}<tr><td>{{ detail_link(url_for('panel.venue_detail', venue_id=venue.venue_id), venue.name) }}</td><td>{{ venue.city or "—" }}</td><td class="team-num">{{ venue.matches }}</td><td class="team-num">{{ venue.average_text }}</td></tr>{% else %}<tr><td colspan="4" class="note">No home matches with a venue.</td></tr>{% endfor %}
+</tbody></table></div></section>
+</div>
+<section class="team-subpanel"><h3>Season entries</h3>
+<div class="table-wrap"><table><thead><tr><th>Season</th><th>Competition</th><th>Name in season</th><th>Actions</th></tr></thead><tbody>
+{% for edition in card.editions %}<tr><td><span class="season-badge">{{ edition.season_code }}</span></td><td>{{ edition.competition_name }}</td><td>{{ edition.name }}</td><td class="row-actions"><a class="icon-link" href="{{ url_for('panel.team_detail', club_id=profile.id, tab='sheet', sheet_season_id=edition.season_id, sheet_competition_id=edition.competition_id) }}">Season sheet</a> <a class="icon-link" href="{{ url_for('panel.lista_zawodnikow', season_id=edition.season_id, club_id=profile.id) }}">Players</a></td></tr>{% else %}<tr><td colspan="4" class="note">No season entries.</td></tr>{% endfor %}
+</tbody></table></div></section>
+<p class="note">Names come from <code>ehf.club_edition</code>. Venues are counted from matches where the team is the home side.</p>
+</div>
+</section>
+
+{# -------------------------------------------------------------- seasons #}
+<section class="panel" id="team-panel-seasons" data-match-panel aria-labelledby="team-tab-seasons">
+<h2>Seasons</h2>
+<div class="panel-body">
+<p class="note">Summary of each season (and of each competition when there were several). Wins, draws and losses use the regular-time score; draws decided by extra time or penalties are counted separately. Walkovers and matches without a result are not in the goal record. Spectators: average and total over played matches with known attendance; 0 (behind closed doors) counts, missing data does not.</p>
+<div class="table-wrap"><table class="team-season-table">
+<thead><tr><th>Season</th><th>Competition</th><th>Name in season</th>{{ record_header() }}</tr></thead>
+<tbody>{% for row in card.seasons %}
+<tr class="{{ 'team-season-row' if row.is_season else 'team-competition-row' }}"><td>{% if row.is_season %}<span class="season-badge">{{ row.season_code }}</span>{% endif %}</td><td>{{ row.competition_name }}</td><td class="team-wrap-cell">{{ row.team_name }}</td>{{ record_cells(row.record) }}</tr>
+{% else %}<tr><td colspan="17" class="note">No team matches.</td></tr>{% endfor %}</tbody>
+</table></div>
+</div>
+</section>
+
+{# -------------------------------------------------------------- matches #}
+<div id="team-panel-matches" data-match-panel aria-labelledby="team-tab-matches">
+<section class="panel">
+<h2>Matches</h2>
+{{ filter_form("matches", with_played=true) }}
+<div class="panel-body">
+<div class="team-kpi-grid">
+<div><span>Matches</span><b>{{ card.match_record.matches }}</b></div>
+<div><span>W-D-L</span><b><span class="team-w">{{ card.match_record.wins }}</span>-<span class="team-d">{{ card.match_record.draws }}</span>-<span class="team-l">{{ card.match_record.losses }}</span></b></div>
+<div><span>Win%</span><b>{{ card.match_record.win_rate_text }}</b></div>
+<div><span>Goals</span><b>{{ card.match_record.goals_text }}</b></div>
+<div><span>Goal difference</span><b>{{ card.match_record.difference_text }}</b></div>
+<div><span>GK save% / opponents</span><b>{{ card.goalkeeping.own.percentage_text }} / {{ card.goalkeeping.opponents.percentage_text }}</b></div>
+</div>
+<section class="team-subpanel"><h3>Attendance in the selected range</h3>
+{% if card.match_attendance.has_data %}{{ attendance_tiles(card.match_attendance) }}{% else %}<p class="note">No attendance data for the selected filters.</p>{% endif %}
+</section>
+<p class="note">Team score: goals for:against in regular time. Match score: home–away final score. Spectators from the match report; 0 means behind closed doors, “—” no data. Save%: team goalkeepers vs. opponent goalkeepers.</p>
+<div class="table-wrap"><table class="team-matches-table">
+<thead><tr><th>Date</th><th>Season / competition</th><th>Phase</th><th>H/A</th><th>Opponent</th><th>Team score</th><th>Result</th><th>Match score</th><th>GK save%</th><th>Opp. GK save%</th><th>Spectators</th><th></th></tr></thead>
+<tbody>
+{% set gk_by_match = card.goalkeeping.by_match_id %}
+{% for match in card.matches %}
+{% set gk = gk_by_match.get(match.match_id) %}
+<tr>
+<td>{{ date_text(match) }}</td>
+<td>{{ match.season_code }}<br><span class="note">{{ match.competition_name }}</span></td>
+<td>{{ match.stage_text }}</td>
+<td>{{ "H" if match.is_home else "A" }}</td>
+<td class="team-wrap-cell">{{ team_link(match.opponent_id, match.opponent_name) }}</td>
+<td class="team-score"><span class="score">{{ match.team_score_text }}</span></td>
+<td>{% if match.outcome %}<span class="badge {{ match.outcome_class }}">{{ match.outcome_text }}</span>{% else %}<span class="note">{{ match.outcome_text }}</span>{% endif %}{% if match.decided_text %}<br><span class="note">{{ match.decided_text }}</span>{% endif %}</td>
+<td><span class="score">{{ match.score_text }}</span><br><span class="note">{{ match.home_name or "—" }} — {{ match.away_name or "—" }}</span></td>
+<td class="team-num" title="{{ gk.own.text if gk else '' }}">{{ gk.own.percentage_text if gk else "—" }}</td>
+<td class="team-num" title="{{ gk.opponents.text if gk else '' }}">{{ gk.opponents.percentage_text if gk else "—" }}</td>
+<td class="team-num">{{ match.spectators if match.spectators is not none else "—" }}</td>
+<td>{{ detail_link(url_for('panel.match_detail', match_id=match.match_id), "Details") }}</td>
+</tr>
+{% else %}<tr><td colspan="12" class="note">No team matches for the selected filters.</td></tr>{% endfor %}
+</tbody></table></div>
+</div>
+</section>
+</div>
+
+{# -------------------------------------------------------------- players #}
+<div id="team-panel-players" data-match-panel aria-labelledby="team-tab-players">
+<section class="panel">
+<h2>Players</h2>
+{{ filter_form("players", with_player=true) }}
+<div class="panel-body">
+<p class="note">Players listed in the team's match lineups (<code>ehf.match_lineup</code>), not confirmed playing time. Average = goals per match in the lineup. Click a column header to sort.</p>
+<div class="table-wrap"><table class="team-players-table">
+<thead><tr><th>#</th><th>Player</th><th>Pos</th><th>M</th><th>G</th><th>Avg</th><th>Sh</th><th>Shot%</th><th>Y</th><th>2'</th><th>R</th><th>Saves</th><th>Faced</th><th>Save%</th><th>Seasons in team</th><th>Last match</th></tr></thead>
+<tbody>{% for player in card.players %}
+<tr><td class="note">{{ player.numbers|join(", ") or "—" }}</td><td>{{ player_link(player.person_id, player.name) }}</td><td>{{ player.position|position_abbr or "—" }}</td><td class="team-num">{{ player.matches }}</td><td class="team-num"><b>{{ player.goals if player.goals is not none else "—" }}</b></td><td class="team-num">{{ player.average_text }}</td><td class="team-num">{{ player.shots if player.shots is not none else "—" }}</td><td class="team-num">{{ player.shot_percentage_text }}</td><td class="team-num">{{ player.yellow_cards or "—" }}</td><td class="team-num">{{ player.two_min_suspensions or "—" }}</td><td class="team-num">{{ player.red_cards or "—" }}</td><td class="team-num">{{ player.saves if player.shots_faced else "—" }}</td><td class="team-num">{{ player.shots_faced or "—" }}</td><td class="team-num">{{ player.save_percentage_text if player.shots_faced else "—" }}</td><td class="team-wrap-cell">{{ player.seasons_text }}</td><td>{{ player.last_match_text }}</td></tr>
+{% else %}<tr><td colspan="16" class="note">No players for the selected filters.</td></tr>{% endfor %}</tbody>
+</table></div>
+</div>
+</section>
+</div>
+
+{# ---------------------------------------------------------- goalkeepers #}
+{% set gk = card.goalkeeping %}
+<div id="team-panel-goalkeepers" data-match-panel aria-labelledby="team-tab-goalkeepers">
+<section class="panel">
+<h2>Goalkeepers</h2>
+{{ filter_form("goalkeepers") }}
+<div class="panel-body">
+{% if gk.has_data %}
+<p class="note">Saves and shots faced from <code>ehf.match_goalkeeper_stat</code>, counted only for goalkeepers who faced at least one shot. Save% = saves / shots faced summed over matches (not an average of match percentages). Opponents' save% shows how well this team's attack did against goalkeepers.</p>
+{% if gk.missing_matches %}<p class="notice notice-warning">{{ gk.missing_matches }} matches in this range are skipped: the import has 0 saves for every goalkeeper of both teams (no save data, mostly season 2022-23).</p>{% endif %}
+<div class="team-kpi-grid">
+<div><span>Matches with GK data</span><b>{{ gk.matches }}</b></div>
+<div><span>Team saves / shots faced</span><b>{{ gk.own.text }}</b></div>
+<div><span>Team save%</span><b>{{ gk.own.percentage_text }}</b></div>
+<div><span>Opponents' save% vs team</span><b>{{ gk.opponents.percentage_text }}</b><small>{{ gk.opponents.text }}</small></div>
+<div><span>Difference</span><b>{{ gk.difference_text }}</b></div>
+<div><span>Saves per match</span><b>{{ "%.1f"|format(gk.own.saves / gk.matches) if gk.matches else "—" }}</b></div>
+</div>
+<div class="team-records">
+{% for title, row in [("Best match (min. 10 shots)", gk.best_match), ("Worst match (min. 10 shots)", gk.worst_match)] %}
+<div class="team-record"><span>{{ title }}</span>{% if row %}<b>{{ detail_link(url_for('panel.match_detail', match_id=row.match.match_id), row.own.percentage_text ~ " (" ~ row.own.text ~ ")") }}</b><small>{{ date_text(row.match) }} · {{ row.match.place_text }} vs {{ row.match.opponent_name or "—" }} · {{ row.keeper_names|join(", ") }}</small>{% else %}<b>—</b>{% endif %}</div>
+{% endfor %}
+{% for title, keeper in [("Most shots faced", gk.most_shots), ("Best save% (min. 100 shots)", gk.best_keeper)] %}
+<div class="team-record"><span>{{ title }}</span>{% if keeper %}<b>{{ player_link(keeper.person_id, keeper.name) }}</b><small>{{ keeper.line.percentage_text }} · {{ keeper.line.text }} · {{ keeper.matches }} matches</small>{% else %}<b>—</b>{% endif %}</div>
+{% endfor %}
+</div>
+
+<section class="team-subpanel"><h3>Goalkeepers</h3>
+<div class="table-wrap"><table class="team-gk-table">
+<thead><tr><th>#</th><th>Goalkeeper</th><th>M</th><th>Saves</th><th>Faced</th><th>Save%</th><th>Saves / match</th><th>Median match save%</th><th>Best match</th><th>Seasons</th></tr></thead>
+<tbody>{% for keeper in gk.keepers %}
+<tr><td class="note">{{ keeper.numbers|join(", ") or "—" }}</td><td>{{ player_link(keeper.person_id, keeper.name) }}</td><td class="team-num">{{ keeper.matches }}</td><td class="team-num">{{ keeper.line.saves }}</td><td class="team-num">{{ keeper.line.shots_faced }}</td><td class="team-num"><b>{{ keeper.line.percentage_text }}</b></td><td class="team-num">{{ keeper.average_saves_text }}</td><td class="team-num">{{ keeper.median_text }}</td><td>{% if keeper.best %}{{ detail_link(url_for('panel.match_detail', match_id=keeper.best.match.match_id), keeper.best.text) }} <span class="note">vs {{ keeper.best.match.opponent_name or "—" }}</span>{% else %}—{% endif %}</td><td class="team-wrap-cell">{{ keeper.seasons_text }}</td></tr>
+{% endfor %}</tbody>
+</table></div></section>
+
+<section class="team-subpanel"><h3>By season</h3>
+<div class="table-wrap"><table class="team-season-table team-gk-split">
+<thead><tr><th>Season / competition</th><th>M</th><th>Team saves</th><th>Team faced</th><th>Team save%</th><th>Opp. saves</th><th>Opp. faced</th><th>Opp. save%</th></tr></thead>
+<tbody>{% for split in gk.splits %}
+<tr class="{{ 'team-season-row' if split.is_season else 'team-competition-row' }}"><td>{% if split.is_season %}<span class="season-badge">{{ split.label }}</span>{% else %}{{ split.label }}{% endif %}</td><td class="team-num">{{ split.matches }}</td><td class="team-num">{{ split.own.saves }}</td><td class="team-num">{{ split.own.shots_faced }}</td><td class="team-num"><b>{{ split.own.percentage_text }}</b></td><td class="team-num">{{ split.opponents.saves }}</td><td class="team-num">{{ split.opponents.shots_faced }}</td><td class="team-num">{{ split.opponents.percentage_text }}</td></tr>
+{% endfor %}</tbody>
+</table></div></section>
+
+<section class="team-subpanel"><h3>Match by match</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Date</th><th>Season</th><th>H/A</th><th>Opponent</th><th>Score</th><th>Goalkeepers (saves/faced)</th><th>Team save%</th><th>Opp. saves/faced</th><th>Opp. save%</th><th></th></tr></thead>
+<tbody>{% for row in gk.by_match %}
+<tr><td>{{ date_text(row.match) }}</td><td>{{ row.match.season_code }}</td><td>{{ "H" if row.match.is_home else "A" }}</td><td class="team-wrap-cell">{{ team_link(row.match.opponent_id, row.match.opponent_name) }}</td><td><span class="score">{{ row.match.team_score_text }}</span>{% if row.match.outcome %} <span class="badge {{ row.match.outcome_class }}">{{ row.match.outcome }}</span>{% endif %}</td><td class="team-wrap-cell">{% for name in row.keeper_names %}{{ name }} {{ row.keepers[loop.index0].saves }}/{{ row.keepers[loop.index0].shots_faced }}{% if not loop.last %} · {% endif %}{% endfor %}</td><td class="team-num"><b>{{ row.own.percentage_text }}</b></td><td class="team-num">{{ row.opponents.text }}</td><td class="team-num">{{ row.opponents.percentage_text }}</td><td>{{ detail_link(url_for('panel.match_detail', match_id=row.match.match_id), "Details") }}</td></tr>
+{% endfor %}</tbody>
+</table></div></section>
+{% else %}
+<p class="notice">No goalkeeper statistics for the selected filters.</p>
+{% endif %}
+</div>
+</section>
+</div>
+
+{# ---------------------------------------------------------------- sheet #}
+{% set sheet = card.sheet %}
+<div id="team-panel-sheet" data-match-panel aria-labelledby="team-tab-sheet">
+<section class="panel">
+<h2>Season sheet{% if sheet.season_code %} {{ sheet.season_code }}{% endif %}</h2>
+<form class="panel-body filters team-filters" method="get" action="{{ url_for('panel.team_detail', club_id=profile.id) }}">
+<input type="hidden" name="tab" value="sheet">
+<label>Season (required)
+<select name="sheet_season_id" required>
+{% for item in card.options.seasons %}<option value="{{ item.value }}" {% if item.value == card.sheet_filters.season_id|string %}selected{% endif %}>{{ item.label }}</option>{% endfor %}
+</select>
+</label>
+<label>Competition{{ select("sheet_competition_id", card.options.competitions, card.sheet_filters.competition_id) }}</label>
+<label>Opponent<input name="sheet_opponent" value="{{ card.sheet_filters.opponent or '' }}" placeholder="team name..."></label>
+<div class="pole-przycisku"><button class="btn small" type="submit">Show</button></div>
+<div class="pole-przycisku"><a class="btn secondary small" href="{{ url_for('panel.team_detail', club_id=profile.id, tab='sheet', sheet_season_id=card.sheet_filters.season_id) }}">Clear</a></div>
+</form>
+<div class="panel-body">
+<p class="note team-sheet-legend">Match column: <b>goals</b> (bold), suspensions (<b>2′</b>), <b>Y</b> yellow card, <b>R</b> red card, and for goalkeepers <span class="team-sheet-gk-sum">saves/shots faced</span>. The last columns sum up the player's season: matches, goals, shot%, cards, saves and save%. Players are ordered by position (goalkeepers, line players, backs, wings), then by goals. Empty striped cell — not in the lineup, “—” — in the lineup without a goal count. Matches without a team lineup are skipped. Hover a cell for details; the match header opens the match.</p>
+{% if sheet.matches %}
+<div class="table-wrap team-sheet-wrap"><table class="team-sheet-table" aria-label="Season sheet {{ sheet.season_code }}: players in rows, matches in columns, season totals in the last columns">
+<thead><tr><th scope="col" rowspan="2" class="team-sheet-player">Player</th><th scope="col" rowspan="2" class="team-sheet-pos">Pos</th>
+{% for match in sheet.matches %}<th scope="col" rowspan="2" class="team-sheet-match"><a href="{{ url_for('panel.match_detail', match_id=match.match_id) }}" data-detail-link title="{{ date_text(match) }} · {{ match.opponent_name or '—' }} · {{ match.place_text }} · {{ match.team_score_text }} ({{ match.outcome_text }})"><span class="team-sheet-vertical"><span class="team-sheet-date">{{ match.kickoff_at.strftime("%d.%m") if match.kickoff_at else "" }}</span> {{ match.opponent_name or "—" }}</span></a><span class="team-sheet-place">{{ "H" if match.is_home else "A" }}</span><span class="badge {{ match.outcome_class }} team-sheet-result">{{ match.team_score_text }}</span></th>{% endfor %}
+<th scope="colgroup" colspan="6" class="team-sheet-sum team-sheet-sum-first team-sheet-sum-group">Season total</th></tr>
+<tr><th scope="col" class="team-sheet-sum team-sheet-sum-first">M</th><th scope="col" class="team-sheet-sum">G</th><th scope="col" class="team-sheet-sum">Shot%</th><th scope="col" class="team-sheet-sum">Cards</th><th scope="col" class="team-sheet-sum">Saves</th><th scope="col" class="team-sheet-sum">Save%</th></tr></thead>
+<tbody>{% for row in sheet.rows %}
+<tr{% if row.is_goalkeeper %} class="team-sheet-keeper"{% endif %}><th scope="row" class="team-sheet-player"><span class="team-sheet-number">{{ row.numbers|join(", ") }}</span>{{ player_link(row.person_id, row.name) }}</th><td class="team-sheet-pos">{{ row.position|position_abbr(row.is_goalkeeper) or "—" }}</td>{% for cell in row.cells %}{{ sheet_cell(cell) }}{% endfor %}{{ sheet_total(row.total) }}</tr>
+{% endfor %}</tbody>
+<tfoot><tr><th scope="row" class="team-sheet-player">Team total</th><td class="team-sheet-pos"></td>{% for cell in sheet.match_totals %}{{ sheet_cell(cell) }}{% endfor %}{{ sheet_total(sheet.total) }}</tr></tfoot>
+</table></div>
+{% else %}<p class="notice">No team matches with a lineup in the selected season and range.</p>{% endif %}
+</div>
+</section>
+</div>
+{% endif %}
+</div>
+{% include "partials/match_detail_dialog.html" %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/match_detail.js') }}"></script>
+<script src="{{ url_for('static', filename='js/matches.js') }}"></script>
+{% endblock %}

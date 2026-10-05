@@ -24,3 +24,9 @@ class RefereeNotFound(Exception):
     def __init__(self, referee_id: int) -> None:
         super().__init__(f"Referee {referee_id} was not found")
         self.referee_id = referee_id
+
+
+class TeamNotFound(Exception):
+    def __init__(self, club_id: int) -> None:
+        super().__init__(f"Team {club_id} was not found")
+        self.club_id = club_id

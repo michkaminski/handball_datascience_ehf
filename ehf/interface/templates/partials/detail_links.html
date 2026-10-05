@@ -1,0 +1,11 @@
+{% macro detail_link(href, text) -%}
+<a class="detail-link" href="{{ href }}" data-detail-link title="Click: details · Double-click: new tab">{{ text }}</a>
+{%- endmacro %}
+
+{% macro team_link(club_id, name) -%}
+{% if club_id is not none and name %}{{ detail_link(url_for('panel.team_detail', club_id=club_id), name) }}{% else %}{{ name or "—" }}{% endif %}
+{%- endmacro %}
+
+{% macro player_link(person_id, name) -%}
+{% if person_id is not none %}{{ detail_link(url_for('panel.player_detail', player_id=person_id), name) }}{% else %}{{ name or "—" }}{% endif %}
+{%- endmacro %}

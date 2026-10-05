@@ -56,6 +56,7 @@ class LineupPlayer:
     shots_faced: int | None
     save_percentage: float | None
     top_scorer: bool = False
+    person_id: int | None = None
 
     @property
     def position_label(self) -> str | None:
@@ -188,6 +189,8 @@ class MatchDetail:
     away_officials: tuple[TeamOfficial, ...]
     officials: tuple[MatchOfficial, ...]
     metrics: tuple[MatchMetric, ...]
+    home_club_id: int | None = None
+    away_club_id: int | None = None
 
     @property
     def home_title(self) -> str:

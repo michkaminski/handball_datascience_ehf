@@ -239,6 +239,17 @@ STRONY: tuple[Strona, ...] = (
         uses_skeleton=False,
     ),
     Strona(
+        klucz="druzyny",
+        endpoint="team_detail",
+        sciezka="/druzyny/<int:club_id>",
+        tytul="Team details",
+        okruszek="Start › Data › Teams › Details",
+        opis="Team card from schema ehf.",
+        wzor="szczegoly",
+        w_menu=False,
+        uses_skeleton=False,
+    ),
+    Strona(
         klucz="hale",
         endpoint="venue_detail",
         sciezka="/hale/<int:venue_id>",

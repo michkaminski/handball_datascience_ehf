@@ -25,6 +25,7 @@ Kluby i ekipy w sezonach EHF.
   ID | Sezon | Drużyna | Płeć | Miasto | Mecze | Status | Akcje
   kliknięcie nagłówka sortuje wszystkie pasujące drużyny
   ID = ehf.club.id
+  Drużyna → /druzyny/<id> ([druzyna.md](druzyna.md)); klik → modal, dwuklik → nowa karta
   Płeć z ehf.competition.gender
 
   Akcje: Mecze → /mecze?season_id=&club=

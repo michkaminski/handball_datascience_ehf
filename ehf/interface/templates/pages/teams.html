@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "partials/sort_macros.html" import sort_th %}
+{% from "partials/detail_links.html" import team_link %}
 
 {% block tytul %}Drużyny — {{ nazwa_projektu }}{% endblock %}
 
@@ -70,7 +71,7 @@
 <tr>
 <td>{{ item.id }}</td>
 <td>{{ item.season_code }}</td>
-<td>{{ item.name }}</td>
+<td>{{ team_link(item.id, item.name) }}</td>
 <td>{{ item.gender_label }}</td>
 <td>{{ item.city or "—" }}</td>
 <td>{{ item.matches }}</td>
@@ -88,4 +89,10 @@
 </div>
 </div>
 </section>
+{% include "partials/match_detail_dialog.html" %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/match_detail.js') }}"></script>
+<script src="{{ url_for('static', filename='js/matches.js') }}"></script>
 {% endblock %}
