@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from flask import Flask
 
 from ehf.interface.branding import NAZWA_PROJEKTU, ODZNAKA_PROJEKTU, PODTYTUL_PROJEKTU
-from ehf.interface.pages import KLUCZE_DANYCH
+from ehf.interface.pages import KLUCZE_DANYCH, KLUCZE_RAPORTOW
 
 
 @dataclass(frozen=True)
@@ -19,6 +19,7 @@ class PozycjaMenu:
 GORNY_PASEK: tuple[PozycjaMenu, ...] = (
     PozycjaMenu("start", "Start", "panel.start"),
     PozycjaMenu("mecze", "Data", "panel.match_list"),
+    PozycjaMenu("raporty", "Reports", "panel.match_sheet"),
     PozycjaMenu("import", "Import", "panel.import_danych"),
     PozycjaMenu("kontrola", "Kontrola danych", "panel.kontrola_danych"),
     PozycjaMenu("logi", "Logi", "panel.logi_aplikacji"),
@@ -34,12 +35,15 @@ SIDEBAR: tuple[tuple[str, tuple[PozycjaMenu, ...]], ...] = (
             PozycjaMenu("zawodnicy", "Players", "panel.lista_zawodnikow", "◎"),
             PozycjaMenu("sklady", "Squads", "panel.lista_skladow", "☰"),
             PozycjaMenu("mecze", "Matches", "panel.match_list", "◈"),
-            PozycjaMenu("protokol", "Match sheet", "panel.match_sheet", "✎"),
             PozycjaMenu("tabele", "Standings", "panel.lista_tabel", "▤"),
             PozycjaMenu("strzelcy", "Scorers", "panel.lista_strzelcow", "★"),
             PozycjaMenu("hale", "Venues", "panel.lista_hal", "⌂"),
             PozycjaMenu("sedziowie", "Referees", "panel.lista_sedziow", "⚑"),
         ),
+    ),
+    (
+        "Reports",
+        (PozycjaMenu("protokol", "Match sheet", "panel.match_sheet", "✎"),),
     ),
     (
         "Import / eksport",
@@ -67,6 +71,7 @@ def zarejestruj_kontekst_nawigacji(aplikacja: Flask) -> None:
             "gorny_pasek": GORNY_PASEK,
             "sidebar": SIDEBAR,
             "klucze_danych": KLUCZE_DANYCH,
+            "klucze_raportow": KLUCZE_RAPORTOW,
             "nazwa_projektu": NAZWA_PROJEKTU,
             "podtytul_projektu": PODTYTUL_PROJEKTU,
             "odznaka_projektu": ODZNAKA_PROJEKTU,

@@ -11,6 +11,7 @@ Te same pozycje co w panelu ZPRP. Tu tylko szkielet — inna baza dojdzie późn
 |---|---|---|
 | Start | `/` | start |
 | Dane | `/mecze` | lista |
+| Reports | `/protokol` | narzedzie |
 | Import | `/import` | narzedzie |
 | Kontrola danych | `/kontrola` | narzedzie |
 | Logi | `/logi` | lista |
@@ -27,11 +28,16 @@ Szkic tekstowy każdej listy: `docs/strony/`. Zmianę strony zacznij od szkicu, 
 | Players | `/zawodnicy` | player list (live) | [zawodnicy.md](strony/zawodnicy.md) |
 | Składy | `/sklady` | lista | [sklady.md](strony/sklady.md) |
 | Matches | `/mecze` | match list (live) | [mecze.md](strony/mecze.md) |
-| Match sheet | `/protokol` | A4 print (live) | [protokol.md](strony/protokol.md) |
 | Tabele | `/tabele` | lista | [tabele.md](strony/tabele.md) |
 | Scorers | `/strzelcy` | scorer list (live) | [strzelcy.md](strony/strzelcy.md) |
 | Venues | `/hale` | venue list (live) | [hale.md](strony/hale.md) |
 | Referees | `/sedziowie` | referee list (live) | [sedziowie.md](strony/sedziowie.md) |
+
+## Reports
+
+| Menu | URL | Wzor | Szkic |
+|---|---|---|---|
+| Match sheet | `/protokol` | A4 print (live) | [protokol.md](strony/protokol.md) |
 
 ## Karty (bez pozycji w menu)
 

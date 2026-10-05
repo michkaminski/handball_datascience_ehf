@@ -105,7 +105,7 @@ STRONY: tuple[Strona, ...] = (
         endpoint="match_sheet",
         sciezka="/protokol",
         tytul="Match sheet",
-        okruszek="Start › Data › Match sheet",
+        okruszek="Start › Reports › Match sheet",
         opis="Printable A4 match sheet for any two teams, filled with season squads and stats.",
         wzor="narzedzie",
         filtry=("Season", "Competition", "Home", "Away", "Date", "Time", "Venue", "Order", "Previous season"),
@@ -294,10 +294,11 @@ KLUCZE_DANYCH = frozenset(
         "zawodnicy",
         "sklady",
         "mecze",
-        "protokol",
         "tabele",
         "strzelcy",
         "hale",
         "sedziowie",
     }
 )
+
+KLUCZE_RAPORTOW = frozenset({"protokol"})

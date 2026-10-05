@@ -4,7 +4,7 @@
 |---|---|
 | URL | `/protokol` (form), `/protokol/druk` (A4 print, new tab) |
 | View | `MatchSheetFormView` (`pages/match_sheet.html`), `MatchSheetPrintView` (`print/match_sheet.html`, `css/match_sheet_print.css`) |
-| Menu | Data › Match sheet |
+| Menu | Reports › Match sheet (top bar: Reports) |
 | Code | `ehf/domain/match_sheet.py` (rules), `ehf/infrastructure/match_sheet_reader.py` (SQL), `ehf/services/match_sheet.py` |
 | Database | `ehf.season`, `club_edition`, `club`, `match`, `match_team`, `match_lineup`, `match_player_stat`, `match_goalkeeper_stat`, `player_edition`, `person`, `venue` |
 

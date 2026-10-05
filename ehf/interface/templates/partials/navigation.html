@@ -1,7 +1,7 @@
 <nav class="nav">
 <div class="nav-inner">
 {% for pozycja in gorny_pasek %}
-<a href="{{ url_for(pozycja.punkt_koncowy) }}"{% if pozycja.klucz == sekcja_aktywna or (pozycja.klucz == 'mecze' and sekcja_aktywna in klucze_danych) %} class="active"{% endif %}>{{ pozycja.etykieta }}</a>
+<a href="{{ url_for(pozycja.punkt_koncowy) }}"{% if pozycja.klucz == sekcja_aktywna or (pozycja.klucz == 'mecze' and sekcja_aktywna in klucze_danych) or (pozycja.klucz == 'raporty' and sekcja_aktywna in klucze_raportow) %} class="active"{% endif %}>{{ pozycja.etykieta }}</a>
 {% endfor %}
 </div>
 </nav>
