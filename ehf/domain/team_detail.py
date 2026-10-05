@@ -866,6 +866,7 @@ class SheetRow:
     is_goalkeeper: bool
     cells: tuple[SheetCell | None, ...]
     total: SheetCell
+    birth_year: int | None = None
 
 
 @dataclass(frozen=True)
@@ -906,6 +907,7 @@ def season_sheet(
                     for match in columns
                 ),
                 total=sheet_cell(group),
+                birth_year=next((entry.birth_year for entry in group if entry.birth_year), None),
             )
         )
     rows.sort(

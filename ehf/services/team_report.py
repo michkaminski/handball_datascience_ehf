@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import replace
 from datetime import date
 from typing import Protocol
 
@@ -119,6 +120,11 @@ class TeamReportService:
         pages = [self._sheet_page(data, entries, request.season_id, season_code)]
         if previous_id is not None and previous_code is not None:
             pages.append(self._sheet_page(data, entries, previous_id, previous_code))
+        people = sorted(
+            {row.person_id for page in pages if page.sheet for row in page.sheet.rows if row.person_id is not None}
+        )
+        nationalities = self._reports.nationalities(people)
+        pages = [replace(page, nationalities=nationalities) for page in pages]
         return SeasonSheets(profile=data.profile, pages=tuple(pages), generated=today or date.today())
 
     @staticmethod

@@ -13,7 +13,7 @@ Two A4 landscape pages: the chosen season (default: the latest) and the season b
 A4 LANDSCAPE, one page per season
   <Team>                         SEASON SHEET                         <season> · as of <date>
   Season sheet <season>   competitions · N matches · W–D–L · goals
-  Player | Pos | <match columns: opponent + date (vertical), H/A, score> | M | G | Sh% | 2' | Sv%
+  Player | Born | Nat | Pos | <match columns: opponent + date (vertical), H/A, score> | M | G | Sh% | 2' | Sv%
   rows: goalkeepers, line players, backs, wings (then goals)
   cell: goals (′ = 2 min, R = red); goalkeepers saves/shots (+goals); empty striped = not in the lineup
   match top scorer boxed; header score underlined = win

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
 
 from ehf.domain.lineup_order import LineRole, line_role
@@ -328,6 +328,10 @@ class SeasonSheetPage:
     record: TeamRecord | None
     sheet: TeamSeasonSheet | None
     best: tuple[int | None, ...]
+    nationalities: dict[int, tuple[str, ...]] = field(default_factory=dict)
+
+    def nationality(self, person_id: int | None) -> tuple[str, ...]:
+        return self.nationalities.get(person_id, ()) if person_id is not None else ()
 
 
 @dataclass(frozen=True)

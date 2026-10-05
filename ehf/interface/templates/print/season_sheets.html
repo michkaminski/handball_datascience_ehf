@@ -24,7 +24,7 @@
 <table class="grid sheet{% if sheet.rows|length > 20 %} dense{% endif %}">
 <thead>
 <tr>
-<th class="l sheet-player">Player</th><th class="sheet-pos">Pos</th>
+<th class="l sheet-player">Player</th><th class="sheet-born">Born</th><th class="sheet-nat">Nat</th><th class="sheet-pos">Pos</th>
 {% for match in sheet.matches %}<th class="sheet-match"><span class="vertical"><b>{{ match.opponent_name or "—" }}</b> {{ match.kickoff_at.strftime("%d.%m") if match.kickoff_at else "" }}</span><span class="sheet-place">{{ "H" if match.is_home else "A" }}</span><span class="sheet-score{% if match.outcome == 'W' %} win{% endif %}">{{ match.team_score_text }}</span></th>{% endfor %}
 <th class="sum first">M</th><th class="sum">G</th><th class="sum">Sh%</th><th class="sum">2'</th><th class="sum">Sv%</th>
 </tr>
@@ -33,6 +33,9 @@
 {% for row in sheet.rows %}
 <tr{% if loop.index0 and row.is_goalkeeper != sheet.rows[loop.index0 - 1].is_goalkeeper %} class="split"{% endif %}>
 <th class="l sheet-player">{% if row.numbers %}<span class="no">{{ row.numbers|join(", ") }}</span>{% endif %}{{ row.name }}</th>
+{% set nat = page.nationality(row.person_id) %}
+<td class="sheet-born">{{ row.birth_year or "" }}</td>
+<td class="sheet-nat" title="{{ nat|join('/') }}">{{ nat[0] if nat else "" }}{% if nat|length > 1 %}<sup>+</sup>{% endif %}</td>
 <td class="sheet-pos">{{ row.position|position_abbr(row.is_goalkeeper) or "" }}</td>
 {% for cell in row.cells %}
 {% if cell %}
@@ -47,10 +50,10 @@
 {% endfor %}
 </tbody>
 <tfoot>
-<tr><th class="l sheet-player">Team</th><td class="sheet-pos"></td>{% for cell in sheet.match_totals %}<td class="cell"><b>{{ cell.goals if cell.goals is not none else "–" }}</b>{% if cell.saves_text %}<span class="gk">{{ cell.save_percentage_text }}</span>{% endif %}</td>{% endfor %}<td class="sum first">{{ sheet.matches|length }}</td><td class="sum"><b>{{ sheet.total.goals or "—" }}</b></td><td class="sum">{{ sheet.total.shot_percentage_text }}</td><td class="sum">{{ sheet.total.two_min_suspensions or "" }}</td><td class="sum">{{ sheet.total.save_percentage_text }}</td></tr>
+<tr><th class="l sheet-player">Team</th><td class="sheet-born"></td><td class="sheet-nat"></td><td class="sheet-pos"></td>{% for cell in sheet.match_totals %}<td class="cell"><b>{{ cell.goals if cell.goals is not none else "–" }}</b>{% if cell.saves_text %}<span class="gk">{{ cell.save_percentage_text }}</span>{% endif %}</td>{% endfor %}<td class="sum first">{{ sheet.matches|length }}</td><td class="sum"><b>{{ sheet.total.goals or "—" }}</b></td><td class="sum">{{ sheet.total.shot_percentage_text }}</td><td class="sum">{{ sheet.total.two_min_suspensions or "" }}</td><td class="sum">{{ sheet.total.save_percentage_text }}</td></tr>
 </tfoot>
 </table>
-<p class="legend">Bold number in a box: the match's top scorer for the team · ′ = one 2-minute suspension · goalkeeper cells: saves/shots faced (+goals) · empty cell: not in the lineup · header score: team goals first; underlined = win · team row: goals and goalkeeper save% per match.</p>
+<p class="legend">Bold number in a box: the match's top scorer for the team · ′ = one 2-minute suspension · goalkeeper cells: saves/shots faced (+goals) · empty cell: not in the lineup · Born: year of birth · Nat: nationality (IOC code, <sup>+</sup> another) · header score: team goals first; underlined = win · team row: goals and goalkeeper save% per match.</p>
 {% else %}
 <p class="empty-note">{% if page.sheet is none %}{{ report.profile.name }} did not play in EHF competitions in season {{ page.season_code }}.{% else %}No lineups for season {{ page.season_code }}.{% endif %}</p>
 {% endif %}
