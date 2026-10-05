@@ -19,6 +19,8 @@ from ehf.domain.team_report import (
     MatchTeamStats,
     PreviousStint,
     ReportMatch,
+    SeasonSheetPage,
+    SeasonSheets,
     TeamReport,
     TeamReportOptions,
     TeamReportRequest,
@@ -80,7 +82,6 @@ class TeamReportService:
         )[: request.last_matches]
         keeping = team_goalkeeping(entries, last).by_match_id
         stats = self._reports.match_stats(request.club_id, [match.match_id for match in last])
-        sheet = season_sheet(entries, season_matches, season_code)
 
         return TeamReport(
             profile=data.profile,
@@ -93,8 +94,6 @@ class TeamReportService:
             players=report_players(
                 players, stints, request.club_id, competitions, self._reports.nationalities(people)
             ),
-            sheet=sheet,
-            sheet_best=sheet_best_per_match(sheet),
             last_matches=tuple(
                 ReportMatch(
                     match=match,
@@ -106,6 +105,35 @@ class TeamReportService:
                 for match in last
             ),
             generated=today or date.today(),
+        )
+
+    def season_sheets(self, request: TeamReportRequest, today: date | None = None) -> SeasonSheets:
+        """The chosen season's sheet and the previous season's (empty page when the team did not play)."""
+        if request.club_id is None or request.season_id is None:
+            raise ValueError("Choose a season and a team")
+        data = self._teams.fetch(request.club_id)
+        season_code, previous_id, previous_code = self._reports.season_info(request.season_id)
+        if not any(edition.season_id == request.season_id for edition in data.editions):
+            raise ValueError(f"{data.profile.name} did not play in season {season_code}")
+        entries, _ = without_missing_saves(data.entries)
+        pages = [self._sheet_page(data, entries, request.season_id, season_code)]
+        if previous_id is not None and previous_code is not None:
+            pages.append(self._sheet_page(data, entries, previous_id, previous_code))
+        return SeasonSheets(profile=data.profile, pages=tuple(pages), generated=today or date.today())
+
+    @staticmethod
+    def _sheet_page(data: TeamCardData, entries, season_id: int, season_code: str) -> SeasonSheetPage:
+        editions = [edition for edition in data.editions if edition.season_id == season_id]
+        if not editions:
+            return SeasonSheetPage(season_code, (), None, None, ())
+        matches = filter_matches(data.matches, TeamDetailFilters(season_id=season_id))
+        sheet = season_sheet(entries, matches, season_code)
+        return SeasonSheetPage(
+            season_code=season_code,
+            competitions=tuple(dict.fromkeys(edition.competition_name for edition in editions)),
+            record=team_record(matches),
+            sheet=sheet,
+            best=sheet_best_per_match(sheet),
         )
 
     @staticmethod

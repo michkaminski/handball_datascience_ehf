@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Season sheets: {{ report.profile.name }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/team_report_print.css') }}">
+</head>
+<body>
+<div class="screen-bar">
+<button type="button" onclick="window.print()">Print / save as PDF</button>
+<span>A4 landscape, one page per season · black-and-white friendly · turn off the browser's headers and footers.</span>
+</div>
+{% for page in report.pages %}
+{% set sheet = page.sheet %}
+<section class="page landscape">
+<div class="fit">
+<header class="running">
+<span class="running-team">{{ report.profile.name }}</span>
+<span class="running-title">Season sheet</span>
+<span class="running-season">{{ page.season_code }}{% if loop.first %} · as of {{ report.generated_text }}{% endif %}</span>
+</header>
+<h2 class="section">Season sheet {{ page.season_code }} <small>{{ page.competitions|join(", ") }}{% if page.record %} · {{ page.record.played }} matches · {{ page.record.wins }}–{{ page.record.draws }}–{{ page.record.losses }} · goals {{ page.record.goals_text }}{% endif %}</small></h2>
+{% if sheet and sheet.matches %}
+<table class="grid sheet{% if sheet.rows|length > 20 %} dense{% endif %}">
+<thead>
+<tr>
+<th class="l sheet-player">Player</th><th class="sheet-pos">Pos</th>
+{% for match in sheet.matches %}<th class="sheet-match"><span class="vertical"><b>{{ match.opponent_name or "—" }}</b> {{ match.kickoff_at.strftime("%d.%m") if match.kickoff_at else "" }}</span><span class="sheet-place">{{ "H" if match.is_home else "A" }}</span><span class="sheet-score{% if match.outcome == 'W' %} win{% endif %}">{{ match.team_score_text }}</span></th>{% endfor %}
+<th class="sum first">M</th><th class="sum">G</th><th class="sum">Sh%</th><th class="sum">2'</th><th class="sum">Sv%</th>
+</tr>
+</thead>
+<tbody>
+{% for row in sheet.rows %}
+<tr{% if loop.index0 and row.is_goalkeeper != sheet.rows[loop.index0 - 1].is_goalkeeper %} class="split"{% endif %}>
+<th class="l sheet-player">{% if row.numbers %}<span class="no">{{ row.numbers|join(", ") }}</span>{% endif %}{{ row.name }}</th>
+<td class="sheet-pos">{{ row.position|position_abbr(row.is_goalkeeper) or "" }}</td>
+{% for cell in row.cells %}
+{% if cell %}
+{% set best = page.best[loop.index0] %}
+<td class="cell{% if best and cell.goals == best %} best{% endif %}{% if cell.saves_text %} keeper{% endif %}">{% if cell.saves_text %}<span class="gk">{{ cell.saves_text }}</span>{% if cell.goals %}<sup>+{{ cell.goals }}</sup>{% endif %}{% else %}<b>{{ cell.goals if cell.goals is not none else "–" }}</b>{% endif %}{% if cell.two_min_suspensions or cell.red_cards %}<sup class="pen">{{ "′" * cell.two_min_suspensions if cell.two_min_suspensions < 4 else cell.two_min_suspensions ~ "′" }}{% if cell.red_cards %}R{% endif %}</sup>{% endif %}</td>
+{% else %}
+<td class="cell empty"></td>
+{% endif %}
+{% endfor %}
+<td class="sum first">{{ row.total.matches }}</td><td class="sum"><b>{{ row.total.goals if row.total.goals is not none else "—" }}</b></td><td class="sum">{{ row.total.shot_percentage_text }}</td><td class="sum">{{ row.total.two_min_suspensions or "" }}</td><td class="sum">{% if row.total.saves_text %}{{ row.total.save_percentage_text }}{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+<tfoot>
+<tr><th class="l sheet-player">Team</th><td class="sheet-pos"></td>{% for cell in sheet.match_totals %}<td class="cell"><b>{{ cell.goals if cell.goals is not none else "–" }}</b>{% if cell.saves_text %}<span class="gk">{{ cell.save_percentage_text }}</span>{% endif %}</td>{% endfor %}<td class="sum first">{{ sheet.matches|length }}</td><td class="sum"><b>{{ sheet.total.goals or "—" }}</b></td><td class="sum">{{ sheet.total.shot_percentage_text }}</td><td class="sum">{{ sheet.total.two_min_suspensions or "" }}</td><td class="sum">{{ sheet.total.save_percentage_text }}</td></tr>
+</tfoot>
+</table>
+<p class="legend">Bold number in a box: the match's top scorer for the team · ′ = one 2-minute suspension · goalkeeper cells: saves/shots faced (+goals) · empty cell: not in the lineup · header score: team goals first; underlined = win · team row: goals and goalkeeper save% per match.</p>
+{% else %}
+<p class="empty-note">{% if page.sheet is none %}{{ report.profile.name }} did not play in EHF competitions in season {{ page.season_code }}.{% else %}No lineups for season {{ page.season_code }}.{% endif %}</p>
+{% endif %}
+</div>
+</section>
+{% endfor %}
+<script>
+// Shrink a page's content when it is taller than the printable area, so every part stays on its page
+// (page 1: players + last matches; page 2: seasons + season sheet), whatever the squad size.
+(() => {
+  // printable height (page minus @page margins), less 5 % because print layout runs a bit taller than screen
+  const AVAILABLE_MM = { portrait: (297 - 21) * 0.95, landscape: (210 - 17) * 0.95 };
+  const probe = document.createElement("div");
+  probe.style.cssText = "position:absolute;visibility:hidden;height:100mm";
+  document.body.append(probe);
+  const pxPerMm = probe.getBoundingClientRect().height / 100;
+  probe.remove();
+  function fit() {
+    document.querySelectorAll(".page").forEach((page) => {
+      const box = page.querySelector(".fit");
+      box.style.zoom = "";
+      const limit = AVAILABLE_MM[page.classList.contains("landscape") ? "landscape" : "portrait"] * pxPerMm;
+      const height = box.getBoundingClientRect().height;
+      if (height > limit) box.style.zoom = String(Math.max(0.6, Math.floor((limit / height) * 1000) / 1000));
+    });
+  }
+  fit();
+  window.addEventListener("beforeprint", fit);
+})();
+</script>
+</body>
+</html>

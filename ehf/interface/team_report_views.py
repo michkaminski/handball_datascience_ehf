@@ -27,8 +27,11 @@ def _request_or_400() -> TeamReportRequest:
 
 
 class TeamReportFormView(MethodView):
-    def __init__(self, service: TeamReportService) -> None:
+    """Form for a team print; the same form serves the team report and the season sheets."""
+
+    def __init__(self, service: TeamReportService, kind: str = "report") -> None:
         self._service = service
+        self._kind = kind
 
     def get(self) -> str:
         report_request = _request_or_400()
@@ -42,8 +45,8 @@ class TeamReportFormView(MethodView):
         if season_id is None and options.seasons:
             season_id = int(options.seasons[0].value)
         return render_template(
-            "pages/team_report.html",
-            sekcja_aktywna="raport_druzyny",
+            "pages/team_report.html" if self._kind == "report" else "pages/season_sheets.html",
+            sekcja_aktywna="raport_druzyny" if self._kind == "report" else "zestawienie_sezonu",
             options=options,
             report_request=report_request,
             season_id=season_id,
@@ -66,3 +69,20 @@ class TeamReportPrintView(MethodView):
         except DataReadError as exc:
             abort(503, description=str(exc))
         return render_template("print/team_report.html", report=report)
+
+
+class SeasonSheetsPrintView(MethodView):
+    def __init__(self, service: TeamReportService) -> None:
+        self._service = service
+
+    def get(self) -> str:
+        report_request = _request_or_400()
+        try:
+            report = self._service.season_sheets(report_request)
+        except TeamNotFound:
+            abort(404)
+        except ValueError as exc:
+            abort(400, description=str(exc))
+        except DataReadError as exc:
+            abort(503, description=str(exc))
+        return render_template("print/season_sheets.html", report=report)

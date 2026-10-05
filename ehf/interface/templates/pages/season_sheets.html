@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block tytul %}Season sheets — {{ nazwa_projektu }}{% endblock %}
+
+{% block tresc %}
+<section class="pagehead">
+<div class="crumb">Start › Reports › Season sheets</div>
+<h1>Season sheets</h1>
+<p>Players × matches for the chosen season and the season before it — one A4 landscape page each.</p>
+</section>
+{% if error %}
+<section class="panel"><div class="panel-body"><p class="note">{{ error }}</p></div></section>
+{% endif %}
+
+<section class="panel">
+<h2>Team and season</h2>
+<form class="panel-body filters report-scope" method="get" action="{{ url_for('panel.season_sheets') }}" data-sheet-scope>
+<label>Season
+<select name="season_id">
+{% for item in options.seasons %}<option value="{{ item.value }}" {% if item.value == season_id|string %}selected{% endif %}>{{ item.label }}</option>{% endfor %}
+</select>
+</label>
+</form>
+<form class="panel-body filters report-form" method="get" action="{{ url_for('panel.season_sheets_print') }}" target="_blank">
+<input type="hidden" name="season_id" value="{{ season_id or '' }}">
+<label>Team
+<select name="club_id" required>
+<option value="">Choose…</option>
+{% for item in options.teams %}<option value="{{ item.value }}" {% if report_request.club_id is not none and item.value == report_request.club_id|string %}selected{% endif %}>{{ item.label }}</option>{% endfor %}
+</select>
+</label>
+<div class="pole-przycisku"><button class="btn small" type="submit">Print season sheets</button></div>
+</form>
+<div class="panel-body">
+<p class="note">Opens in a new tab: page 1 — the chosen season, page 2 — the previous season (if the team played in EHF competitions then). Each page: goals per match, 2′ suspensions, goalkeepers saves/shots, the match top scorer boxed, season totals. Print with Ctrl+P (landscape) or save as PDF.</p>
+</div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/match_sheet.js') }}"></script>
+{% endblock %}

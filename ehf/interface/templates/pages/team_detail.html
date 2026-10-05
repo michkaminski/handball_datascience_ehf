@@ -61,7 +61,7 @@
 {% elif profile %}
 <div class="toolbar" data-detail-navigation>
 <div class="left"><a class="btn secondary" href="{{ url_for('panel.lista_druzyn') }}">← Back to list</a></div>
-<div class="right">{% if card.editions %}<a class="btn secondary" href="{{ url_for('panel.team_report_print', club_id=profile.id, season_id=card.editions[0].season_id) }}" target="_blank" rel="noopener">Team report {{ card.editions[0].season_code }}</a> {% endif %}{% if profile.profile_url %}<a class="btn secondary" href="{{ profile.profile_url }}" target="_blank" rel="noopener">EHF profile</a>{% endif %}</div>
+<div class="right">{% if card.editions %}<a class="btn secondary" href="{{ url_for('panel.team_report_print', club_id=profile.id, season_id=card.editions[0].season_id) }}" target="_blank" rel="noopener">Team report {{ card.editions[0].season_code }}</a> <a class="btn secondary" href="{{ url_for('panel.season_sheets_print', club_id=profile.id, season_id=card.editions[0].season_id) }}" target="_blank" rel="noopener">Season sheets</a> {% endif %}{% if profile.profile_url %}<a class="btn secondary" href="{{ profile.profile_url }}" target="_blank" rel="noopener">EHF profile</a>{% endif %}</div>
 </div>
 
 <section class="hero">

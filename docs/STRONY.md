@@ -39,6 +39,7 @@ Szkic tekstowy każdej listy: `docs/strony/`. Zmianę strony zacznij od szkicu, 
 |---|---|---|---|
 | Match sheet | `/protokol` | A4 print (live) | [protokol.md](strony/protokol.md) |
 | Team report | `/raport-druzyny` | A4 print (live) | [raport_druzyny.md](strony/raport_druzyny.md) |
+| Season sheets | `/zestawienie-sezonu` | A4 landscape print (live) | [zestawienie_sezonu.md](strony/zestawienie_sezonu.md) |
 
 ## Karty (bez pozycji w menu)
 

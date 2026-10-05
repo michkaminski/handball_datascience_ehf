@@ -300,8 +300,6 @@ class TeamReport:
     goalkeeping: TeamGoalkeeping
     seasons: tuple[TeamSeasonRow, ...]
     players: tuple[ReportPlayer, ...]
-    sheet: TeamSeasonSheet
-    sheet_best: tuple[int | None, ...]
     last_matches: tuple[ReportMatch, ...]
     generated: date
 
@@ -317,6 +315,28 @@ class TeamReport:
     @property
     def last_form(self) -> str:
         return " ".join(item.match.outcome or "·" for item in reversed(self.last_matches[:5]))
+
+    @property
+    def generated_text(self) -> str:
+        return self.generated.strftime("%d.%m.%Y")
+
+
+@dataclass(frozen=True)
+class SeasonSheetPage:
+    season_code: str
+    competitions: tuple[str, ...]
+    record: TeamRecord | None
+    sheet: TeamSeasonSheet | None
+    best: tuple[int | None, ...]
+
+
+@dataclass(frozen=True)
+class SeasonSheets:
+    """Season sheets of one team: the chosen season and the one before it."""
+
+    profile: TeamProfile
+    pages: tuple[SeasonSheetPage, ...]
+    generated: date
 
     @property
     def generated_text(self) -> str:

@@ -33,7 +33,7 @@ from ehf.interface.scorer_views import ScorerListView
 from ehf.interface.season_views import SeasonListView
 from ehf.interface.start_views import StartView
 from ehf.interface.match_sheet_views import MatchSheetFormView, MatchSheetPrintView
-from ehf.interface.team_report_views import TeamReportFormView, TeamReportPrintView
+from ehf.interface.team_report_views import SeasonSheetsPrintView, TeamReportFormView, TeamReportPrintView
 from ehf.interface.team_views import TeamDetailView, TeamListView
 from ehf.interface.venue_views import VenueDetailView, VenueListView
 from ehf.interface.views import utworz_blueprint
@@ -160,6 +160,14 @@ def create_app() -> Flask:
     blueprint.add_url_rule(
         "/raport-druzyny/druk",
         view_func=TeamReportPrintView.as_view("team_report_print", service=team_report_service),
+    )
+    blueprint.add_url_rule(
+        "/zestawienie-sezonu",
+        view_func=TeamReportFormView.as_view("season_sheets", service=team_report_service, kind="sheets"),
+    )
+    blueprint.add_url_rule(
+        "/zestawienie-sezonu/druk",
+        view_func=SeasonSheetsPrintView.as_view("season_sheets_print", service=team_report_service),
     )
     blueprint.add_url_rule(
         "/strzelcy",
