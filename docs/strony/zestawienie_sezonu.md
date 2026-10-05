@@ -18,6 +18,7 @@ A4 LANDSCAPE, one page per season
   cell: goals (′ = 2 min, R = red); goalkeepers saves/shots (+goals); empty striped = not in the lineup
   match top scorer boxed; header score underlined = win
   Team row: goals and goalkeeper save% per match
+  season totals highlighted (bold on light grey): top 3 G, top 3 Sh% (min. 20 shots), best Sv% (min. 50 shots faced)
 ```
 
 More than 20 players → denser rows; the fit script scales a page down (not below 60 %) if it is still too tall.

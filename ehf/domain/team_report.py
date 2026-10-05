@@ -329,6 +329,9 @@ class SeasonSheetPage:
     sheet: TeamSeasonSheet | None
     best: tuple[int | None, ...]
     nationalities: dict[int, tuple[str, ...]] = field(default_factory=dict)
+    top_goals: frozenset[int] = frozenset()
+    top_shooters: frozenset[int] = frozenset()
+    top_keeper: int | None = None
 
     def nationality(self, person_id: int | None) -> tuple[str, ...]:
         return self.nationalities.get(person_id, ()) if person_id is not None else ()
@@ -345,6 +348,25 @@ class SeasonSheets:
     @property
     def generated_text(self) -> str:
         return self.generated.strftime("%d.%m.%Y")
+
+
+def sheet_highlights(sheet: TeamSeasonSheet) -> tuple[frozenset[int], frozenset[int], int | None]:
+    """Row indexes to mark in the season totals: top scorers, top shooters, best goalkeeper."""
+    totals = {index: row.total for index, row in enumerate(sheet.rows)}
+    goals = _places({str(i): t.goals for i, t in totals.items() if t.goals})
+    shooters = _places(
+        {str(i): t.goals / t.shots for i, t in totals.items() if t.shots and t.shots >= MIN_SHOTS and t.goals}
+    )
+    keepers = {
+        i: t.saves / t.shots_faced
+        for i, t in totals.items()
+        if t.shots_faced and t.shots_faced >= MIN_SHOTS_FACED and t.saves is not None
+    }
+    return (
+        frozenset(int(i) for i, place in goals.items() if place <= TOP_GOALS),
+        frozenset(int(i) for i, place in shooters.items() if place <= TOP_SHOOTERS),
+        max(keepers, key=keepers.get, default=None),
+    )
 
 
 def sheet_best_per_match(sheet: TeamSeasonSheet) -> tuple[int | None, ...]:

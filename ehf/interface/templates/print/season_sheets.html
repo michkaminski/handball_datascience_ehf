@@ -45,7 +45,8 @@
 <td class="cell empty"></td>
 {% endif %}
 {% endfor %}
-<td class="sum first">{{ row.total.matches }}</td><td class="sum"><b>{{ row.total.goals if row.total.goals is not none else "—" }}</b></td><td class="sum">{{ row.total.shot_percentage_text }}</td><td class="sum">{{ row.total.two_min_suspensions or "" }}</td><td class="sum">{% if row.total.saves_text %}{{ row.total.save_percentage_text }}{% endif %}</td>
+{% set i = loop.index0 %}
+<td class="sum first">{{ row.total.matches }}</td><td class="sum{% if i in page.top_goals %} hl{% endif %}"><b>{{ row.total.goals if row.total.goals is not none else "—" }}</b></td><td class="sum{% if i in page.top_shooters %} hl{% endif %}">{{ row.total.shot_percentage_text }}</td><td class="sum">{{ row.total.two_min_suspensions or "" }}</td><td class="sum{% if i == page.top_keeper %} hl{% endif %}">{% if row.total.saves_text %}{{ row.total.save_percentage_text }}{% endif %}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -53,7 +54,7 @@
 <tr><th class="l sheet-player">Team</th><td class="sheet-born"></td><td class="sheet-nat"></td><td class="sheet-pos"></td>{% for cell in sheet.match_totals %}<td class="cell"><b>{{ cell.goals if cell.goals is not none else "–" }}</b>{% if cell.saves_text %}<span class="gk">{{ cell.save_percentage_text }}</span>{% endif %}</td>{% endfor %}<td class="sum first">{{ sheet.matches|length }}</td><td class="sum"><b>{{ sheet.total.goals or "—" }}</b></td><td class="sum">{{ sheet.total.shot_percentage_text }}</td><td class="sum">{{ sheet.total.two_min_suspensions or "" }}</td><td class="sum">{{ sheet.total.save_percentage_text }}</td></tr>
 </tfoot>
 </table>
-<p class="legend">Bold number in a box: the match's top scorer for the team · ′ = one 2-minute suspension · goalkeeper cells: saves/shots faced (+goals) · empty cell: not in the lineup · Born: year of birth · Nat: nationality (IOC code, <sup>+</sup> another) · header score: team goals first; underlined = win · team row: goals and goalkeeper save% per match.</p>
+<p class="legend"><span class="hl-sample">12</span> season totals: top 3 scorers, top 3 Sh% (min. 20 shots), best Sv% (min. 50 shots) · bold number in a box: the match's top scorer for the team · ′ = one 2-minute suspension · goalkeeper cells: saves/shots faced (+goals) · empty cell: not in the lineup · Born: year of birth · Nat: nationality (IOC code, <sup>+</sup> another) · header score: team goals first; underlined = win · team row: goals and goalkeeper save% per match.</p>
 {% else %}
 <p class="empty-note">{% if page.sheet is none %}{{ report.profile.name }} did not play in EHF competitions in season {{ page.season_code }}.{% else %}No lineups for season {{ page.season_code }}.{% endif %}</p>
 {% endif %}

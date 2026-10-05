@@ -28,6 +28,7 @@ from ehf.domain.team_report import (
     match_date_key,
     report_players,
     sheet_best_per_match,
+    sheet_highlights,
     short_name,
 )
 
@@ -134,12 +135,16 @@ class TeamReportService:
             return SeasonSheetPage(season_code, (), None, None, ())
         matches = filter_matches(data.matches, TeamDetailFilters(season_id=season_id))
         sheet = season_sheet(entries, matches, season_code)
+        top_goals, top_shooters, top_keeper = sheet_highlights(sheet)
         return SeasonSheetPage(
             season_code=season_code,
             competitions=tuple(dict.fromkeys(edition.competition_name for edition in editions)),
             record=team_record(matches),
             sheet=sheet,
             best=sheet_best_per_match(sheet),
+            top_goals=top_goals,
+            top_shooters=top_shooters,
+            top_keeper=top_keeper,
         )
 
     @staticmethod

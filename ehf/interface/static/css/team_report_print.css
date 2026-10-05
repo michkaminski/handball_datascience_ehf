@@ -103,6 +103,7 @@ h1,h2,p{margin:0}
 .sheet.dense .cell,.sheet.dense th,.sheet.dense td{padding-top:.3mm;padding-bottom:.3mm}
 .sheet.dense .sheet-player{font-size:7pt}
 .sheet .sum{text-align:center;font-size:7.4pt;background:var(--tint)}
+.sheet .sum.hl{background:var(--mark);font-weight:700}
 .sheet .sum.first{border-left:.9pt solid var(--ink)}
 .sheet thead .sum{background:none}
 .sheet tr.split td,.sheet tr.split th{border-top:.8pt solid var(--rule)}
