@@ -42,6 +42,8 @@ class TeamReportReader(Protocol):
 
     def previous_stints(self, people: Sequence[int], season_id: int) -> tuple[PreviousStint, ...]: ...
 
+    def nationalities(self, people: Sequence[int]) -> dict[int, tuple[str, ...]]: ...
+
     def match_stats(self, club_id: int, matches: Sequence[int]) -> dict[int, MatchTeamStats]: ...
 
 
@@ -88,7 +90,9 @@ class TeamReportService:
             record=team_record(season_matches),
             goalkeeping=team_goalkeeping(entries, season_matches),
             seasons=season_rows(history, [e for e in data.editions if e.year_start <= year]),
-            players=report_players(players, stints, request.club_id, competitions),
+            players=report_players(
+                players, stints, request.club_id, competitions, self._reports.nationalities(people)
+            ),
             sheet=sheet,
             sheet_best=sheet_best_per_match(sheet),
             last_matches=tuple(

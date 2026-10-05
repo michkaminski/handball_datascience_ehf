@@ -7,6 +7,7 @@ from psycopg.rows import dict_row
 
 from ehf.domain.errors import DataReadError
 from ehf.domain.matches import Choice
+from ehf.domain.nationality import nationality_code
 from ehf.domain.team_report import MatchTeamStats, PreviousStint, TeamReportOptions
 from ehf.infrastructure.match_sheet_reader import SEASON_SQL, TEAM_SQL
 
@@ -53,6 +54,14 @@ LEFT JOIN ehf.match_goalkeeper_stat gk ON gk.lineup_id = l.id
 WHERE ce.season_id = %(season_id)s AND l.person_id = ANY(%(people)s)
 GROUP BY l.person_id, t.club_id, c.name
 ORDER BY l.person_id, matches DESC
+"""
+
+NATIONALITY_SQL = """
+SELECT n.person_id, n.nationality, co.code
+FROM ehf.person_nationality n
+LEFT JOIN ehf.country co ON lower(co.name) = lower(n.nationality)
+WHERE n.person_id = ANY(%(people)s)
+ORDER BY n.person_id, n.nationality
 """
 
 MATCH_STATS_SQL = """
@@ -113,6 +122,23 @@ class PsycopgTeamReportReader:
                     return tuple(PreviousStint(**row) for row in cursor.fetchall())
         except Error as exc:
             raise DataReadError(f"Could not read previous season: {exc}") from exc
+
+    def nationalities(self, people: Sequence[int]) -> dict[int, tuple[str, ...]]:
+        if not people:
+            return {}
+        try:
+            with self._connect() as connection:
+                with connection.cursor(row_factory=dict_row) as cursor:
+                    cursor.execute(NATIONALITY_SQL, {"people": list(people)})
+                    rows = cursor.fetchall()
+        except Error as exc:
+            raise DataReadError(f"Could not read nationalities: {exc}") from exc
+        codes: dict[int, list[str]] = {}
+        for row in rows:
+            code = nationality_code(row["nationality"], row["code"])
+            if code not in codes.setdefault(row["person_id"], []):
+                codes[row["person_id"]].append(code)
+        return {person: tuple(values) for person, values in codes.items()}
 
     def match_stats(self, club_id: int, matches: Sequence[int]) -> dict[int, MatchTeamStats]:
         if not matches:

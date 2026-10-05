@@ -153,6 +153,11 @@ class ReportPlayer:
     top_keeper: bool = False
     top_previous: bool = False
     new_group: bool = False
+    nationalities: tuple[str, ...] = ()
+
+    @property
+    def nationality_text(self) -> str:
+        return "/".join(self.nationalities)
 
     @property
     def number(self) -> str:
@@ -189,6 +194,7 @@ def report_players(
     stints: Sequence[PreviousStint],
     club_id: int,
     competitions: Sequence[str] = (),
+    nationalities: dict[int, tuple[str, ...]] | None = None,
 ) -> tuple[ReportPlayer, ...]:
     by_person: dict[int, list[PreviousStint]] = {}
     for stint in stints:
@@ -233,6 +239,7 @@ def report_players(
                 top_keeper=key(row) == best_keeper,
                 top_previous=previous_goals.get(key(row), 99) <= TOP_GOALS,
                 new_group=index > 0 and current_role != role(ordered[index - 1]),
+                nationalities=(nationalities or {}).get(row.person_id, ()) if row.person_id else (),
             )
         )
     return tuple(players)
