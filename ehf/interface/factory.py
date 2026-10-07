@@ -17,6 +17,7 @@ from ehf.infrastructure.scorer_list_reader import PsycopgScorerListReader
 from ehf.infrastructure.season_list_reader import PsycopgSeasonListReader
 from ehf.infrastructure.match_sheet_reader import PsycopgMatchSheetReader
 from ehf.infrastructure.team_detail_reader import PsycopgTeamDetailReader
+from ehf.infrastructure.match_summary_reader import PsycopgMatchSummaryReader
 from ehf.infrastructure.team_report_reader import PsycopgTeamReportReader
 from ehf.infrastructure.team_list_reader import PsycopgTeamListReader
 from ehf.infrastructure.venue_detail_reader import PsycopgVenueDetailReader
@@ -33,6 +34,7 @@ from ehf.interface.scorer_views import ScorerListView
 from ehf.interface.season_views import SeasonListView
 from ehf.interface.start_views import StartView
 from ehf.interface.match_sheet_views import MatchSheetFormView, MatchSheetPrintView
+from ehf.interface.match_summary_views import MatchSummaryPrintView
 from ehf.interface.team_report_views import SeasonSheetsPrintView, TeamReportFormView, TeamReportPrintView
 from ehf.interface.team_views import TeamDetailView, TeamListView
 from ehf.interface.venue_views import VenueDetailView, VenueListView
@@ -49,6 +51,7 @@ from ehf.services.scorer_list import ScorerListService
 from ehf.services.season_list import SeasonListService
 from ehf.services.match_sheet import MatchSheetService
 from ehf.services.team_detail import TeamDetailService
+from ehf.services.match_summary import MatchSummaryService
 from ehf.services.team_report import TeamReportService
 from ehf.services.team_list import TeamListService
 from ehf.services.venue_detail import VenueDetailService
@@ -91,6 +94,7 @@ def create_app() -> Flask:
     team_detail_service = TeamDetailService(PsycopgTeamDetailReader(connect))
     match_sheet_service = MatchSheetService(PsycopgMatchSheetReader(connect))
     team_report_service = TeamReportService(PsycopgTeamDetailReader(connect), PsycopgTeamReportReader(connect))
+    match_summary_service = MatchSummaryService(PsycopgMatchSummaryReader(connect))
     scorer_list_service = ScorerListService(PsycopgScorerListReader(connect))
     news_service = NewsService(PsycopgNewsReader(connect))
     blueprint.add_url_rule(
@@ -104,6 +108,10 @@ def create_app() -> Flask:
     blueprint.add_url_rule(
         "/mecze/<int:match_id>",
         view_func=MatchDetailView.as_view("match_detail", service=detail_service),
+    )
+    blueprint.add_url_rule(
+        "/mecze/<int:match_id>/podsumowanie",
+        view_func=MatchSummaryPrintView.as_view("match_summary_print", service=match_summary_service),
     )
     blueprint.add_url_rule(
         "/zawodnicy",

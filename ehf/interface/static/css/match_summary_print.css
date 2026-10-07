@@ -1,0 +1,245 @@
+/* Match summary — one A4 portrait page. Home indigo, away orange (both stay apart in greyscale). */
+@page{size:A4 portrait;margin:9mm 10mm}
+
+:root{--ink:#14141a;--soft:#55555f;--faint:#8b8b95;--rule:#cfcfd8;--hair:#e6e6ec;--tint:#f4f4f7;--paper:#fff}
+*{box-sizing:border-box}
+html{font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;font-size:7.8pt;line-height:1.3;color:var(--ink);background:var(--paper);font-variant-numeric:tabular-nums;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{margin:0;background:var(--paper)}
+h1,h2,p,ol,ul,dl,dd{margin:0}
+ol,ul{padding:0;list-style:none}
+.muted{color:var(--faint)}
+.best{font-weight:700;background:var(--tint);box-shadow:inset 0 0 0 .5pt #a9a9b5}
+
+/* team identity */
+.team{white-space:nowrap}
+.sw,.team-dot{display:inline-block;width:2.1mm;height:2.1mm;border-radius:.5mm;margin-right:1mm;vertical-align:-.25mm}
+.team.home .sw,.team-dot.home{background:var(--home)}
+.team.away .sw,.team-dot.away{background:var(--away)}
+
+/* ---------- masthead ---------- */
+.mast{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:4mm;padding-bottom:1.2mm}
+.mast-team{display:flex;align-items:center;gap:2.5mm;min-width:0}
+.mast-team.away{justify-content:flex-end;text-align:right}
+.mast-team img{width:11mm;height:11mm;object-fit:contain}
+.mast-team h1{font-size:15pt;line-height:1.05;font-weight:700;letter-spacing:-.01em}
+.mast-team.home h1{border-left:1.4mm solid var(--home);padding-left:2mm}
+.mast-team.away h1{border-right:1.4mm solid var(--away);padding-right:2mm}
+.mast-score{text-align:center}
+.score{font-size:30pt;font-weight:800;line-height:1;letter-spacing:-.02em}
+.score b{font-weight:300;margin:0 1.5mm;color:var(--faint)}
+.score-sub{font-size:8pt;color:var(--soft);margin-top:.6mm}
+.mast-meta{text-align:center;font-size:7.4pt;color:var(--soft);padding:1mm 0 1.4mm;border-top:.5pt solid var(--rule)}
+.headline{font-family:Georgia,"Times New Roman",serif;font-size:11.5pt;font-style:italic;text-align:center;padding:1.2mm 6mm 1.6mm;border-top:.5pt solid var(--rule);border-bottom:1.4pt solid var(--ink)}
+
+/* ---------- blocks ---------- */
+.block{margin-top:1.9mm;break-inside:avoid;min-width:0}
+.block h2{display:flex;align-items:baseline;gap:1.8mm;font-size:9pt;font-weight:700;padding-bottom:.6mm;margin-bottom:1mm;border-bottom:.5pt solid var(--rule);white-space:nowrap}
+.block h2>span:first-child{display:inline-block;min-width:4.4mm;height:4.4mm;line-height:4.2mm;text-align:center;border:.8pt solid var(--ink);border-radius:50%;font-size:6.8pt}
+.block h2 small{font-size:6.6pt;font-weight:400;color:var(--soft);overflow:hidden;text-overflow:ellipsis}
+.block h2 .key{margin-left:auto}
+.row{display:grid;grid-template-columns:1.12fr 1fr;gap:5mm}
+.row.even{grid-template-columns:1fr 1fr}
+.sub{font-size:6.6pt;color:var(--soft);margin:.4mm 0 .8mm}
+
+/* legend keys */
+.key i,.key b{display:inline-block;vertical-align:middle;margin:0 .6mm 0 2.4mm}
+.k-area{width:2.6mm;height:2.2mm;margin-right:.8mm!important}
+.k-area.home{background:var(--home);opacity:.75}
+.k-area.away{background:var(--away);opacity:.75}
+.k-line{width:4mm;height:0;border-top:1pt solid var(--ink)}
+.k-run{width:3mm;height:2.4mm;background:#ececf2}
+.k-t{width:2.8mm;height:2.8mm;line-height:2.8mm;border-radius:50%;background:#55555f;color:#fff;font-size:5pt;text-align:center}
+.k-s{font-size:6pt;color:var(--soft)}
+.k-avg{display:inline-block;width:0;height:2.6mm;border-left:1pt solid var(--ink);vertical-align:middle;margin:0 .6mm}
+
+/* ---------- 1 flow chart ---------- */
+.flow{display:block;width:100%;height:auto;overflow:visible}
+.flow text{font-family:inherit}
+.flow .grid{stroke:var(--hair);stroke-width:.2}
+.flow .zero{stroke:#9a9aa6;stroke-width:.3}
+.flow .dashed{stroke-dasharray:1 .8}
+.flow .half{stroke:var(--ink);stroke-width:.3;stroke-dasharray:.8 .6}
+.flow .half-label{font-size:2.3px;fill:var(--soft)}
+.flow .ylabel{font-size:2.2px;fill:var(--faint);text-anchor:end}
+.flow .xlabel{font-size:2.3px;fill:var(--soft);text-anchor:middle}
+.flow .area{stroke:none}
+.flow .area.home{fill:var(--home);fill-opacity:.82}
+.flow .area.away{fill:var(--away);fill-opacity:.85}
+.flow .band.home{fill:var(--home);fill-opacity:.08}
+.flow .band.away{fill:var(--away);fill-opacity:.1}
+.flow .band-label{font-size:2.2px;font-weight:700;text-anchor:middle}
+.flow .band-label.home{fill:var(--home)}
+.flow .band-label.away{fill:#c2501f}
+.flow .tmark circle{stroke:#fff;stroke-width:.3}
+.flow .tmark.home circle{fill:var(--home)}
+.flow .tmark.away circle{fill:var(--away)}
+.flow .tmark text{font-size:1.9px;font-weight:700;fill:#fff;text-anchor:middle}
+.flow .smark{font-size:2px;font-weight:700;text-anchor:middle}
+.flow .smark.home{fill:var(--home)}
+.flow .smark.away{fill:#c2501f}
+.flow .moment circle{fill:#fff;stroke:var(--ink);stroke-width:.35}
+.flow .moment text{font-size:2.1px;font-weight:800;text-anchor:middle;fill:var(--ink)}
+.flow .win-frame{fill:none;stroke:var(--hair);stroke-width:.2}
+.flow .win-area{stroke:none}
+.flow .win-area.home{fill:var(--home);fill-opacity:.16}
+.flow .win-area.away{fill:var(--away);fill-opacity:.2}
+.flow .win-line{fill:none;stroke:var(--ink);stroke-width:.35;stroke-linejoin:round}
+.flow .panel-label{font-size:2.2px;fill:var(--soft)}
+.moments{display:flex;flex-wrap:wrap;gap:.6mm 4.5mm;margin-top:.4mm;font-size:7.2pt}
+.moments-title{font-weight:700}
+.moments-title small{font-weight:400;color:var(--soft)}
+.moments .num{display:inline-block;width:3.6mm;height:3.6mm;line-height:3.3mm;border:.6pt solid var(--ink);border-radius:50%;text-align:center;font-size:6pt}
+.moments .team-dot{margin-left:.6mm}
+
+/* short version: one bar chart of the goal difference */
+.flow.lead .lead-bar.home{fill:var(--home)}
+.flow.lead .lead-bar.away{fill:var(--away)}
+.flow.lead .zero{stroke:var(--ink);stroke-width:.35}
+.flow.lead .ylabel{font-size:2.5px}
+.flow.lead .ylabel.home{fill:var(--home);font-weight:600}
+.flow.lead .ylabel.away{fill:#c2501f;font-weight:600}
+.flow.lead .xlabel{font-size:2.6px}
+.flow.lead .half-label{font-size:2.5px}
+.flow.lead .peak circle{fill:#fff;stroke-width:.5}
+.flow.lead .peak.home circle{stroke:var(--home)}
+.flow.lead .peak.away circle{stroke:#c2501f}
+.flow.lead .peak text{font-size:2.6px;text-anchor:middle;fill:var(--ink);paint-order:stroke;stroke:#fff;stroke-width:.7}
+.flow.lead .peak .peak-margin{font-weight:800;font-size:3.1px}
+.flow.lead .peak.home .peak-margin{fill:var(--home)}
+.flow.lead .peak.away .peak-margin{fill:#c2501f}
+.k-peak{width:2.4mm;height:2.4mm;border-radius:50%;border:.5mm solid var(--ink);background:#fff}
+
+/* ---------- 2 comparison ---------- */
+.cmp-head,.cmp-row{display:grid;grid-template-columns:15mm 1fr 27mm 1fr 15mm;align-items:center;column-gap:1.2mm}
+.cmp-head{font-size:7pt;font-weight:600;margin-bottom:.6mm}
+.cmp-head span:first-child{grid-column:1/3}
+.cmp-head span:last-child{grid-column:4/6;text-align:right}
+.cmp-head .team{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.cmp-row{padding:.25mm 0;border-bottom:.35pt solid var(--hair)}
+.cmp-val{font-size:7.4pt;white-space:nowrap}
+.cmp-val.home{text-align:left}
+.cmp-val.away{text-align:right}
+.cmp-val.best{background:none;box-shadow:none}
+.cmp-label{text-align:center;font-size:6.9pt;line-height:1.05;color:var(--ink)}
+.cmp-label small{display:block;font-size:5.6pt;color:var(--faint)}
+.cmp-bar{position:relative;height:2.3mm;background:var(--tint);border-radius:.4mm}
+.cmp-bar i{position:absolute;top:0;bottom:0;border-radius:.4mm}
+.cmp-bar.home i{right:0;background:var(--home)}
+.cmp-bar.away i{left:0;background:var(--away)}
+.cmp-bar em{position:absolute;top:-.6mm;bottom:-.6mm;width:0;border-left:1pt solid var(--ink)}
+
+/* short version: both bars from one baseline, on one scale (percentages on 0–100 %) */
+.pair-head{display:flex;gap:5mm;font-size:7pt;font-weight:600;margin:0 0 .8mm 31.5mm}
+.pair-row{display:grid;grid-template-columns:30mm 1fr;align-items:center;column-gap:1.5mm;padding:.55mm 0;border-bottom:.35pt solid var(--hair)}
+.pair-label{font-size:7.2pt;line-height:1.1}
+.pair-bars{display:flex;flex-direction:column;gap:.45mm}
+.pair{display:flex;align-items:center;gap:1.2mm;height:2.8mm}
+.pair i{display:block;height:100%;min-width:.4mm;border-radius:0 .5mm .5mm 0}
+.pair.home i{background:var(--home)}
+.pair.away i{background:var(--away)}
+.pair b{font-size:7.2pt;font-weight:400;white-space:nowrap}
+.pair.best{background:none;box-shadow:none}
+.pair.best b{font-weight:700}
+.goalkeepers .keepers{margin-top:0}
+.goalkeepers .keepers td{font-size:7.6pt;padding-top:.5mm;padding-bottom:.5mm}
+.kbar{width:30mm}
+.kbar i{display:block;height:2.4mm;border-radius:0 .5mm .5mm 0}
+.kbar.home i{background:var(--home)}
+.kbar.away i{background:var(--away)}
+.keepers .total td{font-weight:700;border-top:.7pt solid var(--ink);border-bottom:0}
+
+/* ---------- 3 phases ---------- */
+.segments{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:1.6mm;height:17mm;margin-bottom:1.2mm}
+.seg{display:flex;flex-direction:column;min-width:0}
+.seg-bars{flex:1;display:flex;align-items:flex-end;justify-content:center;gap:.5mm;border-bottom:.5pt solid var(--ink)}
+.seg-bars .bar{position:relative;width:3.6mm;border-radius:.5mm .5mm 0 0}
+.seg-bars .bar.home{background:var(--home)}
+.seg-bars .bar.away{background:var(--away)}
+.seg-bars .bar b{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font-size:6.4pt;line-height:1.2}
+.seg-label{text-align:center;font-size:6pt;color:var(--soft);margin-top:.4mm;white-space:nowrap}
+.mini{width:100%;border-collapse:collapse}
+.mini th,.mini td{padding:.25mm .9mm;text-align:right;white-space:nowrap}
+.mini thead th{font-size:5.8pt;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--soft);border-bottom:.7pt solid var(--ink)}
+.mini thead th small{text-transform:none;letter-spacing:0;font-weight:400}
+.mini tbody td{border-bottom:.35pt solid var(--hair)}
+.mini .l{text-align:left}
+.strength td.l{max-width:30mm;overflow:hidden;text-overflow:ellipsis}
+.strength td.l .team{display:inline-block;max-width:30mm;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom}
+.timeouts{display:grid;grid-template-columns:repeat(3,auto);justify-content:start;gap:.3mm 4mm;font-size:6.9pt}
+
+/* ---------- 4/5 shooting ---------- */
+.shoot{display:grid;grid-template-columns:52mm 1fr;gap:2.5mm;align-items:start}
+.court{display:block;width:52mm;height:auto}
+.court-floor{fill:#fafafc;stroke:none}
+.court .line6{fill:#ececf2;stroke:#77778a;stroke-width:.09}
+.court .line9{fill:none;stroke:#77778a;stroke-width:.09;stroke-dasharray:.45 .3}
+.court .line7{stroke:#77778a;stroke-width:.12}
+.court .goal-line{stroke:#55555f;stroke-width:.14}
+.court .goal{fill:#fff;stroke:#33333d;stroke-width:.12}
+.court .spot circle{stroke:#fff;stroke-width:.14}
+.court .spot.empty circle{fill:#fff;stroke:#b8b8c4;stroke-dasharray:.3 .25}
+.court .spot-n{font-size:.92px;font-weight:700;text-anchor:middle}
+.court .spot-p{font-size:.62px;text-anchor:middle}
+.court .spot.empty text{fill:#9a9aa6}
+.shoot-side .groups td{font-size:7.2pt}
+.scale{display:flex;align-items:center;gap:.3mm;margin-top:1.4mm;font-size:5.6pt;color:var(--soft)}
+.scale i{display:inline-block;width:3.2mm;height:2.2mm}
+.scale span:first-child{margin-right:.6mm}
+.scale span:last-child{margin-left:.6mm}
+.keepers{margin-top:1.6mm}
+.keepers td.l{max-width:20mm;overflow:hidden;text-overflow:ellipsis}
+.shoot-side .mini td{font-size:7.1pt}
+.court-box .scale{margin-top:.4mm}
+
+/* ---------- 6/7 scorers ---------- */
+.grid{width:100%;border-collapse:collapse;table-layout:fixed}
+.grid th,.grid td{padding:.2mm .8mm;text-align:right;white-space:nowrap;overflow:hidden}
+.grid thead th{font-size:5.8pt;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--soft);border-bottom:.7pt solid var(--ink)}
+.grid tbody td{border-bottom:.35pt solid var(--hair);font-size:7.5pt}
+.grid .l{text-align:left}
+.grid .no{text-align:center;font-weight:700;color:var(--soft)}
+.grid .name{font-weight:600;text-overflow:ellipsis}
+.scorers .grid th:nth-child(1){width:6mm}
+.scorers .grid th:nth-child(2){width:auto}
+.scorers .grid th:nth-child(3){width:9mm}
+.scorers .grid th:nth-child(4){width:8mm}
+.scorers .grid th:nth-child(5){width:7.5mm}
+.scorers .grid th:nth-child(n+6){width:5.5mm}
+.scorers .grid th:last-child{width:27mm}
+.strip-scale{float:right;text-transform:none;letter-spacing:0;font-weight:400}
+.strip-scale i{display:inline-block;width:3mm}
+.strip svg{display:block;width:100%;height:2.6mm}
+.strip line{stroke:#b8b8c4;stroke-width:.6}
+.strip line.mid{stroke:#77778a;stroke-width:.8}
+.strip circle.home{fill:var(--home)}
+.strip circle.away{fill:var(--away)}
+.others{font-size:6.6pt;color:var(--soft);margin-top:.8mm}
+
+/* ---------- facts ---------- */
+.facts{display:flex;justify-content:space-between;margin-top:2.2mm;padding-top:1.2mm;border-top:1.4pt solid var(--ink)}
+.fact{padding:0 2mm;border-left:.5pt solid var(--hair);min-width:0}
+.fact:first-child{border-left:0;padding-left:0}
+.fact dt{font-size:5.6pt;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);white-space:nowrap}
+.fact dd{font-size:8.2pt;font-weight:600;white-space:nowrap}
+.fact.solo dd{font-size:13pt;line-height:1.1}
+.fact dd small{font-size:6.2pt;font-weight:400;color:var(--soft)}
+
+.signature{text-align:right;margin-top:1.2mm;font-size:7pt;letter-spacing:.14em;color:var(--faint);font-weight:600}
+.signature span{letter-spacing:.02em;font-weight:400;font-style:italic}
+
+/* ---------- screen ---------- */
+.screen-bar{display:flex;gap:4mm;align-items:center;padding:3mm 5mm;background:#eef0f7;border-bottom:1px solid #d5d8e6;font-size:9pt;color:var(--soft)}
+.screen-bar .langs{margin-left:auto;display:flex;gap:2mm}
+.screen-bar .langs a{padding:1mm 2.5mm;border:1px solid #c7cbe0;border-radius:4px;color:#33333d;text-decoration:none;background:#fff}
+.screen-bar .langs a[aria-current]{background:#4f46e5;border-color:#4338ca;color:#fff}
+.screen-bar .langs i{width:3mm}
+.screen-bar button{font:inherit;padding:1.4mm 4mm;border:1px solid #4338ca;background:#4f46e5;color:#fff;border-radius:4px;cursor:pointer}
+@media screen{
+  html{background:#e9e9ef}
+  body{background:#e9e9ef}
+  .page{width:210mm;min-height:297mm;margin:6mm auto;padding:9mm 10mm;background:var(--paper);box-shadow:0 1px 6px rgba(0,0,0,.15)}
+}
+@media print{
+  .screen-bar{display:none}
+  .page{margin:0;padding:0}
+}

@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="utf-8">
+<title>{{ t.title }}: {{ s.header.home_name }} – {{ s.header.away_name }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/match_summary_print.css') }}">
+<style>:root{--home:{{ colors.home }};--away:{{ colors.away }};--home-tint:{{ tints.home }};--away-tint:{{ tints.away }}}</style>
+</head>
+{% set h = s.header %}
+{% set sides = ("home", "away") %}
+{% macro pct(value) %}{{ "%.0f%%"|format(value * 100) if value is not none else "–" }}{% endmacro %}
+{% macro team_name(side) %}<span class="team {{ side }}"><i class="sw"></i>{{ h.names[side] }}</span>{% endmacro %}
+<body>
+<div class="screen-bar">
+<button type="button" onclick="window.print()">{{ t.print }}</button>
+<span>{{ t.print_note }}</span>
+<span class="langs">
+<a href="?lang={{ lang }}"{% if not short %} aria-current="true"{% endif %}>{{ t.variant_full }}</a>
+<a href="?lang={{ lang }}&amp;variant=short"{% if short %} aria-current="true"{% endif %}>{{ t.variant_short }}</a>
+<i></i>
+{% for code in languages %}<a href="?lang={{ code }}{% if short %}&amp;variant=short{% endif %}"{% if code == lang %} aria-current="true"{% endif %}>{{ code|upper }}</a>{% endfor %}
+</span>
+</div>
+
+<main class="page">
+<div class="fit">
+
+{# ============================================================ masthead #}
+<header class="mast">
+<div class="mast-team home">
+{% if h.home_logo and not short %}<img src="{{ h.home_logo }}" alt="">{% endif %}
+<h1>{{ h.home_name }}</h1>
+</div>
+<div class="mast-score">
+<div class="score"><span class="home">{{ h.score_home }}</span><b>:</b><span class="away">{{ h.score_away }}</span></div>
+<div class="score-sub">
+{% if h.half_time_home is not none %}{{ t.ht }} {{ h.half_time_home }}:{{ h.half_time_away }}{% endif %}
+{% if h.shootout %} · {{ t.after_extra_shootout if s.flow.end_seconds > 3600 else t.after_shootout }} ({{ s.regular_score[0] }}:{{ s.regular_score[1] }}){% elif h.extra_time or s.flow.end_seconds > 3600 %} · {{ t.after_extra }}{% endif %}
+</div>
+</div>
+<div class="mast-team away">
+<h1>{{ h.away_name }}</h1>
+{% if h.away_logo and not short %}<img src="{{ h.away_logo }}" alt="">{% endif %}
+</div>
+</header>
+<p class="mast-meta">
+{{ h.competition_name }} {{ h.season_code }}{% if h.phase and not short %} · {{ h.phase }}{% endif %}{% if h.group_code %} · {{ t.group }} {{ h.group_code }}{% endif %}
+{% if kickoff %} · {{ kickoff }}{% endif %}
+{% if h.venue_name %} · {{ h.venue_name }}{% if h.venue_city %}, {{ h.venue_city }}{% endif %}{% endif %}
+{% if spectators %} · {{ spectators }}{% endif %}
+</p>
+<p class="headline">{{ headline }}</p>
+
+{# ============================================================ 1 flow #}
+{% if short %}
+<section class="block">
+<h2><span>1</span> {{ t.flow }}
+<small class="key">
+<i class="k-area home"></i>{{ t.ahead.format(team=h.home_name) }}
+<i class="k-area away"></i>{{ t.ahead.format(team=h.away_name) }}
+<b class="k-peak"></b>{{ t.biggest_lead_key }}
+</small>
+</h2>
+<p class="sub">{{ t.lead_note }}</p>
+<svg class="flow lead" viewBox="0 0 {{ lead.width }} {{ lead.height }}" width="{{ lead.width }}mm" height="{{ lead.height }}mm" role="img" aria-label="{{ t.flow }}">
+{% for tick in lead.margin_ticks %}
+<line class="{{ 'zero' if tick.label == '0' else 'grid' }}" x1="{{ lead.left }}" x2="{{ lead.right }}" y1="{{ tick.y }}" y2="{{ tick.y }}"/>
+<text class="ylabel {{ 'home' if tick.y < lead.zero_y - 0.1 else 'away' if tick.y > lead.zero_y + 0.1 else '' }}" x="{{ tick.x }}" y="{{ tick.y + 0.9 }}">{{ tick.label }}</text>
+{% endfor %}
+{% for tick in lead.time_ticks %}
+<line class="grid" x1="{{ tick.x }}" x2="{{ tick.x }}" y1="{{ lead.top }}" y2="{{ lead.bottom }}"/>
+<text class="xlabel" x="{{ tick.x }}" y="{{ tick.y }}">{{ tick.label }}</text>
+{% endfor %}
+{% for bar in lead.bars %}
+<rect class="lead-bar {{ bar.side }}" x="{{ '%.2f'|format(bar.x) }}" y="{{ '%.2f'|format(bar.y) }}" width="{{ '%.2f'|format(bar.width) }}" height="{{ '%.2f'|format(bar.height) }}"/>
+{% endfor %}
+<line class="zero" x1="{{ lead.left }}" x2="{{ lead.right }}" y1="{{ lead.zero_y }}" y2="{{ lead.zero_y }}"/>
+<line class="half" x1="{{ lead.half_x }}" x2="{{ lead.half_x }}" y1="{{ lead.top - 1 }}" y2="{{ lead.bottom }}"/>
+<text class="half-label" x="{{ lead.half_x + 0.8 }}" y="{{ lead.top + 1.4 }}">{{ t.ht_short }} {{ lead.half_label }}</text>
+{% for p in lead.peaks %}
+<g class="peak {{ p.side }}">
+<circle cx="{{ '%.2f'|format(p.x) }}" cy="{{ '%.2f'|format(p.y) }}" r="1.3"/>
+<text x="{{ '%.2f'|format(p.label_x) }}" y="{{ '%.2f'|format(p.label_y) }}"><tspan class="peak-margin">{{ p.margin }}</tspan> {{ p.score }} · {{ p.minute }}</text>
+</g>
+{% endfor %}
+</svg>
+</section>
+{% else %}
+<section class="block">
+<h2><span>1</span> {{ t.flow }}
+<small class="key">
+<i class="k-area home"></i>{{ t.ahead.format(team=h.home_name) }}
+<i class="k-area away"></i>{{ t.ahead.format(team=h.away_name) }}
+<i class="k-line"></i>{{ t.win_probability }}
+<i class="k-run"></i>{{ t.run }}
+<b class="k-t">T</b>{{ t.timeout }}
+<b class="k-s">2'</b>{{ t.suspension }}
+</small>
+</h2>
+<svg class="flow" viewBox="0 0 {{ flow.width }} {{ flow.height }}" width="{{ flow.width }}mm" height="{{ flow.height }}mm" role="img" aria-label="Goal difference and win probability over time">
+<defs>
+<clipPath id="above"><rect x="0" y="0" width="{{ flow.width }}" height="{{ flow.zero_y }}"/></clipPath>
+<clipPath id="below"><rect x="0" y="{{ flow.zero_y }}" width="{{ flow.width }}" height="{{ flow.height }}"/></clipPath>
+<clipPath id="win-above"><rect x="0" y="0" width="{{ flow.width }}" height="{{ flow.win_mid }}"/></clipPath>
+<clipPath id="win-below"><rect x="0" y="{{ flow.win_mid }}" width="{{ flow.width }}" height="{{ flow.height }}"/></clipPath>
+</defs>
+{# scoring runs #}
+{% for band in flow.bands %}
+<rect class="band {{ band.side }}" x="{{ band.x }}" y="{{ flow.margin_top }}" width="{{ band.width }}" height="{{ flow.margin_bottom - flow.margin_top }}"/>
+<text class="band-label {{ band.side }}" x="{{ band.x + band.width / 2 }}" y="{{ flow.margin_top + 2.4 if band.side == 'away' else flow.margin_bottom - 1 }}">{{ band.label }}</text>
+{% endfor %}
+{# grid #}
+{% for tick in flow.margin_ticks %}
+<line class="{{ 'zero' if tick.label == '0' else 'grid' }}" x1="{{ flow.left }}" x2="{{ flow.right }}" y1="{{ tick.y }}" y2="{{ tick.y }}"/>
+<text class="ylabel" x="{{ tick.x }}" y="{{ tick.y + 0.9 }}">{{ tick.label }}</text>
+{% endfor %}
+{% for tick in flow.time_ticks %}
+<line class="grid" x1="{{ tick.x }}" x2="{{ tick.x }}" y1="{{ flow.margin_top }}" y2="{{ flow.win_bottom }}"/>
+<text class="xlabel" x="{{ tick.x }}" y="{{ tick.y }}">{{ tick.label }}</text>
+{% endfor %}
+<line class="half" x1="{{ flow.half_x }}" x2="{{ flow.half_x }}" y1="{{ flow.margin_top - 1 }}" y2="{{ flow.win_bottom }}"/>
+<text class="half-label" x="{{ flow.half_x + 0.8 }}" y="{{ flow.margin_top + 2.2 }}">{{ t.ht_short }} {{ flow.half_label }}</text>
+{# goal difference #}
+<path class="area home" d="{{ flow.margin_path }}" clip-path="url(#above)"/>
+<path class="area away" d="{{ flow.margin_path }}" clip-path="url(#below)"/>
+{# timeouts and suspensions #}
+{% for m in flow.timeouts %}
+<g class="tmark {{ m.side }}"><circle cx="{{ m.x }}" cy="{{ m.y }}" r="1.45"/><text x="{{ m.x }}" y="{{ m.y + 0.75 }}">T</text></g>
+{% endfor %}
+{% for m in flow.suspensions %}
+<text class="smark {{ m.side }}" x="{{ m.x }}" y="{{ m.y }}">{{ t.red if m.label == "R" else m.label }}</text>
+{% endfor %}
+{# key moments #}
+{% for m in flow.moments if not short %}
+<g class="moment"><circle cx="{{ m.x }}" cy="{{ m.y }}" r="1.7"/><text x="{{ m.x }}" y="{{ m.y + 0.8 }}">{{ m.number }}</text></g>
+{% endfor %}
+{# win probability #}
+<rect class="win-frame" x="{{ flow.left }}" y="{{ flow.win_top }}" width="{{ flow.right - flow.left }}" height="{{ flow.win_bottom - flow.win_top }}"/>
+<path class="win-area home" d="{{ flow.win_area }}" clip-path="url(#win-above)"/>
+<path class="win-area away" d="{{ flow.win_area }}" clip-path="url(#win-below)"/>
+<line class="zero dashed" x1="{{ flow.left }}" x2="{{ flow.right }}" y1="{{ flow.win_mid }}" y2="{{ flow.win_mid }}"/>
+<path class="win-line" d="{{ flow.win_path }}"/>
+<text class="ylabel" x="{{ flow.left - 1.2 }}" y="{{ flow.win_top + 1.6 }}">100%</text>
+<text class="ylabel" x="{{ flow.left - 1.2 }}" y="{{ flow.win_mid + 0.9 }}">50%</text>
+<text class="ylabel" x="{{ flow.left - 1.2 }}" y="{{ flow.win_bottom }}">0%</text>
+<text class="panel-label" x="{{ flow.left + 1 }}" y="{{ flow.win_top + 2.1 }}">{{ t.win_probability_of.format(team=h.home_name) }}</text>
+</svg>
+{% if not short %}
+<ol class="moments">
+<li class="moments-title">{{ t.moments }} <small>{{ t.moments_note }}</small></li>
+{% for m in flow.moments %}
+<li><b class="num">{{ m.number }}</b> <b>{{ m.clock }}</b> <span class="team-dot {{ m.side }}"></span>{{ m.who }} {{ m.score }} <span class="muted">{{ m.before }} →</span> <b>{{ m.after }}</b></li>
+{% endfor %}
+</ol>
+{% endif %}
+</section>
+{% endif %}
+
+{# ============================================================ 2 + 3 #}
+<div class="row">
+<section class="block compare">
+<h2><span>2</span> {{ t.comparison }} <small>{% if s.baseline and not short %}<i class="k-avg"></i> {{ t.average.format(label=s.baseline.label) }}{% endif %}</small></h2>
+{% if short %}
+<div class="pair-head">{{ team_name("home") }}{{ team_name("away") }}</div>
+{% for row in s.comparison if row.key not in ("assisted", "blocks") %}
+<div class="pair-row">
+<span class="pair-label">{{ t["row_" ~ row.key] }}</span>
+<div class="pair-bars">
+{% for side in sides %}
+{% set value = row.home if side == "home" else row.away %}
+<div class="pair {{ side }}{% if row.better == side %} best{% endif %}"><i style="width:calc((100% - 24mm) * {{ '%.3f'|format(value / row.scale) }})"></i><b>{{ row.home_text if side == "home" else row.away_text }}</b></div>
+{% endfor %}
+</div>
+</div>
+{% endfor %}
+{% else %}
+<div class="cmp-head"><span>{{ team_name("home") }}</span><span></span><span>{{ team_name("away") }}</span></div>
+{% for row in s.comparison %}
+<div class="cmp-row">
+<span class="cmp-val home{% if row.better == 'home' %} best{% endif %}">{{ row.home_text }}</span>
+<span class="cmp-bar home"><i style="width:{{ '%.1f'|format(100 * row.home / row.scale) }}%"></i>{% if row.average is not none %}<em style="right:{{ '%.1f'|format(100 * row.average / row.scale) }}%"></em>{% endif %}</span>
+<span class="cmp-label">{{ t["row_" ~ row.key] }}{% if row.average_text %}<small>Ø {{ decimal(row.average_text) }}</small>{% endif %}</span>
+<span class="cmp-bar away"><i style="width:{{ '%.1f'|format(100 * row.away / row.scale) }}%"></i>{% if row.average is not none %}<em style="left:{{ '%.1f'|format(100 * row.average / row.scale) }}%"></em>{% endif %}</span>
+<span class="cmp-val away{% if row.better == 'away' %} best{% endif %}">{{ row.away_text }}</span>
+</div>
+{% endfor %}
+{% endif %}
+</section>
+
+<section class="block phases">
+<h2><span>3</span> {{ t.phases }}</h2>
+<p class="sub">{{ t.per_ten }}</p>
+<div class="segments">
+{% for label, hg, ag, hs, as_ in segments %}
+<div class="seg">
+<div class="seg-bars">
+<span class="bar home" style="height:{{ '%.0f'|format(3 + 75 * hs) }}%"><b>{{ hg }}</b></span>
+<span class="bar away" style="height:{{ '%.0f'|format(3 + 75 * as_) }}%"><b>{{ ag }}</b></span>
+</div>
+<span class="seg-label">{{ t.et if label == "ET" else label }}</span>
+</div>
+{% endfor %}
+</div>
+<table class="mini strength">
+<thead><tr><th class="l"></th><th>{{ t.more_players }}</th><th>{{ t.fewer_players }}</th><th>{{ t.timeouts }}</th></tr></thead>
+<tbody>
+{% for side in sides %}
+{% set st = s.flow.strength[side] %}
+<tr><td class="l">{{ team_name(side) }}</td><td>{{ st[0] }}:{{ st[1] }}</td><td>{{ st[2] }}:{{ st[3] }}</td><td>{{ s.flow.timeouts|selectattr("side", "equalto", side)|list|length }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+{% if s.flow.timeouts and not short %}
+<p class="sub">{{ t.timeouts_note }}</p>
+<ul class="timeouts">
+{% for t in s.flow.timeouts %}
+<li><span class="team-dot {{ t.side or 'home' }}"></span><b>{{ (t.seconds // 60) + 1 }}'</b> {{ t.home }}:{{ t.away }} <span class="muted">{{ t.before[0] }}:{{ t.before[1] }} → </span><b>{{ t.after[0] }}:{{ t.after[1] }}</b></li>
+{% endfor %}
+</ul>
+{% endif %}
+</section>
+</div>
+
+{# ============================================================ 4 shooting #}
+{% if short %}
+<div class="row even">
+{% for side in sides %}
+{% set team = s.figures[side] %}
+<section class="block goalkeepers">
+<h2><span>{{ 4 if side == "home" else 5 }}</span> {{ team_name(side) }} <small>{{ t.goalkeepers }}</small></h2>
+<table class="mini keepers">
+<thead><tr><th class="l">{{ t.goalkeeper }}</th><th>{{ t.saves }}</th><th>%</th><th class="kbar"></th><th>{{ t.seven_m }}</th></tr></thead>
+<tbody>
+{% for k in s.keepers[side] %}
+<tr><td class="l"><b>{{ k.person.number }}</b> {{ k.person.name }}</td><td>{{ k.saves }}/{{ k.faced }}</td><td>{{ pct(k.rate) }}</td><td class="kbar {{ side }}"><i style="width:{{ '%.0f'|format(100 * (k.rate or 0)) }}%"></i></td><td>{{ k.seven_saves }}/{{ k.seven_faced }}</td></tr>
+{% else %}
+<tr><td class="l muted" colspan="5">{{ t.no_keeper }}</td></tr>
+{% endfor %}
+<tr class="total"><td class="l">{{ t.total }}</td><td>{{ team.saves }}/{{ team.faced }}</td><td>{{ pct(team.saving) }}</td><td class="kbar {{ side }}"><i style="width:{{ '%.0f'|format(100 * (team.saving or 0)) }}%"></i></td><td>{{ s.keepers[side]|sum(attribute="seven_saves") }}/{{ s.keepers[side]|sum(attribute="seven_faced") }}</td></tr>
+</tbody>
+</table>
+</section>
+{% endfor %}
+</div>
+{% else %}
+<div class="row even">
+{% for side in sides %}
+{% set map = s.maps[side] %}
+<section class="block shooting">
+<h2><span>{{ 4 if side == "home" else 5 }}</span> {{ team_name(side) }} <small>{{ t.shooting }}</small></h2>
+<div class="shoot">
+<div class="court-box">
+<svg class="court" viewBox="-0.6 -1.6 21.2 14.4" role="img" aria-label="Shots by zone">
+<rect class="court-floor" x="0" y="0" width="20" height="12.8"/>
+<path class="line9" d="M0,2.96 A9,9 0 0 0 8.5,9 L11.5,9 A9,9 0 0 0 20,2.96"/>
+<path class="line6" d="M2.5,0 A6,6 0 0 0 8.5,6 L11.5,6 A6,6 0 0 0 17.5,0 Z"/>
+<line class="line7" x1="9.5" x2="10.5" y1="7" y2="7"/>
+<line class="goal-line" x1="0" x2="20" y1="0" y2="0"/>
+<rect class="goal" x="8.5" y="-0.9" width="3" height="0.9"/>
+{% for z in spots[side] %}
+<g class="spot{% if z.empty %} empty{% endif %}">
+<circle cx="{{ z.x }}" cy="{{ z.y }}" r="1.55" fill="{{ z.fill }}"/>
+<text class="spot-n" x="{{ z.x }}" y="{{ z.y + 0.28 }}" fill="{{ z.ink }}">{{ z.goals }}/{{ z.shots }}</text>
+{% if z.rate %}<text class="spot-p" x="{{ z.x }}" y="{{ z.y + 0.98 }}" fill="{{ z.ink }}">{{ z.rate }}</text>{% endif %}
+</g>
+{% endfor %}
+</svg>
+<div class="scale"><span>0%</span>{% for c in stops[side] %}<i style="background:{{ c }}"></i>{% endfor %}<span>100%</span></div>
+</div>
+<div class="shoot-side">
+<table class="mini groups">
+<tbody>
+{% for g in map.groups %}
+<tr><td class="l">{{ t["zone_" ~ g.zone] }}</td><td>{{ g.goals }}/{{ g.shots }}</td><td class="muted">{{ pct(g.rate) }}</td></tr>
+{% endfor %}
+{% if map.fast_break %}<tr><td class="l">{{ t.zone_fast_break }}</td><td>{{ map.fast_break.goals }}/{{ map.fast_break.shots }}</td><td class="muted">{{ pct(map.fast_break.rate) }}</td></tr>{% endif %}
+</tbody>
+</table>
+<table class="mini keepers">
+<thead><tr><th class="l">{{ t.goalkeeper }}</th><th>{{ t.saves }}</th><th>%</th><th>{{ t.seven_m }}</th></tr></thead>
+<tbody>
+{% for k in s.keepers[side] %}
+<tr><td class="l"><b>{{ k.person.number }}</b> {{ k.person.name }}</td><td>{{ k.saves }}/{{ k.faced }}</td><td class="{{ 'best' if k.rate is not none and s.baseline and k.faced >= 8 and k.rate > s.baseline.values.get('saving', 1) }}">{{ pct(k.rate) }}</td><td>{{ k.seven_saves }}/{{ k.seven_faced }}</td></tr>
+{% else %}
+<tr><td class="l muted" colspan="4">{{ t.no_keeper }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+
+</div>
+</div>
+
+</section>
+{% endfor %}
+</div>
+{% endif %}
+
+{# ============================================================ 6 scorers #}
+<div class="row even">
+{% for side in sides %}
+{% set players = s.players[side] %}
+{% set scorers = players|selectattr("goals")|list %}
+{% set top_goals = players|map(attribute="goals")|max if players else 0 %}
+{% set top_assists = players|map(attribute="assists")|max if players else 0 %}
+<section class="block scorers">
+<h2><span>{{ 6 if side == "home" else 7 }}</span> {{ team_name(side) }} <small>{{ t.scorers }}</small></h2>
+<table class="grid">
+<thead><tr><th>{{ t.no }}</th><th class="l">{{ t.player }}</th><th>{{ t.goals_shots }}</th><th>%</th><th>{{ t.seven_m }}</th><th>{{ t.assists }}</th>{% if s.has_turnovers %}<th>{{ t.turnovers_short }}</th>{% endif %}<th>2'</th><th class="l">{{ t.goals_when }} <span class="strip-scale">0'<i></i>30'<i></i>{{ s.flow.end_seconds // 60 }}'</span></th></tr></thead>
+<tbody>
+{% for p in scorers %}
+<tr>
+<td class="no">{{ p.person.number }}</td>
+<td class="l name">{{ p.person.name }}</td>
+<td class="{{ 'best' if p.goals == top_goals }}">{{ p.goals }}/{{ p.shots }}</td>
+<td>{{ pct(p.rate) }}</td>
+<td>{{ "%d/%d"|format(p.seven_goals, p.seven_shots) if p.seven_shots else "" }}</td>
+<td class="{{ 'best' if p.assists and p.assists == top_assists }}">{{ p.assists or "" }}</td>
+{% if s.has_turnovers %}<td>{{ p.turnovers or "" }}</td>{% endif %}
+<td>{{ p.suspensions or "" }}</td>
+<td class="strip"><svg viewBox="0 0 100 10" preserveAspectRatio="none"><line x1="2" x2="98" y1="5" y2="5"/>{% set ht = 2 + 96 * 1800 / s.flow.end_seconds %}<line class="mid" x1="{{ '%.1f'|format(ht) }}" x2="{{ '%.1f'|format(ht) }}" y1="1.5" y2="8.5"/>{% for dot in goal_dots(p, s.flow.end_seconds) %}<circle class="{{ side }}" cx="{{ '%.1f'|format(dot) }}" cy="5" r="2.6"/>{% endfor %}</svg></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% set others = players|rejectattr("goals")|selectattr("shots")|list %}
+{% set helpers = players|rejectattr("goals")|rejectattr("shots")|selectattr("assists")|list %}
+{% if others or helpers %}
+<p class="others">
+{% if others %}{{ t.no_goal }}: {% for p in others %}{{ p.person.name }} 0/{{ p.shots }}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
+{% if helpers %}{% if others %} · {% endif %}{{ t.assists_only }}: {% for p in helpers %}{{ p.person.name }} {{ p.assists }}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
+</p>
+{% endif %}
+</section>
+{% endfor %}
+</div>
+
+{# ============================================================ facts #}
+<section class="facts">
+<div class="fact solo"><dt>{{ t.ties }}</dt><dd>{{ s.flow.ties }}</dd></div>
+<div class="fact solo"><dt>{{ t.lead_changes }}</dt><dd>{{ s.flow.lead_changes }}</dd></div>
+{% for f in s.facts if not (short and f.key in ("front", "best_run", "drought", "last_ten")) %}
+<div class="fact">
+<dt>{{ t["fact_" ~ f.key] }}</dt>
+<dd><span class="team-dot home"></span>{{ f.home }}{% if f.detail_home %} <small>{{ f.detail_home }}</small>{% endif %}</dd>
+<dd><span class="team-dot away"></span>{{ f.away }}{% if f.detail_away %} <small>{{ f.detail_away }}</small>{% endif %}</dd>
+</div>
+{% endfor %}
+</section>
+
+<p class="signature">Sportomatyka <span>„Bawimy się danymi”</span></p>
+</div>
+</main>
+
+<script>
+// Shrink the page when it is taller than the printable A4 area (long scorer lists), never below 75 %.
+(() => {
+  const AVAILABLE_MM = (297 - 18) * 0.97;
+  const probe = document.createElement("div");
+  probe.style.cssText = "position:absolute;visibility:hidden;height:100mm";
+  document.body.append(probe);
+  const pxPerMm = probe.getBoundingClientRect().height / 100;
+  probe.remove();
+  function fit() {
+    const box = document.querySelector(".fit");
+    box.style.zoom = "";
+    const limit = AVAILABLE_MM * pxPerMm;
+    const height = box.getBoundingClientRect().height;
+    if (height > limit) box.style.zoom = String(Math.max(0.75, Math.floor((limit / height) * 1000) / 1000));
+  }
+  fit();
+  window.addEventListener("beforeprint", fit);
+})();
+</script>
+</body>
+</html>
