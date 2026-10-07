@@ -24,7 +24,7 @@ PLOT_WIDTH = WIDTH - PAD_LEFT - PAD_RIGHT
 
 LEAD_TOP = 30.0
 LEAD_PLOT = 210.0
-LEAD_HEIGHT = LEAD_TOP + LEAD_PLOT + 30.0
+LEAD_HEIGHT = LEAD_TOP + LEAD_PLOT + 54.0  # minute labels, then the score every 5 minutes
 
 SMALL_WIDTH = 470.0
 SMALL_LEFT = 34.0
@@ -81,6 +81,7 @@ class LeadChart:
     half_x: float
     half_label: str
     peaks: tuple[Peak, ...]
+    score_marks: tuple[Tick, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -158,7 +159,13 @@ def ticker_actions(actions: tuple[PlayAction, ...]) -> tuple[TickerAction, ...]:
             home=action.score_home,
             away=action.score_away,
             actors=tuple(
-                TickerActor(person.side, person.role_code, person.shirt_number, person.last_name or person.first_name)
+                TickerActor(
+                    person.side,
+                    person.role_code,
+                    person.shirt_number,
+                    person.last_name or person.first_name,
+                    person.person_id,
+                )
                 for person in action.participants
             ),
         )
@@ -261,6 +268,14 @@ def _lead_chart(flow: Flow, half_time: str) -> LeadChart:
                 minute=lead.seconds // 60 + 1,
             )
         )
+    score_marks = []
+    for minute in range(5, minutes + 1, 5):
+        home = away = 0
+        for goal in flow.goals:
+            if goal.seconds > minute * 60:
+                break
+            home, away = goal.home, goal.away
+        score_marks.append(Tick(PAD_LEFT + slot * minute, f"{home}:{away}", "home" if home > away else "away" if away > home else ""))
     return LeadChart(
         width=WIDTH,
         height=LEAD_HEIGHT,
@@ -276,6 +291,7 @@ def _lead_chart(flow: Flow, half_time: str) -> LeadChart:
         half_x=PAD_LEFT + PLOT_WIDTH * (REGULATION / 2) / end,
         half_label=half_time,
         peaks=tuple(peaks),
+        score_marks=tuple(score_marks),
     )
 
 

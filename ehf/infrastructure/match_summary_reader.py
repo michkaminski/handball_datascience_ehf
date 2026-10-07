@@ -6,6 +6,7 @@ from psycopg import Connection, Error
 from psycopg.rows import dict_row
 
 from ehf.domain.errors import DataReadError, MatchNotFound
+from ehf.domain.match_statistics import LineupEntry
 from ehf.domain.match_summary import SummaryHeader, TickerAction, TickerActor
 
 HEADER_SQL = """
@@ -60,11 +61,42 @@ SELECT
     p.side,
     p.role_code,
     p.shirt_number,
-    COALESCE(p.last_name, p.first_name) AS name
+    COALESCE(p.last_name, p.first_name) AS name,
+    p.person_id
 FROM ehf.match_action a
 LEFT JOIN ehf.match_action_actor p ON p.match_action_id = a.id
 WHERE a.match_id = ANY(%s) AND a.clock_seconds IS NOT NULL
 ORDER BY a.match_id, a.seq, p.competitor_order NULLS FIRST, p.athlete_order NULLS FIRST, p.id
+"""
+
+LINEUP_SQL = """
+SELECT
+    t.side,
+    l.person_id,
+    COALESCE(l.shirt_number, '') AS shirt_number,
+    COALESCE(
+        NULLIF(TRIM(CONCAT_WS(' ', l.first_name, l.last_name)), ''),
+        l.display_name,
+        l.source_name,
+        ''
+    ) AS name,
+    COALESCE(l.listed_as_goalkeeper, false) AS goalkeeper,
+    COALESCE(pe.profile_position, per.profile_position) AS position
+FROM ehf.match_lineup l
+JOIN ehf.match_team t ON t.id = l.match_team_id
+JOIN ehf.match m ON m.id = l.match_id
+LEFT JOIN ehf.person per ON per.id = l.person_id
+LEFT JOIN LATERAL (
+    SELECT pe.profile_position
+    FROM ehf.player_edition pe
+    WHERE pe.person_id = l.person_id
+      AND pe.competition_edition_id = m.competition_edition_id
+      AND (t.club_id IS NULL OR pe.club_id = t.club_id)
+    ORDER BY pe.id
+    LIMIT 1
+) pe ON TRUE
+WHERE l.match_id = %s
+ORDER BY t.side, l.id
 """
 
 # Played matches with a play-by-play feed of one competition, this season and the one before.
@@ -135,10 +167,32 @@ class PsycopgMatchSummaryReader:
                 current = row
                 actors = []
             if row["side"] is not None:
-                actors.append(TickerActor(row["side"], row["role_code"], row["shirt_number"], row["name"]))
+                actors.append(
+                    TickerActor(row["side"], row["role_code"], row["shirt_number"], row["name"], row["person_id"])
+                )
         if current is not None:
             grouped.setdefault(current["match_id"], []).append(self._action(current, actors))
         return {match_id: tuple(items) for match_id, items in grouped.items()}
+
+    def lineup(self, match_id: int) -> tuple[LineupEntry, ...]:
+        try:
+            with self._connect() as connection, connection.cursor(row_factory=dict_row) as cursor:
+                cursor.execute(LINEUP_SQL, (match_id,))
+                rows = cursor.fetchall()
+        except Error as exc:
+            raise DataReadError(f"Could not read the lineup of match {match_id}: {exc}") from exc
+        return tuple(
+            LineupEntry(
+                side=row["side"],
+                person_id=row["person_id"],
+                number=str(row["shirt_number"]).strip(),
+                name=row["name"],
+                goalkeeper=row["goalkeeper"],
+                position=row["position"],
+            )
+            for row in rows
+            if row["side"] in ("home", "away")
+        )
 
     def reference_matches(self, competition_id: int, year: int) -> dict[int, list[int]]:
         """Match ids per season start year (this season and the previous one)."""

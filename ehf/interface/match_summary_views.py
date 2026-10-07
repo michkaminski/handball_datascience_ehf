@@ -14,6 +14,15 @@ from ehf.interface.match_summary_charts import (
     scale_stops,
     segment_bars,
 )
+from ehf.interface.match_statistics_charts import (
+    EVENT_KINDS,
+    average_left,
+    bar_width,
+    kpis,
+    player_dots,
+    save_dots,
+    win_chart,
+)
 from ehf.interface.match_summary_texts import (
     LANGUAGES,
     TEXTS,
@@ -64,4 +73,38 @@ class MatchSummaryPrintView(MethodView):
             colors=COLORS,
             tints=TINTS,
             goal_dots=goal_dots,
+        )
+
+
+class MatchStatisticsView(MethodView):
+    """The Statistics tab of the match card, loaded into the card when the tab is first opened."""
+
+    def __init__(self, service: MatchSummaryService) -> None:
+        self._service = service
+
+    def get(self, match_id: int) -> str:
+        try:
+            stats = self._service.statistics(match_id)
+        except MatchNotFound:
+            abort(404)
+        except NoPlayByPlay:
+            return render_template("partials/match_statistics.html", stats=None)
+        except DataReadError as exc:
+            abort(503, description=str(exc))
+        summary = stats.summary
+        return render_template(
+            "partials/match_statistics.html",
+            stats=stats,
+            s=summary,
+            names=summary.header.names,
+            headline=headline_text(summary.headline, summary.header.names, "en"),
+            win=win_chart(summary),
+            kpis=kpis(stats),
+            spots={side: court_spots(summary.maps[side]) for side in ("home", "away")},
+            stops={side: scale_stops(side) for side in ("home", "away")},
+            player_dots=player_dots,
+            save_dots=save_dots,
+            bar_width=bar_width,
+            average_left=average_left,
+            event_kinds=EVENT_KINDS,
         )

@@ -1,0 +1,283 @@
+{# Statistics tab of the match card — loaded into #match-panel-stats from /mecze/<id>/statystyki #}
+{% if not stats %}
+<div class="panel-body"><p class="note">This match has no play-by-play, so there is nothing to compute the statistics from.</p></div>
+{% else %}
+{% set h = s.header %}
+{% set sides = ("home", "away") %}
+{% set end = stats.end_seconds %}
+{% set base = s.baseline.values if s.baseline else {} %}
+{% macro pct(value) %}{{ "%.0f%%"|format(value * 100) if value is not none else "–" }}{% endmacro %}
+{% macro signed(value) %}{% if value >= 0.05 %}+{% endif %}{{ "%.1f"|format(value) if value|abs >= 0.05 else "0.0" }}{% endmacro %}
+{% macro team(side) %}<span class="mst-team {{ side }}"><i></i>{{ names[side] }}</span>{% endmacro %}
+{% macro dots(items, size) %}<div class="mst-strip {{ size }}"><span class="mst-strip-half" style="left:{{ '%.1f'|format(100 * 1800 / end) }}%"></span>{% for d in items %}<span class="dot k-{{ d.kind }}" style="left:{{ '%.1f'|format(d.left) }}%" title="{{ d.title }}"></span>{% endfor %}</div>{% endmacro %}
+
+<div class="mst" data-stats>
+<p class="mst-headline">{{ headline }}</p>
+<div class="mst-tabs" role="tablist" aria-label="Statistics views">
+<button type="button" role="tab" data-stats-tab="overview" aria-selected="true">Overview</button>
+<button type="button" role="tab" data-stats-tab="shooting" aria-selected="false" tabindex="-1">Shooting</button>
+<button type="button" role="tab" data-stats-tab="keepers" aria-selected="false" tabindex="-1">Goalkeepers</button>
+<button type="button" role="tab" data-stats-tab="lineups" aria-selected="false" tabindex="-1">Line-ups</button>
+</div>
+
+{# ================================================================== overview #}
+<section class="mst-panel" data-stats-panel="overview" role="tabpanel">
+<div class="mst-kpis">
+<div class="mst-kpi-key">{{ team("home") }}{{ team("away") }}</div>
+{% for k in kpis %}
+<div class="mst-kpi">
+<span class="mst-kpi-label">{{ k.label }}</span>
+<div class="mst-kpi-values"><b class="home{% if k.better == 'home' %} best{% endif %}">{{ k.home }}{% if k.home_sub %}<small>{{ k.home_sub }}</small>{% endif %}</b><b class="away{% if k.better == 'away' %} best{% endif %}">{{ k.away }}{% if k.away_sub %}<small>{{ k.away_sub }}</small>{% endif %}</b></div>
+<small>{{ k.note }}</small>
+</div>
+{% endfor %}
+</div>
+
+<figure class="mst-card">
+<figcaption><b>Win probability</b><span>{{ h.home_name }}'s chance to win at every moment (above 50 %: {{ h.home_name }} favourite, below: {{ h.away_name }}) · logistic model fitted on 1682 EHF matches</span></figcaption>
+<div class="mst-scroll">
+<svg class="mst-chart mst-wide" viewBox="0 0 {{ win.width }} {{ win.height }}" role="img" aria-label="Win probability during the match">
+<defs>
+<clipPath id="mst-above"><rect x="0" y="0" width="{{ win.width }}" height="{{ win.mid }}"/></clipPath>
+<clipPath id="mst-below"><rect x="0" y="{{ win.mid }}" width="{{ win.width }}" height="{{ win.height }}"/></clipPath>
+</defs>
+{% for tick in win.y_ticks %}
+<line class="grid{% if tick.label == '50%' %} mid{% endif %}" x1="{{ win.left }}" x2="{{ win.right }}" y1="{{ tick.pos }}" y2="{{ tick.pos }}"/>
+<text class="axis" x="{{ win.left - 8 }}" y="{{ tick.pos + 4 }}" text-anchor="end">{{ tick.label }}</text>
+{% endfor %}
+{% for tick in win.x_ticks %}<text class="axis" x="{{ tick.pos }}" y="{{ win.bottom + 20 }}" text-anchor="middle">{{ tick.label }}</text>{% endfor %}
+<line class="half" x1="{{ win.half_x }}" x2="{{ win.half_x }}" y1="{{ win.top }}" y2="{{ win.bottom }}"/>
+<path class="area home" d="{{ win.area }}" clip-path="url(#mst-above)"/>
+<path class="area away" d="{{ win.area }}" clip-path="url(#mst-below)"/>
+<path class="wp-line" d="{{ win.line }}"/>
+{% for m in win.moments %}
+<g class="moment"><circle cx="{{ '%.1f'|format(m.x) }}" cy="{{ '%.1f'|format(m.y) }}" r="9"/><text x="{{ '%.1f'|format(m.x) }}" y="{{ '%.1f'|format(m.y + 4) }}" text-anchor="middle">{{ m.number }}</text></g>
+{% endfor %}
+</svg>
+</div>
+<ol class="mst-moments">
+<li class="title">Biggest swings</li>
+{% for m in win.moments %}
+<li><b class="num">{{ m.number }}</b><b>{{ m.clock }}</b><span class="mst-dot {{ m.side }}"></span>{{ m.who }} <span class="score">{{ m.score }}</span><span class="muted">{{ m.before }} →</span><b>{{ m.after }}</b></li>
+{% endfor %}
+</ol>
+</figure>
+
+<div class="mst-grid2">
+<figure class="mst-card">
+<figcaption><b>Team comparison</b><span>both bars on one scale{% if s.baseline %} · <i class="mst-avg-key"></i> average of {{ s.baseline.label }} ({{ s.baseline.matches }} matches){% endif %}</span></figcaption>
+<div class="mst-pairs">
+{% for row in s.comparison %}
+<div class="mst-pair">
+<span class="mst-pair-label">{{ {"shooting": "Shooting", "attack": "Attack efficiency", "saving": "Goalkeeper saves", "seven": "7m goals", "fast_breaks": "Fast-break goals", "assisted": "Assisted goals", "turnovers": "Turnovers", "steals": "Steals", "blocks": "Blocks", "suspensions": "2-min suspensions"}[row.key] }}{% if row.average_text %}<small>Ø {{ row.average_text }}</small>{% endif %}</span>
+<div class="mst-pair-bars">
+{% for side in sides %}
+<div class="mst-bar {{ side }}{% if row.better == side %} best{% endif %}"><span class="track">{% set avg = average_left(row) %}<i style="width:{{ bar_width(row, side) }}%"></i>{% if avg is not none %}<em style="left:{{ avg }}%"></em>{% endif %}</span><b>{{ row.home_text if side == 'home' else row.away_text }}</b></div>
+{% endfor %}
+</div>
+</div>
+{% endfor %}
+</div>
+</figure>
+
+<div class="mst-stack">
+<figure class="mst-card">
+<figcaption><b>Shot outcomes</b><span>what happened to every shot</span></figcaption>
+{% for side in sides %}
+{% set sh = stats.shooting[side] %}
+<div class="mst-outcome">
+<div class="mst-outcome-head">{{ team(side) }}<span>{{ sh.shots }} shots</span></div>
+<div class="mst-stacked {{ side }}">
+{% for key, label in (("GOAL", "Goal"), ("SAVE", "Saved"), ("MISS", "Missed"), ("POST", "Post"), ("BLC", "Blocked")) %}
+{% set n = sh.outcomes[key] %}
+{% if n %}<span class="seg r-{{ key|lower }}" style="flex:{{ n }}" title="{{ label }}: {{ n }} ({{ pct(n / sh.shots) }})">{% if n / sh.shots >= 0.07 %}{{ n }}{% endif %}</span>{% endif %}
+{% endfor %}
+</div>
+</div>
+{% endfor %}
+<p class="mst-legend"><span><i class="r-goal home"></i>Goal</span><span><i class="r-save home"></i>Saved</span><span><i class="r-miss"></i>Missed</span><span><i class="r-post"></i>Post</span><span><i class="r-blc"></i>Blocked</span></p>
+</figure>
+
+<figure class="mst-card">
+<figcaption><b>Numerical situations</b><span>goals scored : conceded while one team had more players on court</span></figcaption>
+<div class="mst-table-wrap">
+<table class="mst-mini">
+<thead><tr><th class="l"></th><th>With more players</th><th>With fewer players</th><th>2-min suspensions</th></tr></thead>
+<tbody>
+{% for side in sides %}{% set st = s.flow.strength[side] %}
+<tr><td class="l">{{ team(side) }}</td><td><b>{{ st[0] }}:{{ st[1] }}</b></td><td><b>{{ st[2] }}:{{ st[3] }}</b></td><td>{{ s.figures[side].suspensions }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</div>
+</section>
+
+{# ================================================================== shooting #}
+<section class="mst-panel" data-stats-panel="shooting" role="tabpanel" hidden>
+<div class="mst-grid2 even">
+{% for side in sides %}
+{% set sh = stats.shooting[side] %}
+<figure class="mst-card mst-shooting" data-zone-card>
+<figcaption>{{ team(side) }}<span>{{ sh.goals }} goals from {{ sh.shots }} shots · expected {{ "%.1f"|format(sh.xg) }} · <b class="{{ 'up' if sh.goals_above_expected >= 0.05 else 'down' if sh.goals_above_expected <= -0.05 else '' }}">{{ signed(sh.goals_above_expected) }}</b> vs expected</span></figcaption>
+<div class="mst-court-wrap">
+<svg class="mst-court" viewBox="-0.6 -1.6 21.2 14.4" role="img" aria-label="Shots of {{ names[side] }} by zone">
+<rect class="floor" x="0" y="0" width="20" height="12.8"/>
+<path class="line9" d="M0,2.96 A9,9 0 0 0 8.5,9 L11.5,9 A9,9 0 0 0 20,2.96"/>
+<path class="line6" d="M2.5,0 A6,6 0 0 0 8.5,6 L11.5,6 A6,6 0 0 0 17.5,0 Z"/>
+<line class="line7" x1="9.5" x2="10.5" y1="7" y2="7"/>
+<line class="goal-line" x1="0" x2="20" y1="0" y2="0"/>
+<rect class="goal" x="8.5" y="-0.9" width="3" height="0.9"/>
+{% for z in spots[side] %}
+<g class="spot{% if z.empty %} empty{% endif %}"{% if not z.empty %} data-zone="{{ side }}-{{ z.zone }}" tabindex="0" role="button"{% endif %}><title>{{ z.goals }} goals from {{ z.shots }} shots{% if not z.empty %} · click for the players{% endif %}</title>
+<circle cx="{{ z.x }}" cy="{{ z.y }}" r="1.55" fill="{{ z.fill }}"/>
+<text class="n" x="{{ z.x }}" y="{{ z.y + 0.28 }}" fill="{{ z.ink }}">{{ z.goals }}/{{ z.shots }}</text>
+{% if z.rate %}<text class="p" x="{{ z.x }}" y="{{ z.y + 0.98 }}" fill="{{ z.ink }}">{{ z.rate }}</text>{% endif %}
+</g>
+{% endfor %}
+</svg>
+<div class="mst-scale"><span>0%</span>{% for c in stops[side] %}<i style="background:{{ c }}"></i>{% endfor %}<span>100% scored</span></div>
+</div>
+<div class="mst-table-wrap">
+<table class="mst-table zones">
+<thead><tr><th class="l">Zone</th><th>Shots</th><th>Goals</th><th>%</th><th title="Average conversion of this zone in the competition">Ø %</th><th title="Expected goals">xG</th><th title="Goals minus expected goals">G − xG</th></tr></thead>
+<tbody>
+{% for z in sh.zones %}
+{% set diff = z.goals - z.xg %}
+<tr class="mst-zone" data-zone="{{ side }}-{{ z.zone }}" tabindex="0" title="Click for the players who shot from here"><td class="l">{{ z.name }} <span class="mst-more">▾</span></td><td>{{ z.shots }}</td><td>{{ z.goals }}</td><td>{{ pct(z.rate) }}</td><td class="muted">{{ pct(z.average) }}</td><td>{{ "%.1f"|format(z.xg) }}</td><td class="{{ 'up' if diff >= 0.05 else 'down' if diff <= -0.05 else '' }}">{{ signed(diff) }}</td></tr>
+{% endfor %}
+<tr class="total"><td class="l">Total</td><td>{{ sh.shots }}</td><td>{{ sh.goals }}</td><td>{{ pct(sh.goals / sh.shots if sh.shots else none) }}</td><td class="muted">{{ pct(base.get('shooting')) }}</td><td>{{ "%.1f"|format(sh.xg) }}</td><td class="{{ 'up' if sh.goals_above_expected >= 0.05 else 'down' if sh.goals_above_expected <= -0.05 else '' }}">{{ signed(sh.goals_above_expected) }}</td></tr>
+</tbody>
+</table>
+</div>
+{% for z in sh.zones %}
+<div class="mst-pop" data-zone-pop="{{ side }}-{{ z.zone }}" role="dialog" aria-label="{{ z.name }} — shooters" hidden>
+<div class="mst-pop-head"><b>{{ z.name }}</b><span>{{ z.goals }}/{{ z.shots }} · {{ pct(z.rate) }}{% if z.average is not none %} · Ø {{ pct(z.average) }}{% endif %}</span><button type="button" class="mst-pop-close" data-pop-close aria-label="Close">×</button></div>
+<table class="mst-pop-table">
+<thead><tr><th class="l">Player</th><th>Shots</th><th>Goals</th><th>%</th></tr></thead>
+<tbody>
+{% for p in z.shooters %}<tr><td class="l"><b>{{ p.number }}</b> {{ p.name }}</td><td>{{ p.shots }}</td><td>{{ p.goals }}</td><td>{{ pct(p.rate) }}</td></tr>{% else %}<tr><td class="l muted" colspan="4">shooter not recorded</td></tr>{% endfor %}
+</tbody>
+</table>
+</div>
+{% endfor %}
+</figure>
+{% endfor %}
+</div>
+<p class="mst-note">Click a zone on the court or in the table to see who shot from there. <b>Expected goals (xG)</b> — each shot is worth the share of shots from the same zone that ended in a goal in {{ s.baseline.label if s.baseline else "this match" }}; fast breaks count as one zone. A team above its xG finished better than an average team would from the same positions; below it, goalkeepers or poor finishing cost goals.</p>
+</section>
+
+{# ================================================================== goalkeepers #}
+<section class="mst-panel" data-stats-panel="keepers" role="tabpanel" hidden>
+{% set avg = base.get('saving') %}
+{% macro keeper_row(keeper, marks, side, total) %}
+<div class="mst-gk-row{% if total %} total{% endif %} {{ side }}">
+<div class="mst-gk-who">
+{% if total %}<b class="name">All goalkeepers</b>{% else %}<span class="no">{{ keeper.number }}</span><b class="name">{{ keeper.name }}</b>{% endif %}
+</div>
+<div class="mst-gk-figures">
+<span class="big">{{ pct(keeper.save_rate) }}</span>
+<span><em><b>{{ keeper.saves }}</b>/{{ keeper.faced }}</em><small>saves</small></span>
+<span><em><b>{{ keeper.seven_saves }}</b>/{{ keeper.seven_faced }}</em><small>7m</small></span>
+<span><b class="{{ 'up' if keeper.gsaa >= 0.05 else 'down' if keeper.gsaa <= -0.05 else '' }}">{{ signed(keeper.gsaa) }}</b><small>GSAA</small></span>
+</div>
+<div class="mst-gk-meter">
+<div class="mst-meter {{ side }}"><i style="width:{{ '%.0f'|format(100 * (keeper.save_rate or 0)) }}%"></i>{% if avg %}<em style="left:{{ '%.0f'|format(100 * avg) }}%" title="Competition average {{ pct(avg) }}"></em>{% endif %}</div>
+<small class="muted">{% if avg %}Ø {{ pct(avg) }}{% endif %}{% if not total and keeper.span %} · {{ keeper.span }}{% endif %}</small>
+</div>
+<div class="mst-gk-time">{{ dots(save_dots(marks, end), "keeper") }}</div>
+</div>
+{% endmacro %}
+<div class="mst-card mst-gk-board">
+<div class="mst-gk-row head">
+<span>Goalkeeper</span><span>Save % · saves · 7m · GSAA</span><span>vs competition</span>
+<span class="mst-gk-scale">{% for m in range(0, end // 60 + 1, 10) %}<i style="left:{{ '%.1f'|format(100 * m * 60 / end) }}%">{{ m }}'</i>{% endfor %}</span>
+</div>
+{% for side in sides %}
+<div class="mst-gk-team">{{ team(side) }}</div>
+{% for keeper, marks in stats.save_marks[side] %}{{ keeper_row(keeper, marks, side, false) }}{% endfor %}
+{% if stats.save_marks[side]|length > 1 %}{{ keeper_row(stats.team_keeping(side), stats.team_save_marks(side), side, true) }}{% endif %}
+{% endfor %}
+<p class="mst-legend"><span><i class="dot-save home"></i><i class="dot-save away"></i>save</span><span><i class="dot-conceded"></i>goal conceded</span><span><i class="mst-avg-key"></i> competition average save %</span></p>
+</div>
+<p class="mst-note"><b>GSAA</b> (goals saved above average) — saves made minus the saves an average goalkeeper of {{ s.baseline.label if s.baseline else "the competition" }} makes on the same shots, zone by zone (shots on target only: goals and saves). Positive: the goalkeeper took goals away from the opponent. "All goalkeepers" adds up every goalkeeper of the team.</p>
+</section>
+
+{# ================================================================== line-ups #}
+<section class="mst-panel" data-stats-panel="lineups" role="tabpanel" hidden>
+{% for side in sides %}
+{% set players = stats.players[side] %}
+{% set top_goals = players|map(attribute="goals")|max %}
+{% set top_assists = players|map(attribute="assists")|max %}
+{% set top_wpa = players|map(attribute="wpa")|max %}
+<div class="mst-card mst-lineup {{ side }}">
+<div class="mst-lineup-head">{{ team(side) }}<span>click a player to see every moment of the match the player appears in</span></div>
+<div class="mst-table-wrap">
+<table class="mst-table players">
+<thead><tr>
+<th class="sticky">No</th><th class="l sticky name">Player</th><th title="Position">Pos</th>
+<th title="Recorded actions">Act.</th><th title="Goals / shots">G/Sh</th><th>%</th><th title="Expected goals">xG</th><th title="Goals minus expected goals">G−xG</th>
+<th title="7m goals / 7m shots">7m</th><th title="Assists">As</th><th title="Goals + assists">G+A</th><th title="Fast-break goals">FB</th>
+<th title="Turnovers">TO</th><th title="Steals">ST</th><th title="Blocks">BL</th><th title="7m won">7mW</th><th title="2-min suspensions">2'</th>
+<th title="Saves / shots on target">Saves</th><th title="Goals saved above average">GSAA</th><th title="Win probability added by the player's goals (percentage points)">WPA</th>
+<th class="l strip-head">Involvement <span>0'<i></i>{{ end // 60 }}'</span></th>
+</tr></thead>
+<tbody>
+{% set groups = {0: "Goalkeepers", 1: "Line players", 2: "Backs", 3: "Wings", 4: "Other players"} %}
+{% for p in players %}
+{% if loop.first or p.role != loop.previtem.role %}<tr class="mst-group"><td colspan="21">{{ groups[p.role.value] }}</td></tr>{% endif %}
+<tr class="mst-player{% if not p.active %} idle{% endif %}"{% if p.active %} data-player="{{ p.key }}" tabindex="0" aria-expanded="false"{% endif %}>
+<td class="no sticky">{{ p.number }}</td>
+<td class="l name sticky">{{ p.name }}</td>
+<td><span class="pos role-{{ p.role.value }}" title="{{ p.position or '' }}">{{ p.position|position_abbr(p.goalkeeper) or "–" }}</span></td>
+<td>{{ p.actions or "–" }}</td>
+<td class="{{ 'best' if p.goals and p.goals == top_goals }}">{{ "%d/%d"|format(p.goals, p.shots) if p.shots else "" }}</td>
+<td>{{ pct(p.rate) if p.shots else "" }}</td>
+<td>{{ "%.1f"|format(p.xg) if p.shots else "" }}</td>
+<td class="{{ 'up' if p.shots and p.goals_above_expected >= 0.05 else 'down' if p.shots and p.goals_above_expected <= -0.05 else '' }}">{{ signed(p.goals_above_expected) if p.shots else "" }}</td>
+<td>{{ "%d/%d"|format(p.seven_goals, p.seven_shots) if p.seven_shots else "" }}</td>
+<td class="{{ 'best' if p.assists and p.assists == top_assists }}">{{ p.assists or "" }}</td>
+<td>{{ p.involvement or "" }}</td>
+<td>{{ p.fast_break_goals or "" }}</td>
+<td>{{ p.turnovers or "" }}</td>
+<td>{{ p.steals or "" }}</td>
+<td>{{ p.blocks or "" }}</td>
+<td>{{ p.sevens_won or "" }}</td>
+<td>{{ p.suspensions or "" }}{% if p.red %} <span class="card red" title="Red card"></span>{% elif p.yellow %} <span class="card yellow" title="Yellow card"></span>{% endif %}</td>
+<td>{{ "%d/%d"|format(p.saves, p.faced) if p.faced else "" }}</td>
+<td class="{{ 'up' if p.faced and p.gsaa >= 0.05 else 'down' if p.faced and p.gsaa <= -0.05 else '' }}">{{ signed(p.gsaa) if p.faced else "" }}</td>
+<td class="{{ 'best' if p.wpa > 0 and p.wpa == top_wpa }}">{{ "+%.0f"|format(100 * p.wpa) if p.wpa >= 0.005 else "" }}</td>
+<td class="strip">{% if p.active %}{{ dots(player_dots(p, end), "row") }}{% else %}<span class="muted">no recorded actions</span>{% endif %}</td>
+</tr>
+{% if p.active %}
+<tr class="mst-detail" data-player-detail="{{ p.key }}" hidden>
+<td colspan="21">
+<div class="mst-detail-body">
+<div class="mst-detail-head">
+<b>{{ p.number }} {{ p.name }}</b>{% if p.position %}<span class="pos role-{{ p.role.value }}">{{ p.position }}</span>{% endif %}
+<span>{{ p.actions }} actions · {{ p.span }}{% if p.clutch_goals %} · {{ p.clutch_goals }} goal{{ "s" if p.clutch_goals > 1 }} in a close finish{% endif %}</span>
+{% if p.person_id %}<button type="button" class="btn small" data-show-in-play="{{ p.person_id }}">Show in Play-by-play</button>{% endif %}
+</div>
+{{ dots(player_dots(p, end), "detail") }}
+<ol class="mst-events">
+{% for e in p.events %}
+<li class="ev-{{ e.kind }}"><span class="clock">{{ e.clock }}</span><span class="score">{{ e.score }}</span><span class="kind"><i></i>{{ e.title }}</span><span class="detail">{{ e.detail }}</span></li>
+{% endfor %}
+</ol>
+</div>
+</td>
+</tr>
+{% endif %}
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endfor %}
+<p class="mst-legend wide">{% for kind, label in event_kinds.items() %}<span><i class="dot k-{{ kind }}"></i>{{ label }}</span>{% endfor %}</p>
+<p class="mst-note"><b>Act.</b> recorded actions of the player in the play-by-play · <b>xG / G−xG</b> expected goals of the player's shots and goals above them · <b>WPA</b> win probability added by the player's goals, in percentage points (a goal at 24:24 in the 57th minute is worth far more than one at 30:20) · <b>GSAA</b> goals saved above an average goalkeeper of the competition. A close finish: a goal in the last 10 minutes with the margin at 2 or less.</p>
+</section>
+</div>
+{% endif %}

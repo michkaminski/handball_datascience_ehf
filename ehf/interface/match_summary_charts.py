@@ -236,6 +236,7 @@ class ZoneSpot:
     fill: str
     ink: str
     empty: bool
+    zone: str = ""
 
 
 def court_spots(shot_map: ShotMap) -> tuple[ZoneSpot, ...]:
@@ -247,6 +248,7 @@ def court_spots(shot_map: ShotMap) -> tuple[ZoneSpot, ...]:
         fill = _mix("#ffffff", COLORS[shot_map.side], 0.12 + 0.88 * share) if cell.shots else "#ffffff"
         spots.append(
             ZoneSpot(
+                zone=zone,
                 x=x,
                 y=y,
                 goals=cell.goals,

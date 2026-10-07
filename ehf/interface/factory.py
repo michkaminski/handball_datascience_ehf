@@ -34,7 +34,7 @@ from ehf.interface.scorer_views import ScorerListView
 from ehf.interface.season_views import SeasonListView
 from ehf.interface.start_views import StartView
 from ehf.interface.match_sheet_views import MatchSheetFormView, MatchSheetPrintView
-from ehf.interface.match_summary_views import MatchSummaryPrintView
+from ehf.interface.match_summary_views import MatchStatisticsView, MatchSummaryPrintView
 from ehf.interface.team_report_views import SeasonSheetsPrintView, TeamReportFormView, TeamReportPrintView
 from ehf.interface.team_views import TeamDetailView, TeamListView
 from ehf.interface.venue_views import VenueDetailView, VenueListView
@@ -112,6 +112,10 @@ def create_app() -> Flask:
     blueprint.add_url_rule(
         "/mecze/<int:match_id>/podsumowanie",
         view_func=MatchSummaryPrintView.as_view("match_summary_print", service=match_summary_service),
+    )
+    blueprint.add_url_rule(
+        "/mecze/<int:match_id>/statystyki",
+        view_func=MatchStatisticsView.as_view("match_statistics", service=match_summary_service),
     )
     blueprint.add_url_rule(
         "/zawodnicy",

@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Protocol
 
+from ehf.domain.match_statistics import LineupEntry, MatchStatistics, build_statistics
 from ehf.domain.match_summary import (
     Baseline,
     MatchSummary,
@@ -30,6 +31,8 @@ class MatchSummaryReader(Protocol):
 
     def reference_matches(self, competition_id: int, year: int) -> dict[int, list[int]]: ...
 
+    def lineup(self, match_id: int) -> tuple[LineupEntry, ...]: ...
+
 
 class MatchSummaryService:
     def __init__(self, reader: MatchSummaryReader) -> None:
@@ -42,6 +45,16 @@ class MatchSummaryService:
         if not actions:
             raise NoPlayByPlay(match_id)
         return build_summary(header, actions, self._baseline(header) if with_baseline else None)
+
+    def statistics(self, match_id: int) -> MatchStatistics:
+        """The Statistics tab of the match card: the summary plus expected goals and player figures."""
+        header = self._reader.header(match_id)
+        actions = self._reader.actions([match_id]).get(match_id)
+        if not actions:
+            raise NoPlayByPlay(match_id)
+        base = self._baseline(header)
+        summary = build_summary(header, actions, base)
+        return build_statistics(summary, actions, self._reader.lineup(match_id), base)
 
     def _baseline(self, header: SummaryHeader) -> Baseline | None:
         seasons = self._reader.reference_matches(header.competition_id, header.year_start)

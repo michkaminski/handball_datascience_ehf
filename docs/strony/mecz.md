@@ -19,7 +19,7 @@ Match details #id
   Home / Away names → /druzyny/<club_id> (click → modal, double-click → new tab)
 
 [ Tabs ]
-  Basic data | Team statistics | Lineup | Play-by-play
+  Basic data | Team statistics | Lineup | Play-by-play | Statistics (only with a play-by-play)
 
 [ Basic data ]
   chips: competition, season, phase, group, kickoff, venue, status, spectators
@@ -49,6 +49,7 @@ Match details #id
   Goal difference — one bar per minute (biggest difference reached in it; home up, away down,
     each side scaled to its own biggest lead), half-time line with score, biggest leads circled;
     hover a bar for minute · score · lead, click (or Enter) to jump the list to that minute
+    the score every 5 minutes in a row under the time axis (coloured by the team in front)
   Score — running goals of both teams as steps, final totals at the line ends
   Goals per 10 minutes — paired bars with values (+ ET)
   filter pills: All events | Goals | Saves | Missed shots | Turnovers | Cards and 2 min | 7m awarded | Timeouts
@@ -64,3 +65,5 @@ Match details #id
   (GKS, SUBST) are hidden, pauses and duplicate 2 min / yellow / red / technical-error echoes too
   empty state when the match has no ehf.match_action rows
 ```
+
+Statistics tab (Overview, Shooting, Goalkeepers, Line-ups): [statystyki_meczu.md](statystyki_meczu.md).

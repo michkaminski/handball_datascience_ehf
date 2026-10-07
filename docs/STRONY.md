@@ -47,6 +47,7 @@ Szkic tekstowy każdej listy: `docs/strony/`. Zmianę strony zacznij od szkicu, 
 | Strona | URL | Szkic |
 |---|---|---|
 | Match details | `/mecze/<id>` | [mecz.md](strony/mecz.md) |
+| Match statistics (tab of Match details) | `/mecze/<id>/statystyki` | [statystyki_meczu.md](strony/statystyki_meczu.md) |
 | Player details | `/zawodnicy/<id>` | [zawodnik.md](strony/zawodnik.md) |
 | Team details | `/druzyny/<id>` | [druzyna.md](strony/druzyna.md) |
 | Venue details | `/hale/<id>` | [hala.md](strony/hala.md) |

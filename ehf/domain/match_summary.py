@@ -44,6 +44,7 @@ class TickerActor:
     role: str | None
     number: str | None
     name: str | None
+    person_id: int | None = None
 
 
 @dataclass(frozen=True)
@@ -65,6 +66,8 @@ class Person:
     side: str
     number: str
     name: str
+    # not part of equality: a few feed rows carry the name without the link to ehf.person
+    person_id: int | None = field(default=None, compare=False)
 
     @property
     def label(self) -> str:
@@ -123,6 +126,8 @@ class MatchEvents:
     has_turnovers: bool
     has_steals: bool
     has_fast_breaks: bool
+    yellow_cards: tuple[Moment, ...] = ()
+    sevens_won: tuple[Moment, ...] = ()
 
     @property
     def goals(self) -> tuple[Shot, ...]:
@@ -159,6 +164,8 @@ def match_events(actions: Iterable[TickerAction]) -> MatchEvents:
     suspensions: list[Moment] = []
     red_cards: list[Moment] = []
     timeouts: list[Moment] = []
+    yellow_cards: list[Moment] = []
+    sevens_won: list[Moment] = []
     has_turnovers = has_steals = has_fast_breaks = False
     previous = (0, 0)
     for action in cleaned:
@@ -192,6 +199,14 @@ def match_events(actions: Iterable[TickerAction]) -> MatchEvents:
             moment = _moment(action, None)
             if moment is not None:
                 red_cards.append(moment)
+        elif code == "YC":
+            moment = _moment(action, None)
+            if moment is not None:
+                yellow_cards.append(moment)
+        elif code == "RFP":
+            moment = _moment(action, None)
+            if moment is not None:
+                sevens_won.append(moment)
         elif code == "TOUT" and action.add == "START":
             side = action.actors[0].side if action.actors else None
             timeouts.append(Moment(action.seconds, side or "", None))
@@ -212,6 +227,8 @@ def match_events(actions: Iterable[TickerAction]) -> MatchEvents:
         has_turnovers=has_turnovers,
         has_steals=has_steals,
         has_fast_breaks=has_fast_breaks,
+        yellow_cards=tuple(yellow_cards),
+        sevens_won=tuple(sevens_won),
     )
 
 
@@ -222,7 +239,12 @@ def _actor(action: TickerAction, role: str) -> TickerActor | None:
 def _person(actor: TickerActor | None) -> Person | None:
     if actor is None or not (actor.name or actor.number):
         return None
-    return Person(side=actor.side, number=(actor.number or "").strip(), name=(actor.name or "").strip())
+    return Person(
+        side=actor.side,
+        number=(actor.number or "").strip(),
+        name=(actor.name or "").strip(),
+        person_id=actor.person_id,
+    )
 
 
 def _shot(action: TickerAction, previous: tuple[int, int]) -> Shot | None:
@@ -318,6 +340,13 @@ class TeamFigures:
         return _ratio(self.assisted, self.goals)
 
 
+def shot_zone_key(shot: Shot) -> str:
+    """The zone an expected-goal rate is read for: fast breaks apart, then the throwing zone."""
+    if shot.fast_break:
+        return "FB"
+    return shot.zone or "?"
+
+
 def team_figures(events: MatchEvents, side: str) -> TeamFigures:
     own = [shot for shot in events.shots if shot.side == side]
     against = [shot for shot in events.shots if shot.side != side and shot.result in ("GOAL", "SAVE")]
@@ -373,7 +402,17 @@ def baseline(label: str, matches: Sequence[MatchEvents]) -> Baseline:
                 add("attack", team.goals, team.shots + team.turnovers)
             add("steals", team.steals)
             add("fast_breaks", team.fast_breaks)
-    values = {key: part / whole for key, (part, whole) in sums.items() if whole}
+        for shot in events.shots:
+            zone = shot_zone_key(shot)
+            add(f"zone_goal_{zone}", 1 if shot.is_goal else 0)
+            add(f"zone_shots_{zone}", 1)
+            if shot.result in ("GOAL", "SAVE"):
+                add(f"zone_save_{zone}", 1 if shot.result == "SAVE" else 0, 1)
+    for zone in {key.removeprefix("zone_shots_") for key in sums if key.startswith("zone_shots_")}:
+        goals, shots = sums.get(f"zone_goal_{zone}", [0.0, 0.0])[0], sums[f"zone_shots_{zone}"][0]
+        if shots:
+            sums[f"xg_{zone}"] = [goals, shots]
+    values = {key: part / whole for key, (part, whole) in sums.items() if whole and not key.startswith(("zone_goal_", "zone_shots_"))}
     return Baseline(label=label, matches=len(matches), values=values)
 
 

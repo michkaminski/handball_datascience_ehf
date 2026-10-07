@@ -13,6 +13,9 @@
         panel.setAttribute("role", "tabpanel");
         panel.tabIndex = 0;
       });
+      const play = this.root.querySelector("[data-play]");
+      this.play = play ? new PlayBoard(play) : null;
+      this.play?.start();
       this.bar.hidden = false;
       this.buttons.forEach((button, index) => {
         button.addEventListener("click", () => this.select(index));
@@ -42,7 +45,31 @@
       const id = this.buttons[index].getAttribute("aria-controls");
       this.panels.forEach((panel) => {
         panel.hidden = panel.id !== id;
+        if (!panel.hidden && panel.dataset.src) this.load(panel);
       });
+    }
+
+    selectTab(name) {
+      const index = this.buttons.findIndex((button) => button.dataset.tab === name);
+      if (index >= 0) this.select(index);
+    }
+
+    // Panels with data-src (Statistics) are read from the server the first time they are opened.
+    async load(panel) {
+      if (panel.dataset.loaded) return;
+      panel.dataset.loaded = "loading";
+      const slot = panel.querySelector("[data-stats-slot]") || panel;
+      try {
+        const response = await fetch(panel.dataset.src, { headers: { "X-Requested-With": "fetch" } });
+        if (!response.ok) throw new Error(String(response.status));
+        slot.outerHTML = await response.text();
+        panel.dataset.loaded = "yes";
+        const stats = panel.querySelector("[data-stats]");
+        if (stats) new StatsBoard(stats, this).start();
+      } catch {
+        delete panel.dataset.loaded;
+        slot.innerHTML = '<p class="note">Could not load the statistics. Open the tab again to retry.</p>';
+      }
     }
   }
 
@@ -82,9 +109,12 @@
 
     // Scroll the event list to the first visible event of the clicked minute (or the next one with events).
     jump(minute) {
-      if (!this.list) return;
       const row = this.events.find((item) => !item.hidden && Number(item.dataset.minute) >= minute);
-      if (!row) return;
+      this.reveal(row);
+    }
+
+    reveal(row) {
+      if (!this.list || !row) return;
       const head = this.list.querySelector(".pbp-list-head");
       const offset = (head ? head.offsetHeight : 0) + 34;
       this.list.scrollTo({ top: row.offsetTop - offset, behavior: "smooth" });
@@ -92,6 +122,14 @@
       row.classList.remove("is-jump");
       void row.offsetWidth;
       row.classList.add("is-jump");
+    }
+
+    // Opened from the Statistics tab: show everything, highlight the player, scroll to the first event.
+    follow(person) {
+      this.selectFilter("all");
+      this.person = person;
+      this.apply();
+      this.reveal(this.events.find((row) => row.classList.contains("is-hit")));
     }
 
     selectFilter(filter) {
@@ -126,8 +164,113 @@
     }
   }
 
+  class StatsBoard {
+    constructor(root, tabs) {
+      this.root = root;
+      this.tabs = tabs;
+    }
+
+    start() {
+      this.views = Array.from(this.root.querySelectorAll("[data-stats-tab]"));
+      this.views.forEach((button, index) => {
+        button.addEventListener("click", () => this.show(button.dataset.statsTab));
+        button.addEventListener("keydown", (event) => {
+          const step = { ArrowRight: 1, ArrowLeft: -1 }[event.key];
+          if (!step) return;
+          event.preventDefault();
+          const next = this.views[(index + step + this.views.length) % this.views.length];
+          this.show(next.dataset.statsTab);
+          next.focus();
+        });
+      });
+      this.root.addEventListener("click", (event) => {
+        const show = event.target.closest("[data-show-in-play]");
+        if (show) {
+          this.showInPlay(show.dataset.showInPlay);
+          return;
+        }
+        if (event.target.closest("[data-pop-close]")) {
+          this.closePop();
+          return;
+        }
+        const zone = event.target.closest("[data-zone]");
+        if (zone) {
+          this.openPop(zone);
+          return;
+        }
+        if (this.pop && !event.target.closest(".mst-pop")) this.closePop();
+        const row = event.target.closest("[data-player]");
+        if (row) this.toggle(row);
+      });
+      this.root.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && this.pop) {
+          this.closePop();
+          return;
+        }
+        const target = event.target.closest("[data-player], [data-zone]");
+        if (!target || (event.key !== "Enter" && event.key !== " ")) return;
+        event.preventDefault();
+        if (target.dataset.zone) this.openPop(target);
+        else this.toggle(target);
+      });
+    }
+
+    // Shooting: a small window with the players who shot from the clicked zone (court spot or table row).
+    openPop(trigger) {
+      const name = trigger.dataset.zone;
+      const card = trigger.closest("[data-zone-card]");
+      const pop = card ? card.querySelector('[data-zone-pop="' + name + '"]') : null;
+      if (!pop) return;
+      const same = this.pop === pop;
+      this.closePop();
+      if (same) return;
+      const box = card.getBoundingClientRect();
+      const at = trigger.getBoundingClientRect();
+      pop.hidden = false;
+      const width = pop.offsetWidth;
+      const left = Math.min(Math.max(at.left - box.left + at.width / 2 - width / 2, 12), box.width - width - 12);
+      pop.style.left = left + "px";
+      pop.style.top = at.bottom - box.top + 6 + "px";
+      card.querySelectorAll('tr[data-zone="' + name + '"]').forEach((row) => row.classList.add("is-open"));
+      this.pop = pop;
+    }
+
+    closePop() {
+      if (!this.pop) return;
+      this.pop.hidden = true;
+      const card = this.pop.closest("[data-zone-card]");
+      if (card) card.querySelectorAll("tr.is-open").forEach((row) => row.classList.remove("is-open"));
+      this.pop = null;
+    }
+
+    show(name) {
+      this.closePop();
+      this.views.forEach((button) => {
+        const active = button.dataset.statsTab === name;
+        button.setAttribute("aria-selected", String(active));
+        button.tabIndex = active ? 0 : -1;
+      });
+      this.root.querySelectorAll("[data-stats-panel]").forEach((panel) => {
+        panel.hidden = panel.dataset.statsPanel !== name;
+      });
+    }
+
+    toggle(row) {
+      const detail = this.root.querySelector(`[data-player-detail="${row.dataset.player}"]`);
+      if (!detail) return;
+      const open = detail.hidden;
+      detail.hidden = !open;
+      row.setAttribute("aria-expanded", String(open));
+      row.classList.toggle("is-open", open);
+    }
+
+    showInPlay(person) {
+      if (!this.tabs?.play) return;
+      this.tabs.selectTab("play");
+      this.tabs.play.follow(person);
+    }
+  }
+
   const page = document.querySelector("[data-match-detail]");
   if (page) new MatchTabs(page).start();
-  const play = document.querySelector("[data-play]");
-  if (play) new PlayBoard(play).start();
 })();

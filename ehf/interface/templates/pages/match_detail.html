@@ -117,6 +117,7 @@
 <button type="button" role="tab" id="match-tab-stats" aria-controls="match-panel-stats" aria-selected="false" tabindex="-1">Team statistics</button>
 <button type="button" role="tab" id="match-tab-lineup" aria-controls="match-panel-lineup" aria-selected="false" tabindex="-1">Lineup</button>
 <button type="button" role="tab" id="match-tab-play" aria-controls="match-panel-play" aria-selected="false" tabindex="-1" data-tab="play">Play-by-play</button>
+{% if match.play %}<button type="button" role="tab" id="match-tab-stats-ds" aria-controls="match-panel-stats-ds" aria-selected="false" tabindex="-1" data-tab="statistics">Statistics</button>{% endif %}
 </div>
 
 <div id="match-panel-basic" data-match-panel aria-labelledby="match-tab-basic">
@@ -225,6 +226,12 @@
 {% endif %}
 </div>
 
+{% if match.play %}
+<section class="panel" id="match-panel-stats-ds" data-match-panel aria-labelledby="match-tab-stats-ds" data-src="{{ url_for('panel.match_statistics', match_id=match.id) }}">
+<h2>Statistics</h2>
+<div class="panel-body" data-stats-slot><p class="note">Loading statistics…</p></div>
+</section>
+{% endif %}
 <section class="panel" id="match-panel-play" data-match-panel aria-labelledby="match-tab-play">
 <h2>Play-by-play</h2>
 {% set timeline = match.play_view %}
@@ -249,7 +256,7 @@
 
 {% set lead = charts.lead %}
 <figure class="pbp-card">
-<figcaption><b>Goal difference</b><span>biggest lead in each minute · bar up: {{ timeline.home_name }} ahead · bar down: {{ timeline.away_name }} ahead · click a bar to jump to that minute</span></figcaption>
+<figcaption><b>Goal difference</b><span>biggest lead in each minute · bar up: {{ timeline.home_name }} ahead · bar down: {{ timeline.away_name }} ahead · score every 5 minutes under the time axis · click a bar to jump to that minute</span></figcaption>
 <div class="pbp-scroll">
 <svg class="pbp-chart pbp-chart-wide" viewBox="0 0 {{ lead.width }} {{ lead.height }}" role="img" aria-label="Goal difference minute by minute">
 {% for x in lead.minor_x %}<line class="grid minor" x1="{{ x }}" x2="{{ x }}" y1="{{ lead.top }}" y2="{{ lead.bottom }}"/>{% endfor %}
@@ -267,6 +274,10 @@
 <rect class="bar {{ bar.side }}" x="{{ '%.1f'|format(bar.x) }}" y="{{ '%.1f'|format(bar.y) }}" width="{{ '%.1f'|format(bar.width) }}" height="{{ '%.1f'|format(bar.height) }}" rx="1.5" tabindex="0" data-jump-minute="{{ bar.minute }}"><title>{{ bar.minute }}' · {{ bar.score }} · {{ timeline.home_name if bar.side == 'home' else timeline.away_name }} +{{ bar.margin }}</title></rect>
 {% endfor %}
 <line class="zero" x1="{{ lead.left }}" x2="{{ lead.right }}" y1="{{ lead.zero_y }}" y2="{{ lead.zero_y }}"/>
+<text class="axis score-title" x="{{ lead.left - 8 }}" y="{{ lead.bottom + 40 }}" text-anchor="end">Score</text>
+{% for mark in lead.score_marks %}
+<text class="score-mark {{ mark.side }}" x="{{ mark.pos }}" y="{{ lead.bottom + 40 }}" text-anchor="middle">{{ mark.label }}</text>
+{% endfor %}
 {% for peak in lead.peaks %}
 <g class="peak {{ peak.side }}">
 <circle cx="{{ '%.1f'|format(peak.x) }}" cy="{{ '%.1f'|format(peak.y) }}" r="5"/>
