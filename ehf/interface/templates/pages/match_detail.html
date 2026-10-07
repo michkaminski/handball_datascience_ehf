@@ -56,10 +56,11 @@
 {% macro pbp_event(row) -%}
 {% set label = "7m goal" if row.seven and row.filter_key == "goal" else row.title %}
 <div class="pbp-main"><span class="pbp-tag">{{ label }}</span>{% if row.player %}{{ pbp_person(row.player) }}{% endif %}</div>
-{% if row.assist or row.shot_by or row.zone or row.fast_break %}
+{% if row.assist or row.keeper or row.shot_by or row.zone or row.fast_break %}
 <div class="pbp-sub">
 {%- if row.assist %}<span>assist {{ pbp_person(row.assist) }}</span>{% endif -%}
 {%- if row.shot_by %}<span>shot by {{ pbp_person(row.shot_by) }}</span>{% endif -%}
+{%- if row.keeper %}<span>past GK {{ pbp_person(row.keeper) }}</span>{% endif -%}
 {%- if row.fast_break %}<span>fast break</span>{% endif -%}
 {%- if row.zone and not row.seven %}<span>{{ row.zone }}</span>{% endif -%}
 </div>

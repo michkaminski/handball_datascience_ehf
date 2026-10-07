@@ -56,7 +56,7 @@ Match details #id
     home events right-aligned against the centre column, away events left-aligned
     centre: clock and score; when a goal changes the score it sits in a pill of the scoring team
     badge per event (goal filled, save outlined in the team colour, 2 min / yellow, red, timeout, 7m)
-    second line: assist, "shot by" for saves, fast break, zone
+    second line: assist, "past GK" (the goalkeeper who conceded), "shot by" for saves, fast break, zone
     dashed dividers with the score at 10', 20', 40', 50'; dark bars for half-time and full time
     click a player name to follow that person's events; click again to clear
   read like the summary: repeats of the same event are dropped (2021-22 fast breaks come four times),
