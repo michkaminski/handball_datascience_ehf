@@ -197,7 +197,8 @@ class MatchDetail:
 
     @property
     def play_view(self) -> PlayTimeline:
-        return present_timeline(self.play, self.home_title, self.away_title)
+        half_time = f"{self.half_time_home}:{self.half_time_away}" if self.half_time_home is not None else ""
+        return present_timeline(self.play, self.home_title, self.away_title, half_time)
 
     @property
     def home_title(self) -> str:

@@ -61,11 +61,37 @@
       this.root.querySelectorAll("[data-play-filter-btn]").forEach((button) => {
         button.addEventListener("click", () => this.selectFilter(button.dataset.playFilterBtn));
       });
+      this.list = this.root.querySelector("[data-play-list]");
       this.root.addEventListener("click", (event) => {
+        const bar = event.target.closest("[data-jump-minute]");
+        if (bar) {
+          this.jump(Number(bar.dataset.jumpMinute));
+          return;
+        }
         const person = event.target.closest("[data-play-person]");
         if (!person) return;
         this.selectPerson(person.dataset.playPerson || "");
       });
+      this.root.addEventListener("keydown", (event) => {
+        const bar = event.target.closest("[data-jump-minute]");
+        if (!bar || (event.key !== "Enter" && event.key !== " ")) return;
+        event.preventDefault();
+        this.jump(Number(bar.dataset.jumpMinute));
+      });
+    }
+
+    // Scroll the event list to the first visible event of the clicked minute (or the next one with events).
+    jump(minute) {
+      if (!this.list) return;
+      const row = this.events.find((item) => !item.hidden && Number(item.dataset.minute) >= minute);
+      if (!row) return;
+      const head = this.list.querySelector(".pbp-list-head");
+      const offset = (head ? head.offsetHeight : 0) + 34;
+      this.list.scrollTo({ top: row.offsetTop - offset, behavior: "smooth" });
+      this.list.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      row.classList.remove("is-jump");
+      void row.offsetWidth;
+      row.classList.add("is-jump");
     }
 
     selectFilter(filter) {

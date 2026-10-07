@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-SKIPPED_CODES = frozenset({"CLOCK", "TBP", "TYC", "TRC", "TE", "FRP"})
+# TE/TBP/TYC/TRC/FRP repeat another event; GKS/SUBST/TPT are goalkeeper swaps and substitutions
+SKIPPED_CODES = frozenset({"CLOCK", "TBP", "TYC", "TRC", "TE", "FRP", "GKS", "SUBST", "TPT"})
 
 SHOT_TITLES = {
     "GOAL": "Goal",
@@ -100,6 +101,7 @@ class PlayAction:
     score_home: int
     score_away: int
     participants: tuple[PlayParticipant, ...]
+    seconds: int | None = None
 
 
 @dataclass(frozen=True)
@@ -127,6 +129,10 @@ class PlayRow:
     detail: str = ""
     layout: str = ""
     person_ids: tuple[int, ...] = ()
+    minute: int | None = None
+    scored: str | None = None
+    fast_break: bool = False
+    seven: bool = False
 
     @property
     def people_key(self) -> str:
@@ -256,7 +262,8 @@ def _tone(action: PlayAction) -> str:
 
 
 def _zone(action: PlayAction) -> str:
-    if action.action_code != "SHOT" or not action.shot_zone:
+    # FB/FBL/FBR/FBC only say "fast break", which the row shows on its own
+    if action.action_code != "SHOT" or not action.shot_zone or action.shot_zone.startswith("FB"):
         return ""
     return ZONE_LABELS.get(action.shot_zone, action.shot_zone)
 

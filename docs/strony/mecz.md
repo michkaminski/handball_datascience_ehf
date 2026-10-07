@@ -44,18 +44,23 @@ Match details #id
   staff codes
   legend under both tables in the same group order
 
-[ Play-by-play ]
-  compact centre axis: home left, away right, clock and score in the middle column
-  event type shown as a small badge (Goal, Save, Turnover, 2 min, Yellow, Red, 7m, Timeout)
-  goal: scorer, zone, assist, GK who conceded; save: GK + shooter
-  10:00 / 20:00 separators show the score then
-  markers: first lead of each side, highest lead (margin ≥ 2), highest level score
-  analytics charts above the list (shared home/away colours):
-    Lead margin — goal difference 0–60 min, green/red bands, HT, max leads, final margin
-    Score progression — cumulative goals for both teams, HT, final totals
-    Goals by 5-minute period — grouped bars with values
-  filters: All | Goals | Shots | Saves | Turnovers | Cards | 7m | Timeout
-  click a player name to highlight that person's events; click again to clear
-  pauses, duplicate 2 min / yellow / red echoes and technical-error twins are hidden
+[ Play-by-play ]   home indigo, away orange — the same colours and rules as the match summary print
+  head: team key · ties · lead changes · biggest lead of each team (+N score · minute)
+  Goal difference — one bar per minute (biggest difference reached in it; home up, away down,
+    each side scaled to its own biggest lead), half-time line with score, biggest leads circled;
+    hover a bar for minute · score · lead, click (or Enter) to jump the list to that minute
+  Score — running goals of both teams as steps, final totals at the line ends
+  Goals per 10 minutes — paired bars with values (+ ET)
+  filter pills: All events | Goals | Saves | Missed shots | Turnovers | Cards and 2 min | 7m awarded | Timeouts
+  event list (scrolls inside its frame, team names and period headers stay on top):
+    home events right-aligned against the centre column, away events left-aligned
+    centre: clock and score; when a goal changes the score it sits in a pill of the scoring team
+    badge per event (goal filled, save outlined in the team colour, 2 min / yellow, red, timeout, 7m)
+    second line: assist, "shot by" for saves, fast break, zone
+    dashed dividers with the score at 10', 20', 40', 50'; dark bars for half-time and full time
+    click a player name to follow that person's events; click again to clear
+  read like the summary: repeats of the same event are dropped (2021-22 fast breaks come four times),
+  the TO/FB companion row marks the goal as a fast break, goalkeeper swaps and substitutions
+  (GKS, SUBST) are hidden, pauses and duplicate 2 min / yellow / red / technical-error echoes too
   empty state when the match has no ehf.match_action rows
 ```

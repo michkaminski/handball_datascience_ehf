@@ -135,6 +135,7 @@ SELECT
     a.action_code,
     a.period_code,
     a.clock_raw,
+    a.clock_seconds,
     a.result_code,
     a.shot_zone,
     a.action_add,
@@ -322,6 +323,7 @@ class PsycopgMatchDetailReader:
             score_home=row["score_home"],
             score_away=row["score_away"],
             participants=tuple(people),
+            seconds=row["clock_seconds"],
         )
 
     def _metric(self, row: dict) -> MatchMetric:

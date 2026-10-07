@@ -1,347 +1,371 @@
+"""Charts of the Play-by-play tab, read with the same rules as the match summary print.
+
+Geometry is in SVG user units of a fixed-width viewBox (the page scales it to the column width).
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ehf.domain.play_by_play import PlayAction, period_seconds
+from ehf.domain.match_summary import (
+    REGULATION,
+    Flow,
+    TickerAction,
+    TickerActor,
+    match_events,
+    match_flow,
+)
+from ehf.domain.play_by_play import PlayAction
 
-PERIOD_OFFSETS = {
-    "H1": 0,
-    "H2": 30 * 60,
-    "ET1": 60 * 60,
-    "ET2": 70 * 60,
-    "SO": 80 * 60,
-    "P7": 80 * 60,
-}
+WIDTH = 960.0
+PAD_LEFT = 46.0
+PAD_RIGHT = 18.0
+PLOT_WIDTH = WIDTH - PAD_LEFT - PAD_RIGHT
 
-MATCH_MINUTES = 60
-BUCKET_COUNT = 12
-PAD_L = 34.0
-PAD_R = 44.0
-PAD_T = 16.0
-PAD_B = 26.0
-PLOT_W = 560.0
-PLOT_H = 132.0
-WIDTH = PAD_L + PLOT_W + PAD_R
-HEIGHT = PAD_T + PLOT_H + PAD_B
+LEAD_TOP = 30.0
+LEAD_PLOT = 210.0
+LEAD_HEIGHT = LEAD_TOP + LEAD_PLOT + 30.0
+
+SMALL_WIDTH = 470.0
+SMALL_LEFT = 34.0
+SMALL_RIGHT = 40.0
+SMALL_TOP = 18.0
+SMALL_PLOT = 150.0
+SMALL_HEIGHT = SMALL_TOP + SMALL_PLOT + 28.0
 
 
 @dataclass(frozen=True)
-class ChartTick:
+class Tick:
     pos: float
     label: str
+    side: str = ""
 
 
 @dataclass(frozen=True)
-class ChartMark:
+class MinuteBar:
     x: float
     y: float
-    text: str
-    anchor: str = "middle"
+    width: float
+    height: float
+    side: str
+    minute: int
+    margin: int
+    score: str
+
+
+@dataclass(frozen=True)
+class Peak:
+    x: float
+    y: float
+    label_x: float
+    label_y: float
+    side: str
+    margin: int
+    score: str
+    minute: int
 
 
 @dataclass(frozen=True)
 class LeadChart:
-    polyline: str
+    width: float
+    height: float
+    left: float
+    right: float
+    top: float
+    bottom: float
     zero_y: float
-    ht_x: float
-    band_home_h: float
-    band_away_y: float
-    band_away_h: float
-    y_ticks: tuple[ChartTick, ...]
-    x_ticks: tuple[ChartTick, ...]
-    max_home: ChartMark | None
-    max_away: ChartMark | None
-    final: ChartMark | None
-    width: float = WIDTH
-    height: float = HEIGHT
-    plot_left: float = PAD_L
-    plot_top: float = PAD_T
-    plot_width: float = PLOT_W
-    plot_height: float = PLOT_H
+    bars: tuple[MinuteBar, ...]
+    y_ticks: tuple[Tick, ...]
+    x_ticks: tuple[Tick, ...]
+    minor_x: tuple[float, ...]
+    half_x: float
+    half_label: str
+    peaks: tuple[Peak, ...]
 
 
 @dataclass(frozen=True)
 class ScoreChart:
-    home_line: str
-    away_line: str
-    ht_x: float
-    y_ticks: tuple[ChartTick, ...]
-    x_ticks: tuple[ChartTick, ...]
-    home_end: ChartMark
-    away_end: ChartMark
-    width: float = WIDTH
-    height: float = HEIGHT
-    plot_left: float = PAD_L
-    plot_top: float = PAD_T
-    plot_width: float = PLOT_W
-    plot_height: float = PLOT_H
+    width: float
+    height: float
+    left: float
+    right: float
+    top: float
+    bottom: float
+    home_path: str
+    away_path: str
+    home_end: tuple[float, float, int]
+    away_end: tuple[float, float, int]
+    y_ticks: tuple[Tick, ...]
+    x_ticks: tuple[Tick, ...]
+    half_x: float
 
 
 @dataclass(frozen=True)
-class BucketBar:
+class SegmentBar:
     label: str
     home: int
     away: int
     home_x: float
-    home_y: float
-    home_w: float
-    home_h: float
     away_x: float
+    width: float
+    home_y: float
     away_y: float
-    away_w: float
-    away_h: float
     label_x: float
 
 
 @dataclass(frozen=True)
-class BucketChart:
-    bars: tuple[BucketBar, ...]
-    y_ticks: tuple[ChartTick, ...]
-    baseline_y: float
-    width: float = WIDTH
-    height: float = HEIGHT
-    plot_left: float = PAD_L
-    plot_top: float = PAD_T
-    plot_width: float = PLOT_W
-    plot_height: float = PLOT_H
+class SegmentChart:
+    width: float
+    height: float
+    left: float
+    right: float
+    top: float
+    bottom: float
+    bars: tuple[SegmentBar, ...]
+    y_ticks: tuple[Tick, ...]
+
+
+@dataclass(frozen=True)
+class FlowFacts:
+    ties: int
+    lead_changes: int
+    biggest: dict[str, tuple[int, str, int] | None]
 
 
 @dataclass(frozen=True)
 class PlayCharts:
-    lead: LeadChart | None
-    score: ScoreChart | None
-    buckets: BucketChart | None
+    lead: LeadChart | None = None
+    score: ScoreChart | None = None
+    segments: SegmentChart | None = None
+    facts: FlowFacts | None = None
 
     @property
     def ready(self) -> bool:
-        return self.lead is not None or self.score is not None or self.buckets is not None
+        return self.lead is not None
 
 
-def build_play_charts(actions: tuple[PlayAction, ...]) -> PlayCharts:
-    series = _score_series(actions)
-    if not series:
-        return PlayCharts(lead=None, score=None, buckets=None)
+def ticker_actions(actions: tuple[PlayAction, ...]) -> tuple[TickerAction, ...]:
+    """The tab's actions in the shape the match-summary rules read (actions without a clock are left out)."""
+    return tuple(
+        TickerAction(
+            seq=action.seq,
+            code=action.action_code,
+            result=action.result_code,
+            zone=action.shot_zone,
+            add=action.action_add,
+            period=action.period_code,
+            seconds=action.seconds,
+            home=action.score_home,
+            away=action.score_away,
+            actors=tuple(
+                TickerActor(person.side, person.role_code, person.shirt_number, person.last_name or person.first_name)
+                for person in action.participants
+            ),
+        )
+        for action in actions
+        if action.seconds is not None
+    )
+
+
+def build_play_charts(actions: tuple[PlayAction, ...], half_time: str = "") -> PlayCharts:
+    ticker = ticker_actions(actions)
+    if not ticker:
+        return PlayCharts()
+    flow = match_flow(match_events(ticker))
+    if not flow.goals:
+        return PlayCharts()
     return PlayCharts(
-        lead=_lead_chart(series),
-        score=_score_chart(series),
-        buckets=_bucket_chart(series),
+        lead=_lead_chart(flow, half_time),
+        score=_score_chart(flow),
+        segments=_segment_chart(flow),
+        facts=FlowFacts(
+            ties=flow.ties,
+            lead_changes=flow.lead_changes,
+            biggest={
+                side: (lead.margin, f"{lead.home}:{lead.away}", lead.seconds // 60 + 1) if lead else None
+                for side, lead in flow.biggest.items()
+            },
+        ),
     )
 
 
-def _score_series(actions: tuple[PlayAction, ...]) -> list[tuple[float, int, int]]:
-    points = [(0.0, 0, 0)]
-    current = (0, 0)
-    last_t = 0.0
-    for action in actions:
-        if action.action_code == "STARTP":
+# --------------------------------------------------------------------------- goal difference per minute
+
+
+def _lead_chart(flow: Flow, half_time: str) -> LeadChart:
+    end = flow.end_seconds
+    minutes = end // 60
+    slot = PLOT_WIDTH / minutes
+    up = max(3, max((g.home - g.away for g in flow.goals), default=0) + 1)
+    down = max(3, max((g.away - g.home for g in flow.goals), default=0) + 1)
+    per_goal = LEAD_PLOT / (up + down)
+    zero = LEAD_TOP + up * per_goal
+
+    def y(margin: float) -> float:
+        return zero - margin * per_goal
+
+    bars = []
+    margin = 0
+    index = 0
+    score = "0:0"
+    for minute in range(minutes):
+        # the biggest difference reached in the minute (the later one of equals): a lead of seconds still shows
+        shown = margin
+        shown_score = score
+        while index < len(flow.goals) and flow.goals[index].seconds <= (minute + 1) * 60:
+            goal = flow.goals[index]
+            margin = goal.home - goal.away
+            score = f"{goal.home}:{goal.away}"
+            if abs(margin) >= abs(shown):
+                shown, shown_score = margin, score
+            index += 1
+        if shown:
+            bars.append(
+                MinuteBar(
+                    x=PAD_LEFT + minute * slot + slot * 0.14,
+                    y=min(y(shown), zero),
+                    width=slot * 0.72,
+                    height=abs(y(shown) - zero),
+                    side="home" if shown > 0 else "away",
+                    minute=minute + 1,
+                    margin=abs(shown),
+                    score=shown_score,
+                )
+            )
+
+    span = up + down
+    step = 1 if span <= 8 else 2 if span <= 16 else 4 if span <= 32 else 6
+    y_ticks = tuple(
+        Tick(y(value), f"+{abs(value)}" if value else "0", "home" if value > 0 else "away" if value < 0 else "")
+        for value in range(-(down // step) * step, up + 1, step)
+    )
+    x_ticks = tuple(Tick(PAD_LEFT + slot * m, f"{m}'") for m in range(0, minutes + 1, 10))
+    minor_x = tuple(PAD_LEFT + slot * m for m in range(5, minutes, 10))
+
+    peaks = []
+    for side in ("home", "away"):
+        lead = flow.biggest[side]
+        if lead is None:
             continue
-        elapsed = _elapsed(action)
-        if elapsed is None:
-            elapsed = last_t
-        score = (action.score_home, action.score_away)
-        if score != current:
-            points.append((elapsed, score[0], score[1]))
-            current = score
-        last_t = max(last_t, elapsed)
-    end = max(float(MATCH_MINUTES * 60), last_t)
-    if points[-1][0] < end or points[-1][1:] != current:
-        points.append((end, current[0], current[1]))
-    return points
-
-
-def _lead_chart(series: list[tuple[float, int, int]]) -> LeadChart:
-    diffs = [home - away for _, home, away in series]
-    peak = max(1, max(abs(value) for value in diffs))
-    zero_y = PAD_T + PLOT_H / 2
-    step = _lead_step(series, peak, zero_y)
-    max_home_i = max(range(len(diffs)), key=lambda i: diffs[i])
-    max_away_i = min(range(len(diffs)), key=lambda i: diffs[i])
-    max_home = None
-    if diffs[max_home_i] > 0:
-        x, y = _xy(series[max_home_i][0], diffs[max_home_i], peak, zero_y)
-        max_home = ChartMark(x=x, y=max(PAD_T + 10, y - 8), text=f"max +{diffs[max_home_i]}", anchor="middle")
-    max_away = None
-    if diffs[max_away_i] < 0:
-        x, y = _xy(series[max_away_i][0], diffs[max_away_i], peak, zero_y)
-        max_away = ChartMark(x=x, y=min(PAD_T + PLOT_H - 4, y + 12), text=f"max +{-diffs[max_away_i]}", anchor="middle")
-    final_diff = diffs[-1]
-    fx, fy = _xy(series[-1][0], final_diff, peak, zero_y)
-    final_text = f"{final_diff:+d}" if final_diff != 0 else "0"
-    return LeadChart(
-        polyline=step,
-        zero_y=zero_y,
-        ht_x=_x(30 * 60),
-        band_home_h=PLOT_H / 2,
-        band_away_y=zero_y,
-        band_away_h=PLOT_H / 2,
-        y_ticks=_lead_y_ticks(peak, zero_y),
-        x_ticks=_minute_ticks(),
-        max_home=max_home,
-        max_away=max_away,
-        final=ChartMark(x=min(WIDTH - 6, fx + 8), y=fy + 3, text=final_text, anchor="start"),
-    )
-
-
-def _score_chart(series: list[tuple[float, int, int]]) -> ScoreChart:
-    top = max(1, max(max(home, away) for _, home, away in series))
-    home_pts = [_xy_score(t, home, top) for t, home, _ in _step_scores(series, "home")]
-    away_pts = [_xy_score(t, away, top) for t, _, away in _step_scores(series, "away")]
-    home_end = home_pts[-1]
-    away_end = away_pts[-1]
-    home_label_y = home_end[1] - 2
-    away_label_y = away_end[1] + 10
-    if abs(home_label_y - away_label_y) < 10:
-        if home_end[1] <= away_end[1]:
-            home_label_y = home_end[1] - 4
-            away_label_y = away_end[1] + 12
-        else:
-            away_label_y = away_end[1] - 4
-            home_label_y = home_end[1] + 12
-    return ScoreChart(
-        home_line=_poly(home_pts),
-        away_line=_poly(away_pts),
-        ht_x=_x(30 * 60),
-        y_ticks=_score_y_ticks(top),
-        x_ticks=_minute_ticks(),
-        home_end=ChartMark(x=min(WIDTH - 6, home_end[0] + 6), y=home_label_y, text=str(series[-1][1]), anchor="start"),
-        away_end=ChartMark(x=min(WIDTH - 6, away_end[0] + 6), y=away_label_y, text=str(series[-1][2]), anchor="start"),
-    )
-
-
-def _bucket_chart(series: list[tuple[float, int, int]]) -> BucketChart:
-    home_counts = [0] * BUCKET_COUNT
-    away_counts = [0] * BUCKET_COUNT
-    previous = (0, 0)
-    for t, home, away in series[1:]:
-        index = min(BUCKET_COUNT - 1, int(t // 300))
-        if home > previous[0]:
-            home_counts[index] += home - previous[0]
-        if away > previous[1]:
-            away_counts[index] += away - previous[1]
-        previous = (home, away)
-    top = max(1, max(*home_counts, *away_counts))
-    group_w = PLOT_W / BUCKET_COUNT
-    bar_w = group_w * 0.32
-    gap = group_w * 0.08
-    bars: list[BucketBar] = []
-    for index in range(BUCKET_COUNT):
-        left = PAD_L + index * group_w
-        home = home_counts[index]
-        away = away_counts[index]
-        home_h = home / top * (PLOT_H - 8)
-        away_h = away / top * (PLOT_H - 8)
-        home_x = left + group_w * 0.18
-        away_x = home_x + bar_w + gap
-        start = 0 if index == 0 else index * 5 + 1
-        end = (index + 1) * 5
-        bars.append(
-            BucketBar(
-                label=f"{start}–{end}",
-                home=home,
-                away=away,
-                home_x=home_x,
-                home_y=PAD_T + PLOT_H - home_h,
-                home_w=bar_w,
-                home_h=home_h,
-                away_x=away_x,
-                away_y=PAD_T + PLOT_H - away_h,
-                away_w=bar_w,
-                away_h=away_h,
-                label_x=left + group_w / 2,
+        value = lead.margin if side == "home" else -lead.margin
+        x = PAD_LEFT + (lead.seconds // 60) * slot + slot / 2
+        peaks.append(
+            Peak(
+                x=x,
+                y=y(value),
+                label_x=min(max(x, PAD_LEFT + 60), WIDTH - PAD_RIGHT - 60),
+                label_y=y(value) - 9 if side == "home" else y(value) + 18,
+                side=side,
+                margin=lead.margin,
+                score=f"{lead.home}:{lead.away}",
+                minute=lead.seconds // 60 + 1,
             )
         )
-    return BucketChart(
+    return LeadChart(
+        width=WIDTH,
+        height=LEAD_HEIGHT,
+        left=PAD_LEFT,
+        right=WIDTH - PAD_RIGHT,
+        top=LEAD_TOP,
+        bottom=LEAD_TOP + LEAD_PLOT,
+        zero_y=zero,
         bars=tuple(bars),
-        y_ticks=_score_y_ticks(top),
-        baseline_y=PAD_T + PLOT_H,
+        y_ticks=y_ticks,
+        x_ticks=x_ticks,
+        minor_x=minor_x,
+        half_x=PAD_LEFT + PLOT_WIDTH * (REGULATION / 2) / end,
+        half_label=half_time,
+        peaks=tuple(peaks),
     )
 
 
-def _lead_step(series: list[tuple[float, int, int]], peak: int, zero_y: float) -> str:
-    points: list[tuple[float, float]] = []
-    previous_diff = 0
-    for t, home, away in series:
-        diff = home - away
-        if points:
-            points.append((_x(t), _y(previous_diff, peak, zero_y)))
-        points.append((_x(t), _y(diff, peak, zero_y)))
-        previous_diff = diff
-    return _poly(points)
+# --------------------------------------------------------------------------- running score
 
 
-def _step_scores(
-    series: list[tuple[float, int, int]],
-    side: str,
-) -> list[tuple[float, int, int]]:
-    points: list[tuple[float, int, int]] = []
-    previous = series[0]
-    for point in series:
-        if side == "home" and point[1] != previous[1]:
-            points.append((point[0], previous[1], previous[2]))
-        if side == "away" and point[2] != previous[2]:
-            points.append((point[0], previous[1], previous[2]))
-        points.append(point)
-        previous = point
-    return points
+def _score_chart(flow: Flow) -> ScoreChart:
+    end = flow.end_seconds
+    plot_w = SMALL_WIDTH - SMALL_LEFT - SMALL_RIGHT
+    last = flow.goals[-1]
+    top_goals = max(last.home, last.away, 1)
+    step = 5 if top_goals <= 40 else 10
+    ceiling = ((top_goals + 1 + step - 1) // step) * step  # room above the final score
+
+    def x(seconds: int) -> float:
+        return SMALL_LEFT + plot_w * min(seconds, end) / end
+
+    def y(goals: int) -> float:
+        return SMALL_TOP + SMALL_PLOT * (1 - goals / ceiling)
+
+    def path(side: str) -> tuple[str, tuple[float, float, int]]:
+        count = 0
+        parts = [f"M{x(0):.1f},{y(0):.1f}"]
+        for goal in flow.goals:
+            if goal.side != side:
+                continue
+            parts.append(f"H{x(goal.seconds):.1f}")
+            count += 1
+            parts.append(f"V{y(count):.1f}")
+        parts.append(f"H{x(end):.1f}")
+        return " ".join(parts), (x(end), y(count), count)
+
+    home_path, home_end = path("home")
+    away_path, away_end = path("away")
+    return ScoreChart(
+        width=SMALL_WIDTH,
+        height=SMALL_HEIGHT,
+        left=SMALL_LEFT,
+        right=SMALL_WIDTH - SMALL_RIGHT,
+        top=SMALL_TOP,
+        bottom=SMALL_TOP + SMALL_PLOT,
+        home_path=home_path,
+        away_path=away_path,
+        home_end=home_end,
+        away_end=away_end,
+        y_ticks=tuple(Tick(y(value), str(value)) for value in range(0, ceiling + 1, step)),
+        x_ticks=tuple(Tick(x(m * 60), f"{m}'") for m in range(0, end // 60 + 1, 10)),
+        half_x=x(REGULATION // 2),
+    )
 
 
-def _lead_y_ticks(peak: int, zero_y: float) -> tuple[ChartTick, ...]:
-    values = (peak, 0, -peak) if peak <= 3 else (peak, peak // 2, 0, -(peak // 2), -peak)
-    unique = []
-    for value in values:
-        if value not in unique:
-            unique.append(value)
-    return tuple(ChartTick(_y(value, peak, zero_y), f"{value:+d}" if value != 0 else "0") for value in unique)
+# --------------------------------------------------------------------------- goals per 10 minutes
 
 
-def _score_y_ticks(top: int) -> tuple[ChartTick, ...]:
-    if top <= 4:
-        values = list(range(top, -1, -1))
-    else:
-        step = max(1, round(top / 4))
-        values = list(range(top, -1, -step))
-        if values[-1] != 0:
-            values.append(0)
-    return tuple(ChartTick(PAD_T + (1 - value / top) * PLOT_H, str(value)) for value in values)
+def _segment_chart(flow: Flow) -> SegmentChart:
+    plot_w = SMALL_WIDTH - SMALL_LEFT - 10
+    count = len(flow.segments)
+    slot = plot_w / count
+    top = max((max(h, a) for _, h, a in flow.segments), default=1) or 1
+    ceiling = top + 1
 
+    def y(goals: int) -> float:
+        return SMALL_TOP + SMALL_PLOT * (1 - goals / ceiling)
 
-def _minute_ticks() -> tuple[ChartTick, ...]:
-    return tuple(ChartTick(_x(minute * 60), str(minute)) for minute in (0, 15, 30, 45, 60))
+    bar = slot * 0.3
+    bars = []
+    for index, (label, home, away) in enumerate(flow.segments):
+        centre = SMALL_LEFT + slot * index + slot / 2
+        bars.append(
+            SegmentBar(
+                label="ET" if label == "ET" else label,
+                home=home,
+                away=away,
+                home_x=centre - bar - 1.5,
+                away_x=centre + 1.5,
+                width=bar,
+                home_y=y(home),
+                away_y=y(away),
+                label_x=centre,
+            )
+        )
+    step = 1 if ceiling <= 6 else 2 if ceiling <= 12 else 4
+    return SegmentChart(
+        width=SMALL_WIDTH,
+        height=SMALL_HEIGHT,
+        left=SMALL_LEFT,
+        right=SMALL_WIDTH - 10,
+        top=SMALL_TOP,
+        bottom=SMALL_TOP + SMALL_PLOT,
+        bars=tuple(bars),
+        y_ticks=tuple(Tick(y(value), str(value)) for value in range(0, ceiling + 1, step)),
+    )
 
-
-def _xy(seconds: float, diff: int, peak: int, zero_y: float) -> tuple[float, float]:
-    return _x(seconds), _y(diff, peak, zero_y)
-
-
-def _xy_score(seconds: float, goals: int, top: int) -> tuple[float, float]:
-    return _x(seconds), PAD_T + (1 - goals / top) * PLOT_H
-
-
-def _x(seconds: float) -> float:
-    minute = max(0.0, min(float(MATCH_MINUTES), seconds / 60.0))
-    return PAD_L + minute / MATCH_MINUTES * PLOT_W
-
-
-def _y(diff: int, peak: int, zero_y: float) -> float:
-    return zero_y - diff / peak * (PLOT_H / 2 - 4)
-
-
-def _poly(points: list[tuple[float, float]]) -> str:
-    return " ".join(f"{x:.2f},{y:.2f}" for x, y in points)
-
-
-def _elapsed(action: PlayAction) -> float | None:
-    seconds = period_seconds(action.clock_raw)
-    if seconds is None:
-        text = (action.clock_raw or "").strip()
-        if ":" not in text:
-            return None
-        minutes_text, seconds_text = text.split(":", 1)
-        try:
-            whole = int(minutes_text) * 60 + int(seconds_text)
-        except ValueError:
-            return None
-        if whole < 0:
-            return None
-        return float(whole)
-    return float(PERIOD_OFFSETS.get(action.period_code or "", 0) + seconds)
