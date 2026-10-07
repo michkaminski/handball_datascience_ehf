@@ -47,6 +47,61 @@
   }
 
   window.EhfMatchTabs = MatchTabs;
+
+  class PlayBoard {
+    constructor(root) {
+      this.root = root;
+      this.filter = "all";
+      this.person = "";
+    }
+
+    start() {
+      this.events = Array.from(this.root.querySelectorAll("[data-play-filter]"));
+      this.structure = Array.from(this.root.querySelectorAll("[data-play-structure]"));
+      this.root.querySelectorAll("[data-play-filter-btn]").forEach((button) => {
+        button.addEventListener("click", () => this.selectFilter(button.dataset.playFilterBtn));
+      });
+      this.root.addEventListener("click", (event) => {
+        const person = event.target.closest("[data-play-person]");
+        if (!person) return;
+        this.selectPerson(person.dataset.playPerson || "");
+      });
+    }
+
+    selectFilter(filter) {
+      this.filter = filter || "all";
+      this.root.querySelectorAll("[data-play-filter-btn]").forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.playFilterBtn === this.filter));
+      });
+      this.apply();
+    }
+
+    selectPerson(person) {
+      this.person = this.person === person ? "" : person;
+      this.apply();
+    }
+
+    apply() {
+      const person = this.person;
+      this.events.forEach((row) => {
+        const shown = this.filter === "all" || row.dataset.playFilter === this.filter;
+        row.hidden = !shown;
+        const ids = (row.dataset.playPeople || "").split(",").filter(Boolean);
+        const hit = shown && Boolean(person) && ids.includes(person);
+        row.classList.toggle("is-hit", hit);
+        row.classList.toggle("is-dim", shown && Boolean(person) && !hit);
+      });
+      this.root.querySelectorAll("[data-play-person]").forEach((node) => {
+        node.classList.toggle("is-hit", Boolean(person) && node.dataset.playPerson === person);
+      });
+      this.structure.forEach((row) => {
+        row.hidden = this.filter !== "all";
+      });
+    }
+  }
+
   const page = document.querySelector("[data-match-detail]");
   if (page) new MatchTabs(page).start();
+  const play = document.querySelector("[data-play]");
+  if (play) new PlayBoard(play).start();
 })();

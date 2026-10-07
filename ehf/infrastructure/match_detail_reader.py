@@ -15,6 +15,7 @@ from ehf.domain.match_detail import (
     TeamOfficial,
     TeamStats,
 )
+from ehf.domain.play_by_play import PlayAction, PlayParticipant
 
 HEADER_SQL = """
 SELECT
@@ -128,6 +129,29 @@ WHERE match_id = %s
 ORDER BY role, id
 """
 
+PLAY_SQL = """
+SELECT
+    a.seq,
+    a.action_code,
+    a.period_code,
+    a.clock_raw,
+    a.result_code,
+    a.shot_zone,
+    a.action_add,
+    a.score_home,
+    a.score_away,
+    p.side,
+    p.role_code,
+    p.shirt_number,
+    p.first_name,
+    p.last_name,
+    p.person_id
+FROM ehf.match_action a
+LEFT JOIN ehf.match_action_actor p ON p.match_action_id = a.id
+WHERE a.match_id = %s
+ORDER BY a.seq, p.competitor_order NULLS FIRST, p.athlete_order NULLS FIRST, p.id
+"""
+
 METRIC_SQL = """
 SELECT mm.metric_code, m.label, m.unit, mm.home_value, mm.away_value
 FROM ehf.match_metric mm
@@ -161,6 +185,8 @@ class PsycopgMatchDetailReader:
                     officials = tuple(self._official(row) for row in cursor.fetchall())
                     cursor.execute(METRIC_SQL, (match_id,))
                     metrics = tuple(self._metric(row) for row in cursor.fetchall())
+                    cursor.execute(PLAY_SQL, (match_id,))
+                    play = self._play(cursor.fetchall())
         except MatchNotFound:
             raise
         except Error as exc:
@@ -200,6 +226,7 @@ class PsycopgMatchDetailReader:
             away_officials=tuple(self._staff(row) for row in staff if row["side"] == "away"),
             officials=officials,
             metrics=metrics,
+            play=play,
         )
 
     def _period(self, row: dict) -> PeriodScore:
@@ -256,6 +283,45 @@ class PsycopgMatchDetailReader:
             role=row["role"],
             name=row["name"] or "—",
             country_code=row["country_code"],
+        )
+
+    def _play(self, rows: list[dict]) -> tuple[PlayAction, ...]:
+        grouped: list[PlayAction] = []
+        current: dict | None = None
+        people: list[PlayParticipant] = []
+        for row in rows:
+            if current is None or row["seq"] != current["seq"]:
+                if current is not None:
+                    grouped.append(self._play_action(current, people))
+                current = row
+                people = []
+            if row["side"] is not None:
+                people.append(
+                    PlayParticipant(
+                        side=row["side"],
+                        role_code=row["role_code"],
+                        shirt_number=row["shirt_number"],
+                        first_name=row["first_name"],
+                        last_name=row["last_name"],
+                        person_id=row["person_id"],
+                    )
+                )
+        if current is not None:
+            grouped.append(self._play_action(current, people))
+        return tuple(grouped)
+
+    def _play_action(self, row: dict, people: list[PlayParticipant]) -> PlayAction:
+        return PlayAction(
+            seq=row["seq"],
+            action_code=row["action_code"],
+            period_code=row["period_code"],
+            clock_raw=row["clock_raw"],
+            result_code=row["result_code"],
+            shot_zone=row["shot_zone"],
+            action_add=row["action_add"],
+            score_home=row["score_home"],
+            score_away=row["score_away"],
+            participants=tuple(people),
         )
 
     def _metric(self, row: dict) -> MatchMetric:

@@ -4,6 +4,8 @@ from dataclasses import dataclass, replace
 from datetime import datetime
 
 from ehf.domain.matches import format_score
+from ehf.domain.play_by_play import PlayAction
+from ehf.domain.play_timeline import PlayTimeline, present_timeline
 
 
 def format_percentage(value: float | None) -> str | None:
@@ -191,6 +193,11 @@ class MatchDetail:
     metrics: tuple[MatchMetric, ...]
     home_club_id: int | None = None
     away_club_id: int | None = None
+    play: tuple[PlayAction, ...] = ()
+
+    @property
+    def play_view(self) -> PlayTimeline:
+        return present_timeline(self.play, self.home_title, self.away_title)
 
     @property
     def home_title(self) -> str:

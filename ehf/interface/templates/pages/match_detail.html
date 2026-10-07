@@ -49,6 +49,25 @@
 </section>
 {% endmacro %}
 
+{% macro play_person(person) -%}
+{% if person.person_id is not none %}<button type="button" class="play-person" data-play-person="{{ person.person_id }}" title="Highlight this player's events">{{ person.label }}</button>{% else %}<span class="play-person">{{ person.label }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro play_tag(row) -%}
+<span class="play-tag tone-{{ row.tone }}">{{ row.title }}</span>
+{%- endmacro %}
+
+{% macro play_copy(row) %}
+{% if row.layout == 'goal' %}
+<div class="play-main">{{ play_tag(row) }}{% if row.player %} {{ play_person(row.player) }}{% endif %}{% if row.zone %} <span class="play-meta">{{ row.zone }}</span>{% endif %}</div>
+{% if row.assist or row.keeper %}<div class="play-sub">{% if row.assist %}assist {{ play_person(row.assist) }}{% endif %}{% if row.assist and row.keeper %} · {% endif %}{% if row.keeper %}GK {{ play_person(row.keeper) }}{% endif %}</div>{% endif %}
+{% elif row.layout == 'save' %}
+<div class="play-main">{{ play_tag(row) }}{% if row.player %} {{ play_person(row.player) }}{% endif %}{% if row.zone %} <span class="play-meta">{{ row.zone }}</span>{% endif %}{% if row.shot_by %} <span class="play-meta">vs {{ play_person(row.shot_by) }}</span>{% endif %}</div>
+{% else %}
+<div class="play-main">{{ play_tag(row) }}{% if row.player %} {{ play_person(row.player) }}{% endif %}{% if row.zone %} <span class="play-meta">{{ row.zone }}</span>{% endif %}</div>
+{% endif %}
+{% endmacro %}
+
 {% block tytul %}{% if match %}Match #{{ match.id }}{% else %}Match{% endif %} — {{ nazwa_projektu }}{% endblock %}
 
 {% block tresc %}
@@ -65,7 +84,13 @@
 {% elif match %}
 <div class="toolbar" data-detail-navigation>
 <div class="left"><a class="btn secondary" href="{{ url_for('panel.match_list') }}">← Back to list</a></div>
-{% if match.source_url %}<div class="right"><a class="btn secondary" href="{{ match.source_url }}" target="_blank" rel="noopener">EHF page</a></div>{% endif %}
+<div class="right">
+{% if match.play %}<a class="btn" href="{{ url_for('panel.match_summary_print', match_id=match.id) }}" target="_blank" rel="noopener">Match summary (A4) · PL</a>
+<a class="btn secondary" href="{{ url_for('panel.match_summary_print', match_id=match.id, lang='en') }}" target="_blank" rel="noopener">EN</a>
+<a class="btn" href="{{ url_for('panel.match_summary_print', match_id=match.id, variant='short') }}" target="_blank" rel="noopener">Short summary · PL</a>
+<a class="btn secondary" href="{{ url_for('panel.match_summary_print', match_id=match.id, variant='short', lang='en') }}" target="_blank" rel="noopener">EN</a>{% endif %}
+{% if match.source_url %}<a class="btn secondary" href="{{ match.source_url }}" target="_blank" rel="noopener">EHF page</a>{% endif %}
+</div>
 </div>
 
 <section class="hero">
@@ -92,6 +117,7 @@
 <button type="button" role="tab" id="match-tab-basic" aria-controls="match-panel-basic" aria-selected="true">Basic data</button>
 <button type="button" role="tab" id="match-tab-stats" aria-controls="match-panel-stats" aria-selected="false" tabindex="-1">Team statistics</button>
 <button type="button" role="tab" id="match-tab-lineup" aria-controls="match-panel-lineup" aria-selected="false" tabindex="-1">Lineup</button>
+<button type="button" role="tab" id="match-tab-play" aria-controls="match-panel-play" aria-selected="false" tabindex="-1" data-tab="play">Play-by-play</button>
 </div>
 
 <div id="match-panel-basic" data-match-panel aria-labelledby="match-tab-basic">
@@ -199,6 +225,130 @@
 <p class="roster-legend">{% for item in position_legend %}<strong>{{ item.code }}</strong> {{ item.label }}{% if not loop.last %} · {% endif %}{% endfor %}</p>
 {% endif %}
 </div>
+
+<section class="panel" id="match-panel-play" data-match-panel aria-labelledby="match-tab-play">
+<h2>Play-by-play</h2>
+{% set timeline = match.play_view %}
+{% if timeline.rows %}
+<div class="play-board" data-play>
+{% if timeline.charts.ready %}
+{% set charts = timeline.charts %}
+<div class="play-analytics">
+<div class="play-teams-key">
+<span class="home"><i></i>{{ timeline.home_name }}</span>
+<span class="away"><i></i>{{ timeline.away_name }}</span>
+</div>
+{% if charts.lead %}
+<figure class="play-chart-card play-chart-lead">
+<figcaption>Lead margin</figcaption>
+<svg class="play-chart-svg" viewBox="0 0 {{ charts.lead.width }} {{ charts.lead.height }}" role="img" aria-label="Goal difference from minute 0 to 60.">
+<rect class="plot-bg" x="{{ charts.lead.plot_left }}" y="{{ charts.lead.plot_top }}" width="{{ charts.lead.plot_width }}" height="{{ charts.lead.plot_height }}"></rect>
+<rect class="band-home" x="{{ charts.lead.plot_left }}" y="{{ charts.lead.plot_top }}" width="{{ charts.lead.plot_width }}" height="{{ charts.lead.band_home_h }}"></rect>
+<rect class="band-away" x="{{ charts.lead.plot_left }}" y="{{ charts.lead.band_away_y }}" width="{{ charts.lead.plot_width }}" height="{{ charts.lead.band_away_h }}"></rect>
+{% for tick in charts.lead.y_ticks %}
+<line class="grid" x1="{{ charts.lead.plot_left }}" x2="{{ charts.lead.plot_left + charts.lead.plot_width }}" y1="{{ tick.pos }}" y2="{{ tick.pos }}"></line>
+<text class="axis" x="{{ charts.lead.plot_left - 6 }}" y="{{ tick.pos + 3 }}" text-anchor="end">{{ tick.label }}</text>
+{% endfor %}
+{% for tick in charts.lead.x_ticks %}
+<text class="axis" x="{{ tick.pos }}" y="{{ charts.lead.plot_top + charts.lead.plot_height + 14 }}" text-anchor="middle">{{ tick.label }}</text>
+{% endfor %}
+<line class="ht" x1="{{ charts.lead.ht_x }}" x2="{{ charts.lead.ht_x }}" y1="{{ charts.lead.plot_top }}" y2="{{ charts.lead.plot_top + charts.lead.plot_height }}"></line>
+<text class="ht-label" x="{{ charts.lead.ht_x + 3 }}" y="{{ charts.lead.plot_top + 10 }}">HT</text>
+<line class="zero" x1="{{ charts.lead.plot_left }}" x2="{{ charts.lead.plot_left + charts.lead.plot_width }}" y1="{{ charts.lead.zero_y }}" y2="{{ charts.lead.zero_y }}"></line>
+<polyline class="series-lead" points="{{ charts.lead.polyline }}"></polyline>
+{% if charts.lead.max_home %}<text class="mark home" x="{{ charts.lead.max_home.x }}" y="{{ charts.lead.max_home.y }}" text-anchor="{{ charts.lead.max_home.anchor }}">{{ charts.lead.max_home.text }}</text>{% endif %}
+{% if charts.lead.max_away %}<text class="mark away" x="{{ charts.lead.max_away.x }}" y="{{ charts.lead.max_away.y }}" text-anchor="{{ charts.lead.max_away.anchor }}">{{ charts.lead.max_away.text }}</text>{% endif %}
+{% if charts.lead.final %}<text class="mark final" x="{{ charts.lead.final.x }}" y="{{ charts.lead.final.y }}" text-anchor="{{ charts.lead.final.anchor }}">{{ charts.lead.final.text }}</text>{% endif %}
+</svg>
+</figure>
+{% endif %}
+{% if charts.score %}
+<figure class="play-chart-card">
+<figcaption>Score progression</figcaption>
+<svg class="play-chart-svg" viewBox="0 0 {{ charts.score.width }} {{ charts.score.height }}" role="img" aria-label="Cumulative goals for both teams.">
+<rect class="plot-bg" x="{{ charts.score.plot_left }}" y="{{ charts.score.plot_top }}" width="{{ charts.score.plot_width }}" height="{{ charts.score.plot_height }}"></rect>
+{% for tick in charts.score.y_ticks %}
+<line class="grid" x1="{{ charts.score.plot_left }}" x2="{{ charts.score.plot_left + charts.score.plot_width }}" y1="{{ tick.pos }}" y2="{{ tick.pos }}"></line>
+<text class="axis" x="{{ charts.score.plot_left - 6 }}" y="{{ tick.pos + 3 }}" text-anchor="end">{{ tick.label }}</text>
+{% endfor %}
+{% for tick in charts.score.x_ticks %}
+<text class="axis" x="{{ tick.pos }}" y="{{ charts.score.plot_top + charts.score.plot_height + 14 }}" text-anchor="middle">{{ tick.label }}</text>
+{% endfor %}
+<line class="ht" x1="{{ charts.score.ht_x }}" x2="{{ charts.score.ht_x }}" y1="{{ charts.score.plot_top }}" y2="{{ charts.score.plot_top + charts.score.plot_height }}"></line>
+<text class="ht-label" x="{{ charts.score.ht_x + 3 }}" y="{{ charts.score.plot_top + 10 }}">HT</text>
+<polyline class="series-home" points="{{ charts.score.home_line }}"></polyline>
+<polyline class="series-away" points="{{ charts.score.away_line }}"></polyline>
+<text class="mark home" x="{{ charts.score.home_end.x }}" y="{{ charts.score.home_end.y }}" text-anchor="{{ charts.score.home_end.anchor }}">{{ charts.score.home_end.text }}</text>
+<text class="mark away" x="{{ charts.score.away_end.x }}" y="{{ charts.score.away_end.y }}" text-anchor="{{ charts.score.away_end.anchor }}">{{ charts.score.away_end.text }}</text>
+</svg>
+</figure>
+{% endif %}
+{% if charts.buckets %}
+<figure class="play-chart-card">
+<figcaption>Goals by 5-minute period</figcaption>
+<svg class="play-chart-svg" viewBox="0 0 {{ charts.buckets.width }} {{ charts.buckets.height }}" role="img" aria-label="Goals scored in each five-minute period.">
+<rect class="plot-bg" x="{{ charts.buckets.plot_left }}" y="{{ charts.buckets.plot_top }}" width="{{ charts.buckets.plot_width }}" height="{{ charts.buckets.plot_height }}"></rect>
+{% for tick in charts.buckets.y_ticks %}
+<line class="grid" x1="{{ charts.buckets.plot_left }}" x2="{{ charts.buckets.plot_left + charts.buckets.plot_width }}" y1="{{ tick.pos }}" y2="{{ tick.pos }}"></line>
+<text class="axis" x="{{ charts.buckets.plot_left - 6 }}" y="{{ tick.pos + 3 }}" text-anchor="end">{{ tick.label }}</text>
+{% endfor %}
+<line class="zero" x1="{{ charts.buckets.plot_left }}" x2="{{ charts.buckets.plot_left + charts.buckets.plot_width }}" y1="{{ charts.buckets.baseline_y }}" y2="{{ charts.buckets.baseline_y }}"></line>
+{% for bar in charts.buckets.bars %}
+{% if bar.home_h > 0 %}<rect class="bar-home" x="{{ bar.home_x }}" y="{{ bar.home_y }}" width="{{ bar.home_w }}" height="{{ bar.home_h }}"></rect>{% endif %}
+{% if bar.away_h > 0 %}<rect class="bar-away" x="{{ bar.away_x }}" y="{{ bar.away_y }}" width="{{ bar.away_w }}" height="{{ bar.away_h }}"></rect>{% endif %}
+{% if bar.home > 0 %}<text class="bar-value" x="{{ bar.home_x + bar.home_w / 2 }}" y="{{ bar.home_y - 3 }}" text-anchor="middle">{{ bar.home }}</text>{% endif %}
+{% if bar.away > 0 %}<text class="bar-value" x="{{ bar.away_x + bar.away_w / 2 }}" y="{{ bar.away_y - 3 }}" text-anchor="middle">{{ bar.away }}</text>{% endif %}
+<text class="axis" x="{{ bar.label_x }}" y="{{ charts.buckets.baseline_y + 14 }}" text-anchor="middle">{{ bar.label }}</text>
+{% endfor %}
+</svg>
+</figure>
+{% endif %}
+</div>
+{% endif %}
+<div class="play-filters" role="group" aria-label="Play-by-play filter">
+<button type="button" data-play-filter-btn="all" aria-pressed="true">All</button>
+<button type="button" data-play-filter-btn="goal" aria-pressed="false">Goals</button>
+<button type="button" data-play-filter-btn="shot" aria-pressed="false" title="Misses, posts and blocks">Shots</button>
+<button type="button" data-play-filter-btn="save" aria-pressed="false">Saves</button>
+<button type="button" data-play-filter-btn="turnover" aria-pressed="false">Turnovers</button>
+<button type="button" data-play-filter-btn="card" aria-pressed="false">Cards</button>
+<button type="button" data-play-filter-btn="penalty" aria-pressed="false">7m</button>
+<button type="button" data-play-filter-btn="timeout" aria-pressed="false">Timeout</button>
+</div>
+<div class="play-names">
+<span>{{ timeline.home_name }}</span>
+<span class="play-names-mid">clock · score</span>
+<span>{{ timeline.away_name }}</span>
+</div>
+<div class="play-stream">
+<div class="play-axis" aria-hidden="true"></div>
+{% for row in timeline.rows %}
+{% if row.kind == 'period' %}
+<div class="play-period" data-play-structure>{{ row.title }}</div>
+{% elif row.kind == 'tick' %}
+<div class="play-tick" data-play-structure><span>{{ row.clock }}</span> · <b>{{ row.score }}</b></div>
+{% elif row.kind == 'moment' %}
+<div class="play-moment" data-play-structure><b>{{ row.title }}</b> · {{ row.detail }}</div>
+{% elif row.kind == 'close' %}
+<div class="play-close" data-play-structure>{{ row.title }} · {{ row.score }}</div>
+{% else %}
+<div class="play-event is-{{ row.layout }} tone-{{ row.tone }} side-{{ row.side or 'none' }}" data-play-filter="{{ row.filter_key }}" data-play-people="{{ row.people_key }}">
+<div class="play-copy{% if row.side == 'home' %} has-copy{% endif %}">{% if row.side == 'home' %}{{ play_copy(row) }}{% endif %}</div>
+<div class="play-spine">
+<span class="play-clock">{{ row.clock }}</span>
+<span class="play-score">{{ row.score }}</span>
+<span class="play-lead lead-{{ row.lead_side }}">{{ row.lead_text }}</span>
+</div>
+<div class="play-copy away{% if row.side == 'away' %} has-copy{% endif %}">{% if row.side == 'away' %}{{ play_copy(row) }}{% endif %}</div>
+</div>
+{% endif %}
+{% endfor %}
+</div>
+</div>
+{% else %}
+<div class="panel-body"><p class="note">No play-by-play for this match.</p></div>
+{% endif %}
+</section>
 {% endif %}
 </div>
 {% include "partials/match_detail_dialog.html" %}
