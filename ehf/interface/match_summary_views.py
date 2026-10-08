@@ -18,6 +18,7 @@ from ehf.interface.match_statistics_charts import (
     EVENT_KINDS,
     average_left,
     bar_width,
+    keeper_charts,
     kpis,
     player_dots,
     save_dots,
@@ -92,6 +93,7 @@ class MatchStatisticsView(MethodView):
         except DataReadError as exc:
             abort(503, description=str(exc))
         summary = stats.summary
+        saving_avg = summary.baseline.values.get("saving") if summary.baseline else None
         return render_template(
             "partials/match_statistics.html",
             stats=stats,
@@ -100,6 +102,7 @@ class MatchStatisticsView(MethodView):
             headline=headline_text(summary.headline, summary.header.names, "en"),
             win=win_chart(summary),
             kpis=kpis(stats),
+            keepers=keeper_charts(stats, saving_avg),
             spots={side: court_spots(summary.maps[side]) for side in ("home", "away")},
             stops={side: scale_stops(side) for side in ("home", "away")},
             player_dots=player_dots,

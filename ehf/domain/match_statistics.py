@@ -198,6 +198,17 @@ class SaveMark:
     seconds: int
     saved: bool
     seven: bool
+    expected: float = 0.0
+    shooter_number: str = ""
+    shooter_name: str = ""
+
+    @property
+    def gsaa_delta(self) -> float:
+        return (1.0 if self.saved else 0.0) - self.expected
+
+    @property
+    def shooter_label(self) -> str:
+        return f"{self.shooter_number} {self.shooter_name}".strip() or "?"
 
 
 @dataclass(frozen=True)
@@ -333,7 +344,7 @@ def build_statistics(
         players=ordered,
         save_marks={
             side: tuple(
-                (keeper, tuple(_save_marks(events, keeper)))
+                (keeper, tuple(_save_marks(events, keeper, save_of)))
                 for keeper in ordered[side]
                 if keeper.faced
             )
@@ -452,7 +463,7 @@ def _team_shooting(events: MatchEvents, side: str, xg_of, rates: dict[str, float
     )
 
 
-def _save_marks(events: MatchEvents, keeper: PlayerStats):
+def _save_marks(events: MatchEvents, keeper: PlayerStats, save_of):
     for shot in events.shots:
         if shot.keeper is None or shot.result not in ("GOAL", "SAVE") or shot.keeper.side != keeper.side:
             continue
@@ -460,4 +471,12 @@ def _save_marks(events: MatchEvents, keeper: PlayerStats):
             shot.keeper.number == keeper.number
         )
         if same:
-            yield SaveMark(shot.seconds, shot.result == "SAVE", shot.is_penalty)
+            shooter = shot.shooter
+            yield SaveMark(
+                seconds=shot.seconds,
+                saved=shot.result == "SAVE",
+                seven=shot.is_penalty,
+                expected=save_of(shot),
+                shooter_number=shooter.number if shooter else "",
+                shooter_name=shooter.name if shooter else "",
+            )

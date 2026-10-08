@@ -47,10 +47,12 @@ Match details #id
 [ Play-by-play ]   home indigo, away orange — the same colours and rules as the match summary print
   head: team key · ties · lead changes · biggest lead of each team (+N score · minute)
   Goal difference — one bar per minute (biggest difference reached in it; home up, away down,
-    each side scaled to its own biggest lead), half-time line with score, biggest leads circled;
-    hover a bar for minute · score · lead, click (or Enter) to jump the list to that minute
-    the score every 5 minutes in a row under the time axis (coloured by the team in front)
-  Score — running goals of both teams as steps, final totals at the line ends
+    each side scaled to its own biggest lead), grey tick on the zero line for a draw,
+    half-time line with score, biggest leads circled;
+    hover a bar for minute · score · lead/draw, click (or Enter) to jump the list to that minute
+    the score every 5 minutes in a row under the time axis (coloured by the team in front; grey when tied)
+  Score — running goals of both teams as steps with soft area fill and a dot on each goal,
+    half-time mark, final totals at the line ends
   Goals per 10 minutes — paired bars with values (+ ET)
   filter pills: All events | Goals | Saves | Missed shots | Turnovers | Cards and 2 min | 7m awarded | Timeouts
   event list (scrolls inside its frame, team names and period headers stay on top):

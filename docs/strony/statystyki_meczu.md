@@ -42,6 +42,8 @@ Statistics
     wide time axis (0'–60' labelled every 10'): every shot on target faced, filled = save,
       red ring = goal conceded
     "All goalkeepers" row per team (when more than one played): all of them added up
+    charts (team total): save rate in successive 10-minute periods · cumulative GSAA momentum
+      · goalkeeper vs shooter matrix (faced / saved / save %)
 
   Line-ups (one table per team, every player of the match sheet)
     order as in the Lineup tab: Goalkeepers, Line players, Backs, Wings, Other players (group rows),

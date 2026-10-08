@@ -202,7 +202,84 @@
 {% endfor %}
 <p class="mst-legend"><span><i class="dot-save home"></i><i class="dot-save away"></i>save</span><span><i class="dot-conceded"></i>goal conceded</span><span><i class="mst-avg-key"></i> competition average save %</span></p>
 </div>
-<p class="mst-note"><b>GSAA</b> (goals saved above average) — saves made minus the saves an average goalkeeper of {{ s.baseline.label if s.baseline else "the competition" }} makes on the same shots, zone by zone (shots on target only: goals and saves). Positive: the goalkeeper took goals away from the opponent. "All goalkeepers" adds up every goalkeeper of the team.</p>
+
+{% if keepers %}
+{% for side, board in keepers.items() %}
+{% set periods = board.periods %}
+{% set momentum = board.momentum %}
+<div class="mst-gk-charts">
+<div class="mst-gk-team">{{ team(side) }} · charts</div>
+<div class="mst-gk-pair">
+<figure class="mst-card">
+<figcaption><b>Save rate by period</b><span>saves / shots on target in successive 10 minutes</span></figcaption>
+<svg class="mst-chart mst-gk-chart" viewBox="0 0 {{ periods.width }} {{ periods.height }}" role="img" aria-label="Goalkeeper save rate by period">
+{% for tick in periods.y_ticks %}
+<line class="grid" x1="{{ periods.left }}" x2="{{ periods.right }}" y1="{{ tick.pos }}" y2="{{ tick.pos }}"/>
+<text class="axis" x="{{ periods.left - 6 }}" y="{{ tick.pos + 4 }}" text-anchor="end">{{ tick.label }}</text>
+{% endfor %}
+{% if periods.avg_y is not none %}
+<line class="gk-avg" x1="{{ periods.left }}" x2="{{ periods.right }}" y1="{{ periods.avg_y }}" y2="{{ periods.avg_y }}"/>
+{% endif %}
+{% for bar in periods.bars %}
+<g class="gk-period {{ periods.side }}{% if bar.empty %} empty{% endif %}">
+<title>{{ bar.label }}: {% if bar.empty %}no shots on target{% else %}{{ bar.saves }}/{{ bar.faced }} · {{ pct(bar.rate) }}{% endif %}</title>
+{% if not bar.empty %}
+<rect class="bar {{ periods.side }}" x="{{ '%.1f'|format(bar.x) }}" y="{{ '%.1f'|format(bar.y) }}" width="{{ '%.1f'|format(bar.width) }}" height="{{ '%.1f'|format(bar.height) }}" rx="2"/>
+<text class="bar-value" x="{{ '%.1f'|format(bar.x + bar.width / 2) }}" y="{{ '%.1f'|format(bar.y - 4) }}" text-anchor="middle">{{ pct(bar.rate) }}</text>
+{% if bar.height >= 12 %}
+<text class="bar-on" x="{{ '%.1f'|format(bar.x + bar.width / 2) }}" y="{{ '%.1f'|format(bar.y + bar.height / 2 + 3) }}" text-anchor="middle">{{ bar.saves }}/{{ bar.faced }}</text>
+{% endif %}
+{% else %}
+<line class="empty-tick" x1="{{ '%.1f'|format(bar.x) }}" x2="{{ '%.1f'|format(bar.x + bar.width) }}" y1="{{ periods.bottom }}" y2="{{ periods.bottom }}"/>
+{% endif %}
+<text class="axis" x="{{ '%.1f'|format(bar.x + bar.width / 2) }}" y="{{ periods.bottom + 18 }}" text-anchor="middle">{{ bar.label }}</text>
+</g>
+{% endfor %}
+<line class="zero" x1="{{ periods.left }}" x2="{{ periods.right }}" y1="{{ periods.bottom }}" y2="{{ periods.bottom }}"/>
+</svg>
+</figure>
+<figure class="mst-card">
+<figcaption><b>Goalkeeper momentum</b><span>cumulative GSAA minute by minute · when the keeper started saving the team</span></figcaption>
+<svg class="mst-chart mst-gk-chart" viewBox="0 0 {{ momentum.width }} {{ momentum.height }}" role="img" aria-label="Cumulative GSAA">
+{% for tick in momentum.y_ticks %}
+<line class="grid" x1="{{ momentum.left }}" x2="{{ momentum.right }}" y1="{{ tick.pos }}" y2="{{ tick.pos }}"/>
+<text class="axis" x="{{ momentum.left - 6 }}" y="{{ tick.pos + 4 }}" text-anchor="end">{{ tick.label }}</text>
+{% endfor %}
+{% for tick in momentum.x_ticks %}<text class="axis" x="{{ tick.pos }}" y="{{ momentum.bottom + 18 }}" text-anchor="middle">{{ tick.label }}</text>{% endfor %}
+<line class="half" x1="{{ momentum.half_x }}" x2="{{ momentum.half_x }}" y1="{{ momentum.top }}" y2="{{ momentum.bottom }}"/>
+<line class="zero" x1="{{ momentum.left }}" x2="{{ momentum.right }}" y1="{{ momentum.zero_y }}" y2="{{ momentum.zero_y }}"/>
+<path class="gk-area {{ momentum.side }}" d="{{ momentum.area }}"/>
+<path class="gk-line {{ momentum.side }}" d="{{ momentum.line }}"/>
+<text class="gk-end {{ momentum.side }}" x="{{ '%.1f'|format(momentum.end_pos[0] + 6) }}" y="{{ '%.1f'|format(momentum.end_pos[1] + 4) }}">{{ signed(momentum.end_value) }}</text>
+</svg>
+</figure>
+</div>
+{% if board.duels %}
+<figure class="mst-card mst-gk-duels">
+<figcaption><b>Goalkeeper vs shooter</b><span>shots on target faced · how often each opponent was stopped</span></figcaption>
+<div class="mst-table-wrap">
+<table class="mst-table gk-duels">
+<thead><tr><th class="l">Shooter</th><th>Faced</th><th>Saved</th><th>Save %</th><th class="heat">Stop rate</th></tr></thead>
+<tbody>
+{% for row in board.duels %}
+<tr>
+<td class="l"><span class="no">{{ row.number }}</span> {{ row.name }}</td>
+<td>{{ row.faced }}</td>
+<td>{{ row.saves }}</td>
+<td>{{ pct(row.rate) }}</td>
+<td class="heat"><i class="{{ side }}" style="width:{{ '%.0f'|format(100 * row.heat) }}%"></i></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</figure>
+{% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+<p class="mst-note"><b>GSAA</b> (goals saved above average) — saves made minus the saves an average goalkeeper of {{ s.baseline.label if s.baseline else "the competition" }} makes on the same shots, zone by zone (shots on target only: goals and saves). Positive: the goalkeeper took goals away from the opponent. "All goalkeepers" adds up every goalkeeper of the team. <b>Save rate by period</b> and <b>momentum</b> use the team total when more than one goalkeeper played.</p>
 </section>
 
 {# ================================================================== line-ups #}

@@ -298,6 +298,7 @@ def segment_bars(flow: Flow) -> tuple[tuple[str, int, int, float, float], ...]:
 LEAD_HEIGHT = 50.0
 LEAD_TOP = 5.0
 LEAD_BOTTOM = LEAD_HEIGHT - 5.0
+LEAD_TIE_HALF = 0.7
 
 
 @dataclass(frozen=True)
@@ -374,6 +375,16 @@ def lead_chart(summary: MatchSummary) -> LeadChart:
                     width=slot * 0.76,
                     height=abs(y(shown) - zero),
                     side="home" if shown > 0 else "away",
+                )
+            )
+        else:
+            bars.append(
+                LeadBar(
+                    x=FLOW_LEFT + minute * slot + slot * 0.2,
+                    y=zero - LEAD_TIE_HALF,
+                    width=slot * 0.6,
+                    height=LEAD_TIE_HALF * 2,
+                    side="tie",
                 )
             )
 

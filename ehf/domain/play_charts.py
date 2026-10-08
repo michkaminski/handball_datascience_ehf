@@ -25,13 +25,14 @@ PLOT_WIDTH = WIDTH - PAD_LEFT - PAD_RIGHT
 LEAD_TOP = 30.0
 LEAD_PLOT = 210.0
 LEAD_HEIGHT = LEAD_TOP + LEAD_PLOT + 54.0  # minute labels, then the score every 5 minutes
+TIE_HALF = 4.5
 
 SMALL_WIDTH = 470.0
-SMALL_LEFT = 34.0
-SMALL_RIGHT = 40.0
-SMALL_TOP = 18.0
-SMALL_PLOT = 150.0
-SMALL_HEIGHT = SMALL_TOP + SMALL_PLOT + 28.0
+SMALL_LEFT = 38.0
+SMALL_RIGHT = 44.0
+SMALL_TOP = 22.0
+SMALL_PLOT = 168.0
+SMALL_HEIGHT = SMALL_TOP + SMALL_PLOT + 34.0
 
 
 @dataclass(frozen=True)
@@ -85,6 +86,12 @@ class LeadChart:
 
 
 @dataclass(frozen=True)
+class ScoreDot:
+    x: float
+    y: float
+
+
+@dataclass(frozen=True)
 class ScoreChart:
     width: float
     height: float
@@ -94,6 +101,10 @@ class ScoreChart:
     bottom: float
     home_path: str
     away_path: str
+    home_area: str
+    away_area: str
+    home_dots: tuple[ScoreDot, ...]
+    away_dots: tuple[ScoreDot, ...]
     home_end: tuple[float, float, int]
     away_end: tuple[float, float, int]
     y_ticks: tuple[Tick, ...]
@@ -239,6 +250,19 @@ def _lead_chart(flow: Flow, half_time: str) -> LeadChart:
                     score=shown_score,
                 )
             )
+        else:
+            bars.append(
+                MinuteBar(
+                    x=PAD_LEFT + minute * slot + slot * 0.22,
+                    y=zero - TIE_HALF,
+                    width=slot * 0.56,
+                    height=TIE_HALF * 2,
+                    side="tie",
+                    minute=minute + 1,
+                    margin=0,
+                    score=shown_score,
+                )
+            )
 
     span = up + down
     step = 1 if span <= 8 else 2 if span <= 16 else 4 if span <= 32 else 6
@@ -275,7 +299,8 @@ def _lead_chart(flow: Flow, half_time: str) -> LeadChart:
             if goal.seconds > minute * 60:
                 break
             home, away = goal.home, goal.away
-        score_marks.append(Tick(PAD_LEFT + slot * minute, f"{home}:{away}", "home" if home > away else "away" if away > home else ""))
+        side = "home" if home > away else "away" if away > home else "tie"
+        score_marks.append(Tick(PAD_LEFT + slot * minute, f"{home}:{away}", side))
     return LeadChart(
         width=WIDTH,
         height=LEAD_HEIGHT,
@@ -301,6 +326,7 @@ def _lead_chart(flow: Flow, half_time: str) -> LeadChart:
 def _score_chart(flow: Flow) -> ScoreChart:
     end = flow.end_seconds
     plot_w = SMALL_WIDTH - SMALL_LEFT - SMALL_RIGHT
+    bottom = SMALL_TOP + SMALL_PLOT
     last = flow.goals[-1]
     top_goals = max(last.home, last.away, 1)
     step = 5 if top_goals <= 40 else 10
@@ -312,29 +338,37 @@ def _score_chart(flow: Flow) -> ScoreChart:
     def y(goals: int) -> float:
         return SMALL_TOP + SMALL_PLOT * (1 - goals / ceiling)
 
-    def path(side: str) -> tuple[str, tuple[float, float, int]]:
+    def series(side: str) -> tuple[str, str, tuple[ScoreDot, ...], tuple[float, float, int]]:
         count = 0
         parts = [f"M{x(0):.1f},{y(0):.1f}"]
+        dots = [ScoreDot(x(0), y(0))]
         for goal in flow.goals:
             if goal.side != side:
                 continue
             parts.append(f"H{x(goal.seconds):.1f}")
             count += 1
             parts.append(f"V{y(count):.1f}")
+            dots.append(ScoreDot(x(goal.seconds), y(count)))
         parts.append(f"H{x(end):.1f}")
-        return " ".join(parts), (x(end), y(count), count)
+        line = " ".join(parts)
+        area = f"M{x(0):.1f},{bottom:.1f} L" + line[1:] + f" L{x(end):.1f},{bottom:.1f} Z"
+        return line, area, tuple(dots), (x(end), y(count), count)
 
-    home_path, home_end = path("home")
-    away_path, away_end = path("away")
+    home_path, home_area, home_dots, home_end = series("home")
+    away_path, away_area, away_dots, away_end = series("away")
     return ScoreChart(
         width=SMALL_WIDTH,
         height=SMALL_HEIGHT,
         left=SMALL_LEFT,
         right=SMALL_WIDTH - SMALL_RIGHT,
         top=SMALL_TOP,
-        bottom=SMALL_TOP + SMALL_PLOT,
+        bottom=bottom,
         home_path=home_path,
         away_path=away_path,
+        home_area=home_area,
+        away_area=away_area,
+        home_dots=home_dots,
+        away_dots=away_dots,
         home_end=home_end,
         away_end=away_end,
         y_ticks=tuple(Tick(y(value), str(value)) for value in range(0, ceiling + 1, step)),

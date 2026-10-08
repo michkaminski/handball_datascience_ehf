@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ehf.domain.match_statistics import MatchStatistics, PlayerStats, SaveMark
-from ehf.domain.match_summary import REGULATION, ComparisonRow, MatchSummary, clock
+from ehf.domain.match_summary import REGULATION, SIDES, ComparisonRow, MatchSummary, clock
 
 WIN_WIDTH = 960.0
 WIN_LEFT = 52.0
@@ -222,3 +222,215 @@ def kpis(stats: MatchStatistics) -> tuple[Kpi, ...]:
             )
         )
     return tuple(items)
+
+
+# ---------------------------------------------------------------------- goalkeeper charts
+
+GK_WIDTH = 460.0
+GK_LEFT = 42.0
+GK_RIGHT = 28.0
+GK_TOP = 22.0
+GK_PLOT = 150.0
+GK_HEIGHT = GK_TOP + GK_PLOT + 30.0
+
+
+@dataclass(frozen=True)
+class PeriodBar:
+    label: str
+    x: float
+    y: float
+    width: float
+    height: float
+    rate: float | None
+    saves: int
+    faced: int
+    empty: bool
+
+
+@dataclass(frozen=True)
+class KeeperPeriodChart:
+    width: float
+    height: float
+    left: float
+    right: float
+    top: float
+    bottom: float
+    bars: tuple[PeriodBar, ...]
+    y_ticks: tuple[Tick, ...]
+    avg_y: float | None
+    side: str
+
+
+@dataclass(frozen=True)
+class GsaaMomentumChart:
+    width: float
+    height: float
+    left: float
+    right: float
+    top: float
+    bottom: float
+    zero_y: float
+    line: str
+    area: str
+    x_ticks: tuple[Tick, ...]
+    y_ticks: tuple[Tick, ...]
+    half_x: float
+    end_value: float
+    end_pos: tuple[float, float]
+    side: str
+
+
+@dataclass(frozen=True)
+class DuelRow:
+    number: str
+    name: str
+    faced: int
+    saves: int
+
+    @property
+    def rate(self) -> float | None:
+        return self.saves / self.faced if self.faced else None
+
+    @property
+    def heat(self) -> float:
+        return self.rate if self.rate is not None else 0.0
+
+
+@dataclass(frozen=True)
+class KeeperSideCharts:
+    side: str
+    periods: KeeperPeriodChart
+    momentum: GsaaMomentumChart
+    duels: tuple[DuelRow, ...]
+
+
+def keeper_charts(stats: MatchStatistics, competition_save: float | None = None) -> dict[str, KeeperSideCharts]:
+    end = stats.end_seconds
+    return {
+        side: KeeperSideCharts(
+            side=side,
+            periods=_period_chart(stats.team_save_marks(side), end, side, competition_save),
+            momentum=_gsaa_momentum(stats.team_save_marks(side), end, side),
+            duels=_duel_rows(stats.team_save_marks(side)),
+        )
+        for side in SIDES
+        if stats.save_marks[side]
+    }
+
+
+def _period_labels(end: int) -> tuple[tuple[str, int, int], ...]:
+    buckets = [(f"{start}'", start * 60, (start + 10) * 60) for start in range(0, 60, 10)]
+    if end > REGULATION:
+        buckets.append(("ET", REGULATION, end))
+    return tuple(buckets)
+
+
+def _period_chart(
+    marks: tuple[SaveMark, ...], end: int, side: str, competition_save: float | None
+) -> KeeperPeriodChart:
+    plot_w = GK_WIDTH - GK_LEFT - GK_RIGHT
+    buckets = _period_labels(end)
+    slot = plot_w / len(buckets)
+    bar_w = slot * 0.55
+    bottom = GK_TOP + GK_PLOT
+
+    bars = []
+    for index, (label, start, stop) in enumerate(buckets):
+        faced = [m for m in marks if start < m.seconds <= stop]
+        saves = sum(1 for m in faced if m.saved)
+        count = len(faced)
+        rate = saves / count if count else None
+        height = GK_PLOT * (rate or 0)
+        centre = GK_LEFT + slot * index + slot / 2
+        bars.append(
+            PeriodBar(
+                label=label,
+                x=centre - bar_w / 2,
+                y=bottom - height,
+                width=bar_w,
+                height=height,
+                rate=rate,
+                saves=saves,
+                faced=count,
+                empty=count == 0,
+            )
+        )
+    avg_y = bottom - GK_PLOT * competition_save if competition_save is not None else None
+    return KeeperPeriodChart(
+        width=GK_WIDTH,
+        height=GK_HEIGHT,
+        left=GK_LEFT,
+        right=GK_WIDTH - GK_RIGHT,
+        top=GK_TOP,
+        bottom=bottom,
+        bars=tuple(bars),
+        y_ticks=tuple(Tick(bottom - GK_PLOT * p / 100, f"{p}%") for p in (0, 25, 50, 75, 100)),
+        avg_y=avg_y,
+        side=side,
+    )
+
+
+def _gsaa_momentum(marks: tuple[SaveMark, ...], end: int, side: str) -> GsaaMomentumChart:
+    plot_w = GK_WIDTH - GK_LEFT - GK_RIGHT
+    bottom = GK_TOP + GK_PLOT
+
+    def x(seconds: float) -> float:
+        return GK_LEFT + plot_w * min(max(seconds, 0), end) / end
+
+    running = 0.0
+    samples = [(0.0, 0.0)]
+    for mark in marks:
+        running += mark.gsaa_delta
+        samples.append((float(mark.seconds), running))
+    if samples[-1][0] < end:
+        samples.append((float(end), running))
+
+    peak = max((abs(value) for _, value in samples), default=1.0)
+    limit = max(1.0, peak * 1.15)
+
+    def y(value: float) -> float:
+        return GK_TOP + GK_PLOT * (1 - (value + limit) / (2 * limit))
+
+    zero = y(0)
+    line = "M" + " L".join(f"{x(t):.1f},{y(v):.1f}" for t, v in samples)
+    area = f"M{x(samples[0][0]):.1f},{zero:.1f} L" + line[1:] + f" L{x(samples[-1][0]):.1f},{zero:.1f} Z"
+    step = 0.5 if limit <= 2 else 1.0 if limit <= 5 else 2.0
+    ticks = []
+    value = -((limit // step) * step)
+    while value <= limit + 1e-9:
+        label = "0" if abs(value) < 1e-9 else (f"{value:+.0f}" if abs(value - round(value)) < 1e-9 else f"{value:+.1f}")
+        ticks.append(Tick(y(value), label))
+        value += step
+    minutes = list(range(0, end // 60 + 1, 10))
+    return GsaaMomentumChart(
+        width=GK_WIDTH,
+        height=GK_HEIGHT,
+        left=GK_LEFT,
+        right=GK_WIDTH - GK_RIGHT,
+        top=GK_TOP,
+        bottom=bottom,
+        zero_y=zero,
+        line=line,
+        area=area,
+        x_ticks=tuple(Tick(x(m * 60), f"{m}'") for m in minutes),
+        y_ticks=tuple(ticks),
+        half_x=x(REGULATION / 2),
+        end_value=running,
+        end_pos=(x(end), y(running)),
+        side=side,
+    )
+
+
+def _duel_rows(marks: tuple[SaveMark, ...]) -> tuple[DuelRow, ...]:
+    buckets: dict[tuple[str, str], list[int]] = {}
+    for mark in marks:
+        key = (mark.shooter_number, mark.shooter_name or "?")
+        line = buckets.setdefault(key, [0, 0])
+        line[0] += 1
+        line[1] += int(mark.saved)
+    rows = [
+        DuelRow(number=number, name=name, faced=faced, saves=saves)
+        for (number, name), (faced, saves) in buckets.items()
+    ]
+    rows.sort(key=lambda row: (-row.faced, -(row.rate or 0), row.name))
+    return tuple(rows)
