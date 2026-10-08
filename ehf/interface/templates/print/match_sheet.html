@@ -44,7 +44,7 @@
 <tr class="team-name"><th colspan="8"><span class="label">{{ team.letter }} (name)</span> {{ team.name }}{% if team.country_code %} <span class="label">{{ team.country_code }}</span>{% endif %}{% if team.from_roster %} <span class="label source-note">(registered roster, no lineups yet)</span>{% endif %}</th><th colspan="{{ penalties|length }}" class="penalties">Penalties</th></tr>
 <tr class="cols"><th>No</th><th class="name">Player name</th><th class="stat" title="Position">P</th><th class="stat" title="Year of birth">Yr</th><th class="stat" title="Matches in season">M</th><th class="stat" title="Goals in season">G</th><th class="stat" title="Goals per match">Avg</th><th class="stat stat-last" title="Goalkeeper save percentage">Sv%</th>{% for item in penalties %}<th>{{ item }}</th>{% endfor %}</tr>
 {% for p in team.players %}
-<tr class="player{% if p.new_group %} new-group{% endif %}"><td class="nr">{{ p.number }}</td><td class="name">{{ p.name }}</td><td class="stat">{{ p.position }}</td><td class="stat">{{ p.birth_year }}</td><td class="stat">{{ p.matches }}</td><td class="stat{% if p.highlight %} stat-top{% endif %}">{{ p.goals }}</td><td class="stat">{{ p.average }}</td><td class="stat stat-last">{{ p.percentage }}</td>{% for _ in penalties %}<td></td>{% endfor %}</tr>
+<tr class="player{% if p.new_group %} new-group{% endif %}{% if p.spare %} spare{% endif %}"><td class="nr">{{ p.number }}</td><td class="name">{% if p.name %}<span class="name-line"><span class="who">{{ p.name }}</span>{% if p.nationality %}<span class="nat">{{ p.nationality }}</span>{% endif %}</span>{% endif %}</td><td class="stat">{{ p.position }}</td><td class="stat">{{ p.birth_year }}</td><td class="stat">{{ p.matches }}</td><td class="stat{% if p.highlight %} stat-top{% endif %}">{{ p.goals }}</td><td class="stat">{{ p.average }}</td><td class="stat stat-last">{{ p.percentage }}</td>{% for _ in penalties %}<td></td>{% endfor %}</tr>
 {% else %}
 <tr class="player"><td class="nr"></td><td class="name note">No players in this season's lineups</td>{% for _ in range(5) %}<td class="stat"></td>{% endfor %}<td class="stat stat-last"></td>{% for _ in penalties %}<td></td>{% endfor %}</tr>
 {% endfor %}
@@ -107,7 +107,7 @@
 </td>
 </tr>
 </table>
-<p class="source">{{ nazwa_projektu }} · P: G goalkeeper, B back, W wing, P pivot · Yr: year of birth · M, G, Avg: matches, goals and goals per match in season {{ sheet.season_code }} (bold — the team's top {{ top_scorers }} scorers) · Sv%: goalkeeper save percentage · squads from the season's lineups{% if sheet.stats_until %} before {{ sheet.stats_until.strftime("%d.%m.%Y") }}{% endif %}{% if sheet.home.from_roster or sheet.away.from_roster %}; teams without lineups — registered roster{% endif %}</p>
+<p class="source">{{ nazwa_projektu }} · P: G goalkeeper, B back, W wing, P pivot · Yr: year of birth · M, G, Avg: matches, goals and goals per match in season {{ sheet.season_code }} (bold — the team's top {{ top_scorers }} scorers) · Sv%: goalkeeper save percentage · squads from the season's lineups{% if sheet.stats_until %} before {{ sheet.stats_until.strftime("%d.%m.%Y") }}{% endif %}{% if sheet.home.from_roster or sheet.away.from_roster %}; teams without lineups — registered roster{% endif %} · letters after the name: nationality, when the name leaves room · one blank row: an extra player</p>
 </main>
 </body>
 </html>

@@ -16,7 +16,9 @@ from ehf.domain.match_sheet import (
     SquadEntry,
     SquadPlayer,
     aggregate_squad,
+    with_nationalities,
 )
+from ehf.domain.nationality import nationality_code
 from ehf.domain.matches import Choice
 from ehf.infrastructure.kickoff import KICKOFF_AT_SQL
 
@@ -184,6 +186,14 @@ WHERE pe.club_id = %(club_id)s AND ce.season_id = %(season_id)s
 ORDER BY per.id, pe.id
 """
 
+NATIONALITY_SQL = """
+SELECT n.person_id, n.nationality, co.code
+FROM ehf.person_nationality n
+LEFT JOIN ehf.country co ON lower(co.name) = lower(n.nationality)
+WHERE n.person_id = ANY(%(people)s)
+ORDER BY n.person_id, n.nationality
+"""
+
 
 class PsycopgMatchSheetReader:
     def __init__(self, connect: Callable[[], Connection]) -> None:
@@ -263,14 +273,29 @@ class PsycopgMatchSheetReader:
         if not current:
             cursor.execute(ROSTER_SQL, {"club_id": club_id, "season_id": request.season_id})
             roster = tuple(SquadPlayer(**row) for row in cursor.fetchall())
+        codes = self._nationalities(cursor, current, previous, roster)
         return SheetTeamData(
             club_id=club["id"],
             name=club["name"],
             country_code=club["country_code"],
-            current=current,
-            previous=previous,
-            roster=roster,
+            current=with_nationalities(current, codes),
+            previous=with_nationalities(previous, codes),
+            roster=with_nationalities(roster, codes),
         )
+
+    @staticmethod
+    def _nationalities(cursor, *groups: tuple[SquadPlayer, ...]) -> dict[int, tuple[str, ...]]:
+        people = list({player.person_id for group in groups for player in group if player.person_id is not None})
+        if not people:
+            return {}
+        cursor.execute(NATIONALITY_SQL, {"people": people})
+        grouped: dict[int, list[str]] = {}
+        for row in cursor.fetchall():
+            code = nationality_code(row["nationality"], row["code"])
+            codes = grouped.setdefault(row["person_id"], [])
+            if code not in codes:
+                codes.append(code)
+        return {person: tuple(codes) for person, codes in grouped.items()}
 
     @staticmethod
     def _squad(cursor, club_id: int, season_id: int, until: date | None, no_save_data: frozenset[int]):

@@ -7,6 +7,7 @@ from enum import Enum
 from ehf.domain.lineup_order import LineRole, line_role
 from ehf.domain.match_detail import format_percentage, ratio_percentage
 from ehf.domain.matches import Choice
+from ehf.domain.nationality import nationality_mark
 
 TOP_SCORERS = 4
 FLOW_ROWS = 34
@@ -74,6 +75,7 @@ class SquadPlayer:
     goals: int | None
     saves: int | None
     shots_faced: int | None
+    nationalities: tuple[str, ...] = ()
 
     @property
     def key(self) -> str:
@@ -170,6 +172,8 @@ class SheetPlayer:
     percentage: str
     highlight: bool
     new_group: bool
+    nationality: str = ""
+    spare: bool = False
 
 
 @dataclass(frozen=True)
@@ -279,6 +283,15 @@ def display_name(player: SquadPlayer) -> str:
     return player.name
 
 
+def with_nationalities(
+    players: tuple[SquadPlayer, ...], codes: dict[int, tuple[str, ...]]
+) -> tuple[SquadPlayer, ...]:
+    return tuple(
+        replace(player, nationalities=codes[player.person_id]) if player.person_id in codes else player
+        for player in players
+    )
+
+
 def _number(value: int | None) -> str:
     return "–" if value is None else str(value)
 
@@ -307,6 +320,23 @@ def sheet_player(player: SquadPlayer, places: dict[str, int], new_group: bool) -
         percentage=percentage or "",
         highlight=place is not None and place <= TOP_SCORERS,
         new_group=new_group,
+        nationality=nationality_mark(player.nationalities),
+    )
+
+
+def spare_player() -> SheetPlayer:
+    return SheetPlayer(
+        number="",
+        name="",
+        position="",
+        birth_year="",
+        matches="",
+        goals="",
+        average="",
+        percentage="",
+        highlight=False,
+        new_group=False,
+        spare=True,
     )
 
 
@@ -320,6 +350,8 @@ def sheet_team(letter: str, team: SheetTeamData, order: SheetOrder, previous_sea
             order is SheetOrder.POSITIONS and index > 0 and _role(player) != _role(ordered[index - 1])
         )
         rows.append(sheet_player(player, places, new_group))
+    if rows:
+        rows.append(spare_player())
     return SheetTeam(letter=letter, name=team.name, country_code=team.country_code, source=source, players=tuple(rows))
 
 

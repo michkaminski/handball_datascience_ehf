@@ -41,7 +41,12 @@ th,td{padding:0 1.2mm;vertical-align:middle;line-height:1}
 .cols th.name{text-align:left}
 .player .nr{text-align:center;font-weight:700}
 .player .name{text-align:left}
+.team-table td.name{white-space:normal}
+.player .name-line{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:1.3mm;width:100%;max-height:1.15em;overflow:hidden}
+.player .who,.player .nat{flex:0 0 auto;white-space:nowrap}
+.player .nat{font-weight:700;letter-spacing:.04em}
 .player.new-group td{border-top:1.2pt solid #000}
+.team-table tr.spare td{background:#fff;border-top:1pt solid #000}
 .officials>td{padding:0;border:0}
 .officials-grid{table-layout:fixed}
 .officials-grid td{border:.4pt solid #000;vertical-align:top;padding:.4mm .8mm;height:6.2mm;white-space:normal}
@@ -96,6 +101,7 @@ th,td{padding:0 1.2mm;vertical-align:middle;line-height:1}
 .team-table th.stat{font-size:6pt;background:#e0e0e0}
 .team-table .stat-last{border-right:1pt solid #000}
 .team-table td.stat-top{font-weight:800;font-size:.95em;background:#d8d8d8}
+.team-table tr.spare td.stat{background:#fff;font-weight:400}
 .fill{display:inline-block;min-width:16mm;border-bottom:.4pt solid #000;text-align:center}
 .fill.short{min-width:10mm}
 .officials-grid td.warning{width:6%;text-align:center}
