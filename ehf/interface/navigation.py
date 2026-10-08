@@ -60,6 +60,7 @@ SIDEBAR: tuple[tuple[str, tuple[PozycjaMenu, ...]], ...] = (
     (
         "Narzędzia",
         (
+            PozycjaMenu("statystyki_bazy", "Statystyki tabel", "panel.statystyki_tabel", "◫"),
             PozycjaMenu("anomalie", "Anomalie danych", "panel.anomalie", "!"),
             PozycjaMenu("walidacja", "Walidacja danych", "panel.walidacja", "✓"),
             PozycjaMenu("logi_aplikacji", "Logi aplikacji", "panel.logi_aplikacji", "≡"),

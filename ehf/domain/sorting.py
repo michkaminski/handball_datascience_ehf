@@ -96,6 +96,9 @@ TEAM_SORT_COLUMNS = frozenset(
     {"id", "season", "name", "gender", "city", "matches", "status"}
 )
 SCORER_SORT_COLUMNS = frozenset({"player", "team", "goals", "matches"})
+DATABASE_STATS_SORT_COLUMNS = frozenset(
+    {"schema", "table", "rows", "total", "data", "indexes"}
+)
 
 
 def resolve_sort(column: str | None, direction: str | None, allowed: frozenset[str], default: Sort) -> Sort:

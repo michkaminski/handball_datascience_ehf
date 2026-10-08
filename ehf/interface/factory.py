@@ -6,6 +6,7 @@ from flask import Flask
 
 from ehf.infrastructure.competition_list_reader import PsycopgCompetitionListReader
 from ehf.infrastructure.connection import open_connection
+from ehf.infrastructure.database_stats_reader import PsycopgDatabaseStatsReader
 from ehf.infrastructure.match_detail_reader import PsycopgMatchDetailReader
 from ehf.infrastructure.match_list_reader import PsycopgMatchListReader
 from ehf.infrastructure.news_reader import PsycopgNewsReader
@@ -23,6 +24,7 @@ from ehf.infrastructure.team_list_reader import PsycopgTeamListReader
 from ehf.infrastructure.venue_detail_reader import PsycopgVenueDetailReader
 from ehf.infrastructure.venue_list_reader import PsycopgVenueListReader
 from ehf.interface.competition_views import CompetitionListView
+from ehf.interface.database_stats_views import DatabaseStatsView
 from ehf.interface.expand import expand_href
 from ehf.interface.match_views import MatchDetailView, MatchListView
 from ehf.interface.navigation import zarejestruj_kontekst_nawigacji
@@ -40,6 +42,7 @@ from ehf.interface.team_views import TeamDetailView, TeamListView
 from ehf.interface.venue_views import VenueDetailView, VenueListView
 from ehf.interface.views import utworz_blueprint
 from ehf.services.competition_list import CompetitionListService
+from ehf.services.database_stats import DatabaseStatsService
 from ehf.services.match_detail import MatchDetailService
 from ehf.services.match_list import MatchListService
 from ehf.services.news import NewsService
@@ -97,6 +100,7 @@ def create_app() -> Flask:
     match_summary_service = MatchSummaryService(PsycopgMatchSummaryReader(connect))
     scorer_list_service = ScorerListService(PsycopgScorerListReader(connect))
     news_service = NewsService(PsycopgNewsReader(connect))
+    database_stats_service = DatabaseStatsService(PsycopgDatabaseStatsReader(connect))
     blueprint.add_url_rule(
         "/",
         view_func=StartView.as_view("start", service=news_service),
@@ -184,6 +188,10 @@ def create_app() -> Flask:
     blueprint.add_url_rule(
         "/strzelcy",
         view_func=ScorerListView.as_view("lista_strzelcow", service=scorer_list_service),
+    )
+    blueprint.add_url_rule(
+        "/statystyki-tabel",
+        view_func=DatabaseStatsView.as_view("statystyki_tabel", service=database_stats_service),
     )
     app.register_blueprint(blueprint)
     return app

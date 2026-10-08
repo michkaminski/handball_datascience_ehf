@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% from "partials/sort_macros.html" import sort_th %}
+
+{% block tytul %}Statystyki tabel — {{ nazwa_projektu }}{% endblock %}
+
+{% block tresc %}
+<section class="pagehead">
+<div class="crumb">Start › Narzędzia › Statystyki tabel</div>
+<h1>Statystyki tabel</h1>
+<p>Rozmiary i przybliżone liczby rekordów tabel PostgreSQL (statystyki katalogowe).</p>
+</section>
+
+<section class="panel">
+<h2>Baza {{ page.summary.name }}</h2>
+<div class="panel-body">
+{% if error %}
+<p class="note">{{ error }}</p>
+{% endif %}
+<div class="venue-summary">
+<div><span>Rozmiar bazy</span><b>{{ page.summary.size_label }}</b></div>
+<div><span>Tabele</span><b>{{ page.summary.table_count_label }}</b></div>
+<div><span>Rekordy ≈</span><b>{{ page.summary.row_total_label }}</b></div>
+<div><span>Suma tabel</span><b>{{ page.summary.tables_bytes_label }}</b></div>
+<div><span>Suma indeksów</span><b>{{ page.summary.indexes_bytes_label }}</b></div>
+</div>
+<p class="note">Liczba rekordów pochodzi z <code>pg_stat_user_tables</code> (n_live_tup) — po dużych importach warto uruchomić <code>ANALYZE</code>.</p>
+</div>
+</section>
+
+<section class="panel">
+<h2>Filtry</h2>
+<form class="panel-body filters catalog-filters compact" method="get">
+<label>Szukaj<input name="q" value="{{ filters.query or '' }}" placeholder="schemat lub tabela..."></label>
+<label>Schemat
+<select name="schema">
+<option value="">Wszystkie</option>
+{% for item in options.schemas %}
+<option value="{{ item.value }}" {% if filters.schema == item.value %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+</label>
+<label>Zapełnienie
+<select name="fill">
+<option value="">Wszystkie</option>
+{% for item in options.fills %}
+<option value="{{ item.value }}" {% if filters.fill == item.value %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+</label>
+<label>Min. rekordów<input name="min_rows" type="number" min="0" value="{{ filters.min_rows if filters.min_rows is not none else '' }}" placeholder="0"></label>
+<input type="hidden" name="sort" value="{{ filters.sort.column }}">
+<input type="hidden" name="dir" value="{{ filters.sort.direction }}">
+<div class="pole-przycisku"><button class="btn small" type="submit">Filtruj</button></div>
+<div class="pole-przycisku"><a class="btn secondary small" href="{{ url_for('panel.statystyki_tabel') }}">Wyczyść</a></div>
+</form>
+</section>
+
+<section class="panel">
+<div class="panel-body">
+<div class="toolbar">
+<span class="note">Widoczne tabele: {{ page.filtered_count_label }} / {{ page.summary.table_count_label }}</span>
+</div>
+<div class="table-wrap">
+<table id="database-stats-table" data-remote-sort data-sort-default="total" data-sort-default-dir="desc">
+<thead>
+<tr>
+{{ sort_th(filters.sort, "schema", "Schemat") }}
+{{ sort_th(filters.sort, "table", "Tabela") }}
+{{ sort_th(filters.sort, "rows", "Rekordy ≈") }}
+{{ sort_th(filters.sort, "total", "Razem") }}
+{{ sort_th(filters.sort, "data", "Dane") }}
+{{ sort_th(filters.sort, "indexes", "Indeksy") }}
+</tr>
+</thead>
+<tbody>
+{% for item in page.items %}
+<tr>
+<td>{{ item.schema }}</td>
+<td><b>{{ item.table }}</b></td>
+<td>{{ item.rows_label }}</td>
+<td>{{ item.total_label }}</td>
+<td>{{ item.data_label }}</td>
+<td>{{ item.indexes_label }}</td>
+</tr>
+{% else %}
+<tr><td colspan="6" class="note">Brak tabel spełniających wybrane filtry.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</section>
+{% endblock %}

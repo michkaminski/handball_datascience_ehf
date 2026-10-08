@@ -219,6 +219,18 @@ STRONY: tuple[Strona, ...] = (
         wzor="narzedzie",
     ),
     Strona(
+        klucz="statystyki_bazy",
+        endpoint="statystyki_tabel",
+        sciezka="/statystyki-tabel",
+        tytul="Statystyki tabel",
+        okruszek="Start › Narzędzia › Statystyki tabel",
+        opis="Rozmiary i przybliżone liczby rekordów tabel PostgreSQL.",
+        wzor="lista",
+        filtry=("Szukaj", "Schemat", "Zapełnienie", "Min. rekordów"),
+        kolumny=("Schemat", "Tabela", "Rekordy ≈", "Razem", "Dane", "Indeksy"),
+        uses_skeleton=False,
+    ),
+    Strona(
         klucz="anomalie",
         endpoint="anomalie",
         sciezka="/anomalie",
