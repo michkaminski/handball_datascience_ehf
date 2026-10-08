@@ -556,3 +556,51 @@ button.pbp-person.is-hit{background:#fff3b0;border-radius:3px;padding:0 3px}
 .mst-pop-table th,.mst-pop-table td{border:0;border-bottom:1px solid #f1f1f5;padding:4px 6px;text-align:right;background:none!important;white-space:nowrap}
 .mst-pop-table th{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;position:static}
 .mst-pop-table .l{text-align:left;white-space:normal}
+.report-description{white-space:normal;min-width:18rem;max-width:44rem}
+.filters.goal-dist-filters{grid-template-columns:repeat(3,minmax(160px,1fr)) auto auto}
+.goal-dist-kpis{display:grid;grid-template-columns:repeat(6,minmax(110px,1fr));gap:8px;margin-bottom:12px}
+.goal-dist-kpis>div,.goal-dist-metrics li{border-left:3px solid var(--acc);background:var(--acc-soft, #f5f8fa);padding:8px 9px;min-width:0}
+.goal-dist-kpis>div:nth-child(3n+2){border-left-color:var(--good)}
+.goal-dist-kpis>div:nth-child(3n){border-left-color:var(--warn)}
+.goal-dist-kpis span,.goal-dist-metrics span{display:block;color:var(--muted);font-size:.72rem}
+.goal-dist-kpis b,.goal-dist-metrics b{display:block;margin-top:3px;color:var(--ink);font-size:.95rem;font-variant-numeric:tabular-nums}
+.goal-dist-nav{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
+.goal-dist-nav a{padding:5px 10px;border:1px solid var(--line2);border-radius:5px;background:var(--acc-soft, #f7fafc);color:var(--ink);font-size:.78rem}
+.goal-dist-nav a:hover{text-decoration:none;background:var(--acc-soft, #edf4f8)}
+.goal-dist-card{border:1px solid var(--line);border-radius:var(--r);background:var(--panel-elevated, #fff);padding:12px 14px 14px;margin:0 0 14px;scroll-margin-top:12px;min-width:0}
+.goal-dist-card h2{margin:0 0 4px;font-size:1.02rem;color:var(--ink)}
+.goal-dist-lead{margin:0;color:var(--muted);font-size:.8rem}
+.goal-dist-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}
+.goal-dist-metrics{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0;padding:0}
+.goal-dist-metrics li{min-width:88px}
+.goal-dist-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.goal-dist-body{display:grid;gap:12px;min-width:0}
+.goal-dist-split .goal-dist-body{grid-template-columns:minmax(0,1.35fr) minmax(0,.85fr);align-items:start}
+.goal-dist-figure{margin:0;min-width:0}
+.goal-dist-figure figcaption,.goal-dist-axis{color:var(--muted);font-size:.75rem}
+.goal-dist-figure figcaption{margin:0 0 8px;font-weight:600;color:var(--ink)}
+.goal-dist-axis{margin:6px 0 0}
+.goal-dist-plot{border:1px solid var(--line);border-radius:6px;background:
+repeating-linear-gradient(to top,transparent 0,transparent 24%,rgba(23,56,82,.08) 24%,rgba(23,56,82,.08) calc(24% + 1px));padding:8px 8px 4px;min-width:0;overflow:hidden}
+.goal-dist-chart{display:flex;align-items:flex-end;gap:0;height:220px;width:100%;min-width:0;overflow:hidden;padding-bottom:2px}
+.goal-dist-col{flex:1 1 0;min-width:0;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;border:0;background:transparent;padding:0;font:inherit;color:inherit;cursor:pointer}
+.goal-dist-col:disabled{cursor:default}
+.goal-dist-col:not(:disabled):hover .goal-dist-track i{filter:brightness(1.12)}
+.goal-dist-col:focus-visible{outline:2px solid var(--acc);outline-offset:-2px;z-index:1}
+.goal-dist-count{height:14px;font-size:.65rem;font-weight:700;color:var(--good);font-variant-numeric:tabular-nums}
+.goal-dist-track{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center}
+.goal-dist-track i{display:block;width:78%;height:var(--h);border-radius:3px 3px 0 0;background:linear-gradient(180deg,var(--acc),color-mix(in srgb,var(--acc) 62%,#10283f))}
+.goal-dist-away .goal-dist-track i{background:linear-gradient(180deg,var(--warn),color-mix(in srgb,var(--warn) 70%,#5c3b08))}
+.goal-dist-col.has-count .goal-dist-track i{min-height:3px}
+.goal-dist-col.goal-dist-mode .goal-dist-track i{background:linear-gradient(180deg,var(--good),color-mix(in srgb,var(--good) 68%,#0d3b32))}
+.goal-dist-tick{margin-top:4px;height:12px;max-width:100%;overflow:hidden;white-space:nowrap;font-size:.62rem;color:var(--muted);font-variant-numeric:tabular-nums;line-height:1}
+.goal-dist-tick.is-hidden{visibility:hidden}
+.goal-dist-table-wrap{max-height:460px;overflow:auto}
+.goal-dist-table{width:100%}
+.goal-dist-table th,.goal-dist-table td{font-variant-numeric:tabular-nums}
+.goal-dist-table thead th{position:sticky;top:0;background:var(--panel-elevated, #fff);z-index:1}
+.goal-dist-table td.num,.goal-dist-table thead th:not(:first-child){text-align:right}
+.goal-dist-table tr.goal-dist-mode th,.goal-dist-table tr.goal-dist-mode td{background:color-mix(in srgb,var(--good) 16%,var(--panel-elevated, #fff));font-weight:700}
+@media(max-width:1100px){.goal-dist-kpis{grid-template-columns:repeat(3,minmax(110px,1fr))}.goal-dist-pair,.goal-dist-split .goal-dist-body{grid-template-columns:1fr}.goal-dist-head{flex-direction:column}}
+@media(max-width:700px){.filters.goal-dist-filters{grid-template-columns:1fr 1fr}.goal-dist-kpis{grid-template-columns:1fr 1fr}}
+@media(max-width:430px){.filters.goal-dist-filters{grid-template-columns:1fr}}

@@ -1,0 +1,33 @@
+{% if matches %}
+<p class="note">{{ matches|length }} matches</p>
+<div class="table-wrap">
+<table class="goal-dist-table">
+<thead>
+<tr>
+<th scope="col">Date</th>
+<th scope="col">Season</th>
+<th scope="col">Competition</th>
+<th scope="col">Home</th>
+<th scope="col">Score</th>
+<th scope="col">Away</th>
+<th scope="col"><span class="sr-only">Details</span></th>
+</tr>
+</thead>
+<tbody>
+{% for match in matches %}
+<tr>
+<td>{{ match.kickoff_label }}</td>
+<td>{{ match.season }}</td>
+<td>{{ match.competition }}</td>
+<td>{{ match.home }}</td>
+<td class="num"><b>{{ match.score_label }}</b></td>
+<td>{{ match.away }}</td>
+<td><a class="icon-link" href="{{ url_for('panel.match_detail', match_id=match.match_id) }}">Details</a></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="note">No matches.</p>
+{% endif %}

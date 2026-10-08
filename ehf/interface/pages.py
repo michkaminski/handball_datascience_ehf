@@ -134,6 +134,27 @@ STRONY: tuple[Strona, ...] = (
         uses_skeleton=False,
     ),
     Strona(
+        klucz="rozkłady",
+        endpoint="lista_rozkladow",
+        sciezka="/rozklady",
+        tytul="Distributions",
+        okruszek="Start › Reports › Distributions",
+        opis="Frequency profiles and further statistical breakdowns.",
+        wzor="lista",
+        uses_skeleton=False,
+    ),
+    Strona(
+        klucz="rozkłady",
+        endpoint="rozklad_bramek",
+        sciezka="/rozklady/bramki",
+        tytul="Goals per match",
+        okruszek="Start › Reports › Distributions › Goals per match",
+        opis="How often each goal total occurs, for the match, the home team and the away team.",
+        wzor="narzedzie",
+        w_menu=False,
+        uses_skeleton=False,
+    ),
+    Strona(
         klucz="tabele",
         endpoint="lista_tabel",
         sciezka="/tabele",
@@ -335,4 +356,4 @@ KLUCZE_DANYCH = frozenset(
     }
 )
 
-KLUCZE_RAPORTOW = frozenset({"protokol", "raport_druzyny", "zestawienie_sezonu"})
+KLUCZE_RAPORTOW = frozenset({"protokol", "raport_druzyny", "zestawienie_sezonu", "rozkłady"})

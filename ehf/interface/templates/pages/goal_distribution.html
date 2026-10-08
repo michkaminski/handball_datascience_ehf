@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% macro blok(identyfikator, tytul, opis, seria, odmiana, uklad) %}
+<section class="goal-dist-card goal-dist-{{ odmiana }} goal-dist-{{ uklad }}" id="{{ identyfikator }}">
+<header class="goal-dist-head">
+<div>
+<h2>{{ tytul }}</h2>
+<p class="goal-dist-lead">{{ opis }}</p>
+</div>
+<ul class="goal-dist-metrics">
+<li><span>Matches</span><b>{{ seria.match_count_label }}</b></li>
+<li><span>Mean</span><b>{{ seria.mean_label }}</b></li>
+<li><span>Median</span><b>{{ seria.median_label }}</b></li>
+<li><span>Mode</span><b>{{ seria.modes_label }}</b></li>
+<li><span>Range</span><b>{{ seria.range_label }}</b></li>
+</ul>
+</header>
+{% if seria.bins %}
+{% set liczba_slupkow = seria.bins|length %}
+{% set krok = 1 if liczba_slupkow <= 20 else (2 if liczba_slupkow <= 36 else (5 if liczba_slupkow <= 60 else 10)) %}
+<div class="goal-dist-body">
+<figure class="goal-dist-figure">
+<figcaption>Matches by number of goals. Click a bar to list the matches.</figcaption>
+<div class="goal-dist-plot">
+<div class="goal-dist-chart" role="group" aria-label="{{ tytul }}: mean {{ seria.mean_label }}, median {{ seria.median_label }}, mode {{ seria.modes_label }}">
+{% for pozycja in seria.bins %}
+{% set pokaz = pozycja.is_mode or loop.first or loop.last or pozycja.goals % krok == 0 %}
+<button type="button" class="goal-dist-col{% if pozycja.matches %} has-count{% endif %}{% if pozycja.is_mode %} goal-dist-mode{% endif %}" {% if pozycja.matches %}data-goal-bar data-series="{{ identyfikator }}" data-goals="{{ pozycja.goals }}" data-caption="{{ tytul }}: {{ pozycja.goals }} goals, {{ pozycja.matches_label }} matches"{% else %}disabled{% endif %} title="{{ pozycja.goals }} goals — {{ pozycja.matches_label }} matches ({{ pozycja.share_label }})" aria-label="{{ pozycja.goals }} goals, {{ pozycja.matches_label }} matches">
+<span class="goal-dist-count">{% if pozycja.is_mode and liczba_slupkow <= 24 %}{{ pozycja.matches_label }}{% endif %}</span>
+<span class="goal-dist-track"><i style="--h: {{ '%.2f'|format(pozycja.width) }}%"></i></span>
+<span class="goal-dist-tick{% if not pokaz %} is-hidden{% endif %}">{{ pozycja.goals }}</span>
+</button>
+{% endfor %}
+</div>
+</div>
+<p class="goal-dist-axis">Goals. The green bar is the most common value.</p>
+</figure>
+<div class="table-wrap goal-dist-table-wrap">
+<table class="goal-dist-table">
+<thead>
+<tr>
+<th scope="col">Goals</th>
+<th scope="col">Matches</th>
+<th scope="col">Share</th>
+<th scope="col">Cumulative</th>
+</tr>
+</thead>
+<tbody>
+{% for pozycja in seria.bins %}
+<tr{% if pozycja.is_mode %} class="goal-dist-mode"{% endif %}>
+<th scope="row">{{ pozycja.goals }}</th>
+<td class="num">{{ pozycja.matches_label }}</td>
+<td class="num">{{ pozycja.share_label }}</td>
+<td class="num">{{ pozycja.cumulative_label }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% else %}
+<p class="note">No played matches for the selected filters.</p>
+{% endif %}
+</section>
+{% endmacro %}
+
+{% block tytul %}Goals per match — {{ nazwa_projektu }}{% endblock %}
+
+{% block tresc %}
+<section class="pagehead">
+<div class="crumb">Start › <a href="{{ url_for('panel.lista_rozkladow') }}">Distributions</a> › Goals per match</div>
+<h1>Goals per match</h1>
+<p>Recorded match score. Walkovers and matches without a score are excluded.</p>
+</section>
+
+<section class="panel">
+<h2>Filters</h2>
+<form id="goal-dist-filters" class="panel-body filters goal-dist-filters" method="get">
+<label>Season
+<select name="season">
+<option value="">All</option>
+{% for item in choices.seasons %}
+<option value="{{ item.value }}" {% if filters.season_id is not none and filters.season_id|string == item.value %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+</label>
+<label>Competition
+<select name="competition">
+<option value="">All</option>
+{% for item in choices.competitions %}
+<option value="{{ item.value }}" {% if filters.competition_id is not none and filters.competition_id|string == item.value %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+</label>
+<label>Gender
+<select name="gender">
+<option value="">All</option>
+{% for item in genders %}
+<option value="{{ item.value }}" {% if filters.gender == item.value %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+</label>
+<div class="pole-przycisku"><button class="btn small" type="submit">Filter</button></div>
+<div class="pole-przycisku"><a class="btn secondary small" href="{{ url_for('panel.rozklad_bramek') }}">Clear</a></div>
+</form>
+</section>
+
+<div data-goal-distribution data-matches-url="{{ url_for('panel.goal_distribution_matches') }}">
+<section class="panel">
+<div class="panel-body">
+<div class="goal-dist-kpis">
+<div><span>Matches</span><b>{{ report.total.match_count_label }}</b></div>
+<div><span>Mean total</span><b>{{ report.total.mean_label }}</b></div>
+<div><span>Median total</span><b>{{ report.total.median_label }}</b></div>
+<div><span>Most common total</span><b>{{ report.total.modes_label }}</b></div>
+<div><span>Mean home</span><b>{{ report.home.mean_label }}</b></div>
+<div><span>Mean away</span><b>{{ report.away.mean_label }}</b></div>
+</div>
+<nav class="goal-dist-nav" aria-label="Distribution sections">
+<a href="#total">Total goals</a>
+<a href="#home">Home</a>
+<a href="#away">Away</a>
+</nav>
+{{ blok('total', 'Total goals', 'How often each combined goal total occurred.', report.total, 'total', 'split') }}
+<div class="goal-dist-pair">
+{{ blok('home', 'Home goals', 'How often the home team scored each number of goals.', report.home, 'home', 'stack') }}
+{{ blok('away', 'Away goals', 'How often the away team scored each number of goals.', report.away, 'away', 'stack') }}
+</div>
+</div>
+</section>
+<dialog class="match-detail-dialog" data-goal-dialog aria-labelledby="goal-matches-title">
+<div class="modal-head"><h2 id="goal-matches-title" data-goal-title>Matches</h2><button class="close" type="button" data-goal-close aria-label="Close match list" autofocus>×</button></div>
+<div class="modal-body" data-goal-body aria-live="polite"></div>
+<div class="modal-foot"><button class="btn secondary" type="button" data-goal-close>Close</button></div>
+</dialog>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/goal_distribution.js') }}"></script>
+{% endblock %}

@@ -7,6 +7,7 @@ from flask import Flask
 from ehf.infrastructure.competition_list_reader import PsycopgCompetitionListReader
 from ehf.infrastructure.connection import open_connection
 from ehf.infrastructure.database_stats_reader import PsycopgDatabaseStatsReader
+from ehf.infrastructure.goal_distribution_reader import PsycopgGoalDistributionReader
 from ehf.infrastructure.match_detail_reader import PsycopgMatchDetailReader
 from ehf.infrastructure.match_list_reader import PsycopgMatchListReader
 from ehf.infrastructure.news_reader import PsycopgNewsReader
@@ -25,6 +26,11 @@ from ehf.infrastructure.venue_detail_reader import PsycopgVenueDetailReader
 from ehf.infrastructure.venue_list_reader import PsycopgVenueListReader
 from ehf.interface.competition_views import CompetitionListView
 from ehf.interface.database_stats_views import DatabaseStatsView
+from ehf.interface.goal_distribution_views import (
+    DistributionListView,
+    GoalDistributionMatchesView,
+    GoalDistributionView,
+)
 from ehf.interface.expand import expand_href
 from ehf.interface.match_views import MatchDetailView, MatchListView
 from ehf.interface.navigation import zarejestruj_kontekst_nawigacji
@@ -43,6 +49,7 @@ from ehf.interface.venue_views import VenueDetailView, VenueListView
 from ehf.interface.views import utworz_blueprint
 from ehf.services.competition_list import CompetitionListService
 from ehf.services.database_stats import DatabaseStatsService
+from ehf.services.goal_distribution import GoalDistributionService
 from ehf.services.match_detail import MatchDetailService
 from ehf.services.match_list import MatchListService
 from ehf.services.news import NewsService
@@ -101,6 +108,7 @@ def create_app() -> Flask:
     scorer_list_service = ScorerListService(PsycopgScorerListReader(connect))
     news_service = NewsService(PsycopgNewsReader(connect))
     database_stats_service = DatabaseStatsService(PsycopgDatabaseStatsReader(connect))
+    goal_distribution_service = GoalDistributionService(PsycopgGoalDistributionReader(connect))
     blueprint.add_url_rule(
         "/",
         view_func=StartView.as_view("start", service=news_service),
@@ -192,6 +200,22 @@ def create_app() -> Flask:
     blueprint.add_url_rule(
         "/statystyki-tabel",
         view_func=DatabaseStatsView.as_view("statystyki_tabel", service=database_stats_service),
+    )
+    blueprint.add_url_rule(
+        "/rozklady",
+        view_func=DistributionListView.as_view("lista_rozkladow"),
+    )
+    blueprint.add_url_rule(
+        "/rozklady/bramki",
+        view_func=GoalDistributionView.as_view(
+            "rozklad_bramek", service=goal_distribution_service
+        ),
+    )
+    blueprint.add_url_rule(
+        "/rozklady/bramki/matches",
+        view_func=GoalDistributionMatchesView.as_view(
+            "goal_distribution_matches", service=goal_distribution_service
+        ),
     )
     app.register_blueprint(blueprint)
     return app

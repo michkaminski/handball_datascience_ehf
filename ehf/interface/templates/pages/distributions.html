@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block tytul %}Distributions — {{ nazwa_projektu }}{% endblock %}
+
+{% block tresc %}
+<section class="pagehead">
+<div class="crumb">Start › Reports › Distributions</div>
+<h1>Distributions</h1>
+<p>Frequency profiles of played matches. Each report is read-only and uses the selected range.</p>
+</section>
+<section class="panel">
+<h2>Distribution catalog</h2>
+<div class="panel-body">
+<div class="table-wrap">
+<table class="report-catalog">
+<thead><tr><th scope="col">Report</th><th scope="col">Category</th><th scope="col">Description</th><th scope="col">Actions</th></tr></thead>
+<tbody>
+{% for rozklad in rozklady %}
+<tr>
+<td><a class="player-link" href="{{ url_for(rozklad.endpoint) }}">{{ rozklad.title }}</a></td>
+<td><span class="badge plan">{{ rozklad.category }}</span></td>
+<td class="report-description">{{ rozklad.description }}</td>
+<td><a class="icon-link" href="{{ url_for(rozklad.endpoint) }}">Open</a></td>
+</tr>
+{% else %}
+<tr><td colspan="4" class="note">No distributions.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</section>
+{% endblock %}
