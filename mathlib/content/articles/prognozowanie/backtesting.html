@@ -1,0 +1,171 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Model prognozujący frekwencję ma działać w przyszłości: w sierpniu przewidujemy mecze, które odbędą się w październiku. Uczciwy sprawdzian jakości musi więc odtwarzać tę sytuację — model zna tylko przeszłość, a oceniamy go na tym, co nastąpiło później. Na tym polega <strong>backtesting</strong>, czyli <strong>walidacja chronologiczna</strong> (ang. <em>time-series validation</em>, <em>out-of-sample evaluation</em>, <em>evaluation on a rolling forecasting origin</em>): cofamy się w czasie do chwili \( \tau \), uczymy model wyłącznie na danych sprzed \( \tau \), prognozujemy okres po \( \tau \) i porównujemy prognozy z rzeczywistością <cite data-bib="tashman2000"></cite>, <cite data-bib="hyndman2021fpp3"></cite>.</p>
+<p>Dlaczego nie wystarczy zwykła losowa walidacja krzyżowa (ang. <em>k-fold cross-validation</em>)? Bo przy losowym podziale mecz z marca 2024 może trafić do zbioru testowego, a mecze z kwietnia i maja 2024 — do treningowego. Model „wie” wtedy, jak kształtował się efekt tego sezonu i forma drużyn po teście, czyli korzysta z informacji z przyszłości. Taki <strong>wyciek informacji</strong> (ang. <em>data leakage</em>, <em>look-ahead bias</em>) sprawia, że błędy na teście są zaniżone, a model wygląda lepiej, niż będzie działał naprawdę <cite data-bib="bergmeir2012"></cite>.</p>
+<p>Najczęstszy wariant to <strong>okno rozszerzające się</strong> (ang. <em>expanding window</em>): w kolejnych krokach punkt podziału przesuwa się do przodu, a zbiór treningowy rośnie o kolejny sezon. Ocena z wielu punktów podziału jest stabilniejsza niż z jednego i pokazuje, czy jakość modelu zmienia się w czasie. Ten schemat implementuje m.in. <code>TimeSeriesSplit</code> z biblioteki scikit-learn <cite data-bib="doc-sklearn-tss"></cite>.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \( (y_i, x_i, t_i) \), \( i=1,\dots,n \), będą obserwacjami (mecze) z momentami \( t_i \) (data i godzina rozpoczęcia), a \( \mathcal F_\tau \) — informacją dostępną w chwili \( \tau \): wszystkie obserwacje z \( t_i\lt\tau \) oraz cechy meczów, które w chwili \( \tau \) są już znane. Niech \( \mathcal A \) będzie procedurą uczenia (estymacja modelu z danych), a \( \ell \) — funkcją straty prognozy (np. \( |\hat y-y| \), \( (\hat y-y)^2 \), CRPS).</p>
+<div class="ml-box ml-def" id="def-backtesting"><p class="ml-box-title">Definicja (walidacja chronologiczna z oknem rozszerzającym się)</p>
+<p>Dla rosnącego ciągu punktów podziału \( \tau_1\lt\tau_2\lt\dots\lt\tau_{K+1} \) definiujemy zbiory treningowe i testowe</p>
+<div class="ml-eq" id="eq-backtesting-podzial">\[ \mathcal T_k=\{i:\ t_i\lt\tau_k\}, \qquad \mathcal V_k=\{i:\ \tau_k\le t_i\lt\tau_{k+1}\}, \qquad k=1,\dots,K . \]</div>
+<p>W kroku \( k \) model \( \hat M_k=\mathcal A(\{(y_i,x_i)\}_{i\in\mathcal T_k}) \) daje prognozę \( \hat y_i^{(k)} \) dla \( i\in\mathcal V_k \), przy czym cechy \( x_i \) muszą być \( \mathcal F_{t_i} \)-mierzalne (znane przed meczem \( i \)). <strong>Błędem backtestu</strong> nazywamy</p>
+<div class="ml-eq" id="eq-backtesting">\[ \widehat{R} \;=\; \frac{1}{\sum_{k=1}^K|\mathcal V_k|}\sum_{k=1}^K\sum_{i\in\mathcal V_k}\ell\bigl(\hat y_i^{(k)},\,y_i\bigr). \]</div>
+</div>
+<p>W wariancie <strong>okna przesuwnego</strong> (ang. <em>sliding</em>, <em>rolling window</em>) zbiór treningowy ma stałą długość: \( \mathcal T_k=\{i:\tau_k-\Delta\le t_i\lt\tau_k\} \). Wariant z <strong>przerwą</strong> (ang. <em>gap</em>) pomija obserwacje z \( [\tau_k-g,\tau_k) \), gdy prognoza powstaje z wyprzedzeniem \( g \) lub gdy obserwacje sąsiednie są silnie zależne.</p>
+<div class="ml-box ml-def" id="def-wyciek"><p class="ml-box-title">Definicja (wyciek informacji z przyszłości)</p>
+<p><strong>Wyciekiem</strong> nazywamy sytuację, w której prognoza \( \hat y_i \) zależy od jakiejkolwiek wielkości niebędącej \( \mathcal F_{\tau} \)-mierzalną, gdzie \( \tau \) jest faktyczną chwilą sporządzania prognozy — bezpośrednio (cecha \( x_i \) policzona z danych przyszłych) lub pośrednio (parametry, standaryzacja, imputacja, dobór modelu lub hiperparametrów wykonane z udziałem danych testowych).</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( t_i \)</td><td>moment rozegrania meczu \( i \)</td></tr>
+<tr><td>\( \tau_k \)</td><td>\( k \)-ty punkt podziału (początek okresu testowego)</td></tr>
+<tr><td>\( \mathcal F_\tau \)</td><td>informacja dostępna w chwili \( \tau \)</td></tr>
+<tr><td>\( \mathcal T_k,\ \mathcal V_k \)</td><td>zbiór treningowy i testowy w kroku \( k \)</td></tr>
+<tr><td>\( K \)</td><td>liczba kroków (podziałów)</td></tr>
+<tr><td>\( \mathcal A,\ \hat M_k \)</td><td>procedura uczenia i model wyuczony w kroku \( k \)</td></tr>
+<tr><td>\( \hat y_i^{(k)} \)</td><td>prognoza dla meczu \( i \) z modelu \( \hat M_k \)</td></tr>
+<tr><td>\( \ell \)</td><td>funkcja straty</td></tr>
+<tr><td>\( \widehat R \)</td><td>błąd backtestu (średnia strata na zbiorach testowych)</td></tr>
+<tr><td>\( n_k \)</td><td>liczba meczów testowych w kroku \( k \)</td></tr>
+<tr><td>\( g,\ \Delta \)</td><td>przerwa między treningiem a testem; długość okna przesuwnego</td></tr>
+<tr><td>\( H \)</td><td>macierz rzutowa („daszkowa”) regresji liniowej</td></tr>
+<tr><td>\( p,\ \sigma^2 \)</td><td>liczba parametrów i wariancja błędu w regresji liniowej</td></tr>
+<tr><td>\( \mathrm{SS} \)</td><td>wskaźnik umiejętności względem prognozy naiwnej</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li><strong>Ścisła chronologia.</strong> Każda obserwacja testowa jest późniejsza od wszystkich treningowych w danym kroku. Mecze przełożone umieszczamy według faktycznej daty rozegrania.</li>
+<li><strong>Cechy dostępne ex ante.</strong> Forma, pozycja w tabeli, liczba widzów na poprzednich meczach itd. są liczone wyłącznie z meczów rozegranych przed meczem prognozowanym.</li>
+<li><strong>Cały potok w fałdzie.</strong> Wszystkie kroki wymagające danych — standaryzacja, imputacja, kodowanie kategorii, dobór priorów i zmiennych — wykonujemy w każdym kroku tylko na \( \mathcal T_k \).</li>
+<li><strong>Względna stabilność procesu.</strong> Błąd backtestu przenosi się na przyszłość, jeżeli mechanizm generujący dane zmienia się wolno. Przerwy strukturalne (np. sezon bez publiczności, zmiana formatu rozgrywek) wymagają osobnego komentarza.</li>
+<li><strong>Odpowiednia długość okresu testowego.</strong> Okres testowy odpowiada horyzontowi, na jaki model będzie używany (u nas: sezon).</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p><strong>Agregacja miar po krokach.</strong> Przy liczebnościach \( n_k=|\mathcal V_k| \), \( N=\sum_kn_k \):</p>
+<div class="ml-eq" id="eq-backtesting-agregacja">\[ \mathrm{MAE}=\frac1N\sum_{k=1}^K n_k\,\mathrm{MAE}_k, \qquad \mathrm{RMSE}=\sqrt{\frac1N\sum_{k=1}^K n_k\,\mathrm{RMSE}_k^2}, \qquad \mathrm{pokrycie}=\frac1N\sum_{k=1}^K n_k\,\mathrm{pokrycie}_k . \]</div>
+<p>RMSE łączymy przez średnią kwadratów, a nie średnią z pierwiastków (ta byłaby zaniżona — nierówność Jensena).</p>
+<p><strong>Wskaźnik umiejętności</strong> względem prognozy naiwnej (np. średnia frekwencja gospodarza w poprzednim sezonie):</p>
+<div class="ml-eq" id="eq-backtesting-skill">\[ \mathrm{SS} = 1-\frac{\widehat R_{\text{model}}}{\widehat R_{\text{naiwna}}} . \]</div>
+<p><strong>Podział <code>TimeSeriesSplit</code></strong> dla \( n \) obserwacji uporządkowanych w czasie i \( K \) podziałów (domyślnie): długość testu \( m=\lfloor n/(K+1)\rfloor \), w kroku \( k \) zbiór testowy to indeksy \( \{n-(K-k+1)m,\dots,n-(K-k)m-1\} \) (numeracja od 0), a treningowy — wszystkie wcześniejsze, z pominięciem ostatnich \( g \) przy parametrze <code>gap</code> \( =g \) <cite data-bib="doc-sklearn-tss"></cite>.</p>
+<p><strong>Optymizm błędu w próbie</strong> dla regresji liniowej (wzór z sekcji Twierdzenia):</p>
+<div class="ml-eq" id="eq-backtesting-optymizm">\[ \mathbb{E}\,\mathrm{MSE}_{\text{w próbie}}=\sigma^2\Bigl(1-\frac pn\Bigr), \qquad \mathbb{E}\,\mathrm{MSE}_{\text{nowe }y}=\sigma^2\Bigl(1+\frac pn\Bigr). \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-optymizm"><p class="ml-box-title">Twierdzenie (optymizm oceny na danych treningowych)</p>
+<p>Niech \( y=X\beta+\varepsilon \), \( \mathbb{E}\varepsilon=0 \), \( \operatorname{Var}\varepsilon=\sigma^2I_n \), \( X\in\mathbb R^{n\times p} \) ma rząd \( p \), a \( \hat y=Hy \), \( H=X(X^\top X)^{-1}X^\top \). Jeżeli \( y^\ast=X\beta+\varepsilon^\ast \) jest nowym wektorem obserwacji przy tych samych \( X \), z \( \varepsilon^\ast \) niezależnym od \( \varepsilon \) i o tym samym rozkładzie, to zachodzi <a class="ml-eqref" href="#eq-backtesting-optymizm"></a>; różnica wynosi \( 2p\sigma^2/n \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-nieobciazonosc-backtestu"><p class="ml-box-title">Twierdzenie (nieobciążoność oceny chronologicznej)</p>
+<p>Jeżeli prognoza \( \hat y_i \) jest \( \mathcal F_{\tau} \)-mierzalna, a \( y_i \) dla \( t_i\ge\tau \) ma warunkowo względem \( \mathcal F_\tau \) ten sam rozkład, co przyszłe obserwacje, dla których model będzie używany, to \( \mathbb{E}\bigl[\ell(\hat y_i,y_i)\mid\mathcal F_\tau\bigr] \) jest dokładnie ryzykiem prognozy w warunkach użycia; średnia strata na zbiorze testowym jest jego nieobciążonym estymatorem.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-wyciek"><p class="ml-box-title">Twierdzenie (wyciek obniża błąd oceny)</p>
+<p>Niech \( \hat y^{\mathrm{ex}} \) będzie optymalną (przy stracie kwadratowej) prognozą opartą na \( \mathcal F_\tau \), a \( \hat y^{\mathrm{wyc}} \) — optymalną prognozą opartą na bogatszej informacji \( \mathcal G\supseteq\mathcal F_\tau \) (np. z cechami z przyszłości). Wtedy \( \mathbb{E}(y-\hat y^{\mathrm{wyc}})^2\le\mathbb{E}(y-\hat y^{\mathrm{ex}})^2 \): ocena z wyciekiem jest systematycznie zbyt optymistyczna w stosunku do tego, co da się osiągnąć w praktyce.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-optymizm">Optymizm błędu w próbie</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>\( H \) jest symetryczna i idempotentna, \( HX=X \), \( \operatorname{tr}H=\operatorname{tr}\bigl((X^\top X)^{-1}X^\top X\bigr)=\operatorname{tr}I_p=p \). Reszty w próbie: \( y-\hat y=(I-H)y=(I-H)\varepsilon \), bo \( (I-H)X\beta=0 \). Stąd</p>
+\[ \mathbb{E}\|y-\hat y\|^2=\mathbb{E}\,\varepsilon^\top(I-H)\varepsilon=\sigma^2\operatorname{tr}(I-H)=\sigma^2(n-p) , \]
+<p>z tożsamości \( \mathbb{E}\,\varepsilon^\top A\varepsilon=\sigma^2\operatorname{tr}A \) dla \( \operatorname{Var}\varepsilon=\sigma^2I \). Dla nowych obserwacji: \( y^\ast-\hat y=\varepsilon^\ast-H\varepsilon \), a ponieważ \( \varepsilon^\ast \) i \( \varepsilon \) są niezależne i scentrowane,</p>
+\[ \mathbb{E}\|y^\ast-\hat y\|^2=\mathbb{E}\|\varepsilon^\ast\|^2+\mathbb{E}\,\varepsilon^\top H^\top H\varepsilon=n\sigma^2+\sigma^2\operatorname{tr}H=\sigma^2(n+p) . \]
+<p>Dzieląc przez \( n \), otrzymujemy <a class="ml-eqref" href="#eq-backtesting-optymizm"></a>; różnica wynosi \( 2p\sigma^2/n \).</p>
+<p class="ml-qed">∎</p></div>
+<p>Model hierarchiczny MAF ma setki parametrów (efekty gospodarzy, rywali, kombinacji z sezonami), więc „efektywna liczba parametrów” jest duża i ocena na danych treningowych byłaby wyraźnie zbyt optymistyczna; ściąganie (partial pooling) zmniejsza ten efekt, ale go nie usuwa.</p>
+
+<h3 id="dowod-nieobciazonosc">Nieobciążoność oceny chronologicznej</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Ponieważ \( \hat y_i \) jest \( \mathcal F_\tau \)-mierzalna, przy warunkowaniu na \( \mathcal F_\tau \) jest stałą, a jedyną losowością w \( \ell(\hat y_i,y_i) \) jest \( y_i \). Wartość oczekiwana \( \mathbb{E}[\ell(\hat y_i,y_i)\mid\mathcal F_\tau]=\int\ell(\hat y_i,y)\,P(dy\mid\mathcal F_\tau) \) jest z założenia tą samą całką co ryzyko w warunkach użycia. Średnia z \( n_k \) takich strat ma (z liniowości) tę samą wartość oczekiwaną. W losowej walidacji krzyżowej prognoza zależy od obserwacji późniejszych niż \( t_i \), więc nie jest \( \mathcal F_{t_i} \)-mierzalna i to rozumowanie nie zachodzi.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-wyciek">Wyciek obniża błąd</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Prognoza optymalna przy stracie kwadratowej i informacji \( \mathcal G \) to \( \mathbb{E}(y\mid\mathcal G) \) (zob. <a data-concept="wartosc-oczekiwana-prognozy" data-anchor="twierdzenia">wartość oczekiwana prognozy</a>). Ponieważ \( \hat y^{\mathrm{ex}}=\mathbb{E}(y\mid\mathcal F_\tau) \) jest \( \mathcal G \)-mierzalna, jest jedną z prognoz dopuszczalnych przy informacji \( \mathcal G \); minimum po większym zbiorze prognoz nie może być większe:</p>
+\[ \mathbb{E}(y-\hat y^{\mathrm{ex}})^2=\mathbb{E}(y-\hat y^{\mathrm{wyc}})^2+\mathbb{E}(\hat y^{\mathrm{wyc}}-\hat y^{\mathrm{ex}})^2\ \ge\ \mathbb{E}(y-\hat y^{\mathrm{wyc}})^2 , \]
+<p>gdzie równość (rozkład Pitagorasa) wynika z ortogonalności \( y-\mathbb{E}(y\mid\mathcal G) \) do każdej \( \mathcal G \)-mierzalnej zmiennej o skończonym drugim momencie.</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><em>Dane ilustracyjne.</em></p>
+<ol class="ml-steps">
+<li><strong>Mechanika <code>TimeSeriesSplit</code>.</strong> \( n=12 \) obserwacji (indeksy 0–11), \( K=3 \). Długość testu \( m=\lfloor12/4\rfloor=3 \). Podziały: trening {0,1,2} → test {3,4,5}; trening {0,…,5} → test {6,7,8}; trening {0,…,8} → test {9,10,11}. Z parametrem <code>gap=1</code> z treningu znika ostatnia obserwacja przed testem: {0,1} → {3,4,5}; {0,…,4} → {6,7,8}; {0,…,7} → {9,10,11}.</li>
+<li><strong>Backtest sezonowy.</strong> Model frekwencji uczymy na sezonach od 2011/12 do sezonu poprzedzającego test, cztery kroki z oknem rozszerzającym się. Wyniki:
+<table class="ml-table">
+<thead><tr><th>Sezon testowy</th><th>\( n_k \)</th><th>MAE</th><th>RMSE</th><th>Pokrycie 80%</th><th>MAE naiwnej</th></tr></thead>
+<tbody>
+<tr><td>2021/22</td><td>1450</td><td>238</td><td>341</td><td>0,77</td><td>301</td></tr>
+<tr><td>2022/23</td><td>1520</td><td>221</td><td>318</td><td>0,79</td><td>288</td></tr>
+<tr><td>2023/24</td><td>1580</td><td>215</td><td>305</td><td>0,81</td><td>279</td></tr>
+<tr><td>2024/25</td><td>1610</td><td>209</td><td>296</td><td>0,80</td><td>276</td></tr>
+</tbody>
+</table></li>
+<li><strong>Łączne MAE</strong>: \( N=6160 \); \( \sum n_k\mathrm{MAE}_k=345\,100+335\,920+339\,700+336\,490=1\,357\,210 \); \( \mathrm{MAE}=1\,357\,210/6160\approx220{,}3 \) widza.</li>
+<li><strong>Łączne RMSE</strong>: \( \sum n_k\mathrm{RMSE}_k^2=1450\cdot116\,281+1520\cdot101\,124+1580\cdot93\,025+1610\cdot87\,616=610\,357\,190 \); \( \sqrt{610\,357\,190/6160}=\sqrt{99\,084}\approx314{,}8 \). (Średnia arytmetyczna czterech RMSE dałaby 315,0 — przy podobnych liczebnościach różnica jest mała, ale metoda poprawna to średnia kwadratów.)</li>
+<li><strong>Pokrycie</strong>: \( (1116{,}5+1200{,}8+1279{,}8+1288)/6160=4885{,}1/6160\approx0{,}793 \) — blisko nominalnych 80%.</li>
+<li><strong>Umiejętność</strong>: MAE prognozy naiwnej (średnia frekwencja gospodarza w poprzednim sezonie) \( =1\,759\,390/6160\approx285{,}6 \); \( \mathrm{SS}=1-220{,}3/285{,}6\approx0{,}229 \) — model zmniejsza średni błąd bezwzględny o ok. 23%.</li>
+<li><strong>Skutek wycieku (ilustracja).</strong> Gdyby „forma” zawierała wynik prognozowanego meczu albo standaryzację liczono na wszystkich sezonach łącznie z testowym, MAE na teście mogłoby spaść np. do 200 — ale ta poprawa nie byłaby dostępna przy rzeczywistej prognozie; zgodnie z twierdzeniem o wycieku ocena byłaby zawyżona, a wybór modelu — potencjalnie błędny.</li>
+</ol>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Łączne MAE 220 widzów oznacza, że prognoza średnio myli się o ok. 220 osób na mecz, w warunkach odpowiadających realnemu użyciu modelu (prognoza przed sezonem, bez wiedzy o przyszłości). Przy średniej frekwencji w Superlidze mężczyzn ok. 1100–1300 widzów to błąd rzędu 17–20%. RMSE (315) jest wyraźnie większe od MAE, co świadczy o pojedynczych dużych pomyłkach — typowo przy meczach o wyjątkowym znaczeniu.</p>
+<p>Malejący błąd w kolejnych krokach (238 → 209) ma dwa możliwe wyjaśnienia: rosnący zbiór treningowy (więcej sezonów danych) i zmiany w samym procesie (np. stabilizacja po sezonach z ograniczeniami). Backtest z wieloma punktami podziału pozwala to zobaczyć — pojedynczy podział by na to nie pozwolił <cite data-bib="tashman2000"></cite>.</p>
+<p>Wskaźnik umiejętności 0,23 jest ważniejszy od samego MAE: odpowiada na pytanie, czy złożony model hierarchiczny wnosi coś ponad prostą regułę, którą klub zastosowałby bez modelu.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>Walidacja <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> jest chronologiczna: model uczymy na sezonach wcześniejszych i testujemy na ostatnim (oraz — w rozszerzonej wersji — na kilku kolejnych sezonach z oknem rozszerzającym się). Na zbiorze testowym liczymy <a data-concept="mae">MAE</a>, <a data-concept="rmse">RMSE</a>, <a data-concept="pokrycie-przedzialow-predykcyjnych">pokrycie przedziałów</a> 50/80/95%, PIT (<a data-concept="kalibracja-prawdopodobienstw">kalibracja</a>), reszty standaryzowane i predykcyjne wartości p.</p>
+<p>Specyfika MAF wymaga kilku zabezpieczeń przed wyciekiem:</p>
+<ul>
+<li><strong>Efekt sezonu testowego jest nieznany.</strong> Prognoza meczów sezonu testowego losuje nowy efekt \( S_{\mathrm{new}}\sim N(0,\sigma_S^2) \) (i nowe \( HS \), \( RS \)) — dokładnie tak jak przy prognozie na prawdziwy przyszły sezon (<a data-concept="monte-carlo">symulacja Monte Carlo</a>). Użycie efektu oszacowanego z meczów testowych byłoby wyciekiem.</li>
+<li><strong>Forma i tabela tylko z przeszłości.</strong> <a data-concept="srednia-ruchoma">Forma</a> to średnia punktów z 5 meczów przed danym meczem, pozycja w tabeli — po ostatniej kolejce rozegranej przed meczem. W backteście z wyprzedzeniem całego sezonu trzeba zdecydować, czy forma w dniu meczu jest „znana” (prognoza tuż przed meczem), czy nie (prognoza przed sezonem); oba scenariusze są uprawnione, ale muszą odpowiadać deklarowanemu zastosowaniu.</li>
+<li><strong>Standaryzacja w fałdzie.</strong> Średnie i odchylenia do <a data-concept="standaryzacja">standaryzacji</a> cech liczymy na zbiorze treningowym i stosujemy bez zmian do testu.</li>
+<li><strong>Populacja referencyjna IAF</strong> i wszelkie agregaty sezonowe (np. średnia frekwencja klubu w sezonie) liczymy bez meczów testowych.</li>
+<li><strong>Brak strojenia na teście.</strong> Decyzje modelarskie (wybór wariantu, priory) podejmujemy na wcześniejszych krokach backtestu; ostatni sezon służy tylko do oceny końcowej.</li>
+</ul>
+<p>Dane obejmują sezony 2011–2026 (ok. 24 tys. meczów ZPRP ze znaną frekwencją oraz ok. 2,8 tys. meczów pucharów EHF). Mecze z brakiem informacji o frekwencji (NULL) pomijamy zarówno w treningu, jak i w teście — brak danych nie oznacza 0 widzów.</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Mniej danych do treningu.</strong> Wczesne kroki uczą się na krótkiej historii, więc ich błąd jest pesymistyczny względem modelu wyuczonego na wszystkich danych.</li>
+<li><strong>Mało punktów oceny.</strong> Przy podziale sezonowym mamy kilka kroków; niepewność samego \( \widehat R \) jest znaczna, a kroki nie są niezależne (zachodzące zbiory treningowe).</li>
+<li><strong>Niestacjonarność.</strong> Jeżeli proces się zmienia (nowe hale, zmiana formatu ligi, sezon bez publiczności), błąd z przeszłości słabo przewiduje błąd przyszły; sezony nietypowe warto raportować osobno.</li>
+<li><strong>Koszt obliczeń.</strong> Każdy krok wymaga ponownego dopasowania modelu MCMC (4 łańcuchy NUTS), co przy wielu krokach jest kosztowne. Przybliżenia (np. leave-future-out z ważeniem istotności) wymagają dodatkowej diagnostyki.</li>
+<li><strong>Losowa walidacja krzyżowa nie jest zawsze błędna</strong> — dla niektórych modeli autoregresyjnych bywa akceptowalna <cite data-bib="bergmeir2012"></cite> — ale przy efektach sezonowych i cechach zależnych od czasu, jak w MAF, ryzyko wycieku jest wysokie; walidacja chronologiczna jest bezpiecznym wyborem.</li>
+<li><strong>Wyciek bywa subtelny.</strong> Poprawiane z opóźnieniem dane (np. frekwencja uzupełniona po sezonie, rewizje pojemności hal) mogą nie być dostępne w chwili prognozy; idealny backtest używa wersji danych z danej chwili.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="kalibracja-prawdopodobienstw">Kalibracja prawdopodobieństw</a> — ocena prognoz probabilistycznych na zbiorze testowym.</li>
+<li><a data-concept="mae">MAE</a> i <a data-concept="rmse">RMSE</a> — miary błędu prognozy punktowej.</li>
+<li><a data-concept="pokrycie-przedzialow-predykcyjnych">Pokrycie przedziałów predykcyjnych</a> — ocena niepewności.</li>
+<li><a data-concept="srednia-ruchoma">Średnia ruchoma</a> — przykład cechy, którą łatwo skazić wyciekiem.</li>
+<li><a data-concept="autokorelacja">Autokorelacja</a> — powód, dla którego losowy podział zawodzi.</li>
+<li><a data-concept="monte-carlo">Symulacja Monte Carlo w prognozowaniu</a> — generowanie prognoz dla sezonu testowego.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="tashman2000"></li>
+<li data-bib="bergmeir2012"></li>
+<li data-bib="doc-sklearn-tss"></li>
+<li data-bib="hyndman2021fpp3"></li>
+<li data-bib="hyndman2006"></li>
+</ul>
+</section>

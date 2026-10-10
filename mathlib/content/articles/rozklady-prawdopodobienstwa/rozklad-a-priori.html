@@ -1,0 +1,182 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Rozkład a priori (ang. <em>prior distribution</em>, krótko: prior) opisuje, co wiemy — lub co jesteśmy gotowi założyć — o nieznanym parametrze, zanim zobaczymy dane. W statystyce bayesowskiej parametr, np. skuteczność rzutów karnych zawodnika albo efekt rywala na frekwencję, jest traktowany jak wielkość losowa, a niepewność co do niego wyraża się rozkładem prawdopodobieństwa. Dane aktualizują ten rozkład przez <a data-concept="twierdzenie-bayesa">twierdzenie Bayesa</a>, dając <a data-concept="rozklad-posterior">rozkład posterior</a>.</p>
+<p>Prior nie musi być „subiektywną opinią”. W praktyce modelowania najczęściej pełni rolę regularyzacji: wyklucza wartości absurdalne (efekt meczu w weekend zwiększający frekwencję stukrotnie), stabilizuje oszacowania dla grup z małą liczbą obserwacji i pozwala modelom hierarchicznym dzielić informację między klubami. Dobry prior jest jawny, uzasadniony i sprawdzony — najlepiej przez to, jakie dane przewiduje, zanim zobaczy prawdziwe.</p>
+<div class="ml-plot" data-plot="beta" data-params='{"a": 15, "b": 5}'></div>
+<p>Prior \(\text{Beta}(15,5)\) dla skuteczności rzutów karnych koncentruje się wokół 0,75; zmniejszając jednocześnie \(a\) i \(b\) przy stałym stosunku \(a/b\), zachowujesz średnią, ale zmniejszasz „siłę” priora.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-rozklad-a-priori"><p class="ml-box-title">Definicja</p>
+<p>Niech \(\{p(y\mid\theta):\theta\in\Theta\}\) będzie modelem statystycznym, gdzie \(\Theta\subseteq\mathbb R^d\) jest przestrzenią parametrów z \(\sigma\)-algebrą zbiorów borelowskich. Rozkładem a priori nazywamy miarę probabilistyczną \(\Pi\) na \(\Theta\); jeśli ma gęstość \(\pi\) względem miary Lebesgue’a (lub liczącej), piszemy \(\theta\sim\pi\). Rozkład a priori wraz z modelem wyznacza łączny rozkład \((\theta,y)\) i, gdy mianownik jest dodatni i skończony, rozkład posterior:</p>
+<div class="ml-eq" id="eq-rozklad-a-priori">\[ \pi(\theta)\ge0,\quad \int_\Theta\pi(\theta)\,d\theta=1,\qquad p(\theta\mid y)=\frac{p(y\mid\theta)\,\pi(\theta)}{\int_\Theta p(y\mid\vartheta)\,\pi(\vartheta)\,d\vartheta}. \]</div>
+</div>
+<div class="ml-box ml-def" id="def-niewlasciwy"><p class="ml-box-title">Definicja (prior niewłaściwy)</p>
+<p>Prior niewłaściwy (ang. <em>improper prior</em>) to nieujemna funkcja \(\pi\) z \(\int_\Theta\pi=\infty\) (np. \(\pi(\theta)\equiv1\) na \(\mathbb R\)). Wolno go użyć tylko wtedy, gdy dla obserwowanych danych \(0\lt\int_\Theta p(y\mid\theta)\pi(\theta)\,d\theta\lt\infty\), tj. gdy posterior jest właściwy.</p>
+</div>
+<div class="ml-box ml-def" id="def-sprzezony"><p class="ml-box-title">Definicja (rodzina sprzężona)</p>
+<p>Rodzina rozkładów \(\mathcal P\) na \(\Theta\) jest sprzężona (ang. <em>conjugate</em>) z modelem \(p(y\mid\theta)\), jeśli dla każdego \(\pi\in\mathcal P\) i każdych danych \(y\) posterior \(p(\theta\mid y)\) również należy do \(\mathcal P\).</p>
+</div>
+<p>Typologia używana w praktyce <cite data-bib="gelman2013bda"></cite>: priory <em>informacyjne</em> (oparte na wcześniejszych danych lub wiedzy eksperckiej), <em>słabo informacyjne</em> (ang. <em>weakly informative</em> — wykluczają wartości nierealistyczne, ale nie przesądzają o wyniku), <em>referencyjne/„nieinformacyjne”</em> (np. jednostajne, Jeffreysa) oraz <em>hierarchiczne</em>, w których parametry priora same mają rozkład — <a data-concept="hiperpriory">hiperprior</a>.</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(\theta\)</td><td>parametr (wektor parametrów) modelu</td></tr>
+<tr><td>\(\Theta\)</td><td>przestrzeń parametrów</td></tr>
+<tr><td>\(\pi(\theta)\)</td><td>gęstość rozkładu a priori</td></tr>
+<tr><td>\(p(y\mid\theta)\)</td><td>model danych; jako funkcja \(\theta\) — <a data-concept="funkcja-wiarygodnosci">funkcja wiarygodności</a></td></tr>
+<tr><td>\(p(\theta\mid y)\)</td><td>rozkład posterior</td></tr>
+<tr><td>\(p(y)\)</td><td>rozkład predykcyjny a priori (wiarygodność brzegowa)</td></tr>
+<tr><td>\(g\)</td><td>przekształcenie parametru, \(\psi=g(\theta)\)</td></tr>
+<tr><td>\(a,\ b\)</td><td>parametry priora beta; \(a+b\) — „liczba pseudoobserwacji”</td></tr>
+<tr><td>\(\sigma\)</td><td>parametr skali efektu losowego z priorem półnormalnym</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Prior jest ustalony przed analizą danych, na których jest używany (nie „dopasowujemy” priora do wyniku).</li>
+<li>Nośnik priora zawiera wszystkie wartości parametru, które uznajemy za możliwe — wartości z zerową gęstością a priori nigdy nie otrzymają dodatniej gęstości a posteriori.</li>
+<li>Prior jest określony na konkretnej skali parametru (logit, logarytm, skala oryginalna); jego „nieinformacyjność” nie przenosi się na inne skale.</li>
+<li>Przy priorach niewłaściwych zakłada się (i należy sprawdzić), że posterior jest właściwy.</li>
+<li>W modelach regresyjnych zmienne objaśniające są standaryzowane, aby wspólna skala priora \(N(0,1)\) miała tę samą interpretację dla wszystkich współczynników.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Rozkład predykcyjny a priori — co prior „mówi” o danych przed ich zobaczeniem:</p>
+<div class="ml-eq" id="eq-rozklad-a-priori-predykcyjny">\[ p(y)=\int_\Theta p(y\mid\theta)\,\pi(\theta)\,d\theta. \]</div>
+<p>Zamiana zmiennych: jeśli \(\psi=g(\theta)\), \(g\) jest różniczkowalną bijekcją, to</p>
+<div class="ml-eq" id="eq-rozklad-a-priori-zamiana">\[ \pi_\psi(\psi)=\pi_\theta\big(g^{-1}(\psi)\big)\,\left|\frac{d\,g^{-1}(\psi)}{d\psi}\right|. \]</div>
+<p>Prior na skali logitu i jego obraz na skali prawdopodobieństwa (\(\eta\sim N(0,s^2)\), \(p=\operatorname{logit}^{-1}\eta\)):</p>
+<div class="ml-eq" id="eq-rozklad-a-priori-logit">\[ \pi_p(p)=\frac{1}{s\sqrt{2\pi}}\exp\!\Big(-\frac{(\operatorname{logit}p)^2}{2s^2}\Big)\cdot\frac{1}{p(1-p)},\qquad 0\lt p\lt1. \]</div>
+<p>Prior beta jako pseudoobserwacje i jego udział w średniej a posteriori (model dwumianowy, \(k\) sukcesów w \(n\) próbach):</p>
+<div class="ml-eq" id="eq-rozklad-a-priori-waga">\[ E(p\mid y)=w\,\frac{a}{a+b}+(1-w)\,\frac kn,\qquad w=\frac{a+b}{a+b+n}. \]</div>
+<p>Prior półnormalny dla skali (zob. <a data-concept="rozklad-normalny" data-anchor="wzory">rozkład normalny</a>):</p>
+<div class="ml-eq" id="eq-rozklad-a-priori-polnormalny">\[ \sigma\sim\text{Half-Normal}(0,1):\qquad E\sigma=\sqrt{2/\pi}\approx0{,}798,\qquad P(\sigma\le s)=2\Phi(s)-1. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-cromwell"><p class="ml-box-title">Twierdzenie (zachowanie nośnika — reguła Cromwella)</p>
+<p>Jeśli \(\Pi(B)=0\) dla pewnego zbioru \(B\subseteq\Theta\), to \(P(\theta\in B\mid y)=0\) dla dowolnych danych \(y\), dla których posterior istnieje.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-nieniezmienniczosc"><p class="ml-box-title">Twierdzenie (brak niezmienniczości priora jednostajnego)</p>
+<p>Jeśli \(p\sim U(0,1)\), to \(\eta=\operatorname{logit}p\) ma rozkład logistyczny o gęstości \(\pi_\eta(\eta)=\dfrac{e^\eta}{(1+e^\eta)^2}\), \(\eta\in\mathbb R\). Prior „płaski” na jednej skali nie jest płaski na innej.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-szeroki-normalny"><p class="ml-box-title">Twierdzenie (szeroki prior normalny na skali logitu)</p>
+<p>Niech \(\eta\sim N(0,s^2)\) i \(p=\operatorname{logit}^{-1}\eta\). Dla każdego \(\varepsilon\in(0,1/2)\): \(P(\varepsilon\lt p\lt1-\varepsilon)=2\Phi\big(\operatorname{logit}(1-\varepsilon)/s\big)-1\to0\) przy \(s\to\infty\). Bardzo szeroki prior na logicie skupia więc masę przy \(p=0\) i \(p=1\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-wygasanie"><p class="ml-box-title">Twierdzenie (wygasanie wpływu priora)</p>
+<p>W modelu dwumianowym z priorem \(\text{Beta}(a,b)\) waga priora w średniej a posteriori <a class="ml-eqref" href="#eq-rozklad-a-priori-waga"></a> wynosi \(w=(a+b)/(a+b+n)\to0\) przy \(n\to\infty\). Ogólniej, przy regularnych warunkach i priorze dodatnim w otoczeniu prawdziwej wartości, posterior jest asymptotycznie normalny i nie zależy od priora (twierdzenie Bernsteina–von Misesa) <cite data-bib="gelman2013bda"></cite>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-haldane"><p class="ml-box-title">Twierdzenie (warunek właściwości posterior dla priora Haldane’a)</p>
+<p>Dla niewłaściwego priora \(\pi(p)\propto p^{-1}(1-p)^{-1}\) i \(k\) sukcesów w \(n\) próbach posterior jest właściwy wtedy i tylko wtedy, gdy \(1\le k\le n-1\); wówczas jest to \(\text{Beta}(k,n-k)\).</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="cromwell-dowod">Reguła Cromwella</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>\(P(\theta\in B\mid y)=\frac{\int_Bp(y\mid\theta)\,\Pi(d\theta)}{\int_\Theta p(y\mid\theta)\,\Pi(d\theta)}\). Licznik jest całką funkcji nieujemnej po zbiorze miary zero, więc wynosi 0.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="zamiana-dowod">Wzór na zamianę zmiennych i rozkład logistyczny</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla rosnącej bijekcji \(g\): \(P(\psi\le t)=P(\theta\le g^{-1}(t))=F_\theta(g^{-1}(t))\); różniczkując po \(t\), dostajemy <a class="ml-eqref" href="#eq-rozklad-a-priori-zamiana"></a> (dla malejącej — z wartością bezwzględną). Dla \(\eta=\operatorname{logit}p\) mamy \(p=g^{-1}(\eta)=\frac{e^\eta}{1+e^\eta}\), a \(\frac{dp}{d\eta}=\frac{e^\eta}{(1+e^\eta)^2}=p(1-p)\). Przy \(\pi_p\equiv1\) na \((0,1)\): \(\pi_\eta(\eta)=1\cdot\frac{e^\eta}{(1+e^\eta)^2}\).</p>
+<p>W kierunku odwrotnym, dla \(\eta\sim N(0,s^2)\): \(\pi_p(p)=\varphi_s(\operatorname{logit}p)\cdot\left|\frac{d\operatorname{logit}p}{dp}\right|=\varphi_s(\operatorname{logit}p)\cdot\frac1{p(1-p)}\), co daje <a class="ml-eqref" href="#eq-rozklad-a-priori-logit"></a>.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="szeroki-dowod">Szeroki prior normalny</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Funkcja \(\operatorname{logit}^{-1}\) jest rosnąca, więc \(\{\varepsilon\lt p\lt1-\varepsilon\}=\{|\eta|\lt c\}\) z \(c=\operatorname{logit}(1-\varepsilon)\gt0\). Zatem \(P=\Phi(c/s)-\Phi(-c/s)=2\Phi(c/s)-1\). Ponieważ \(\Phi\) jest ciągła i \(\Phi(0)=1/2\), dla \(s\to\infty\) wyrażenie dąży do \(0\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="waga-dowod">Średnia a posteriori jako średnia ważona</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z sprzężoności (zob. <a data-concept="rozklad-posterior" data-anchor="wyprowadzenie">rozkład posterior</a>) \(p\mid y\sim\text{Beta}(a+k,\ b+n-k)\), więc</p>
+\[ E(p\mid y)=\frac{a+k}{a+b+n}=\frac{a+b}{a+b+n}\cdot\frac{a}{a+b}+\frac{n}{a+b+n}\cdot\frac kn. \]
+<p>Współczynniki sumują się do 1, a \(w=\frac{a+b}{a+b+n}\to0\) przy \(n\to\infty\). Liczba \(a+b\) odgrywa więc rolę liczby „wcześniejszych prób”.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="haldane-dowod">Prior Haldane’a</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Nieznormalizowany posterior to \(p^{k-1}(1-p)^{n-k-1}\). Całka \(\int_0^1p^{k-1}(1-p)^{n-k-1}dp\) jest skończona wtedy i tylko wtedy, gdy oba wykładniki są większe od \(-1\), tj. \(k\gt0\) i \(n-k\gt0\); wówczas równa się \(B(k,n-k)\). Dla \(k=0\) (lub \(k=n\)) całka jest rozbieżna w 0 (lub w 1).</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<h3 id="przyklad-logit">Co naprawdę mówi prior na skali logitu?</h3>
+<ol class="ml-steps">
+<li>Interesuje nas prawdopodobieństwo, że średnie wypełnienie \(\mu=\operatorname{logit}^{-1}\eta\) leży w rozsądnym przedziale \((0{,}1;\ 0{,}9)\). Granica: \(\operatorname{logit}0{,}9=\log9=2{,}1972\).</li>
+<li>\(\eta\sim N(0,1)\): \(P=2\Phi(2{,}1972)-1=0{,}972\).</li>
+<li>\(\eta\sim N(0,1{,}5^2)\): \(P=2\Phi(1{,}4648)-1=0{,}857\).</li>
+<li>\(\eta\sim N(0,10^2)\): \(P=2\Phi(0{,}2197)-1=0{,}174\); natomiast \(P(\mu\gt0{,}99)=1-\Phi(\log99/10)=1-\Phi(0{,}4595)=0{,}323\).</li>
+<li>Wniosek: „szeroki, nieinformacyjny” prior \(N(0,10)\) zakłada w rzeczywistości, że w ok. 1/3 przypadków hala jest wypełniona w ponad 99%, a w kolejnej 1/3 — w mniej niż 1%. To silne, nierealistyczne założenie.</li>
+</ol>
+<h3 id="przyklad-wspolczynnik">Prior \(N(0,1)\) dla standaryzowanego współczynnika</h3>
+<ol class="ml-steps">
+<li>Na skali logitu współczynnik \(\beta_k\) mnoży szanse wypełnienia przez \(e^{\beta_k}\) na każde odchylenie standardowe zmiennej.</li>
+<li>Centralny przedział 95% a priori: \(\beta_k\in[-1{,}96;\ 1{,}96]\), czyli iloraz szans \(\in[e^{-1{,}96},e^{1{,}96}]=[0{,}141;\ 7{,}10]\).</li>
+<li>Prior dopuszcza więc silne efekty (siedmiokrotny wzrost szans), ale praktycznie wyklucza efekty rzędu stukrotnych (\(\beta=4{,}6\), ok. \(4{,}6\sigma\) od zera).</li>
+</ol>
+<h3 id="przyklad-skala">Prior \(\text{Half-Normal}(0,1)\) dla skali efektu rywala</h3>
+<ol class="ml-steps">
+<li>\(P(\sigma_R\le0{,}5)=2\Phi(0{,}5)-1=0{,}383\); \(P(\sigma_R\le1)=0{,}683\); \(P(\sigma_R\le2)=0{,}954\); \(E\sigma_R=0{,}798\).</li>
+<li>Interpretacja: przy \(\sigma_R=1\) typowy (o jedno odchylenie lepszy od przeciętnego) rywal zmienia logit wypełnienia o 1, co przy wypełnieniu bazowym 50% daje \(\operatorname{logit}^{-1}(1)=73\%\). Wartości \(\sigma_R\gt2\) (rywal zmieniający wypełnienie z 50% do 88%) są a priori mało prawdopodobne, ale nie wykluczone.</li>
+</ol>
+<h3 id="przyklad-informacyjny">Prior informacyjny dla skuteczności karnych (dane ilustracyjne)</h3>
+<ol class="ml-steps">
+<li>W lidze skuteczność rzutów karnych wynosi ok. 75%, a zróżnicowanie zawodników odpowiada ok. 20 „wcześniejszym rzutom”: \(\text{Beta}(15,5)\).</li>
+<li>Średnia a priori \(15/20=0{,}75\), odchylenie standardowe \(\sqrt{\frac{15\cdot5}{20^2\cdot21}}=0{,}0945\), centralny przedział 95%: \([0{,}544;\ 0{,}909]\).</li>
+<li>Po \(n=15\) rzutach waga priora wynosi \(w=20/35=0{,}571\); po \(n=200\) rzutach — już tylko \(20/220=0{,}091\).</li>
+</ol>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Przykłady pokazują trzy praktyczne zasady. Po pierwsze, prior należy oceniać na skali, na której interpretujemy wynik — tu na skali wypełnienia, a nie logitu; najlepszym narzędziem jest rozkład predykcyjny a priori <a class="ml-eqref" href="#eq-rozklad-a-priori-predykcyjny"></a> (ang. <em>prior predictive check</em>) <cite data-bib="gelman2020workflow"></cite>. Po drugie, „szeroki” nie znaczy „neutralny”: \(N(0,10)\) na logicie jest priorem silnie informacyjnym, tyle że absurdalnym. Po trzecie, siłę priora można wyrazić w jednostkach danych (pseudoobserwacje) — przy dużej liczbie meczów prior przestaje mieć znaczenie dla efektów stałych, ale nadal ma znaczenie dla skal efektów losowych, o których informacja rośnie z liczbą <em>grup</em> (klubów, sezonów), a nie obserwacji <cite data-bib="gelman2006prior"></cite>.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">Modelu Atrakcyjności Frekwencyjnej</a> priory są słabo informacyjne i zdefiniowane na skali predyktora liniowego:</p>
+<ul>
+<li>\(\beta_k\sim N(0,1)\) dla standaryzowanych warunków meczu (weekend, godzina, faza, forma i pozycja w tabeli obu drużyn).</li>
+<li>Efekty losowe w parametryzacji niecentrowanej: \(R_j=\sigma_Rz_j\), \(z_j\sim N(0,1)\) — prior dla \(R_j\) jest normalny z nieznaną skalą (zob. <a data-concept="efekty-stale-i-losowe">efekty stałe i losowe</a>).</li>
+<li>Skale \(\sigma_H,\sigma_R,\sigma_{HS},\sigma_{RS},\sigma_S,\sigma_L\sim\text{Half-Normal}(0,1)\) — <a data-concept="hiperpriory">hiperpriory</a>, które przy małej liczbie meczów danego rywala „ściągają” jego efekt ku zeru (<a data-concept="partial-pooling">partial pooling</a>). Dzięki temu klub, który przyjechał tylko raz, nie dostaje skrajnego indeksu IAF.</li>
+<li>Ten sam prior \(N(0,1)\) na logicie (wariant „wypełnienie”) i na logarytmie (wariant „liczba widzów”) ma różną interpretację: na skali log \(\beta=1\) oznacza mnożnik frekwencji \(e\approx2{,}72\).</li>
+<li>Kontrola priorów: przed dopasowaniem symuluje się frekwencję z rozkładu predykcyjnego a priori i sprawdza, czy obejmuje realistyczne wartości (od kilkudziesięciu widzów w niższych ligach do kilkunastu tysięcy w meczach EHF), ale nie miliony.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li>Wynik zależy od priora, zwłaszcza dla parametrów słabo identyfikowanych przez dane (skale efektów losowych przy kilku sezonach, efekty rzadkich rywali). Należy raportować analizę wrażliwości.</li>
+<li>Nie istnieje prior „nieinformacyjny” w sensie bezwzględnym — każdy prior jest informacyjny na jakiejś skali.</li>
+<li>Priory niewłaściwe mogą prowadzić do niewłaściwych posteriorów (np. prior Haldane’a dla klubu, który zawsze wyprzedaje halę), a próbniki MCMC nie zawsze sygnalizują ten problem wprost.</li>
+<li>Priory sprzężone są wygodne analitycznie, ale wybór rodziny tylko ze względu na wygodę może być nieadekwatny merytorycznie.</li>
+<li>Prior ustalony po obejrzeniu danych (ang. <em>double dipping</em>) zaniża niepewność.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="priory">Priory — dobór rozkładów a priori</a> (praktyka).</li>
+<li><a data-concept="hiperpriory">Hiperpriory</a>.</li>
+<li><a data-concept="rozklad-posterior">Rozkład posterior</a>.</li>
+<li><a data-concept="twierdzenie-bayesa-w-estymacji">Twierdzenie Bayesa w estymacji</a>.</li>
+<li><a data-concept="rozklad-normalny">Rozkład normalny</a>, <a data-concept="rozklad-beta">rozkład beta</a>.</li>
+<li><a data-concept="funkcja-logit">Funkcja logit</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelman2013bda"></li>
+<li data-bib="gelman2006prior"></li>
+<li data-bib="gelman2020workflow"></li>
+<li data-bib="mcelreath2020"></li>
+<li data-bib="bayes1763"></li>
+</ul>
+</section>

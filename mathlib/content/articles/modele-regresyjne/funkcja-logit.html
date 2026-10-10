@@ -1,0 +1,149 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Wypełnienie hali to liczba z przedziału \( [0,1] \). Model regresyjny składa jednak efekty addytywnie: „gospodarz +0,3, weekend +0,15, słaby rywal −0,2”. Gdyby dodawać je bezpośrednio do wypełnienia, łatwo przekroczyć 100%. Potrzebujemy transformacji, która rozciąga przedział \( (0,1) \) na całą oś liczbową — tam można dodawać bez ograniczeń — a potem wraca na \( (0,1) \).</p>
+<p>Tę rolę pełni funkcja logit (ang. <em>logit</em>, od <em>logistic unit</em>): najpierw zamienia prawdopodobieństwo \( p \) na <em>szanse</em> (ang. <em>odds</em>) \( p/(1-p) \in (0,\infty) \) — „ile razy bardziej prawdopodobne jest zdarzenie niż jego brak” — a następnie logarytmuje je, otrzymując liczbę z \( (-\infty,\infty) \). Wartość 0 odpowiada \( p = 0{,}5 \), wartości dodatnie — \( p \gt 0{,}5 \). Odwrotnością jest <em>funkcja logistyczna</em> \( \sigma \) (ang. <em>logistic, sigmoid function</em>) — charakterystyczna krzywa w kształcie litery S.</p>
+<p>Kluczowa obserwacja: w okolicy \( p=0{,}5 \) logit jest prawie liniowy, a przy krańcach mocno się rozciąga. Ten sam przyrost na skali logit to duża zmiana wypełnienia w środku zakresu i mała przy wypełnieniu bliskim 100% — co dobrze oddaje „nasycenie” hali.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-logit"><p class="ml-box-title">Definicja</p>
+<p><strong>Funkcją logit</strong> nazywamy odwzorowanie \( \operatorname{logit}:(0,1)\to\mathbb{R} \),</p>
+<div class="ml-eq" id="eq-funkcja-logit">\[ \operatorname{logit}(p) = \ln\frac{p}{1-p}, \qquad p\in(0,1). \]</div>
+<p><strong>Funkcją logistyczną</strong> (standardową) nazywamy \( \sigma:\mathbb{R}\to(0,1) \),</p>
+<div class="ml-eq" id="eq-funkcja-logit-logistyczna">\[ \sigma(x) = \operatorname{logit}^{-1}(x) = \frac{1}{1+e^{-x}} = \frac{e^x}{1+e^x}, \qquad x\in\mathbb{R}. \]</div>
+<p><strong>Szansami</strong> zdarzenia o prawdopodobieństwie \( p \) nazywamy \( o(p) = p/(1-p) \), a <strong>ilorazem szans</strong> (ang. <em>odds ratio</em>, OR) dwóch prawdopodobieństw — \( \mathrm{OR} = o(p_1)/o(p_0) \).</p>
+</div>
+<p>Funkcja \( \sigma \) jest dystrybuantą standardowego rozkładu logistycznego; stąd w modelu ze zmienną ukrytą \( y^* = x^\top\beta + \varepsilon \), \( \varepsilon \) o rozkładzie logistycznym, \( P(y^*\gt0) = \sigma(x^\top\beta) \).</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( p,\ \mu \)</td><td>prawdopodobieństwo lub oczekiwane wypełnienie, wartość w \( (0,1) \)</td></tr>
+<tr><td>\( \operatorname{logit}(p) \)</td><td>logarytm szans</td></tr>
+<tr><td>\( \sigma(x) \)</td><td>funkcja logistyczna, odwrotność logitu</td></tr>
+<tr><td>\( o(p) \)</td><td>szanse \( p/(1-p) \)</td></tr>
+<tr><td>\( \mathrm{OR} \)</td><td>iloraz szans</td></tr>
+<tr><td>\( \eta = x^\top\beta \)</td><td>predyktor liniowy (skala logit)</td></tr>
+<tr><td>\( \beta_k \)</td><td>współczynnik zmiennej \( x_k \)</td></tr>
+<tr><td>\( \partial\mu/\partial x_k \)</td><td>efekt krańcowy na skali wypełnienia</td></tr>
+<tr><td>\( W_i \)</td><td>wypełnienie hali w meczu \( i \)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Argument logitu musi leżeć w <em>otwartym</em> przedziale \( (0,1) \): \( \operatorname{logit}(0) = -\infty \), \( \operatorname{logit}(1) = +\infty \). Nie wolno więc liczyć logitu obserwowanego wypełnienia równego 0 lub 1 — logit stosujemy do <em>wartości oczekiwanej</em> \( \mu \), która w modelu zawsze leży w \( (0,1) \), albo stosujemy korektę (zob. <a data-concept="regresja-beta" data-anchor="wzory">transformacja Smithsona–Verkuilena</a>).</li>
+<li>Użycie logitu jako funkcji łączącej zakłada, że efekty są <em>addytywne na skali logarytmu szans</em> — to założenie modelowe, nie własność danych.</li>
+<li>Interpretacja w kategoriach ilorazu szans zakłada, że pozostałe składniki predyktora są ustalone.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p><strong>Symetrie</strong>:</p>
+<div class="ml-eq" id="eq-funkcja-logit-symetria">\[ \operatorname{logit}(1-p) = -\operatorname{logit}(p), \qquad \sigma(-x) = 1-\sigma(x). \]</div>
+<p><strong>Pochodne</strong>:</p>
+<div class="ml-eq" id="eq-funkcja-logit-pochodna">\[ \sigma'(x) = \sigma(x)\bigl(1-\sigma(x)\bigr), \qquad \frac{d}{dp}\operatorname{logit}(p) = \frac{1}{p(1-p)}. \]</div>
+<p><strong>Iloraz szans</strong> w modelu \( \operatorname{logit}\mu = \eta = \beta_0 + \beta_1x_1 + \dots + \beta_kx_k \):</p>
+<div class="ml-eq" id="eq-funkcja-logit-or">\[ \frac{o\bigl(\mu(x_k+1)\bigr)}{o\bigl(\mu(x_k)\bigr)} = e^{\beta_k}. \]</div>
+<p><strong>Efekt krańcowy</strong> na skali wypełnienia:</p>
+<div class="ml-eq" id="eq-funkcja-logit-krancowy">\[ \frac{\partial\mu}{\partial x_k} = \beta_k\,\mu(1-\mu) \le \frac{\beta_k}{4}. \]</div>
+<p><strong>Przybliżenie liniowe</strong> w okolicy zera: \( \sigma(x) \approx \tfrac12 + \tfrac{x}{4} \) — stąd reguła „dziel przez 4” <cite data-bib="gelmanhill2007"></cite>: \( \beta_k/4 \) to górne ograniczenie zmiany \( \mu \) na jednostkę \( x_k \).</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-logit-bijekcja"><p class="ml-box-title">Twierdzenie (logit jako bijekcja)</p>
+<p>Funkcja logit jest ciągłą, ściśle rosnącą bijekcją \( (0,1)\to\mathbb{R} \), a jej odwrotnością jest \( \sigma \). Obie są klasy \( C^\infty \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-pochodna-logistycznej"><p class="ml-box-title">Twierdzenie (pochodna funkcji logistycznej)</p>
+<p>Dla każdego \( x\in\mathbb{R} \) zachodzi \( \sigma'(x) = \sigma(x)(1-\sigma(x)) \). W szczególności \( \sigma' \) osiąga maksimum \( 1/4 \) w \( x=0 \), jest parzysta i dąży do 0 przy \( |x|\to\infty \); \( \sigma \) jest wypukła na \( (-\infty,0] \) i wklęsła na \( [0,\infty) \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-iloraz-szans"><p class="ml-box-title">Twierdzenie (stały iloraz szans)</p>
+<p>W modelu \( \operatorname{logit}\mu = x^\top\beta \) iloraz szans dla zmiany \( x_k \) o \( \Delta \) przy pozostałych zmiennych ustalonych wynosi \( e^{\beta_k\Delta} \), niezależnie od wartości pozostałych zmiennych i od poziomu \( \mu \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-logit-kanoniczne"><p class="ml-box-title">Twierdzenie (logit jako łącze kanoniczne)</p>
+<p>Logit jest łączem kanonicznym rozkładu dwumianowego: parametr naturalny rozkładu \( \mathrm{Bin}(m,\mu) \) w postaci wykładniczej to \( \theta = \operatorname{logit}\mu \) <cite data-bib="mccullagh1989"></cite>.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="wyprowadzenie-odwrotnosc">Odwrotność logitu</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Rozwiązujemy \( x = \ln\frac{p}{1-p} \) względem \( p \): \( e^x = \frac{p}{1-p} \Rightarrow e^x - e^x p = p \Rightarrow p(1+e^x) = e^x \Rightarrow p = \frac{e^x}{1+e^x} = \frac{1}{1+e^{-x}} \). Dla każdego \( x\in\mathbb{R} \) wynik leży w \( (0,1) \), a z \( \frac{d}{dp}\operatorname{logit}p = \frac1p + \frac1{1-p} = \frac{1}{p(1-p)} \gt 0 \) wynika ścisła monotoniczność. Granice \( \lim_{p\to0^+}\operatorname{logit}p = -\infty \), \( \lim_{p\to1^-}\operatorname{logit}p = +\infty \) i ciągłość dają surjekcję.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-pochodna">Pochodna funkcji logistycznej</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<ol>
+<li>\( \sigma(x) = (1+e^{-x})^{-1} \). Z reguły łańcuchowej: \( \sigma'(x) = -(1+e^{-x})^{-2}\cdot(-e^{-x}) = \frac{e^{-x}}{(1+e^{-x})^2} \).</li>
+<li>Rozbijamy iloraz: \( \frac{e^{-x}}{(1+e^{-x})^2} = \frac{1}{1+e^{-x}}\cdot\frac{e^{-x}}{1+e^{-x}} \).</li>
+<li>Drugi czynnik: \( \frac{e^{-x}}{1+e^{-x}} = \frac{(1+e^{-x})-1}{1+e^{-x}} = 1 - \frac{1}{1+e^{-x}} = 1-\sigma(x) \).</li>
+<li>Zatem \( \sigma'(x) = \sigma(x)(1-\sigma(x)) \).</li>
+<li>Maksimum: funkcja \( u(1-u) \) na \( (0,1) \) osiąga maksimum \( 1/4 \) w \( u=1/2 \), czyli \( x=0 \). Parzystość wynika z \( \sigma(-x)(1-\sigma(-x)) = (1-\sigma(x))\sigma(x) \). Druga pochodna \( \sigma''(x) = \sigma'(x)(1-2\sigma(x)) \) jest dodatnia dla \( x\lt0 \) i ujemna dla \( x\gt0 \).</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-or">Iloraz szans i efekt krańcowy</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z definicji \( o(\mu) = e^{\operatorname{logit}\mu} = e^{\eta} \). Zmiana \( x_k \to x_k+\Delta \) przy pozostałych ustalonych zmienia \( \eta \) o \( \beta_k\Delta \), więc \( o_{\text{nowe}}/o_{\text{stare}} = e^{\eta+\beta_k\Delta}/e^{\eta} = e^{\beta_k\Delta} \) — wynik nie zależy od \( \eta \). Efekt krańcowy: \( \mu = \sigma(\eta) \), \( \partial\eta/\partial x_k = \beta_k \), więc z reguły łańcuchowej i poprzedniego dowodu \( \partial\mu/\partial x_k = \sigma'(\eta)\beta_k = \beta_k\mu(1-\mu) \), a \( \mu(1-\mu)\le 1/4 \).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-box ml-note"><p>Iloraz szans jest stały, ale <em>różnica wypełnień</em> nie jest. Ta asymetria jest źródłem większości błędów interpretacyjnych — zob. <a data-concept="interpretacja-wspolczynnikow">interpretacja współczynników</a>.</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong> Oczekiwane wypełnienie hali w meczu w dzień roboczy wynosi \( \mu_0 = 0{,}60 \). Współczynnik zmiennej „weekend” na skali logit: \( \beta = 0{,}30 \).</p>
+<ol class="ml-steps">
+<li>Logit punktu wyjścia: \( \eta_0 = \ln(0{,}6/0{,}4) = \ln 1{,}5 \approx 0{,}4055 \).</li>
+<li>Predyktor w weekend: \( \eta_1 = 0{,}4055 + 0{,}30 = 0{,}7055 \).</li>
+<li>Powrót na skalę wypełnienia: \( \mu_1 = \sigma(0{,}7055) = 1/(1+e^{-0{,}7055}) \approx 0{,}6694 \).</li>
+<li>Kontrola przez szanse: \( o_0 = 1{,}5 \), \( e^{0{,}3}\approx1{,}3499 \), \( o_1 = 1{,}5\cdot1{,}3499 \approx 2{,}0248 \), \( \mu_1 = 2{,}0248/3{,}0248 \approx 0{,}6694 \) ✓.</li>
+<li>Rzeczywista zmiana: \( 0{,}6694 - 0{,}60 = 0{,}0694 \) (≈ +6,9 p.p.). Efekt krańcowy w punkcie startowym: \( 0{,}3\cdot0{,}6\cdot0{,}4 = 0{,}072 \) — przybliżenie styczną różni się o 0,26 p.p., bo \( \sigma \) jest tu wklęsła.</li>
+<li>Ten sam współczynnik przy \( \mu_0 = 0{,}90 \): \( \eta_0 = \ln 9 \approx 2{,}1972 \), \( \sigma(2{,}4972)\approx 0{,}9239 \), zmiana ≈ +2,4 p.p. (efekt krańcowy \( 0{,}3\cdot0{,}9\cdot0{,}1 = 0{,}027 \)).</li>
+<li>W hali na 2500 miejsc: +6,9 p.p. ≈ +174 widzów przy wyjściowych 60%, ale tylko ≈ +60 widzów przy wyjściowych 90%.</li>
+</ol>
+<div class="ml-plot" data-plot="logistic" data-params='{"alpha": 0.41, "beta": 0.3}'></div>
+<p>Krzywa \( \sigma(0{,}41 + 0{,}3x) \) pokazuje wypełnienie w funkcji zmiennej \( x \). Zauważ, że nachylenie jest największe tam, gdzie krzywa przecina poziom 0,5, i maleje w obu kierunkach — to właśnie \( \beta\mu(1-\mu) \).</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Współczynnik \( \beta = 0{,}3 \) czytamy na trzech poziomach: (1) na skali logit — „+0,3 logarytmu szans”; (2) jako iloraz szans \( e^{0{,}3}\approx1{,}35 \) — „szanse zapełnienia rosną o 35%”, niezależnie od klubu; (3) na skali wypełnienia — „+6,9 p.p. dla klubu z wypełnieniem 60%, +2,4 p.p. dla klubu z 90%”. Tylko (3) jest bezpośrednio zrozumiały dla odbiorcy raportu, ale wymaga podania punktu odniesienia.</p>
+<p>Reguła „dziel przez 4” daje szybkie górne oszacowanie: \( 0{,}3/4 = 0{,}075 \), czyli najwyżej ~7,5 p.p. na jednostkę \( x \).</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W wariancie „wypełnienie” modelu <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> logit wiąże oczekiwane wypełnienie z predyktorem: \( \operatorname{logit}\mu_i = \eta_i \), \( A_i\sim\text{BetaBinomial}(C_i,\mu_i\phi,(1-\mu_i)\phi) \). Konsekwencje:</p>
+<ul>
+<li><strong>Efekty gospodarza, rywala, sezonu i kowariat</strong> są addytywne na skali logit. Efekt rywala \( R_j = 0{,}3 \) oznacza ten sam iloraz szans 1,35 dla każdego gospodarza, ale różny przyrost widzów — duży dla hal wypełnionych w połowie, mały dla hal prawie pełnych.</li>
+<li><strong>Nasycenie:</strong> kluby z kompletem widzów nie „przekraczają” 100%; atrakcyjny rywal w pełnej hali nie może dodać widzów, co model oddaje automatycznie.</li>
+<li><strong>Indeks IAF</strong> uśrednia wypełnienie <em>po</em> transformacji \( \sigma \) na populacji referencyjnej meczów, a nie przekształca uśrednionego logitu — z powodu nierówności Jensena to nie to samo (zob. <a data-concept="interpretacja-wspolczynnikow" data-anchor="wyprowadzenie">interpretacja współczynników</a>).</li>
+<li><strong>Priory</strong> \( \beta_k\sim N(0,1) \) na skali logit oznaczają, że efekt jednego odchylenia standardowego kowariaty większy niż ±2 (iloraz szans poza zakresem ok. 0,14–7,4) jest a priori mało prawdopodobny.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Brak wartości na brzegach:</strong> obserwowane wypełnienia 0 i 1 nie mają skończonego logitu — nie stosujemy regresji liniowej na „zlogitowanych” danych; wybieramy model z wiarygodnością obsługującą brzegi (beta-dwumianowy, <a data-concept="rozklady-z-masa-na-granicach">ZOIB</a>).</li>
+<li><strong>Iloraz szans jest nieintuicyjny</strong> dla odbiorców i bywa mylony z ilorazem prawdopodobieństw (ryzyk); przy dużych \( \mu \) różnica jest znaczna.</li>
+<li><strong>Symetria</strong> logitu zakłada, że krzywa zbliża się do 0 i 1 w ten sam sposób; alternatywy asymetryczne (np. łącze cloglog) istnieją, ale nie są stosowane w MAF.</li>
+<li><strong>Efekty krańcowe</strong> zależą od punktu odniesienia — trzeba je zawsze raportować z kontekstem.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="uogolnione-modele-liniowe">Uogólnione modele liniowe</a> — logit jako funkcja łącząca.</li>
+<li><a data-concept="regresja-beta">Regresja beta</a> — logit dla średniej rozkładu beta.</li>
+<li><a data-concept="interpretacja-wspolczynnikow">Interpretacja współczynników</a> — skala logit a skala wypełnienia.</li>
+<li><a data-concept="rozklad-beta-dwumianowy">Rozkład beta-dwumianowy</a> — wiarygodność wariantu „wypełnienie”.</li>
+<li><a data-concept="rozklady-z-masa-na-granicach">Rozkłady z masą na granicach</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="mccullagh1989"></li>
+<li data-bib="gelmanhill2007"></li>
+<li data-bib="nelder1972"></li>
+</ul>
+</section>

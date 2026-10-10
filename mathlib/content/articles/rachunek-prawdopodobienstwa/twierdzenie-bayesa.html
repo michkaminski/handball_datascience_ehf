@@ -1,0 +1,166 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Często znamy prawdopodobieństwo „w niewłaściwym kierunku”. Wiemy, jak często przy meczach z kompletem widzów przedsprzedaż na dobę przed meczem przekracza 60% miejsc — a chcemy wiedzieć, jak często mecz z taką przedsprzedażą kończy się kompletem. <strong>Twierdzenie Bayesa</strong> (ang. <em>Bayes’ theorem</em>) odwraca kierunek warunkowania: wyraża \(P(A\mid B)\) przez \(P(B\mid A)\), prawdopodobieństwo a priori \(P(A)\) i całkowite prawdopodobieństwo obserwacji \(P(B)\).</p>
+<p>Twierdzenie pochodzi z pośmiertnie opublikowanej pracy Thomasa Bayesa <cite data-bib="bayes1763"></cite> i jest elementarną konsekwencją definicji <a data-concept="prawdopodobienstwo-warunkowe">prawdopodobieństwa warunkowego</a>. Jego znaczenie jest jednak ogromne: opisuje, jak racjonalnie aktualizować przekonania w świetle danych. Stosowane do parametrów modelu (a nie tylko do zdarzeń) staje się podstawą wnioskowania bayesowskiego <cite data-bib="gelman2013bda"></cite>, na którym opiera się model MAF.</p>
+<p>Kluczowa lekcja twierdzenia: <em>siła dowodu zależy od tego, jak rzadkie jest zjawisko</em>. Nawet bardzo dobry sygnał przy rzadkim zdarzeniu daje umiarkowane prawdopodobieństwo a posteriori.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-thm" id="thm-bayes"><p class="ml-box-title">Twierdzenie (Bayesa)</p>
+<p>Niech \((\Omega,\mathcal F,P)\) będzie przestrzenią probabilistyczną, \(A,B\in\mathcal F\), \(P(A)\gt0\), \(P(B)\gt0\). Wtedy</p>
+<div class="ml-eq" id="eq-twierdzenie-bayesa">\[ P(A\mid B)=\frac{P(B\mid A)\,P(A)}{P(B)}. \]</div>
+<p>Jeśli \(A_1,A_2,\ldots\) jest przeliczalnym podziałem \(\Omega\) na zdarzenia o dodatnich prawdopodobieństwach, to dla każdego \(k\):</p>
+<div class="ml-eq" id="eq-twierdzenie-bayesa-podzial">\[ P(A_k\mid B)=\frac{P(B\mid A_k)\,P(A_k)}{\sum_jP(B\mid A_j)\,P(A_j)}. \]</div>
+</div>
+<p>W terminologii bayesowskiej: \(P(A)\) — <strong>prawdopodobieństwo a priori</strong> (ang. <em>prior</em>), \(P(B\mid A)\) — <strong>wiarygodność</strong> (ang. <em>likelihood</em>), \(P(B)\) — <strong>prawdopodobieństwo brzegowe</strong> (ang. <em>evidence</em>, <em>marginal likelihood</em>), \(P(A\mid B)\) — <strong>prawdopodobieństwo a posteriori</strong> (ang. <em>posterior</em>).</p>
+<h3 id="postac-ciagla">Postać dla gęstości</h3>
+<p>Dla parametru \(\theta\) o gęstości a priori \(p(\theta)\) i danych \(y\) o gęstości (lub funkcji prawdopodobieństwa) \(p(y\mid\theta)\):</p>
+<div class="ml-eq" id="eq-twierdzenie-bayesa-gestosc">\[ p(\theta\mid y)=\frac{p(y\mid\theta)\,p(\theta)}{\int p(y\mid\vartheta)\,p(\vartheta)\,d\vartheta}\ \propto\ p(y\mid\theta)\,p(\theta). \]</div>
+<p>Zastosowania tej postaci do estymacji rozwija artykuł <a data-concept="twierdzenie-bayesa-w-estymacji">twierdzenie Bayesa w estymacji</a>.</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(P(A)\)</td><td>prawdopodobieństwo a priori hipotezy \(A\)</td></tr>
+<tr><td>\(P(B\mid A)\)</td><td>wiarygodność: prawdopodobieństwo obserwacji \(B\) przy hipotezie \(A\)</td></tr>
+<tr><td>\(P(B)\)</td><td>prawdopodobieństwo brzegowe obserwacji</td></tr>
+<tr><td>\(P(A\mid B)\)</td><td>prawdopodobieństwo a posteriori</td></tr>
+<tr><td>\(\{A_j\}\)</td><td>podział \(\Omega\): zdarzenia parami rozłączne, sumujące się do \(\Omega\)</td></tr>
+<tr><td>\(O(A)\)</td><td>szanse (ang. <em>odds</em>) \(P(A)/P(A^c)\)</td></tr>
+<tr><td>\(\Lambda(B)\)</td><td>iloraz wiarygodności \(P(B\mid A)/P(B\mid A^c)\)</td></tr>
+<tr><td>\(\theta\)</td><td>parametr (wektor parametrów) modelu</td></tr>
+<tr><td>\(y\)</td><td>dane</td></tr>
+<tr><td>\(p(\theta), p(\theta\mid y)\)</td><td>gęstość a priori i a posteriori</td></tr>
+<tr><td>\(K, S, D\)</td><td>w przykładzie: komplet, sygnał przedsprzedaży, rywal z czołówki</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>\(P(B)\gt0\) (obserwacja jest możliwa w modelu); dla postaci gęstościowej — brzegowa gęstość danych w punkcie \(y\) jest dodatnia i skończona.</li>
+<li>Zdarzenia \(A_j\) tworzą <em>podział</em>: wykluczają się wzajemnie i wyczerpują wszystkie możliwości. Pominięcie hipotezy (np. „mecz przy pustych trybunach z decyzji administracyjnej”) zniekształca wynik.</li>
+<li>Wiarygodności \(P(B\mid A_j)\) i prior \(P(A_j)\) muszą odnosić się do tej samej populacji (tej samej ligi, epoki, typu meczu).</li>
+<li>Przy sekwencyjnym łączeniu kilku sygnałów przez mnożenie ilorazów wiarygodności zakłada się ich <strong>warunkową niezależność</strong> przy danej hipotezie.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p><strong>Postać ilorazowa (szansowa).</strong> Dla hipotezy \(A\) i jej dopełnienia:</p>
+<div class="ml-eq" id="eq-twierdzenie-bayesa-szanse">\[ \underbrace{\frac{P(A\mid B)}{P(A^c\mid B)}}_{O(A\mid B)}=\underbrace{\frac{P(B\mid A)}{P(B\mid A^c)}}_{\Lambda(B)}\cdot\underbrace{\frac{P(A)}{P(A^c)}}_{O(A)}, \qquad P(A\mid B)=\frac{O(A\mid B)}{1+O(A\mid B)}. \]</div>
+<p><strong>Postać logarytmiczna</strong> — ewidencja dodaje się na skali log-szans (logit):</p>
+<div class="ml-eq" id="eq-twierdzenie-bayesa-logit">\[ \operatorname{logit}P(A\mid B)=\operatorname{logit}P(A)+\log\Lambda(B). \]</div>
+<p><strong>Sekwencyjna aktualizacja</strong> przy warunkowo niezależnych sygnałach \(B_1,B_2\):</p>
+<div class="ml-eq" id="eq-twierdzenie-bayesa-sekwencja">\[ O(A\mid B_1\cap B_2)=\Lambda(B_1)\,\Lambda(B_2)\,O(A). \]</div>
+<p><strong>Miary jakości klasyfikatora</strong> (dla hipotezy \(A\) i sygnału \(B\) „klasyfikator wskazuje \(A\)”): czułość \(P(B\mid A)\), swoistość \(P(B^c\mid A^c)\), precyzja (wartość predykcyjna dodatnia) \(P(A\mid B)\) — ta ostatnia wynika z dwóch pierwszych i z częstości bazowej \(P(A)\) przez <a class="ml-eqref" href="#eq-twierdzenie-bayesa"></a>.</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<p>Główne twierdzenie sformułowano w sekcji <a href="#definicja">Definicja formalna</a> (<a class="ml-eqref" href="#eq-twierdzenie-bayesa"></a>, <a class="ml-eqref" href="#eq-twierdzenie-bayesa-podzial"></a>). Uzupełniają je następujące fakty.</p>
+<div class="ml-box ml-thm" id="thm-sprzezonosc"><p class="ml-box-title">Twierdzenie (sprzężoność beta–dwumianowa)</p>
+<p>Jeśli \(p\sim\mathrm{Beta}(a,b)\) i \(k\mid p\sim\mathrm{Bin}(n,p)\), to \(p\mid k\sim\mathrm{Beta}(a+k,\ b+n-k)\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-spojnosc-sekwencyjna"><p class="ml-box-title">Twierdzenie (spójność sekwencyjna)</p>
+<p>Jeśli dane \(y_1,y_2\) są warunkowo niezależne przy \(\theta\), to aktualizacja „najpierw \(y_1\), potem \(y_2\)” (posterior po \(y_1\) jako prior dla \(y_2\)) daje ten sam rozkład a posteriori co aktualizacja jednorazowa na \((y_1,y_2)\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-prior-zero"><p class="ml-box-title">Twierdzenie (prior zerowy jest odporny na dane)</p>
+<p>Jeśli \(P(A)=0\), to \(P(A\mid B)=0\) dla każdego \(B\) z \(P(B)\gt0\). Analogicznie, jeśli \(p(\theta)=0\) na zbiorze \(\Theta_0\), to posterior również jest tam zerowy.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<div class="ml-proof"><p class="ml-box-title">Dowód twierdzenia Bayesa</p>
+<p>Z definicji prawdopodobieństwa warunkowego, zastosowanej dwukrotnie do tego samego zdarzenia \(A\cap B\) (reguła mnożenia):</p>
+<div class="ml-eq" id="eq-twierdzenie-bayesa-dowod">\[ P(A\mid B)\,P(B)=P(A\cap B)=P(B\mid A)\,P(A). \]</div>
+<p>Dzieląc przez \(P(B)\gt0\), otrzymujemy <a class="ml-eqref" href="#eq-twierdzenie-bayesa"></a>. Dla podziału \(\{A_j\}\) mianownik rozpisujemy z <a data-concept="prawo-calkowitego-prawdopodobienstwa">prawa całkowitego prawdopodobieństwa</a>: \(P(B)=\sum_jP(B\mid A_j)P(A_j)\), co daje <a class="ml-eqref" href="#eq-twierdzenie-bayesa-podzial"></a>.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Wyprowadzenie postaci szansowej</p>
+<p>Zapiszmy <a class="ml-eqref" href="#eq-twierdzenie-bayesa"></a> dla \(A\) i dla \(A^c\) z tym samym \(B\) i podzielmy stronami — \(P(B)\) się skraca:</p>
+<div class="ml-eq" id="eq-twierdzenie-bayesa-dowod-szanse">\[ \frac{P(A\mid B)}{P(A^c\mid B)}=\frac{P(B\mid A)P(A)/P(B)}{P(B\mid A^c)P(A^c)/P(B)}=\frac{P(B\mid A)}{P(B\mid A^c)}\cdot\frac{P(A)}{P(A^c)}. \]</div>
+<p>Ponieważ \(P(A\mid B)+P(A^c\mid B)=1\), z \(O=P/(1-P)\) wynika \(P=O/(1+O)\). Logarytmując, dostajemy <a class="ml-eqref" href="#eq-twierdzenie-bayesa-logit"></a>. Dla dwóch sygnałów warunkowo niezależnych \(P(B_1\cap B_2\mid A)=P(B_1\mid A)P(B_2\mid A)\) i tak samo przy \(A^c\), więc iloraz wiarygodności łącznej obserwacji jest iloczynem ilorazów — stąd <a class="ml-eqref" href="#eq-twierdzenie-bayesa-sekwencja"></a>.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód sprzężoności beta–dwumianowej</p>
+<p>Z <a class="ml-eqref" href="#eq-twierdzenie-bayesa-gestosc"></a>, pomijając czynniki niezależne od \(p\):</p>
+<div class="ml-eq" id="eq-twierdzenie-bayesa-dowod-beta">\[ p(p\mid k)\propto\underbrace{\binom nk p^k(1-p)^{n-k}}_{\text{wiarygodność}}\cdot\underbrace{\frac{p^{a-1}(1-p)^{b-1}}{B(a,b)}}_{\text{prior}}\propto p^{a+k-1}(1-p)^{b+n-k-1}. \]</div>
+<p>Jest to jądro gęstości \(\mathrm{Beta}(a+k,\,b+n-k)\); stała normująca jest wyznaczona jednoznacznie przez warunek \(\int_0^1p(p\mid k)\,dp=1\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód spójności sekwencyjnej</p>
+<p>Po \(y_1\): \(p(\theta\mid y_1)\propto p(y_1\mid\theta)p(\theta)\). Użycie go jako priora dla \(y_2\) (z warunkową niezależnością \(p(y_2\mid\theta,y_1)=p(y_2\mid\theta)\)): \(p(\theta\mid y_1,y_2)\propto p(y_2\mid\theta)\,p(y_1\mid\theta)\,p(\theta)=p(y_1,y_2\mid\theta)\,p(\theta)\), czyli dokładnie posterior jednorazowy.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód odporności priora zerowego</p>
+<p>\(P(A\mid B)=P(B\mid A)P(A)/P(B)\); licznik jest równy 0 niezależnie od \(P(B\mid A)\) (precyzyjniej: \(P(A\cap B)\le P(A)=0\)). Wniosek praktyczny: prior nie powinien wykluczać wartości parametrów, które są choćby teoretycznie możliwe.</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<h3 id="przyklad-klasyfikacja">Klasyfikacja meczu: czy będzie komplet?</h3>
+<p><strong>Dane ilustracyjne.</strong> W Superlidze komplet widzów (\(K\)) zdarza się w 10% meczów. Sygnał \(S\): „na dobę przed meczem sprzedano co najmniej 60% biletów”. Z historii: \(P(S\mid K)=0{,}90\) (czułość), \(P(S\mid K^c)=0{,}15\) (czyli swoistość 0,85).</p>
+<ol class="ml-steps">
+<li><strong>Prawdopodobieństwo sygnału</strong> (prawo całkowitego prawdopodobieństwa): \(P(S)=0{,}90\cdot0{,}10+0{,}15\cdot0{,}90=0{,}090+0{,}135=0{,}225\).</li>
+<li><strong>Posterior.</strong> \(P(K\mid S)=0{,}090/0{,}225=0{,}40\). Mimo czułości 90% tylko 40% sygnałów kończy się kompletem — bo komplety są rzadkie, a fałszywe alarmy pochodzą z dużej grupy 90% meczów bez kompletu.</li>
+<li><strong>Brak sygnału.</strong> \(P(K\mid S^c)=\dfrac{0{,}10\cdot0{,}10}{1-0{,}225}=\dfrac{0{,}010}{0{,}775}\approx0{,}0129\).</li>
+<li><strong>Kontrola postacią szansową.</strong> \(O(K)=0{,}10/0{,}90=1/9\); \(\Lambda(S)=0{,}90/0{,}15=6\); \(O(K\mid S)=6/9=2/3\); \(P=\frac{2/3}{1+2/3}=0{,}40\). ✓</li>
+<li><strong>Drugi sygnał.</strong> \(D\): „rywal z czołowej trójki”, \(P(D\mid K)=0{,}50\), \(P(D\mid K^c)=0{,}10\), \(\Lambda(D)=5\). Zakładając warunkową niezależność \(S\) i \(D\) przy \(K\) i przy \(K^c\): \(O(K\mid S\cap D)=5\cdot\tfrac23=\tfrac{10}3\), \(P(K\mid S\cap D)=\frac{10/3}{13/3}=\tfrac{10}{13}\approx0{,}769\).</li>
+<li><strong>Skala logit.</strong> \(\operatorname{logit}(0{,}10)=\ln(1/9)\approx-2{,}197\); \(+\ln6\approx1{,}792\); \(+\ln5\approx1{,}609\); suma \(\approx1{,}204\); \(\operatorname{logit}^{-1}(1{,}204)\approx0{,}769\). ✓ Ewidencja dodaje się liniowo — ta sama struktura co predyktor liniowy w regresji logistycznej.</li>
+<li><strong>Wpływ częstości bazowej.</strong> W lidze, w której komplet zdarza się w 30% meczów, ten sam sygnał \(S\) daje \(O=6\cdot\frac{0{,}3}{0{,}7}=\frac{18}7\), \(P(K\mid S)=\frac{18}{25}=0{,}72\).</li>
+</ol>
+<h3 id="przyklad-parametr">Aktualizacja parametru: odsetek kompletów klubu</h3>
+<p><strong>Dane ilustracyjne.</strong> Prior dla nieznanego odsetka kompletów \(p\) klubu: \(\mathrm{Beta}(2,8)\) (średnia 0,20 — wiedza o lidze). W bieżącym sezonie klub miał \(k=6\) kompletów w \(n=15\) meczach.</p>
+<ol class="ml-steps">
+<li>Posterior (sprzężoność): \(\mathrm{Beta}(2+6,\ 8+9)=\mathrm{Beta}(8,17)\).</li>
+<li>Średnia a posteriori: \(8/25=0{,}32\) — między średnią a priori 0,20 a częstością w próbie \(6/15=0{,}40\).</li>
+<li>Waga danych: \(0{,}32=\frac{10}{25}\cdot0{,}20+\frac{15}{25}\cdot0{,}40=0{,}08+0{,}24\). Prior „waży” tyle co 10 meczów (\(a+b=10\)).</li>
+</ol>
+<div class="ml-plot" data-plot="beta-update" data-params='{"a": 2, "b": 8, "k": 6, "n": 15}'></div>
+<p>Posterior leży między priorem a danymi. Zwiększ \(n\) przy stałej proporcji \(k/n\): posterior przesuwa się ku \(k/n\) i zwęża — dane przeważają nad priorem.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Wynik \(P(K\mid S)=0{,}40\) to precyzja klasyfikatora „sygnał przedsprzedaży”: po sygnale szansa kompletu rośnie czterokrotnie (z 10% do 40%), ale nadal częściej komplet <em>nie</em> nastąpi. Iloraz wiarygodności \(\Lambda=6\) jest cechą sygnału (przenośną między ligami), a posterior — wypadkową sygnału i częstości bazowej. To wyjaśnia, dlaczego ten sam model klasyfikacji ma różną precyzję w różnych ligach (krok 7).</p>
+<p>W przykładzie parametrycznym posterior jest kompromisem: przy małej liczbie meczów zbliża się do wiedzy a priori, przy dużej — do danych. To samo zjawisko, uogólnione na wiele klubów, nazywa się ściąganiem (ang. <em>shrinkage</em>) w <a data-concept="partial-pooling">partial pooling</a>.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<ul>
+<li><strong>Estymacja MAF.</strong> Cały model <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> jest zastosowaniem <a class="ml-eqref" href="#eq-twierdzenie-bayesa-gestosc"></a>: \(p(\theta\mid y)\propto\prod_ip(A_i\mid\eta_i,\phi)\cdot p(\theta)\), gdzie \(\theta\) obejmuje \(\alpha\), \(\beta\), efekty \(H,HS,R,RS,S,L\), ich odchylenia \(\sigma\) i \(\phi\) (lub \(\kappa\)). Priory: \(\beta_k\sim N(0,1)\), \(\sigma\sim\text{Half-Normal}(0,1)\) (zob. <a data-concept="priory">priory</a>, <a data-concept="hiperpriory">hiperpriory</a>).</li>
+<li><strong>Mianownik jest nieobliczalny analitycznie.</strong> Całka \(\int p(y\mid\theta)p(\theta)\,d\theta\) ma setki wymiarów; dlatego posterior próbkuje się algorytmem NUTS (<a data-concept="mcmc">MCMC</a>), który wymaga tylko gęstości z dokładnością do stałej — prawej strony „\(\propto\)”.</li>
+<li><strong>Efekt rywala dla klubów z małą liczbą meczów</strong> (np. drużyn, które spędziły jeden sezon w Superlidze) jest silnie ściągany do zera przez prior hierarchiczny \(R_j\sim N(0,\sigma_R^2)\) — dokładnie jak w przykładzie Beta(2, 8), gdzie prior „ważył” 10 meczów.</li>
+<li><strong>Raport \(P(\mathrm{IAF}_j\gt100)\)</strong> jest prawdopodobieństwem a posteriori hipotezy „klub jako rywal przyciąga więcej widzów niż przeciętny”; ma sens tylko w ujęciu bayesowskim.</li>
+<li><strong>Klasyfikacja „będzie komplet”</strong>: prognozowane \(P(W_i\ge1)\) można traktować jak klasyfikator; jego precyzja przy progu decyzyjnym zależy od częstości bazowej kompletów w danej lidze, co wynika wprost z <a class="ml-eqref" href="#eq-twierdzenie-bayesa"></a>.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Zależność od priora.</strong> Przy małej liczbie danych wynik zależy od \(P(A)\) lub \(p(\theta)\); wymaga to uzasadnienia priora i analizy wrażliwości <cite data-bib="gelman2006prior"></cite>.</li>
+<li><strong>Warunkowa niezależność sygnałów.</strong> Mnożenie ilorazów wiarygodności (krok 5) zawyża pewność, jeśli sygnały są skorelowane (np. przedsprzedaż jest wysoka <em>dlatego</em>, że rywal jest z czołówki).</li>
+<li><strong>Niekompletny podział hipotez.</strong> Posterior rozkłada się tylko na rozważane hipotezy; pominięcie prawdziwej daje pewne, lecz błędne wnioski.</li>
+<li><strong>Prior zerowy.</strong> Wykluczenie wartości w priorze uniemożliwia danym jej „przywrócenie”.</li>
+<li><strong>Stabilność wiarygodności.</strong> Czułość i swoistość oszacowane w jednej epoce (np. przed zmianą systemu biletowego) mogą nie przenosić się na inne.</li>
+<li><strong>Koszt obliczeniowy.</strong> Poza modelami sprzężonymi posterior wymaga metod numerycznych i diagnostyki zbieżności (R-hat, ESS).</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="prawdopodobienstwo-warunkowe">Prawdopodobieństwo warunkowe</a>.</li>
+<li><a data-concept="prawo-calkowitego-prawdopodobienstwa">Prawo całkowitego prawdopodobieństwa</a> — mianownik twierdzenia.</li>
+<li><a data-concept="twierdzenie-bayesa-w-estymacji">Twierdzenie Bayesa w estymacji</a>.</li>
+<li><a data-concept="rozklad-a-priori">Rozkład a priori</a>, <a data-concept="rozklad-posterior">rozkład a posteriori</a>, <a data-concept="funkcja-wiarygodnosci">funkcja wiarygodności</a>.</li>
+<li><a data-concept="rozklad-beta">Rozkład beta</a>, <a data-concept="rozklad-dwumianowy">rozkład dwumianowy</a>.</li>
+<li><a data-concept="funkcja-logit">Funkcja logit</a> — skala, na której ewidencja się dodaje.</li>
+<li><a data-concept="kalibracja-prawdopodobienstw">Kalibracja prawdopodobieństw</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="bayes1763"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="pishronik2014"></li>
+<li data-bib="gelman2006prior"></li>
+<li data-bib="hoffman2014nuts"></li>
+</ul>
+</section>

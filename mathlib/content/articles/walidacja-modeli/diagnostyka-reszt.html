@@ -1,0 +1,181 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Miary zbiorcze, takie jak <a data-concept="mae">MAE</a> czy <a data-concept="rmse">RMSE</a>, mówią, <em>jak bardzo</em> model się myli. Diagnostyka reszt odpowiada na pytania <em>gdzie</em> i <em>dlaczego</em>: które mecze są przewidywane źle, czy błędy mają systematyczny wzór (np. model zaniża frekwencję w weekendy albo w końcówce sezonu), czy rozrzut błędów rośnie z wielkością hali, czy pojedyncze obserwacje są nieprawdopodobne w świetle modelu.</p>
+<p>Reszta (ang. <em>residual</em>) to różnica między obserwacją a tym, czego model się spodziewał. Surowa różnica „1650 widzów zamiast 1200” nie mówi jednak, czy to dużo: w hali na 4000 miejsc i przy dużej niepewności może to być typowe odchylenie, w hali na 1500 miejsc — zdarzenie wyjątkowe. Dlatego reszty <em>skalujemy</em> przez niepewność predykcyjną (reszty standaryzowane, por. <a data-concept="standaryzacja">standaryzacja</a>) albo przekształcamy na skalę prawdopodobieństwa (reszty kwantylowe, predykcyjne wartości p).</p>
+<p>Ważna przestroga: dane frekwencyjne są dyskretne, ograniczone (od 0 do pojemności hali) i skośne. Reguła „reszta standaryzowana powyżej 2 to 5% najbardziej nietypowych przypadków” pochodzi z rozkładu normalnego i dla takich danych bywa wyraźnie błędna. Poprawne wnioski daje bezpośrednie odwołanie do <a data-concept="rozklad-predykcyjny">rozkładu predykcyjnego</a> modelu <cite data-bib="gelman2013bda"></cite>.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \( y_i \) będzie obserwacją (np. liczbą widzów \( A_i \in \{0,1,\dots,C_i\} \)), a \( F_i(\cdot) = P(Y_i \le \cdot \mid \mathcal{D}) \) — dystrybuantą rozkładu predykcyjnego dla tej obserwacji, wyznaczoną na podstawie danych \( \mathcal{D} \) nieobejmujących \( y_i \) (np. danych treningowych w walidacji chronologicznej). Oznaczmy \( \hat\mu_i = \mathbb{E}(Y_i\mid\mathcal{D}) \), \( \hat s_i = \sqrt{\operatorname{Var}(Y_i\mid\mathcal{D})} \) i \( \pi_i(y) = P(Y_i = y\mid\mathcal{D}) \).</p>
+<div class="ml-box ml-def" id="def-reszty"><p class="ml-box-title">Definicja (rodzaje reszt)</p>
+<ul>
+<li><strong>Reszta surowa:</strong> \( r_i = y_i - \hat\mu_i \).</li>
+<li><strong>Reszta standaryzowana (predykcyjna):</strong>
+<div class="ml-eq" id="eq-diagnostyka-reszt">\[ r_i^{S} \;=\; \frac{y_i - \mathbb{E}(Y_i\mid\mathcal{D})}{\sqrt{\operatorname{Var}(Y_i\mid\mathcal{D})}} \;=\; \frac{y_i - \hat\mu_i}{\hat s_i}. \]</div></li>
+<li><strong>Reszta kwantylowa (losowana):</strong> \( r_i^{Q} = \Phi^{-1}(u_i) \), gdzie dla rozkładu ciągłego \( u_i = F_i(y_i) \), a dla dyskretnego \( u_i \) jest losowane z rozkładu jednostajnego na przedziale \( \big(F_i(y_i - 1),\ F_i(y_i)\big] \).</li>
+</ul>
+</div>
+<div class="ml-box ml-def" id="def-predykcyjna-wartosc-p"><p class="ml-box-title">Definicja (dwustronna predykcyjna wartość p obserwacji)</p>
+<div class="ml-eq" id="eq-diagnostyka-reszt-p">\[ p_i \;=\; \min\Big\{1,\ 2\min\big(P(Y_i \le y_i\mid\mathcal{D}),\ P(Y_i \ge y_i\mid\mathcal{D})\big)\Big\}. \]</div>
+<p>Wersja <em>mid-p</em> dla danych dyskretnych:</p>
+<div class="ml-eq" id="eq-diagnostyka-reszt-midp">\[ p_i^{\text{mid}} \;=\; 2\min\Big( F_i(y_i-1) + \tfrac12\pi_i(y_i),\ \ 1 - F_i(y_i) + \tfrac12\pi_i(y_i) \Big). \]</div>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( y_i \)</td><td>obserwacja \( i \) (np. liczba widzów)</td></tr>
+<tr><td>\( \mathcal{D} \)</td><td>dane, na podstawie których wyznaczono rozkład predykcyjny</td></tr>
+<tr><td>\( F_i,\ \pi_i \)</td><td>dystrybuanta i funkcja prawdopodobieństwa rozkładu predykcyjnego \( Y_i \)</td></tr>
+<tr><td>\( \hat\mu_i,\ \hat s_i \)</td><td>średnia i odchylenie standardowe rozkładu predykcyjnego</td></tr>
+<tr><td>\( r_i,\ r_i^S,\ r_i^Q \)</td><td>reszta surowa, standaryzowana, kwantylowa</td></tr>
+<tr><td>\( u_i \)</td><td>(losowana) wartość przekształcenia całkowego (PIT)</td></tr>
+<tr><td>\( p_i,\ p_i^{\text{mid}} \)</td><td>dwustronna predykcyjna wartość p i jej wersja mid-p</td></tr>
+<tr><td>\( \Phi,\ \Phi^{-1} \)</td><td>dystrybuanta i funkcja kwantylowa \( N(0,1) \)</td></tr>
+<tr><td>\( \operatorname{MAD},\ \operatorname{MADN} \)</td><td>mediana odchyleń bezwzględnych i jej wersja znormalizowana (\( 1{,}4826\cdot\operatorname{MAD} \))</td></tr>
+<tr><td>\( Q_n \)</td><td>odporny estymator skali Rousseeuwa–Crouxa</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li><strong>Rozkład predykcyjny niezależny od \( y_i \).</strong> Reszty na danych treningowych są „zbyt dobre”, bo model widział obserwację. Do oceny prognoz używamy danych testowych (<a data-concept="backtesting">walidacja chronologiczna</a>); do diagnostyki dopasowania — reszt typu leave-one-out <cite data-bib="vehtari2017loo"></cite> lub świadomie akceptujemy łagodność reszt w próbie.</li>
+<li><strong>Pełny rozkład predykcyjny.</strong> \( \hat\mu_i, \hat s_i, F_i \) wyznaczamy z rozkładu predykcyjnego a posteriori (uśrednionego po próbkach parametrów), a nie z rozkładu przy ustalonych parametrach — inaczej niedoszacujemy niepewności i zawyżymy reszty.</li>
+<li><strong>Skończona wariancja</strong> — dla reszt standaryzowanych. Reszty kwantylowe i wartości p tego nie wymagają.</li>
+<li><strong>Brak niezależności między resztami.</strong> Reszty meczów tego samego klubu czy kolejki są zwykle skorelowane; nie traktujemy ich jak próby i.i.d. przy testowaniu.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Średnia i wariancja predykcyjna z próbek \( \theta^{(s)} \), \( s=1,\dots,S \) (<a data-concept="prawo-calkowitej-wariancji">prawo całkowitej wariancji</a>):</p>
+<div class="ml-eq" id="eq-diagnostyka-reszt-momenty">\[ \hat\mu_i = \frac1S\sum_{s=1}^S \mathbb{E}(Y_i\mid\theta^{(s)}), \qquad \hat s_i^2 = \frac1S\sum_{s=1}^S \operatorname{Var}(Y_i\mid\theta^{(s)}) + \frac1S\sum_{s=1}^S\big(\mathbb{E}(Y_i\mid\theta^{(s)}) - \hat\mu_i\big)^2. \]</div>
+<p>Dla rozkładu beta-dwumianowego \( Y \sim \text{BetaBin}(C,\ \mu\phi,\ (1-\mu)\phi) \) przy danych parametrach:</p>
+<div class="ml-eq" id="eq-diagnostyka-reszt-bb">\[ \mathbb{E}Y = C\mu, \qquad \operatorname{Var}Y = C\mu(1-\mu)\,\frac{\phi + C}{\phi + 1}. \]</div>
+<p>Reszta kwantylowa dla danych dyskretnych:</p>
+<div class="ml-eq" id="eq-diagnostyka-reszt-q">\[ r_i^Q = \Phi^{-1}(u_i), \qquad u_i \sim U\big(F_i(y_i - 1),\ F_i(y_i)\big]. \]</div>
+<p>Odporne miary położenia i skali reszt <cite data-bib="rousseeuw1993"></cite>:</p>
+<div class="ml-eq" id="eq-diagnostyka-reszt-mad">\[ \operatorname{MADN} = 1{,}4826\cdot\operatorname{med}_i\big|r_i - \operatorname{med}_j r_j\big|, \qquad Q_n = d\cdot\big\{|r_i - r_j| : i \lt j\big\}_{(k)}, \quad k = \tbinom{h}{2},\ h = \lfloor n/2\rfloor + 1, \]</div>
+<p>gdzie \( \{\cdot\}_{(k)} \) oznacza \( k \)-tą najmniejszą wartość, a \( d \approx 2{,}2219 \) jest stałą zapewniającą zgodność z \( \sigma \) dla rozkładu normalnego (dla małych \( n \) autorzy podają dodatkowe poprawki skończonej próby). Odporny wskaźnik nietypowości reszty:</p>
+<div class="ml-eq" id="eq-diagnostyka-reszt-robust">\[ z_i^{\text{odp}} = \frac{r_i - \operatorname{med}_j r_j}{\operatorname{MADN}}. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-reszty-pit"><p class="ml-box-title">Twierdzenie (rozkład reszt kwantylowych przy poprawnym modelu)</p>
+<p>Jeśli \( Y_i \) ma rzeczywiście rozkład o dystrybuancie \( F_i \) (ciągłej lub dyskretnej na liczbach całkowitych), a \( u_i \) wyznaczono jak w <a class="ml-eqref" href="#eq-diagnostyka-reszt-q"></a>, to \( u_i \sim U(0,1) \) i \( r_i^Q \sim N(0,1) \) <em>dokładnie</em>, niezależnie od kształtu \( F_i \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-reszty-standaryzowane"><p class="ml-box-title">Twierdzenie (momenty reszt standaryzowanych)</p>
+<p>Przy poprawnym rozkładzie predykcyjnym \( \mathbb{E}r_i^S = 0 \) i \( \operatorname{Var}r_i^S = 1 \). Rozkład \( r_i^S \) nie musi jednak być normalny: ma tę samą skośność i ten sam (dyskretny, ograniczony) nośnik co \( Y_i \), po przesunięciu i przeskalowaniu.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-reszty-midp"><p class="ml-box-title">Twierdzenie (jednostronna mid-p ma średnią 1/2)</p>
+<p>Niech \( Y \) ma rozkład dyskretny \( \pi \) z dystrybuantą \( F \), i niech \( q(Y) = F(Y-1) + \frac12\pi(Y) \). Wtedy \( \mathbb{E}\,q(Y) = \frac12 \). Natomiast dla „zwykłej” wartości \( P(Y' \ge y) \) przy \( y = Y \) mamy \( \mathbb{E} = \frac12 + \frac12\sum_y\pi(y)^2 \gt \frac12 \) — jest ona konserwatywna.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<div class="ml-proof"><p class="ml-box-title">Dowód (reszty kwantylowe)</p>
+<ol>
+<li><strong>Przypadek ciągły.</strong> Z twierdzenia o przekształceniu całkowym \( P(F(Y)\le u) = u \) dla \( u\in(0,1) \), więc \( u_i = F_i(Y_i) \sim U(0,1) \).</li>
+<li><strong>Przypadek dyskretny.</strong> Ustalmy \( u\in(0,1) \) i niech \( y^\ast \) będzie jedyną wartością z \( F(y^\ast - 1) \lt u \le F(y^\ast) \). Wtedy
+\[ P(u_i \le u) = \sum_{y \lt y^\ast}\pi(y)\cdot 1 + \pi(y^\ast)\cdot\frac{u - F(y^\ast-1)}{\pi(y^\ast)} = F(y^\ast - 1) + u - F(y^\ast - 1) = u. \]
+Dla \( y \lt y^\ast \) cały przedział losowania leży poniżej \( u \); dla \( y = y^\ast \) prawdopodobieństwo trafienia poniżej \( u \) jest stosunkiem długości przedziałów; dla \( y \gt y^\ast \) przedział leży powyżej \( u \).</li>
+<li>Zatem \( u_i \sim U(0,1) \), a \( \Phi^{-1}(U) \sim N(0,1) \) dla \( U\sim U(0,1) \) (odwrotne przekształcenie całkowe).</li>
+</ol>
+<p>Losowanie \( u_i \) „rozmywa” skokową dystrybuantę rozkładu dyskretnego. Gdy masa pojedynczego punktu jest mała (jak dla liczby widzów, \( \pi_i(y) \) rzędu \( 10^{-4} \)), przedział losowania jest wąski i \( r_i^Q \) prawie nie zależy od losowania; wtedy można użyć środka przedziału. Przy dużych atomach (np. komplet widzów \( A_i = C_i \)) wynik zależy od losowania i warto powtórzyć je kilka razy.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (momenty reszt standaryzowanych)</p>
+<ol>
+<li>\( \mathbb{E}r_i^S = (\mathbb{E}Y_i - \hat\mu_i)/\hat s_i = 0 \), bo przy poprawnym modelu \( \mathbb{E}Y_i = \hat\mu_i \).</li>
+<li>\( \operatorname{Var}r_i^S = \operatorname{Var}Y_i/\hat s_i^2 = 1 \).</li>
+<li>Przekształcenie afiniczne \( y\mapsto (y-\hat\mu_i)/\hat s_i \) nie zmienia skośności ani dyskretności rozkładu, więc \( r_i^S \) jest normalny tylko wtedy, gdy \( Y_i \) jest normalny.</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (mid-p)</p>
+<ol>
+<li>\( \mathbb{E}\,q(Y) = \sum_y \pi(y)F(y-1) + \frac12\sum_y\pi(y)^2 = \sum_{x \lt y}\pi(x)\pi(y) + \frac12\sum_y\pi(y)^2 \).</li>
+<li>Z symetrii \( \sum_{x\lt y}\pi(x)\pi(y) = \sum_{x \gt y}\pi(x)\pi(y) \), a suma po wszystkich parach \( \sum_{x,y}\pi(x)\pi(y) = 1 \). Stąd \( \sum_{x\lt y}\pi(x)\pi(y) = \frac12\big(1 - \sum_y\pi(y)^2\big) \).</li>
+<li>Podstawiając: \( \mathbb{E}q(Y) = \frac12 - \frac12\sum\pi^2 + \frac12\sum\pi^2 = \frac12 \).</li>
+<li>Dla wersji zwykłej: \( P(Y'\ge y) = 1 - F(y-1) \), więc \( \mathbb{E} = 1 - \sum_{x\lt y}\pi(x)\pi(y) = \frac12 + \frac12\sum_y\pi(y)^2 \gt \frac12 \).</li>
+</ol>
+<p>Wniosek: dla danych dyskretnych zwykła wartość p jest zawyżona średnio o \( \frac12\sum\pi^2 \); w dwustronnej wersji <a class="ml-eqref" href="#eq-diagnostyka-reszt-p"></a> suma \( P(Y\le y) + P(Y \ge y) = 1 + \pi(y) \gt 1 \). Korekta mid-p <a class="ml-eqref" href="#eq-diagnostyka-reszt-midp"></a> usuwa ten efekt.</p>
+<p class="ml-qed">∎</p></div>
+<h3 id="dlaczego-nie-normalny">Dlaczego nie stosować mechanicznie rozkładu normalnego</h3>
+<p>Reszta standaryzowana \( r^S = 2 \) odpowiada dwustronnej wartości p \( \approx 0{,}046 \) <em>tylko</em> dla rozkładu normalnego. Dla rozkładu beta-dwumianowego o średniej 0,6 pojemności prawy ogon jest krótszy (ograniczenie pojemnością), dla ujemnego dwumianowego — dłuższy. W efekcie ta sama wartość \( r^S \) może odpowiadać bardzo różnym prawdopodobieństwom. Przykład poniżej pokazuje różnicę 0,036 vs 0,022. Dlatego do oceny nietypowości używamy \( p_i \), \( p_i^{\text{mid}} \) lub \( r_i^Q \), a \( r_i^S \) — głównie do wykresów i wykrywania wzorców.</p>
+<h3 id="odpornosc">Dlaczego odporne miary skali</h3>
+<p>Klasyczne odchylenie standardowe reszt jest samo zawyżane przez reszty odstające, przez co te „chowają się” (efekt maskowania). Mediana odchyleń bezwzględnych (MAD) i estymator \( Q_n \) mają punkt załamania 50% — połowa reszt może być dowolnie zła, a oszacowanie skali pozostaje ograniczone <cite data-bib="rousseeuw1993"></cite>. \( Q_n \) nie wymaga przy tym wyznaczania położenia i ma większą efektywność niż MAD przy danych normalnych; MAD jest prostszy i łatwiejszy do wyjaśnienia <cite data-bib="leys2013"></cite>.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong> Mecz w hali na \( C = 2000 \) miejsc; rozkład predykcyjny modelu to \( \text{BetaBin}(2000,\ 12,\ 8) \), czyli \( \mu = 0{,}6 \), \( \phi = 20 \) (dla przejrzystości pomijamy rozrzut parametrów a posteriori). Na mecz przyszło \( y = 1650 \) widzów.</p>
+<ol class="ml-steps">
+<li><strong>Średnia predykcyjna:</strong> \( \hat\mu = 2000\cdot0{,}6 = 1200 \). Reszta surowa: \( r = 1650 - 1200 = 450 \).</li>
+<li><strong>Wariancja predykcyjna</strong> ze wzoru <a class="ml-eqref" href="#eq-diagnostyka-reszt-bb"></a>: \( 2000\cdot0{,}6\cdot0{,}4\cdot\frac{2020}{21} = 480\cdot 96{,}190 \approx 46\,171{,}4 \); \( \hat s \approx 214{,}9 \).</li>
+<li><strong>Reszta standaryzowana:</strong> \( r^S = 450/214{,}9 \approx 2{,}09 \).</li>
+<li><strong>Błędne przybliżenie normalne:</strong> \( 2\,(1-\Phi(2{,}094)) \approx 0{,}036 \).</li>
+<li><strong>Dokładne prawdopodobieństwa</strong> (sumowanie funkcji prawdopodobieństwa rozkładu beta-dwumianowego): \( P(Y \ge 1650) \approx 0{,}011127 \), \( P(Y \le 1650) \approx 0{,}989061 \), \( \pi(1650) \approx 0{,}000188 \).</li>
+<li><strong>Dwustronna predykcyjna wartość p:</strong> \( p = 2\min(0{,}989061;\ 0{,}011127) \approx 0{,}0223 \). <strong>Mid-p:</strong> \( 2\,(0{,}011127 - 0{,}000094) \approx 0{,}0221 \) — przy tak małym atomie korekta jest pomijalna. Prawdziwa nietypowość (≈ 2,2%) jest wyraźnie większa, niż sugerowało przybliżenie normalne (≈ 3,6%), bo rozkład jest lewostronnie skośny (krótki prawy ogon).</li>
+<li><strong>Reszta kwantylowa:</strong> \( F(1649) = 1 - 0{,}011127 = 0{,}988873 \), \( F(1650) = 0{,}989061 \). \( u \) losujemy z \( (0{,}988873;\ 0{,}989061] \); \( \Phi^{-1} \) daje \( r^Q \in (2{,}286;\ 2{,}292] \), środek przedziału \( \approx 2{,}289 \). Ta wartość ma dokładnie rozkład \( N(0,1) \) przy poprawnym modelu, więc może być porównywana z kwantylami normalnymi.</li>
+</ol>
+<p><strong>Odporna ocena skali — dane ilustracyjne.</strong> Reszty kwantylowe 10 meczów klubu: \( -0{,}8;\ 0{,}3;\ 1{,}1;\ -0{,}4;\ 0{,}2;\ -1{,}3;\ 0{,}6;\ 4{,}9;\ -0{,}1;\ 0{,}5 \).</p>
+<ol class="ml-steps">
+<li>Klasycznie: średnia \( 0{,}5 \), odchylenie standardowe \( 1{,}698 \); wskaźnik dla 4,9: \( (4{,}9 - 0{,}5)/1{,}698 \approx 2{,}59 \) — „niezbyt nietypowe”.</li>
+<li>Mediana: po uporządkowaniu \( -1{,}3;\ -0{,}8;\ -0{,}4;\ -0{,}1;\ 0{,}2;\ 0{,}3;\ 0{,}5;\ 0{,}6;\ 1{,}1;\ 4{,}9 \) — \( (0{,}2+0{,}3)/2 = 0{,}25 \).</li>
+<li>Odchylenia bezwzględne od mediany, uporządkowane: \( 0{,}05;\ 0{,}05;\ 0{,}25;\ 0{,}35;\ 0{,}35;\ 0{,}65;\ 0{,}85;\ 1{,}05;\ 1{,}55;\ 4{,}65 \); MAD \( = (0{,}35+0{,}65)/2 = 0{,}5 \); \( \operatorname{MADN} = 1{,}4826\cdot0{,}5 \approx 0{,}741 \).</li>
+<li>\( Q_n \): \( h = 6 \), \( k = \binom62 = 15 \); 15. najmniejsza z 45 różnic \( |r_i - r_j| \) wynosi 0,6, więc \( Q_n \approx 2{,}2219\cdot0{,}6 \approx 1{,}33 \) (bez poprawki małej próby, która dla \( n=10 \) wyraźnie ją zmniejsza).</li>
+<li>Odporny wskaźnik dla 4,9: \( (4{,}9 - 0{,}25)/0{,}741 \approx 6{,}27 \). Mecz jest skrajnie nietypowy — klasyczne SD „zamaskowało” go, bo samo zostało zawyżone przez tę resztę. Reszty kwantylowe powinny mieć skalę ≈ 1; MADN = 0,74 dla pozostałych meczów sugeruje raczej lekko <em>zbyt szerokie</em> przedziały predykcyjne dla tego klubu.</li>
+</ol>
+<div class="ml-plot" data-plot="betabinomial" data-params='{"n": 2000, "a": 12, "b": 8}'></div>
+<p>Rozkład predykcyjny z przykładu: zauważ, że jest lewostronnie skośny — prawy ogon kończy się szybciej niż lewy, więc wartości daleko powyżej średniej są mniej prawdopodobne, niż sugerowałby symetryczny rozkład normalny o tym samym odchyleniu.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li><strong>Pojedyncza reszta.</strong> \( p_i \approx 0{,}02 \) mówi: wynik tak skrajny lub bardziej (w którąkolwiek stronę) model przewidywał z prawdopodobieństwem ok. 2%. W zbiorze 300 meczów oczekujemy ok. 6 takich przypadków nawet przy idealnym modelu — pojedyncze małe \( p_i \) nie dowodzą błędu.</li>
+<li><strong>Wzorce, nie wyjątki.</strong> Najcenniejsza jest systematyczność: reszty standaryzowane rosnące wraz z prognozą (niedoszacowana wariancja dla dużych hal), dodatnie w meczach weekendowych (źle oszacowany efekt dnia tygodnia), dodatnie dla jednego klubu przez cały sezon (zmiana efektu klubu w czasie).</li>
+<li><strong>Kalibracja zbiorcza.</strong> Histogram wartości \( u_i \) (PIT) powinien być płaski; kształt U oznacza zbyt wąskie rozkłady predykcyjne, kształt odwróconego U — zbyt szerokie, nachylenie — obciążenie (por. <a data-concept="kalibracja-prawdopodobienstw">kalibracja prawdopodobieństw</a>, <cite data-bib="gabry2019"></cite>). Równoważnie, wykres kwantyl–kwantyl \( r_i^Q \) względem \( N(0,1) \) powinien leżeć na przekątnej.</li>
+<li><strong>Skala reszt kwantylowych.</strong> Odporna skala \( \operatorname{MADN} \) lub \( Q_n \) wyraźnie większa od 1 oznacza zbyt wąskie przedziały; wyraźnie mniejsza — zbyt szerokie.</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W walidacji <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> diagnostyka reszt jest prowadzona na meczach sezonu testowego, dla każdego meczu z osobna.</p>
+<ul>
+<li><strong>Raport meczów nietypowych.</strong> Dla każdego meczu liczymy \( r_i^S \), \( r_i^Q \) i \( p_i^{\text{mid}} \) z rozkładu predykcyjnego (próbki parametrów + losowanie liczby widzów). Mecze z \( p_i^{\text{mid}} \lt 0{,}01 \) trafiają na listę do przeglądu: często okazuje się, że mecz rozegrano w innej hali, był transmitowany w nietypowej porze lub był meczem o awans — informacje, których model nie miał.</li>
+<li><strong>Komplety widzów.</strong> Dla meczów z \( A_i = C_i \) rozkład beta-dwumianowy ma w punkcie \( C_i \) atom; reszta kwantylowa jest wtedy losowana z szerszego przedziału i warto uśredniać wnioski po kilku losowaniach. Jednostronna wartość \( P(Y_i \ge C_i) = \pi_i(C_i) \) mówi wprost, jak bardzo model „nie wierzył” w komplet (por. <a data-concept="posterior-predictive-checks">posterior predictive checks</a>).</li>
+<li><strong>Wykresy grupowe.</strong> Mediany reszt kwantylowych per klub, per sezon, per dzień tygodnia i godzina meczu; odporne miary (mediana, MADN) są tu właściwsze od średniej i SD, bo pojedyncze derby nie mogą zdominować oceny całego klubu <cite data-bib="leys2013"></cite>.</li>
+<li><strong>Wariant „liczba widzów”.</strong> Dla meczów pucharów EHF rozkład ujemny dwumianowy jest prawostronnie skośny; reszta standaryzowana +2 odpowiada tam zwykle <em>większej</em> wartości p niż w rozkładzie normalnym — mechaniczne progi ±2 dawałyby za dużo fałszywych alarmów.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Wielokrotne porównania.</strong> Przy setkach meczów kilka małych \( p_i \) jest oczekiwanych. Interpretujemy rozkład wartości p (powinien być w przybliżeniu jednostajny), a nie pojedyncze wartości.</li>
+<li><strong>Losowość reszt kwantylowych.</strong> Dla danych dyskretnych z dużymi atomami \( r_i^Q \) zależy od losowania; wnioski powinny być odporne na powtórzenie losowania.</li>
+<li><strong>Zależność od rozkładu predykcyjnego.</strong> Reszty oceniają łącznie model i jego niepewność; dobre reszty nie oznaczają poprawnej interpretacji parametrów (np. efektu rywala), a złe nie wskazują automatycznie, który składnik modelu jest błędny.</li>
+<li><strong>Korelacje.</strong> Reszty meczów jednego klubu, jednej kolejki lub jednego sezonu są zależne; nie stosujemy do nich testów zakładających niezależność.</li>
+<li><strong>Odporność ma cenę.</strong> MAD przy danych normalnych ma efektywność zaledwie ok. 37%, a \( Q_n \) ok. 82% <cite data-bib="rousseeuw1993"></cite>; przy małej liczbie meczów oszacowania skali są niepewne.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="standaryzacja" data-anchor="z-score">Standaryzacja i z-score</a> — konstrukcja reszt standaryzowanych.</li>
+<li><a data-concept="posterior-predictive-checks">Posterior predictive checks</a> — sprawdzenie zbiorcze, statystyki testowe.</li>
+<li><a data-concept="kalibracja-prawdopodobienstw">Kalibracja prawdopodobieństw</a> i <a data-concept="pokrycie-przedzialow-predykcyjnych">pokrycie przedziałów predykcyjnych</a>.</li>
+<li><a data-concept="rozklad-predykcyjny">Rozkład predykcyjny</a> i <a data-concept="prawo-calkowitej-wariancji">prawo całkowitej wariancji</a>.</li>
+<li><a data-concept="rozklad-beta-dwumianowy">Rozkład beta-dwumianowy</a> i <a data-concept="rozklad-ujemny-dwumianowy">rozkład ujemny dwumianowy</a>.</li>
+<li><a data-concept="mediana">Mediana</a> — podstawa odpornych miar.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelman2013bda"></li>
+<li data-bib="gabry2019"></li>
+<li data-bib="rousseeuw1993"></li>
+<li data-bib="leys2013"></li>
+<li data-bib="vehtari2017loo"></li>
+<li data-bib="gneiting2007calibration"></li>
+</ul>
+</section>

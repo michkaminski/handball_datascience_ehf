@@ -1,0 +1,180 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Rozkład predykcyjny (dokładniej: rozkład predykcyjny a posteriori, ang. <em>posterior predictive distribution</em>) odpowiada na pytanie praktyka: <em>ile widzów przyjdzie na najbliższy mecz?</em> — a nie: <em>jaki jest parametr modelu?</em> Prognoza musi uwzględniać dwa źródła niepewności. Pierwsze to niepewność co do parametrów (nie znamy dokładnie atrakcyjności rywala ani efektu weekendu) — opisuje ją <a data-concept="rozklad-posterior">rozkład posterior</a>. Drugie to losowość samego zjawiska: nawet gdybyśmy znali parametry co do przecinka, frekwencja konkretnego meczu i tak by się wahała.</p>
+<p>Rozkład predykcyjny łączy obie niepewności przez uśrednienie rozkładu danych po wszystkich wartościach parametrów, ważonych ich prawdopodobieństwem a posteriori. Dlatego <a data-concept="przedzialy-predykcyjne">przedział predykcyjny</a> dla przyszłej obserwacji jest zawsze szerszy niż <a data-concept="przedzial-wiarygodnosci">przedział wiarygodności</a> dla średniej — i w przeciwieństwie do niego nie kurczy się do zera, nawet przy nieskończenie wielu danych.</p>
+<div class="ml-plot" data-plot="betabinomial" data-params='{"n": 5, "a": 24, "b": 11}'></div>
+<p>Wykres pokazuje rozkład predykcyjny liczby trafień w 5 kolejnych rzutach karnych po posterior \(\text{Beta}(24,11)\). Zwiększaj jednocześnie \(a\) i \(b\) (więcej danych) — rozkład zbliży się do dwumianowego, ale nie stanie się węższy od niego.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-rozklad-predykcyjny"><p class="ml-box-title">Definicja</p>
+<p>Niech \(y\) oznacza dane obserwowane, \(\tilde y\) — przyszłą (lub nową) obserwację, a \(p(\theta\mid y)\) — rozkład posterior parametru \(\theta\in\Theta\). Zakładamy, że przy danym \(\theta\) obserwacje \(\tilde y\) i \(y\) są warunkowo niezależne: \(p(\tilde y\mid\theta,y)=p(\tilde y\mid\theta)\). Rozkładem predykcyjnym a posteriori nazywamy rozkład \(\tilde y\) przy danym \(y\):</p>
+<div class="ml-eq" id="eq-rozklad-predykcyjny">\[ p(\tilde y\mid y)=\int_\Theta p(\tilde y\mid\theta)\,p(\theta\mid y)\,d\theta. \]</div>
+</div>
+<div class="ml-box ml-def" id="def-predykcyjny-a-priori"><p class="ml-box-title">Definicja (rozkład predykcyjny a priori)</p>
+<p>Analogicznie, rozkład predykcyjny a priori to \(p(y)=\int_\Theta p(y\mid\theta)\,\pi(\theta)\,d\theta\) — rozkład danych przewidywany przed ich obserwacją (zob. <a data-concept="rozklad-a-priori" data-anchor="wzory">rozkład a priori</a>).</p>
+</div>
+<div class="ml-box ml-def" id="def-przedzial-predykcyjny"><p class="ml-box-title">Definicja (przedział predykcyjny)</p>
+<p>Centralnym przedziałem predykcyjnym na poziomie \(1-\alpha\) nazywamy \([\tilde q_{\alpha/2},\ \tilde q_{1-\alpha/2}]\), gdzie \(\tilde q_u\) jest kwantylem rzędu \(u\) rozkładu \(p(\tilde y\mid y)\). Dla zmiennych dyskretnych przyjmujemy \(\tilde q_u=\min\{k:P(\tilde y\le k\mid y)\ge u\}\).</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(y\)</td><td>dane obserwowane (np. frekwencje meczów z sezonów treningowych)</td></tr>
+<tr><td>\(\tilde y\)</td><td>przyszła obserwacja (np. frekwencja meczu prognozowanego)</td></tr>
+<tr><td>\(\theta\)</td><td>parametry modelu</td></tr>
+<tr><td>\(p(\theta\mid y)\)</td><td>rozkład posterior</td></tr>
+<tr><td>\(p(\tilde y\mid\theta)\)</td><td>rozkład danych przy znanych parametrach</td></tr>
+<tr><td>\(p(\tilde y\mid y)\)</td><td>rozkład predykcyjny a posteriori</td></tr>
+<tr><td>\(\theta^{(s)},\ \tilde y^{(s)}\)</td><td>\(s\)-ta próbka z posterior i odpowiadająca jej symulowana obserwacja</td></tr>
+<tr><td>\(m\)</td><td>liczba przyszłych prób (model dwumianowy)</td></tr>
+<tr><td>\(a',\ b'\)</td><td>parametry posterior beta</td></tr>
+<tr><td>\(C,\ \phi\)</td><td>pojemność hali i precyzja modelu beta-dwumianowego</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Warunkowa niezależność \(\tilde y\) i \(y\) przy danym \(\theta\). W modelach z zależnością czasową (np. forma drużyny) zależność musi być zawarta w predyktorach lub w strukturze modelu.</li>
+<li>Przyszła obserwacja pochodzi z tego samego procesu generującego, co dane treningowe — z ewentualnie nowymi wartościami zmiennych objaśniających.</li>
+<li>Posterior jest poprawnie wyznaczony (zbieżność MCMC); przy reprezentacji próbkowej liczba próbek wystarcza do stabilnego oszacowania kwantyli ogonowych (tail-ESS).</li>
+<li>Nowe poziomy efektów losowych (np. beniaminek bez historii) wymagają losowania efektu z rozkładu populacyjnego \(N(0,\sigma^2)\) z próbkami \(\sigma^{(s)}\).</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Średnia i wariancja predykcyjna (rozkład niepewności na dwa składniki):</p>
+<div class="ml-eq" id="eq-rozklad-predykcyjny-srednia">\[ E(\tilde y\mid y)=E\big[E(\tilde y\mid\theta)\,\big|\,y\big], \]</div>
+<div class="ml-eq" id="eq-rozklad-predykcyjny-wariancja">\[ \operatorname{Var}(\tilde y\mid y)=\underbrace{E\big[\operatorname{Var}(\tilde y\mid\theta)\,\big|\,y\big]}_{\text{losowość zjawiska}}+\underbrace{\operatorname{Var}\big(E(\tilde y\mid\theta)\,\big|\,y\big)}_{\text{niepewność parametrów}}. \]</div>
+<p>Symulacja (metoda składania, ang. <em>composition</em>):</p>
+<div class="ml-eq" id="eq-rozklad-predykcyjny-symulacja">\[ \theta^{(s)}\sim p(\theta\mid y),\quad \tilde y^{(s)}\sim p(\tilde y\mid\theta^{(s)}),\quad s=1,\dots,S\quad\Longrightarrow\quad \tilde y^{(s)}\sim p(\tilde y\mid y). \]</div>
+<p>Przypadek sprzężony beta–dwumian (posterior \(\text{Beta}(a',b')\), \(m\) nowych prób):</p>
+<div class="ml-eq" id="eq-rozklad-predykcyjny-bb">\[ P(\tilde y=j\mid y)=\binom mj\frac{B(a'+j,\ b'+m-j)}{B(a',b')},\qquad j=0,\dots,m, \]</div>
+<div class="ml-eq" id="eq-rozklad-predykcyjny-bb-momenty">\[ E(\tilde y\mid y)=m\bar p,\qquad \operatorname{Var}(\tilde y\mid y)=m\bar p(1-\bar p)\,\frac{m+a'+b'}{1+a'+b'},\qquad \bar p=\frac{a'}{a'+b'}. \]</div>
+<p>Porównanie szerokości: dla proporcji \(\tilde y/m\)</p>
+<div class="ml-eq" id="eq-rozklad-predykcyjny-porownanie">\[ \operatorname{Var}\Big(\frac{\tilde y}{m}\,\Big|\,y\Big)=\underbrace{\operatorname{Var}(p\mid y)}_{\to0\ \text{gdy}\ n\to\infty}+\underbrace{\frac{E[p(1-p)\mid y]}{m}}_{\text{nie znika}}. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-postac-calkowa"><p class="ml-box-title">Twierdzenie (postać całkowa)</p>
+<p>Przy warunkowej niezależności \(\tilde y\perp y\mid\theta\) rozkład warunkowy \(\tilde y\) przy danym \(y\) ma gęstość <a class="ml-eqref" href="#eq-rozklad-predykcyjny"></a>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-symulacja"><p class="ml-box-title">Twierdzenie (poprawność symulacji)</p>
+<p>Jeśli \(\theta^{(s)}\sim p(\theta\mid y)\) i \(\tilde y^{(s)}\mid\theta^{(s)}\sim p(\tilde y\mid\theta^{(s)})\), to brzegowo \(\tilde y^{(s)}\sim p(\tilde y\mid y)\). Kwantyle empiryczne próbek \(\tilde y^{(s)}\) są zgodnymi oszacowaniami kwantyli predykcyjnych.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-rozklad-wariancji"><p class="ml-box-title">Twierdzenie (rozkład wariancji predykcyjnej)</p>
+<p>Jeśli \(E(\tilde y^2\mid y)\lt\infty\), zachodzą <a class="ml-eqref" href="#eq-rozklad-predykcyjny-srednia"></a> i <a class="ml-eqref" href="#eq-rozklad-predykcyjny-wariancja"></a>. W szczególności \(\operatorname{Var}(\tilde y\mid y)\ge E[\operatorname{Var}(\tilde y\mid\theta)\mid y]\): przedział predykcyjny nie może być węższy, niż wynika z losowości samego zjawiska.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-bb-predykcyjny"><p class="ml-box-title">Twierdzenie (predykcja w modelu beta–dwumian)</p>
+<p>Jeśli \(p\mid y\sim\text{Beta}(a',b')\) i \(\tilde y\mid p\sim\text{Bin}(m,p)\), to \(\tilde y\mid y\sim\text{BetaBinomial}(m,a',b')\), z momentami <a class="ml-eqref" href="#eq-rozklad-predykcyjny-bb-momenty"></a>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-przedzialy"><p class="ml-box-title">Twierdzenie (przedział wiarygodności a przedział predykcyjny)</p>
+<p>W modelu beta–dwumian z \(n\) obserwowanymi próbami: \(\operatorname{Var}(p\mid y)=O(1/n)\to0\), podczas gdy \(\operatorname{Var}(\tilde y/m\mid y)\to p_0(1-p_0)/m\gt0\) (dla prawdziwego \(p_0\in(0,1)\)). Przedział wiarygodności parametru kurczy się do punktu, przedział predykcyjny — nie.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="calkowa-wyprowadzenie">Postać całkowa</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z definicji gęstości brzegowej i warunkowej:</p>
+\[ p(\tilde y\mid y)=\int_\Theta p(\tilde y,\theta\mid y)\,d\theta=\int_\Theta p(\tilde y\mid\theta,y)\,p(\theta\mid y)\,d\theta=\int_\Theta p(\tilde y\mid\theta)\,p(\theta\mid y)\,d\theta, \]
+<p>gdzie w ostatnim kroku użyliśmy warunkowej niezależności. Jest to wersja <a data-concept="prawo-calkowitego-prawdopodobienstwa">prawa całkowitego prawdopodobieństwa</a> z ciągłym „podziałem” przestrzeni względem \(\theta\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="symulacja-wyprowadzenie">Poprawność symulacji</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Para \((\theta^{(s)},\tilde y^{(s)})\) ma łączną gęstość \(p(\theta\mid y)\,p(\tilde y\mid\theta)\). Gęstość brzegowa \(\tilde y^{(s)}\) to całka po \(\theta\) — dokładnie <a class="ml-eqref" href="#eq-rozklad-predykcyjny"></a>. Zgodność kwantyli empirycznych wynika z prawa wielkich liczb dla dystrybuanty empirycznej (dla łańcuchów MCMC — z ergodyczności), zob. <a data-concept="monte-carlo">symulacja Monte Carlo</a>.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wariancja-wyprowadzenie">Rozkład wariancji</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Stosujemy <a data-concept="prawo-calkowitej-wartosci-oczekiwanej">prawo całkowitej wartości oczekiwanej</a> i <a data-concept="prawo-calkowitej-wariancji">prawo całkowitej wariancji</a> do rozkładu łącznego \((\theta,\tilde y)\) warunkowo względem \(y\), z warunkowaniem wewnętrznym względem \(\theta\); dzięki warunkowej niezależności \(E(\tilde y\mid\theta,y)=E(\tilde y\mid\theta)\) i \(\operatorname{Var}(\tilde y\mid\theta,y)=\operatorname{Var}(\tilde y\mid\theta)\). Drugi składnik <a class="ml-eqref" href="#eq-rozklad-predykcyjny-wariancja"></a> jest nieujemny, co daje nierówność.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="bb-wyprowadzenie">Predykcja w modelu beta–dwumian</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Podstawiamy do <a class="ml-eqref" href="#eq-rozklad-predykcyjny"></a>:</p>
+\[ \begin{aligned} P(\tilde y=j\mid y)&amp;=\int_0^1\binom mjp^j(1-p)^{m-j}\,\frac{p^{a'-1}(1-p)^{b'-1}}{B(a',b')}\,dp\\ &amp;=\binom mj\frac{1}{B(a',b')}\int_0^1p^{a'+j-1}(1-p)^{b'+m-j-1}\,dp=\binom mj\frac{B(a'+j,\ b'+m-j)}{B(a',b')}. \end{aligned} \]
+<p>Jest to rozkład \(\text{BetaBinomial}(m,a',b')\); jego momenty (z precyzją \(\phi'=a'+b'\)) wyprowadzono w artykule <a data-concept="rozklad-beta-dwumianowy" data-anchor="wyprowadzenie">rozkład beta-dwumianowy</a>. Dzieląc wariancję przez \(m^2\) i korzystając z \(E[p(1-p)\mid y]=\bar p(1-\bar p)\frac{\phi'}{1+\phi'}\), \(\operatorname{Var}(p\mid y)=\frac{\bar p(1-\bar p)}{1+\phi'}\), dostajemy <a class="ml-eqref" href="#eq-rozklad-predykcyjny-porownanie"></a>.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="przedzialy-wyprowadzenie">Przedział wiarygodności a przedział predykcyjny</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Po \(n\) próbach z \(k\) sukcesami \(a'+b'=a+b+n\), więc \(\operatorname{Var}(p\mid y)=\frac{\bar p(1-\bar p)}{1+a+b+n}\le\frac{1}{4(1+a+b+n)}\to0\). Z prawa wielkich liczb \(\bar p=\frac{a+k}{a+b+n}\to p_0\) prawie na pewno, zatem \(E[p(1-p)\mid y]=\bar p(1-\bar p)\frac{a+b+n}{1+a+b+n}\to p_0(1-p_0)\), a drugi składnik <a class="ml-eqref" href="#eq-rozklad-predykcyjny-porownanie"></a> dąży do \(p_0(1-p_0)/m\gt0\).</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<h3 id="przyklad-karne">Kolejne rzuty karne (kontynuacja przykładu z artykułu o posterior; dane ilustracyjne)</h3>
+<ol class="ml-steps">
+<li><strong>Posterior.</strong> Po priorze \(\text{Beta}(15,5)\) i 9 trafieniach na 15: \(p\mid y\sim\text{Beta}(24,11)\), \(\bar p=24/35=0{,}6857\), \(a'+b'=35\).</li>
+<li><strong>Rozkład predykcyjny dla \(m=5\) rzutów</strong> — wzór <a class="ml-eqref" href="#eq-rozklad-predykcyjny-bb"></a>, porównany z rozkładem „podstawieniowym” \(\text{Bin}(5;\ 0{,}6857)\), który ignoruje niepewność \(p\):
+<table class="ml-table"><thead><tr><th>\(j\)</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead>
+<tbody>
+<tr><td>predykcyjny</td><td>0,0052</td><td>0,0417</td><td>0,1490</td><td>0,2980</td><td>0,3353</td><td>0,1707</td></tr>
+<tr><td>podstawieniowy</td><td>0,0031</td><td>0,0335</td><td>0,1460</td><td>0,3185</td><td>0,3474</td><td>0,1516</td></tr>
+</tbody></table></li>
+<li><strong>Przykładowa wartość.</strong> \(P(\tilde y=5\mid y)=\frac{B(29,11)}{B(24,11)}=\prod_{i=0}^{4}\frac{24+i}{35+i}=\frac{24\cdot25\cdot26\cdot27\cdot28}{35\cdot36\cdot37\cdot38\cdot39}=0{,}1707\), wobec \(0{,}6857^5=0{,}1516\).</li>
+<li><strong>Wariancja.</strong> Predykcyjna: \(5\cdot0{,}6857\cdot0{,}3143\cdot\frac{5+35}{1+35}=1{,}0776\cdot1{,}1111=1{,}1973\); podstawieniowa: \(1{,}0776\). Niepewność parametru zwiększa wariancję o 11%.</li>
+<li><strong>Prawdopodobieństwo co najmniej 4 trafień.</strong> \(0{,}3353+0{,}1707=0{,}506\) (podstawieniowo \(0{,}499\)).</li>
+</ol>
+
+<h3 id="przyklad-frekwencja">Prognoza frekwencji: przedział wiarygodności vs predykcyjny (dane ilustracyjne)</h3>
+<ol class="ml-steps">
+<li><strong>Założenia.</strong> Hala \(C=2000\); po dopasowaniu modelu średnie wypełnienie najbliższego meczu ma posterior \(\mu\mid y\sim\text{Beta}(600,400)\) (średnia 0,6, odchylenie \(\sqrt{0{,}24/1001}=0{,}0155\)); dla uproszczenia precyzja \(\phi=20\) jest znana. Model danych: \(A\mid\mu\sim\text{BetaBinomial}(2000,\ 20\mu,\ 20(1-\mu))\).</li>
+<li><strong>Przedział wiarygodności dla oczekiwanej frekwencji</strong> \(E(A\mid\mu)=2000\mu\): \(2000\cdot[0{,}5695;\ 0{,}6302]=[1139;\ 1260]\).</li>
+<li><strong>Składnik losowości zjawiska.</strong> \(E[\operatorname{Var}(A\mid\mu)\mid y]=\frac{2000\cdot2020}{21}\cdot E[\mu(1-\mu)\mid y]=192\,381\cdot0{,}23976=46\,125\), gdzie \(E[\mu(1-\mu)\mid y]=0{,}24\cdot\frac{1000}{1001}=0{,}23976\).</li>
+<li><strong>Składnik niepewności parametru.</strong> \(\operatorname{Var}(2000\mu\mid y)=2000^2\cdot\frac{0{,}24}{1001}=959\).</li>
+<li><strong>Wariancja predykcyjna.</strong> \(46\,125+959=47\,084\); odchylenie standardowe \(217{,}0\) (wobec \(31{,}0\) dla \(2000\mu\)). Ok. 98% wariancji prognozy to losowość samego meczu.</li>
+<li><strong>Przedziały predykcyjne</strong> (całkowanie numeryczne po \(\mu\) i sumowanie pmf): 50% \([1053;\ 1354]\), 80% \([913;\ 1478]\), 95% \([761;\ 1601]\). \(P(A\ge1500\mid y)=0{,}081\), \(P(W\ge0{,}9\mid y)=0{,}0004\).</li>
+</ol>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>W przykładzie z frekwencją jesteśmy dość pewni, że <em>oczekiwana</em> frekwencja wynosi 1140–1260 widzów, ale <em>konkretny mecz</em> z prawdopodobieństwem 95% zgromadzi od ok. 760 do ok. 1600 widzów. Oba zdania są prawdziwe jednocześnie i odpowiadają na różne pytania. Przedział wiarygodności mówi o parametrze i zwęża się wraz z przybywaniem danych; przedział predykcyjny mówi o obserwacji i ma dolną granicę szerokości wyznaczoną przez zmienność zjawiska (tu: \(\phi=20\)).</p>
+<p>Częsty błąd to podawanie przedziału wiarygodności średniej jako „prognozy frekwencji” — taki przedział pokryje rzeczywistą frekwencję znacznie rzadziej niż deklarowane 95%. W przykładzie z karnymi różnica między rozkładem predykcyjnym a podstawieniowym jest mała, bo posterior jest już dość skupiony; przy mniejszej liczbie obserwacji ignorowanie niepewności parametru prowadzi do wyraźnie zbyt pewnych prognoz.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<ul>
+<li><strong>Prognoza frekwencji w MAF.</strong> Dla meczu \(i\) i każdej próbki posterior \(s\) liczy się \(\eta_i^{(s)}\), a następnie losuje \(A_i^{(s)}\sim\text{BetaBinomial}(C_i,\mu_i^{(s)}\phi^{(s)},(1-\mu_i^{(s)})\phi^{(s)})\) (wariant „wypełnienie”) lub \(A_i^{(s)}\sim\text{NegBin}(\mu_i^{(s)},\kappa^{(s)})\) (wariant „liczba widzów”) — wzór <a class="ml-eqref" href="#eq-rozklad-predykcyjny-symulacja"></a>. Zob. <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a>.</li>
+<li><strong>Raportowane wielkości.</strong> Mediana predykcyjna, <a data-concept="przedzialy-predykcyjne">przedziały predykcyjne</a> 50/80/95% oraz prawdopodobieństwa \(P(W\ge0{,}75)\), \(P(W\ge0{,}9)\), \(P(W\ge0{,}95)\), \(P(W=1)\) — udział próbek spełniających warunek. Wartość oczekiwana prognozy — zob. <a data-concept="wartosc-oczekiwana-prognozy">wartość oczekiwana prognozy</a>.</li>
+<li><strong>Nowi rywale i beniaminkowie.</strong> Dla klubu bez historii efekt \(R_j^{(s)}\) losuje się z \(N(0,(\sigma_R^{(s)})^2)\), co automatycznie poszerza przedziały.</li>
+<li><strong>Walidacja.</strong> W walidacji chronologicznej (<a data-concept="backtesting">backtesting</a>: trening na sezonach wcześniejszych, test na ostatnim) sprawdza się <a data-concept="pokrycie-przedzialow-predykcyjnych">pokrycie przedziałów predykcyjnych</a>, histogram PIT \(u_i=P(\tilde A_i\le A_i^{\text{obs}}\mid y)\) (dla zmiennych dyskretnych w wersji randomizowanej) i <a data-concept="kalibracja-prawdopodobienstw">kalibrację prawdopodobieństw</a> <cite data-bib="gneiting2007calibration"></cite>, a także MAE i RMSE mediany lub średniej predykcyjnej.</li>
+<li><strong>Kontrola modelu.</strong> Te same symulacje dla meczów treningowych dają <a data-concept="posterior-predictive-checks">posterior predictive checks</a>: porównanie liczby kompletów, rozrzutu i skośności danych symulowanych i obserwowanych.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li>Rozkład predykcyjny dziedziczy błędy modelu: jeśli model nie uwzględnia czynnika (np. przeniesienia meczu do większej hali), przedziały będą źle skalibrowane.</li>
+<li>Przyjęcie warunkowej niezależności ignoruje wspólne szoki (np. ograniczenia sanitarne w całym sezonie), które w danych testowych mogą wystąpić naraz dla wielu meczów.</li>
+<li>Kwantyle ogonowe (2,5%, 97,5%) wymagają wielu efektywnych próbek; przy niskim tail-ESS są niestabilne.</li>
+<li>Przedziały dla zmiennych dyskretnych mają pokrycie co najmniej nominalne, ale nie dokładnie nominalne; przy małych pojemnościach różnica bywa zauważalna.</li>
+<li>Prognoza zależy od znajomości warunków meczu \(x_i\) (termin, forma, pozycja w tabeli) w chwili prognozowania — użycie wartości znanych dopiero po meczu zawyża jakość prognoz w walidacji.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="rozklad-posterior">Rozkład posterior</a>.</li>
+<li><a data-concept="przedzialy-predykcyjne">Przedziały predykcyjne</a> i <a data-concept="przedzial-wiarygodnosci">przedział wiarygodności</a>.</li>
+<li><a data-concept="niepewnosc-predykcyjna">Niepewność predykcyjna</a>.</li>
+<li><a data-concept="monte-carlo">Symulacja Monte Carlo w prognozowaniu</a>.</li>
+<li><a data-concept="rozklad-beta-dwumianowy">Rozkład beta-dwumianowy</a>.</li>
+<li><a data-concept="posterior-predictive-checks">Posterior predictive checks</a>, <a data-concept="pokrycie-przedzialow-predykcyjnych">pokrycie przedziałów predykcyjnych</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelman2013bda"></li>
+<li data-bib="gneiting2007calibration"></li>
+<li data-bib="gneiting2007scoring"></li>
+<li data-bib="hyndman2021fpp3"></li>
+<li data-bib="gabry2019"></li>
+</ul>
+</section>

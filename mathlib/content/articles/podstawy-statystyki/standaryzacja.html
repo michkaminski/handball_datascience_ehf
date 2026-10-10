@@ -1,0 +1,187 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Czy mecz z 1450 widzami to dużo? Dla klubu, którego średnia wynosi 1280 przy odchyleniu 135 widzów — umiarkowanie dużo. Dla klubu I ligi ze średnią 200 — sensacja. Liczba bezwzględna nie wystarcza; trzeba ją odnieść do „normalnego poziomu” i „normalnej zmienności” danej grupy. Standaryzacja (ang. <em>standardization</em>) robi dokładnie to: od wartości odejmuje średnią i dzieli wynik przez odchylenie standardowe.</p>
+<p>Wynik, zwany <em>wartością standaryzowaną</em> lub <em>z-score</em>, mówi, o ile odchyleń standardowych obserwacja leży powyżej (wartość dodatnia) lub poniżej (ujemna) średniej. Po standaryzacji każda zmienna ma średnią 0 i odchylenie 1, niezależnie od jednostek: widzowie, punkty w tabeli, godzina rozpoczęcia meczu. Dzięki temu wielkości mierzone w różnych jednostkach stają się porównywalne.</p>
+<p>W modelowaniu standaryzacja ma trzy kluczowe zastosowania: (1) przygotowanie predyktorów regresji, tak by współczynniki i ich rozkłady a priori miały wspólną skalę; (2) reszty standaryzowane, które mówią, czy błąd prognozy jest duży w porównaniu z niepewnością modelu; (3) wykrywanie wartości odstających. W tym ostatnim zastosowaniu klasyczny z-score ma poważną wadę — sama wartość odstająca zawyża odchylenie standardowe i „maskuje się” — dlatego omawiamy też odporną wersję opartą na medianie i MAD.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-standaryzacja"><p class="ml-box-title">Definicja (standaryzacja próby)</p>
+<p>Niech \(x_1,\dots,x_n\), \(n\ge2\), będzie próbą ze średnią \(\bar x\) i odchyleniem standardowym \(s\gt0\). <strong>Standaryzacją</strong> nazywamy przekształcenie afiniczne</p>
+<div class="ml-eq" id="eq-standaryzacja">\[ z_i=\frac{x_i-\bar x}{s}, \qquad i=1,\dots,n . \]</div>
+</div>
+<div class="ml-box ml-def" id="def-standaryzacja-zmiennej"><p class="ml-box-title">Definicja (standaryzacja zmiennej losowej)</p>
+<p>Dla zmiennej losowej \(X\) z \(E X=\mu\) i \(0\lt\operatorname{Var}X=\sigma^2\lt\infty\) zmienną standaryzowaną nazywamy \(Z=(X-\mu)/\sigma\). Jeżeli \(X\sim N(\mu,\sigma^2)\), to \(Z\sim N(0,1)\) — <a data-concept="rozklad-normalny">standardowy rozkład normalny</a>.</p>
+</div>
+<p>Standaryzacja jest przypadkiem ogólniejszego schematu \(z=(x-\text{położenie})/\text{skala}\). Wybór miary położenia i skali określa wariant: klasyczny (średnia, SD), odporny (mediana, MAD), regresyjny (średnia i SD ze zbioru uczącego, ewentualnie 2 SD) lub predykcyjny (wartość oczekiwana i SD rozkładu predykcyjnego).</p>
+
+<h3 id="z-score">Z-score</h3>
+<div class="ml-box ml-def" id="def-z-score"><p class="ml-box-title">Definicja (z-score)</p>
+<p><strong>Z-score</strong> (wartość standaryzowana, wynik standardowy) obserwacji \(x\) względem grupy odniesienia o średniej \(\bar x\) i odchyleniu \(s\) to liczba \(z=(x-\bar x)/s\) — liczba odchyleń standardowych, o jaką \(x\) odbiega od średniej grupy.</p>
+</div>
+<p>Grupa odniesienia nie musi zawierać \(x\): możemy liczyć z-score nowego meczu względem historii klubu albo wyniku klubu względem całej ligi. Przy rozkładzie normalnym z-score przekłada się na prawdopodobieństwo: \(P(Z\gt z)=1-\Phi(z)\), np. \(|z|\gt2\) zdarza się w ok. 4,6% przypadków, a \(|z|\gt3\) — w ok. 0,27%. Dla rozkładów skośnych (frekwencja) ta translacja jest tylko przybliżeniem.</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(x_i,\ \bar x,\ s\)</td><td>obserwacja, średnia i odchylenie standardowe z próby</td></tr>
+<tr><td>\(z_i\)</td><td>wartość standaryzowana (z-score)</td></tr>
+<tr><td>\(\mu,\ \sigma\)</td><td>wartość oczekiwana i odchylenie standardowe rozkładu</td></tr>
+<tr><td>\(Z\)</td><td>zmienna standaryzowana</td></tr>
+<tr><td>\(\Phi\)</td><td>dystrybuanta rozkładu \(N(0,1)\)</td></tr>
+<tr><td>\(\mathrm{MAD}\)</td><td>mediana bezwzględnych odchyleń od mediany</td></tr>
+<tr><td>\(z_i^{\mathrm{rob}}\)</td><td>odporny z-score</td></tr>
+<tr><td>\(\beta_k,\ \beta_k^{*}\)</td><td>współczynnik regresji przy predyktorze w skali oryginalnej i standaryzowanej</td></tr>
+<tr><td>\(r_i\)</td><td>reszta standaryzowana (predykcyjna)</td></tr>
+<tr><td>\(\eta_i\)</td><td>predyktor liniowy modelu MAF</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Skala co najmniej przedziałowa i \(s\gt0\) (zmienna nie może być stała).</li>
+<li>Własności „średnia 0, SD 1” są algebraiczne i nie wymagają żadnych założeń rozkładowych.</li>
+<li>Interpretacja z-score w kategoriach prawdopodobieństwa (np. „\(|z|\gt3\) zdarza się w 0,27% przypadków”) wymaga normalności.</li>
+<li>Odporny z-score wymaga \(\mathrm{MAD}\gt0\) (co najmniej połowa obserwacji nie może być równa medianie); stała 1,4826 zapewnia zgodność z \(\sigma\) przy rozkładzie normalnym.</li>
+<li>W walidacji modeli parametry standaryzacji (średnia, SD) muszą pochodzić wyłącznie ze zbioru uczącego.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Własności próby standaryzowanej:</p>
+<div class="ml-eq" id="eq-standaryzacja-momenty">\[ \bar z=0, \qquad s_z=1, \qquad \sum_{i=1}^n z_i^2=n-1 . \]</div>
+<p>Odwrócenie standaryzacji (powrót do jednostek oryginalnych):</p>
+<div class="ml-eq" id="eq-standaryzacja-odwrotna">\[ x_i=\bar x+s\,z_i . \]</div>
+<p>Odporny z-score oparty na medianie i MAD:</p>
+<div class="ml-eq" id="eq-standaryzacja-mad">\[ z_i^{\mathrm{rob}}=\frac{x_i-\operatorname{med}(x)}{1{,}4826\cdot\mathrm{MAD}}, \qquad \mathrm{MAD}=\operatorname{med}_i\big|x_i-\operatorname{med}(x)\big| . \]</div>
+<p>Stała zgodności przy rozkładzie normalnym:</p>
+<div class="ml-eq" id="eq-standaryzacja-stala">\[ \frac{1}{\Phi^{-1}(3/4)}\approx\frac{1}{0{,}6745}\approx1{,}4826 . \]</div>
+<p>Współczynnik regresji przy predyktorze standaryzowanym i jego związek ze skalą oryginalną:</p>
+<div class="ml-eq" id="eq-standaryzacja-beta">\[ \eta=\alpha^{*}+\beta^{*}\,\frac{x-\bar x}{s_x} \quad\Longleftrightarrow\quad \eta=\Big(\alpha^{*}-\beta^{*}\frac{\bar x}{s_x}\Big)+\frac{\beta^{*}}{s_x}\,x, \qquad \beta=\frac{\beta^{*}}{s_x} . \]</div>
+<p>Reszta standaryzowana (predykcyjna) obserwacji \(y_i\):</p>
+<div class="ml-eq" id="eq-standaryzacja-reszta">\[ r_i=\frac{y_i-E(y_i\mid\text{model})}{\sqrt{\operatorname{Var}(y_i\mid\text{model})}} . \]</div>
+<p>Parametryzacja niecentrowana efektu losowego — „odwrotna” standaryzacja:</p>
+<div class="ml-eq" id="eq-standaryzacja-niecentrowana">\[ R_j=\sigma_R\,z_j,\qquad z_j\sim N(0,1) \quad\Longleftrightarrow\quad z_j=\frac{R_j-0}{\sigma_R} . \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-standaryzacja-momenty"><p class="ml-box-title">Twierdzenie (momenty po standaryzacji)</p>
+<p>Dla dowolnej próby z \(s\gt0\) wartości \(z_i\) z <a class="ml-eqref" href="#eq-standaryzacja"></a> spełniają <a class="ml-eqref" href="#eq-standaryzacja-momenty"></a>. Dla zmiennej losowej: \(E Z=0\), \(\operatorname{Var}Z=1\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-standaryzacja-niezmienniczosc"><p class="ml-box-title">Twierdzenie (niezmienniczość)</p>
+<p>Z-score jest niezmienniczy względem przekształceń \(x\mapsto a+bx\) z \(b\gt0\) (zmiana jednostek i punktu zerowego); przy \(b\lt0\) zmienia znak. W konsekwencji współczynnik korelacji Pearsona dwóch zmiennych nie zmienia się po ich standaryzacji i jest równy \(\frac{1}{n-1}\sum_iz_i^{(x)}z_i^{(y)}\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-standaryzacja-mad"><p class="ml-box-title">Twierdzenie (zgodność odpornej skali)</p>
+<p>Jeżeli \(X\sim N(\mu,\sigma^2)\), to mediana \(|X-\mu|\) wynosi \(\sigma\,\Phi^{-1}(3/4)\); zatem \(1{,}4826\cdot\mathrm{MAD}\) jest zgodnym estymatorem \(\sigma\). MAD ma punkt załamania 50% <cite data-bib="rousseeuw1993"></cite>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-standaryzacja-ograniczenie"><p class="ml-box-title">Twierdzenie (ograniczenie klasycznego z-score)</p>
+<p>W próbie o liczności \(n\) każda wartość standaryzowana spełnia \(|z_i|\le(n-1)/\sqrt n\). W szczególności w próbie 7 meczów żaden mecz nie może mieć \(|z|\gt2{,}27\), choćby był dowolnie skrajny.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-momenty">Momenty po standaryzacji</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>\(\bar z=\frac1{ns}\sum_i(x_i-\bar x)=0\), bo suma odchyleń od średniej jest zerem. Dalej \(\sum_iz_i^2=\frac{1}{s^2}\sum_i(x_i-\bar x)^2=\frac{(n-1)s^2}{s^2}=n-1\), więc \(s_z^2=\frac{1}{n-1}\sum_i(z_i-0)^2=1\). Dla zmiennej losowej: \(E Z=(EX-\mu)/\sigma=0\), \(\operatorname{Var}Z=\operatorname{Var}X/\sigma^2=1\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-niezmienniczosc">Niezmienniczość</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla \(y_i=a+bx_i\): \(\bar y=a+b\bar x\), \(s_y=|b|s_x\), więc \(z_i^{(y)}=\frac{b(x_i-\bar x)}{|b|s_x}=\operatorname{sgn}(b)\,z_i^{(x)}\). Korelacja Pearsona \(r=\frac{\sum(x_i-\bar x)(y_i-\bar y)}{(n-1)s_xs_y}=\frac{1}{n-1}\sum_iz_i^{(x)}z_i^{(y)}\) zależy tylko od z-score’ów, więc jest niezmiennicza względem rosnących przekształceń afinicznych każdej zmiennej.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-mad">Stała 1,4826</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Mediana rozkładu normalnego to \(\mu\). Szukamy \(c\) z \(P(|X-\mu|\le c)=\frac12\). Standaryzując: \(P(|Z|\le c/\sigma)=2\Phi(c/\sigma)-1=\frac12\iff\Phi(c/\sigma)=\frac34\iff c=\sigma\Phi^{-1}(3/4)\approx0{,}6745\,\sigma\). Zatem \(\sigma=c/0{,}6745\approx1{,}4826\,c\). Ponieważ mediana z próby jest zgodna (przy dodatniej gęstości w medianie), \(\mathrm{MAD}\to c\), a \(1{,}4826\,\mathrm{MAD}\to\sigma\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-ograniczenie">Ograniczenie \(|z_i|\le(n-1)/\sqrt n\)</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Ustalmy \(i\) i niech \(d_j=x_j-\bar x\). Ponieważ \(\sum_jd_j=0\), mamy \(\sum_{j\ne i}d_j=-d_i\). Z nierówności Cauchy’ego–Schwarza \(d_i^2=\big(\sum_{j\ne i}d_j\big)^2\le(n-1)\sum_{j\ne i}d_j^2\). Stąd \((n-1)s^2=\sum_jd_j^2=d_i^2+\sum_{j\ne i}d_j^2\ge d_i^2+\frac{d_i^2}{n-1}=\frac{n\,d_i^2}{n-1}\), czyli \(z_i^2=d_i^2/s^2\le(n-1)^2/n\). Dla \(n=7\): \(6/\sqrt7\approx2{,}27\).</p>
+<p class="ml-qed">∎</p></div>
+<p>To twierdzenie wyjaśnia efekt <em>maskowania</em>: w małej próbie nawet ekstremalna obserwacja nie osiągnie „progu” \(|z|\gt3\), bo sama zawyża \(s\). Odporny z-score nie ma tego ograniczenia.</p>
+
+<h3 id="wyprowadzenie-regresja">Standaryzacja predyktorów w regresji</h3>
+<p>Podstawiając \(x^{*}=(x-\bar x)/s_x\) do predyktora liniowego otrzymujemy <a class="ml-eqref" href="#eq-standaryzacja-beta"></a>: model jest <em>tym samym</em> modelem w innej parametryzacji, a dopasowanie (np. metodą największej wiarygodności) daje \(\hat\beta=\hat\beta^{*}/s_x\). W modelu bayesowskim parametryzacja ma jednak znaczenie, bo rozkład a priori nakłada się na konkretny parametr: prior \(\beta^{*}\sim N(0,1)\) oznacza „zmiana predyktora o 1 SD zmienia \(\eta\) typowo o nie więcej niż ok. 2 jednostki logitu” — założenie sensowne jednocześnie dla formy drużyny, pozycji w tabeli i godziny meczu, choć w skalach oryginalnych ich współczynniki różniłyby się o rzędy wielkości. Centrowanie sprawia ponadto, że wyraz wolny \(\alpha^{*}\) odpowiada „przeciętnemu” meczowi, a korelacja a posteriori między \(\alpha\) a \(\beta\) maleje, co ułatwia próbkowanie. Gelman i Hill omawiają centrowanie i standaryzację predyktorów, w tym wariant dzielenia przez dwa odchylenia standardowe, porównywalny ze skalą predyktorów binarnych <cite data-bib="gelmanhill2007"></cite>.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<h3 id="przyklad-klasyczny">Klasyczny z-score</h3>
+<p>Frekwencja w pięciu meczach (dane ilustracyjne): 1200, 1350, 1100, 1450, 1300; \(\bar x=1280\), \(s\approx135{,}09\) (zob. <a data-concept="wariancja" data-anchor="przyklad">wariancja</a>).</p>
+<ol class="ml-steps">
+<li>Odchylenia od średniej: \(-80,\ 70,\ -180,\ 170,\ 20\).</li>
+<li>Z-score: \(-80/135{,}09\approx-0{,}592\); \(70/135{,}09\approx0{,}518\); \(-180/135{,}09\approx-1{,}332\); \(170/135{,}09\approx1{,}258\); \(20/135{,}09\approx0{,}148\).</li>
+<li>Kontrola: suma \(\approx0\); suma kwadratów \(\approx0{,}351+0{,}268+1{,}775+1{,}584+0{,}022=4{,}000=n-1\) ✓.</li>
+<li>Nowy mecz z 1600 widzami względem tej historii: \(z=(1600-1280)/135{,}09\approx2{,}37\) — wyraźnie powyżej normy klubu.</li>
+</ol>
+<h3 id="przyklad-odporny">Maskowanie i odporny z-score</h3>
+<p>Siedem meczów (dane ilustracyjne), w tym derby: 1060, 1120, 1180, 1210, 1250, 1340, 2900.</p>
+<ol class="ml-steps">
+<li>Klasycznie: \(\bar x=10\,060/7\approx1437{,}1\), \(s\approx651{,}3\). Z-score derbów: \((2900-1437{,}1)/651{,}3\approx2{,}25\) — poniżej typowego progu 3 (i zgodnie z twierdzeniem nie mógłby przekroczyć 2,27).</li>
+<li>Mediana: \(\operatorname{med}=1210\).</li>
+<li>Odchylenia bezwzględne od mediany: \(150,\ 90,\ 30,\ 0,\ 40,\ 130,\ 1690\); po uporządkowaniu \(0,30,40,90,130,150,1690\), więc \(\mathrm{MAD}=90\).</li>
+<li>Skala odporna: \(1{,}4826\cdot90\approx133{,}4\) widza (porównaj z \(s\approx651\)).</li>
+<li>Odporny z-score derbów: \((2900-1210)/133{,}4\approx12{,}67\) — jednoznacznie odstający (próg 2,5 zalecany przez Leys i in. <cite data-bib="leys2013"></cite>). Pozostałe mecze: od \(-1{,}12\) (1060) do \(0{,}97\) (1340).</li>
+</ol>
+<h3 id="przyklad-regresja">Predyktor i reszta w modelu</h3>
+<ol class="ml-steps">
+<li>Forma gospodarza (punkty na mecz w 5 ostatnich kolejkach; dane ilustracyjne) ma w zbiorze uczącym średnią 1,0 i SD 0,5. Wartość 1,6 daje \(x^{*}=(1{,}6-1{,}0)/0{,}5=1{,}2\).</li>
+<li>Jeżeli \(\beta^{*}=0{,}12\) (na skali logitu), to w skali oryginalnej \(\beta=0{,}12/0{,}5=0{,}24\) na punkt na mecz. Przy wypełnieniu ok. 70% pochodna funkcji odwrotnej do logitu wynosi \(0{,}7\cdot0{,}3=0{,}21\), więc wzrost formy o 1 SD podnosi oczekiwane wypełnienie o ok. \(0{,}12\cdot0{,}21\approx0{,}025\) (2,5 p.p.).</li>
+<li>Reszta: hala na \(C=2000\) miejsc, \(\mu=0{,}6\), \(\phi=30\). W rozkładzie beta-dwumianowym \(E A=C\mu=1200\), \(\operatorname{Var}A=C\mu(1-\mu)\frac{\phi+C}{\phi+1}=2000\cdot0{,}24\cdot\frac{2030}{31}\approx480\cdot65{,}48\approx31\,432\), \(\mathrm{SD}\approx177{,}3\). Obserwacja 1550 daje \(r=(1550-1200)/177{,}3\approx1{,}97\).</li>
+</ol>
+<div class="ml-plot" data-plot="normal" data-params='{"mu": 0, "sigma": 1}'></div>
+<p>Po standaryzacji zmienna normalna ma rozkład \(N(0,1)\): z-score 1,97 leży blisko 97,5. percentyla, a 2,37 — w okolicy 99. percentyla. Zmieniając \(\mu\) i \(\sigma\), zobacz rozkład przed standaryzacją; standaryzacja sprowadza każdą z tych krzywych do tej samej, wyjściowej.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li>\(z=2{,}37\) oznacza „2,37 odchylenia standardowego powyżej średniej klubu”; dopiero przy założeniu normalności można dodać „takie mecze zdarzają się rzadziej niż raz na sto”.</li>
+<li>Porównanie klasycznego (2,25) i odpornego (12,67) z-score derbów pokazuje, że klasyczny z-score nie nadaje się do wykrywania wartości odstających w małych próbach.</li>
+<li>\(\beta^{*}=0{,}12\) to efekt zmiany predyktora o jedno SD — porównywalny między predyktorami. \(\beta=0{,}24\) to efekt zmiany o jeden punkt na mecz — interpretowalny w jednostkach oryginalnych. Obie liczby opisują ten sam model.</li>
+<li>Reszta standaryzowana \(r\approx1{,}97\) mówi, że obserwacja leży na skraju typowego zakresu prognozy; pojedyncza taka reszta nie jest alarmem, ale ich nadmiar w grupie meczów (np. w play-off) sygnalizuje brak w modelu.</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<ul>
+<li><strong>Standaryzowane kowariaty MAF.</strong> W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> warunki meczu \(x_i\) (weekend, godzina, faza rozgrywek, forma i pozycja w tabeli obu drużyn) są standaryzowane, a ich współczynniki mają priory \(\beta_k\sim N(0;1)\). Średnie i odchylenia używane do standaryzacji wyznacza się na zbiorze uczącym i stosuje bez zmian do meczów testowych oraz prognoz — inaczej walidacja chronologiczna (<a data-concept="backtesting">backtesting</a>) korzystałaby z informacji z przyszłości. Zob. <a data-concept="interpretacja-wspolczynnikow">interpretacja współczynników</a>.</li>
+<li><strong>Parametryzacja niecentrowana.</strong> Efekty losowe zapisujemy jako \(R_j=\sigma_Rz_j\) ze standaryzowanymi \(z_j\sim N(0,1)\) <a class="ml-eqref" href="#eq-standaryzacja-niecentrowana"></a>. Sampler NUTS „widzi” zmienne w skali standardowej, co usuwa geometrię lejka przy małych \(\sigma_R\) i ogranicza dywergencje <cite data-bib="betancourt2015hier"></cite>; zob. <a data-concept="modele-hierarchiczne">modele hierarchiczne</a>.</li>
+<li><strong>Reszty standaryzowane w walidacji.</strong> Dla każdego meczu testowego reszta \(r_i\) wg <a class="ml-eqref" href="#eq-standaryzacja-reszta"></a>, z wartością oczekiwaną i wariancją z rozkładu predykcyjnego, pozwala porównywać błędy meczów w halach na 500 i na 4000 miejsc. Ich rozkład względem klubu, sezonu i fazy rozgrywek jest podstawą <a data-concept="diagnostyka-reszt">diagnostyki reszt</a>; uzupełniają je predykcyjne wartości p i PIT.</li>
+<li><strong>Kontrola danych.</strong> Odporny z-score frekwencji w obrębie klubu i sezonu (mediana, MAD) wskazuje mecze do weryfikacji źródłowej — np. pomyłki rzędu wielkości przy wprowadzaniu liczby widzów.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Maskowanie i brak odporności</strong> klasycznego z-score; w małych próbach \(|z|\) jest ograniczony przez \((n-1)/\sqrt n\).</li>
+<li><strong>Interpretacja probabilistyczna wymaga normalności</strong>; dla skośnej frekwencji lepiej standaryzować na skali logarytmicznej albo używać rang percentylowych.</li>
+<li><strong>Zależność od grupy odniesienia</strong>: z-score względem klubu, ligi i sezonu to trzy różne liczby; zmiana próby uczącej zmienia parametry standaryzacji, a więc i interpretację \(\beta^{*}\).</li>
+<li><strong>Predyktory binarne</strong> (weekend tak/nie) po standaryzacji tracą bezpośrednią interpretację „efektu weekendu”; czasem lepiej je jedynie centrować lub dzielić ciągłe predyktory przez 2 SD.</li>
+<li><strong>MAD równe zeru</strong> przy wielu identycznych wartościach (np. komplety widzów) — odporny z-score jest wtedy niezdefiniowany; potrzebne są alternatywy (\(S_n\), \(Q_n\)) <cite data-bib="rousseeuw1993"></cite>.</li>
+<li><strong>Standaryzacja nie zmienia kształtu rozkładu</strong>: skośność i grube ogony pozostają; standaryzacja nie „normalizuje” danych.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="odchylenie-standardowe">Odchylenie standardowe</a> i <a data-concept="srednia-arytmetyczna">średnia arytmetyczna</a> — parametry standaryzacji.</li>
+<li><a data-concept="mediana">Mediana</a> i <a data-concept="kwartyle">kwartyle</a> — odporne miary położenia i skali.</li>
+<li><a data-concept="rozklad-normalny">Rozkład normalny</a> — rozkład \(N(0,1)\).</li>
+<li><a data-concept="diagnostyka-reszt">Diagnostyka reszt</a> — reszty standaryzowane.</li>
+<li><a data-concept="interpretacja-wspolczynnikow">Interpretacja współczynników</a> — współczynniki przy predyktorach standaryzowanych.</li>
+<li><a data-concept="modele-hierarchiczne">Modele hierarchiczne</a> — parametryzacja niecentrowana.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="openintro2019"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="gelmanhill2007"></li>
+<li data-bib="rousseeuw1993"></li>
+<li data-bib="leys2013"></li>
+<li data-bib="betancourt2015hier"></li>
+</ul>
+</section>

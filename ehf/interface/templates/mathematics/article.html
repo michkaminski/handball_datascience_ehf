@@ -1,0 +1,39 @@
+{% extends "mathematics/_layout.html" %}
+{% set article = page.article %}
+{% set active_category = page.category.id %}
+{% set active_article = article.concept.id %}
+{% block tytul %}{{ article.concept.name }} — Mathematics — {{ nazwa_projektu }}{% endblock %}
+{% block mathematics %}
+<div class="pagehead">
+<div class="crumb"><a href="{{ url_for('panel.math_index') }}">Mathematics</a> › <a href="{{ url_for('panel.math_category', category=page.category.id) }}">{{ page.category.name }}</a> › {{ article.concept.name }}</div>
+<h1>{{ article.concept.name }}</h1>
+<p class="ml-lead">{{ article.concept.summary }}</p>
+{% if page.used_by %}<p class="ml-tags">Used by: {% for model in page.used_by %}<span class="ml-tag">{{ model|upper }}</span>{% endfor %}</p>{% endif %}
+<p class="note">Article content is in Polish (shared library with the national app).</p>
+</div>
+<div class="ml-article-layout">
+<aside class="ml-toc" aria-label="Table of contents">
+<p class="ml-toc-title">Contents</p>
+<ol>
+{% for entry in article.toc %}
+<li class="ml-toc-l{{ entry.level }}"><a href="#{{ entry.id }}" data-ml-toc="{{ entry.id }}">{% if entry.number %}{{ entry.number }}. {% endif %}{{ entry.title }}</a></li>
+{% endfor %}
+</ol>
+</aside>
+<article class="panel ml-article" data-ml-article lang="pl">
+<div class="panel-body">
+{{ article.html|safe }}
+</div>
+</article>
+</div>
+<nav class="ml-pager" aria-label="Navigation between chapters">
+{% if page.previous %}<a class="btn secondary" href="{{ registry.url(page.previous.id) }}">← {{ page.previous.name }}</a>{% else %}<span></span>{% endif %}
+{% if page.next %}<a class="btn secondary" href="{{ registry.url(page.next.id) }}">{{ page.next.name }} →</a>{% endif %}
+</nav>
+{% if page.related %}
+<div class="panel"><div class="panel-body">
+<h2 class="ml-related-title">Related concepts in the registry</h2>
+<ul class="ml-related">{% for concept in page.related %}<li><a href="{{ registry.url(concept.id) }}" title="{{ concept.summary }}">{{ concept.name }}</a></li>{% endfor %}</ul>
+</div></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,158 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>„Współczynnik weekendu wynosi 0,2” — co to właściwie znaczy? W <a data-concept="regresja-liniowa">regresji liniowej</a> odpowiedź jest prosta: mecze weekendowe mają średnio o 0,2 jednostki zmiennej objaśnianej więcej, przy pozostałych zmiennych ustalonych. W <a data-concept="uogolnione-modele-liniowe">uogólnionych modelach liniowych</a> współczynnik działa jednak na skali <em>predyktora liniowego</em> \( \eta \), a odbiorcę interesuje skala <em>wyniku</em> — wypełnienie hali albo liczba widzów. Między nimi stoi nieliniowa funkcja łącząca, która sprawia, że ten sam współczynnik oznacza różne przyrosty w różnych meczach.</p>
+<p>Do tego dochodzą trzy pułapki: (1) średnia z przekształconych wartości nie jest przekształceniem średniej (nierówność Jensena); (2) współczynnik zależy od jednostek zmiennej, więc bez standaryzacji wielkości nie da się porównać; (3) współczynnik opisuje różnicę między <em>porównywanymi grupami meczów</em>, a nie skutek <em>interwencji</em> — korelacja nie jest przyczynowością.</p>
+<p>Artykuł porządkuje te kwestie: od skal (logit, log, wypełnienie) przez efekty krańcowe, po warunki, przy których współczynnik można czytać przyczynowo.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Rozważmy model \( g(\mu(x)) = \eta(x) = x^\top\beta \), gdzie \( \mu(x) = \mathbb{E}(Y\mid x) \), a \( g \) jest ściśle monotoniczną, różniczkowalną funkcją łączącą.</p>
+<div class="ml-box ml-def" id="def-efekt-skala-lacza"><p class="ml-box-title">Definicja</p>
+<p><strong>Efekt na skali łącza</strong> zmiennej \( x_k \) to \( \partial\eta/\partial x_k = \beta_k \) — przyrost predyktora liniowego przy wzroście \( x_k \) o jednostkę i ustalonych pozostałych zmiennych.</p>
+</div>
+<div class="ml-box ml-def" id="def-efekt-krancowy"><p class="ml-box-title">Definicja</p>
+<p><strong>Efektem krańcowym</strong> (ang. <em>marginal effect</em>) zmiennej ciągłej \( x_k \) w punkcie \( x \) nazywamy</p>
+<div class="ml-eq" id="eq-interpretacja-wspolczynnikow">\[ \mathrm{ME}_k(x) = \frac{\partial\mu(x)}{\partial x_k} = \frac{\beta_k}{g'\bigl(\mu(x)\bigr)}. \]</div>
+<p><strong>Przeciętnym efektem krańcowym</strong> (ang. <em>average marginal effect</em>, AME) na zbiorze obserwacji \( \{x_i\}_{i=1}^n \) nazywamy \( \mathrm{AME}_k = \frac1n\sum_i \mathrm{ME}_k(x_i) \). Dla zmiennej binarnej (lub skończonej zmiany \( \Delta \)) zamiast pochodnej używamy <strong>różnicy predykcyjnej</strong> \( \mu(x + \Delta e_k) - \mu(x) \) i jej średniej po obserwacjach <cite data-bib="gelmanhill2007"></cite>.</p>
+</div>
+<div class="ml-box ml-def" id="def-standaryzowany"><p class="ml-box-title">Definicja</p>
+<p><strong>Współczynnikiem standaryzowanym</strong> nazywamy współczynnik zmiennej przekształconej \( x_k^{\mathrm{std}} = (x_k - \bar x_k)/s_k \); związek z surowym: \( \beta_k^{\mathrm{std}} = s_k\,\beta_k \). Mierzy efekt zmiany o jedno odchylenie standardowe.</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( \eta = x^\top\beta \)</td><td>predyktor liniowy (skala łącza)</td></tr>
+<tr><td>\( \mu(x) \)</td><td>wartość oczekiwana wyniku (wypełnienie lub liczba widzów)</td></tr>
+<tr><td>\( g,\ g^{-1} \)</td><td>funkcja łącząca i jej odwrotność</td></tr>
+<tr><td>\( \sigma \)</td><td>funkcja logistyczna, \( \sigma = \operatorname{logit}^{-1} \)</td></tr>
+<tr><td>\( \beta_k \)</td><td>współczynnik zmiennej \( x_k \)</td></tr>
+<tr><td>\( \mathrm{ME}_k,\ \mathrm{AME}_k \)</td><td>efekt krańcowy w punkcie i przeciętny efekt krańcowy</td></tr>
+<tr><td>\( \mathrm{OR} \)</td><td>iloraz szans \( e^{\beta_k} \)</td></tr>
+<tr><td>\( s_k \)</td><td>odchylenie standardowe zmiennej \( x_k \) w próbie</td></tr>
+<tr><td>\( \beta_k^{\mathrm{std}} \)</td><td>współczynnik standaryzowany</td></tr>
+<tr><td>\( T \)</td><td>„leczenie” / interwencja (np. mecz w weekend)</td></tr>
+<tr><td>\( Y(1),\ Y(0) \)</td><td>wyniki potencjalne przy \( T=1 \) i \( T=0 \)</td></tr>
+<tr><td>\( \mathrm{ATE} \)</td><td>przeciętny efekt przyczynowy \( \mathbb{E}[Y(1)-Y(0)] \)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li><strong>Ceteris paribus:</strong> interpretacja „przy pozostałych zmiennych ustalonych” ma sens tylko wtedy, gdy zmianę \( x_k \) przy ustalonych innych zmiennych można sobie wyobrazić. Przy interakcjach lub składnikach wielomianowych (\( x \) i \( x^2 \)) pojedynczy współczynnik nie ma samodzielnej interpretacji.</li>
+<li><strong>Poprawna specyfikacja</strong> — addytywność na skali łącza i poprawna postać funkcyjna.</li>
+<li><strong>Identyfikowalność</strong> współczynnika (<a data-concept="identyfikowalnosc-parametrow">identyfikowalność parametrów</a>): poszczególne efekty grupowe mają sens tylko w przyjętej konwencji (np. średnia zero).</li>
+<li><strong>Do interpretacji przyczynowej</strong> potrzebne są dodatkowe założenia: wymienialność warunkowa (brak nieuwzględnionych czynników zakłócających), dodatniość i spójność (zob. twierdzenie o identyfikacji efektu przyczynowego w sekcji „Twierdzenia”).</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<h3 id="wzory-logit">Skala logit</h3>
+<div class="ml-eq" id="eq-interpretacja-wspolczynnikow-logit">\[ \mathrm{OR}_k = e^{\beta_k}, \qquad \mathrm{ME}_k(x) = \beta_k\,\mu(x)\bigl(1-\mu(x)\bigr) \le \frac{\beta_k}{4}, \qquad \Delta\mu = \sigma(\eta+\beta_k) - \sigma(\eta). \]</div>
+<h3 id="wzory-log">Skala log</h3>
+<div class="ml-eq" id="eq-interpretacja-wspolczynnikow-log">\[ \frac{\mu(x+e_k)}{\mu(x)} = e^{\beta_k}, \qquad \text{zmiana procentowa} = 100\,(e^{\beta_k}-1)\%, \qquad \mathrm{ME}_k(x) = \beta_k\,\mu(x). \]</div>
+<p>Dla małych \( |\beta_k| \): \( e^{\beta_k}-1\approx\beta_k \), więc \( \beta_k = 0{,}05 \) to ok. +5%.</p>
+<h3 id="wzory-jensen">Średnia na skali wyniku</h3>
+<div class="ml-eq" id="eq-interpretacja-wspolczynnikow-jensen">\[ \frac1n\sum_{i=1}^n \sigma(\eta_i) \;\ne\; \sigma\Bigl(\frac1n\sum_{i=1}^n\eta_i\Bigr) \quad\text{(w ogólności)}. \]</div>
+<h3 id="wzory-standaryzacja">Standaryzacja</h3>
+<div class="ml-eq" id="eq-interpretacja-wspolczynnikow-std">\[ \beta_k^{\mathrm{std}} = s_k\,\beta_k, \qquad \beta_k = \beta_k^{\mathrm{std}}/s_k. \]</div>
+<h3 id="wzory-przyczynowosc">Efekt przyczynowy</h3>
+<div class="ml-eq" id="eq-interpretacja-wspolczynnikow-ate">\[ \mathrm{ATE} = \mathbb{E}\bigl[Y(1) - Y(0)\bigr] = \mathbb{E}_X\Bigl[\mathbb{E}(Y\mid T=1,X) - \mathbb{E}(Y\mid T=0,X)\Bigr] \quad\text{(przy założeniach identyfikacji)}. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-efekt-krancowy"><p class="ml-box-title">Twierdzenie (efekt krańcowy w GLM)</p>
+<p>Dla \( \mu = g^{-1}(\eta) \) zachodzi <a class="ml-eqref" href="#eq-interpretacja-wspolczynnikow"></a>. Przy łączu tożsamościowym efekt jest stały (\( \beta_k \)); przy łączu log — proporcjonalny do \( \mu \); przy łączu logit — proporcjonalny do \( \mu(1-\mu) \), maksymalny przy \( \mu=1/2 \) i znikający przy \( \mu\to0 \) lub \( \mu\to1 \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-jensen"><p class="ml-box-title">Twierdzenie (nierówność Jensena dla funkcji logistycznej)</p>
+<p>Niech \( \eta \) będzie zmienną losową o skończonej wartości oczekiwanej. Jeśli \( \eta \le 0 \) p.n., to \( \mathbb{E}\,\sigma(\eta)\ge\sigma(\mathbb{E}\eta) \); jeśli \( \eta\ge0 \) p.n., to \( \mathbb{E}\,\sigma(\eta)\le\sigma(\mathbb{E}\eta) \). Równość zachodzi wtedy i tylko wtedy, gdy \( \eta \) jest stała p.n. W ogólnym przypadku znak różnicy zależy od rozkładu \( \eta \). Dla łącza log zawsze \( \mathbb{E}\,e^{\eta}\ge e^{\mathbb{E}\eta} \), a dla \( \eta\sim N(m,v) \): \( \mathbb{E}\,e^\eta = e^{m+v/2} \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-przyczynowosc"><p class="ml-box-title">Twierdzenie (identyfikacja efektu przyczynowego)</p>
+<p>W ramach modelu wyników potencjalnych <cite data-bib="rubin1974"></cite> załóżmy: (i) spójność: \( Y = Y(T) \); (ii) wymienialność warunkową: \( \{Y(0),Y(1)\}\perp T\mid X \); (iii) dodatniość: \( 0\lt P(T=1\mid X)\lt1 \). Wtedy \( \mathbb{E}[Y(t)\mid X] = \mathbb{E}(Y\mid T=t,X) \), a ATE dany jest wzorem <a class="ml-eqref" href="#eq-interpretacja-wspolczynnikow-ate"></a> <cite data-bib="hernan2020"></cite>. Jeśli ponadto model \( \mathbb{E}(Y\mid T,X) \) jest poprawnie wyspecyfikowany, współczynnik przy \( T \) (przeliczony na skalę wyniku i uśredniony po \( X \)) jest estymatorem efektu przyczynowego.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="wyprowadzenie-krancowy">Efekt krańcowy</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>\( \mu = g^{-1}(\eta) \), więc \( \frac{\partial\mu}{\partial x_k} = (g^{-1})'(\eta)\cdot\beta_k = \frac{\beta_k}{g'(\mu)} \) (pochodna funkcji odwrotnej). Łącze logit: \( g'(\mu) = \frac{1}{\mu(1-\mu)} \); łącze log: \( g'(\mu) = 1/\mu \); tożsamość: \( g' = 1 \). Maksimum \( \mu(1-\mu) \) wynosi 1/4 w \( \mu=1/2 \) (por. <a data-concept="funkcja-logit" data-anchor="wyprowadzenie">pochodna funkcji logistycznej</a>).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-jensen">Nierówność Jensena</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>\( \sigma''(x) = \sigma(x)(1-\sigma(x))(1-2\sigma(x)) \), więc \( \sigma \) jest ściśle wypukła na \( (-\infty,0] \) i ściśle wklęsła na \( [0,\infty) \). Dla funkcji wypukłej \( \varphi \) nierówność Jensena daje \( \mathbb{E}\varphi(\eta)\ge\varphi(\mathbb{E}\eta) \) (z prostej podpierającej w punkcie \( m=\mathbb{E}\eta \): \( \varphi(\eta)\ge\varphi(m)+\varphi'(m)(\eta-m) \); bierzemy wartość oczekiwaną). Dla wklęsłej — nierówność odwrotna. Ścisła wypukłość daje równość tylko dla stałego \( \eta \). Dla \( e^\eta \) (wypukła na całej osi) i \( \eta\sim N(m,v) \) — funkcja tworząca momenty rozkładu normalnego w punkcie 1 daje \( e^{m+v/2} \).</p>
+<p class="ml-qed">∎</p></div>
+<p><strong>Konsekwencja praktyczna.</strong> Oczekiwane wypełnienie „przeciętnego meczu” \( \sigma(\bar\eta) \) to nie to samo co przeciętne oczekiwane wypełnienie \( \overline{\sigma(\eta)} \). Podobnie dla niepewności parametrów: \( \mathbb{E}_{\text{post}}[\sigma(\eta)] \ne \sigma(\mathbb{E}_{\text{post}}[\eta]) \). Dlatego wielkości na skali wyniku liczy się <em>dla każdej próbki posterioru i każdego meczu</em>, a dopiero potem uśrednia.</p>
+
+<h3 id="wyprowadzenie-przyczynowosc">Identyfikacja przyczynowa</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>\( \mathbb{E}(Y\mid T=t,X) = \mathbb{E}(Y(t)\mid T=t,X) \) ze spójności; \( = \mathbb{E}(Y(t)\mid X) \) z wymienialności warunkowej; dodatniość gwarantuje, że warunkowanie na \( T=t \) jest określone dla każdego \( X \). Uśredniając po rozkładzie \( X \) (<a data-concept="prawo-calkowitej-wartosci-oczekiwanej">prawo całkowitej wartości oczekiwanej</a>) otrzymujemy \( \mathbb{E}Y(t) \), a różnica daje ATE.</p>
+<p class="ml-qed">∎</p></div>
+<p>W języku grafów przyczynowych Pearla <cite data-bib="pearl2009"></cite> warunek (ii) jest zapewniony, gdy zbiór \( X \) spełnia <em>kryterium tylnych drzwi</em> (ang. <em>back-door criterion</em>): blokuje wszystkie ścieżki od \( T \) do \( Y \) zaczynające się strzałką wchodzącą do \( T \) i nie zawiera potomków \( T \). Warunkowanie na potomku (mediatorze lub zderzaczu, ang. <em>collider</em>) może wprowadzić obciążenie zamiast je usunąć.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong> Współczynnik zmiennej „weekend” na skali logit \( \beta = 0{,}2 \); hala na 2500 miejsc.</p>
+<ol class="ml-steps">
+<li>Iloraz szans: \( e^{0{,}2}\approx1{,}221 \) — szanse wypełnienia rosną o ok. 22%, w każdym meczu tak samo.</li>
+<li>Mecz z \( \mu = 0{,}5 \) (\( \eta=0 \)): \( \sigma(0{,}2) - 0{,}5 \approx 0{,}5498 - 0{,}5 = 0{,}0498 \), czyli +5,0 p.p. ≈ +125 widzów. Reguła „dziel przez 4”: \( 0{,}2/4 = 0{,}05 \) — trafna w środku zakresu.</li>
+<li>Mecz z \( \mu = 0{,}9 \) (\( \eta = \ln 9\approx2{,}197 \)): \( \sigma(2{,}397) \approx 0{,}9166 \), przyrost +1,66 p.p. ≈ +42 widzów. Efekt krańcowy w punkcie: \( 0{,}2\cdot0{,}9\cdot0{,}1 = 0{,}018 \).</li>
+<li>Przeciętny efekt na trzech meczach o \( \eta = (-1;\ 0{,}5;\ 2) \): \( \mu = (0{,}2689;\ 0{,}6225;\ 0{,}8808) \); \( \mu(1-\mu) = (0{,}1966;\ 0{,}2350;\ 0{,}1050) \); \( \mathrm{ME} = 0{,}2\cdot(\dots) = (0{,}0393;\ 0{,}0470;\ 0{,}0210) \); \( \mathrm{AME}\approx0{,}0358 \) (3,6 p.p.). Różnice skończone \( \sigma(\eta_i+0{,}2)-\sigma(\eta_i) = (0{,}0411;\ 0{,}0457;\ 0{,}0195) \), średnio \( \approx0{,}0354 \).</li>
+<li>Jensen dla tych samych meczów: średnie oczekiwane wypełnienie \( (0{,}2689+0{,}6225+0{,}8808)/3 \approx 0{,}5907 \), a wypełnienie dla średniego predyktora \( \sigma(0{,}5)\approx0{,}6225 \) — różnica ponad 3 p.p.</li>
+<li>Skala log (wariant „liczba widzów”): \( \beta = 0{,}15 \Rightarrow e^{0{,}15}\approx1{,}1618 \), +16,2%; przy średniej 1200 widzów: \( 1200\cdot1{,}1618\approx1394 \).</li>
+<li>Standaryzacja: współczynnik formy gospodarza \( \beta^{\mathrm{std}} = 0{,}12 \) na 1 odchylenie standardowe, \( s = 3{,}2 \) pkt; na 1 punkt: \( 0{,}12/3{,}2 = 0{,}0375 \); iloraz szans na 1 odchylenie: \( e^{0{,}12}\approx1{,}127 \).</li>
+</ol>
+<div class="ml-plot" data-plot="logistic" data-params='{"alpha": 0, "beta": 1}'></div>
+<p>Krzywa \( \sigma(\eta) \): przesunięcie o te same 0,2 jednostki w poziomie daje duży skok pionowy w środku i mały na krańcach. Zmień \( \beta \), aby zobaczyć, jak zmienia się maksymalne nachylenie \( \beta/4 \).</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Współczynnik na skali logit (0,2) i iloraz szans (1,22) są własnościami <em>modelu</em> — jednakowe dla wszystkich meczów. Przyrost wypełnienia (od 1,7 do 5 p.p. w przykładzie) jest własnością <em>meczu</em> — zależy od jego punktu wyjścia. Komunikując wyniki, podawaj więc skalę wyniku z punktem odniesienia („dla typowego meczu ligowego o wypełnieniu 60%…”) albo przeciętny efekt na zdefiniowanej populacji meczów.</p>
+<p>Nawet poprawnie przeliczony efekt pozostaje <em>opisowy</em>: „mecze weekendowe mają średnio wyższe wypełnienie przy tej samej formie i pozycji drużyn”. Stwierdzenie „przeniesienie meczu na weekend zwiększy frekwencję o 5 p.p.” wymaga założeń z twierdzenia o identyfikacji — np. że terminy nie są wybierane z uwagi na spodziewaną atrakcyjność (transmisje telewizyjne, derby), czego dane obserwacyjne zwykle nie gwarantują.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W modelu <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a>:</p>
+<ul>
+<li><strong>Kowariaty \( x_i \) są standaryzowane</strong> — \( \beta_k \) to efekt jednego odchylenia standardowego na skali logit (wariant „wypełnienie”) lub log (wariant „liczba widzów”); dzięki temu współczynniki są porównywalne, a prior \( \beta_k\sim N(0,1) \) ma tę samą skalę dla wszystkich zmiennych.</li>
+<li><strong>Efekty grupowe</strong> (\( H \), \( R \), \( S \)…) interpretujemy wyłącznie po centrowaniu i jako ilorazy szans względem przeciętnego poziomu (zob. <a data-concept="identyfikowalnosc-parametrow">identyfikowalność</a>).</li>
+<li><strong>Indeks IAF</strong> jest konstrukcją zgodną z tym artykułem: zamiast surowego \( R_j \) (skala logit) raportuje stosunek <em>przeciętnych oczekiwanych wypełnień</em> z rywalem \( j \) i bez niego, uśrednionych po populacji referencyjnej meczów <em>po</em> transformacji \( \sigma \) — co uwzględnia zależność efektu od poziomu i nierówność Jensena. Liczony jest dla każdej próbki posterioru, a raportowana jest mediana, 95% przedział wiarygodności i \( P(\mathrm{IAF}\gt100) \).</li>
+<li><strong>Prognozy</strong> (rozkład predykcyjny, \( P(W\ge0{,}9) \) itp.) również liczy się próbka po próbce, a nie z uśrednionych parametrów.</li>
+<li><strong>Interpretacja przyczynowa</strong> nie jest celem MAF: IAF mówi, ilu widzów <em>przeciętnie towarzyszy</em> wizycie danego rywala przy kontroli gospodarza, sezonu i warunków meczu, a nie ilu widzów rywal „sprowadza”. Badania popytu na sport zwracają uwagę na wiele czynników zakłócających (ceny, transmisje, niepewność wyniku) <cite data-bib="borland2003"></cite>.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Efekty krańcowe zależą od wyboru punktu lub populacji</strong> — różne raporty mogą podawać różne liczby dla tego samego modelu.</li>
+<li><strong>Interakcje i nieliniowości</strong> — przy interakcji \( x_k\times x_l \) efekt \( x_k \) zależy od \( x_l \) nawet na skali łącza.</li>
+<li><strong>Standaryzacja zależy od próby</strong> — \( s_k \) zmienia się między sezonami lub ligami; współczynniki z różnych modeli nie są porównywalne bez wspólnej standaryzacji.</li>
+<li><strong>Współliniowość</strong> — „przy pozostałych ustalonych” bywa kontrfaktyczne (forma i pozycja w tabeli rzadko zmieniają się niezależnie).</li>
+<li><strong>Korelacja ≠ przyczynowość</strong> — bez założeń (ii)–(iii) i poprawnego zbioru \( X \) współczynnik może odzwierciedlać czynniki zakłócające; kontrola na mediatorach lub zderzaczach może obciążenie pogłębić.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="funkcja-logit">Funkcja logit</a> — iloraz szans i pochodna \( \sigma \).</li>
+<li><a data-concept="regresja-liniowa">Regresja liniowa</a> — interpretacja w przypadku łącza tożsamościowego.</li>
+<li><a data-concept="uogolnione-modele-liniowe">Uogólnione modele liniowe</a>.</li>
+<li><a data-concept="identyfikowalnosc-parametrow">Identyfikowalność parametrów</a> — które współczynniki mają sens samodzielnie.</li>
+<li><a data-concept="standaryzacja">Standaryzacja</a>.</li>
+<li><a data-concept="wartosc-oczekiwana">Wartość oczekiwana</a> i <a data-concept="prawo-calkowitej-wartosci-oczekiwanej">prawo całkowitej wartości oczekiwanej</a>.</li>
+<li><a data-concept="atrakcyjnosc-frekwencyjna">Atrakcyjność frekwencyjna (IAF)</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelmanhill2007"></li>
+<li data-bib="mccullagh1989"></li>
+<li data-bib="rubin1974"></li>
+<li data-bib="pearl2009"></li>
+<li data-bib="hernan2020"></li>
+<li data-bib="borland2003"></li>
+</ul>
+</section>

@@ -1,0 +1,188 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Regresja liniowa (ang. <em>linear regression</em>) odpowiada na pytanie: jak zmienia się <em>przeciętna</em> wartość zmiennej objaśnianej, gdy zmieniają się zmienne objaśniające? Jeżeli kluby w lepszej formie przyciągają średnio więcej widzów, to zamiast opisywać każdy mecz osobno, szukamy prostej (albo, przy wielu zmiennych, hiperpłaszczyzny), która najlepiej „przechodzi” przez chmurę punktów. Pojedyncze mecze odchylają się od tej prostej — są derby, pogoda, transmisja telewizyjna — ale średnio układają się wokół niej.</p>
+<p>Słowo „liniowa” dotyczy <em>parametrów</em>, a nie samych zmiennych: model \( y = \beta_0 + \beta_1 x + \beta_2 x^2 + \varepsilon \) jest nadal regresją liniową, bo wartość oczekiwana jest liniową kombinacją współczynników \( \beta_0, \beta_1, \beta_2 \). Dzięki tej liniowości estymator otrzymujemy w postaci zamkniętej, a jego własności (nieobciążoność, wariancja, optymalność) dają się udowodnić w kilku linijkach algebry macierzowej.</p>
+<p>Regresja liniowa jest punktem wyjścia dla całego działu: <a data-concept="uogolnione-modele-liniowe">uogólnione modele liniowe</a> zachowują jej predyktor liniowy \( \eta = x^\top\beta \), ale zmieniają rozkład zmiennej objaśnianej i sposób, w jaki \( \eta \) przekłada się na wartość oczekiwaną. Model frekwencji MAF jest takim właśnie uogólnieniem — wszystko, co tu powiemy o predyktorze liniowym, o macierzy planu i o interpretacji współczynników, przenosi się na niego bezpośrednio.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-model-liniowy"><p class="ml-box-title">Definicja</p>
+<p>Niech \( y = (y_1,\dots,y_n)^\top \in \mathbb{R}^n \) będzie wektorem obserwacji zmiennej objaśnianej, a \( X \in \mathbb{R}^{n\times p} \) — ustaloną (nielosową lub traktowaną warunkowo) <em>macierzą planu</em> (ang. <em>design matrix</em>), której \( i \)-ty wiersz \( x_i^\top \) zawiera wartości \( p \) zmiennych objaśniających dla obserwacji \( i \) (zwykle pierwsza kolumna to jedynki — wyraz wolny). <strong>Modelem regresji liniowej</strong> nazywamy założenie</p>
+<div class="ml-eq" id="eq-regresja-liniowa">\[ y = X\beta + \varepsilon, \qquad \mathbb{E}(\varepsilon \mid X) = 0, \qquad \operatorname{Var}(\varepsilon \mid X) = \sigma^2 I_n, \]</div>
+<p>gdzie \( \beta \in \mathbb{R}^p \) jest nieznanym wektorem współczynników, a \( \sigma^2 \in (0,\infty) \) — nieznaną wariancją błędu. Równoważnie: \( \mathbb{E}(y_i \mid x_i) = x_i^\top\beta \), a błędy są nieskorelowane i homoskedastyczne.</p>
+</div>
+<div class="ml-box ml-def" id="def-mnk"><p class="ml-box-title">Definicja</p>
+<p><strong>Estymatorem metody najmniejszych kwadratów</strong> (MNK, ang. <em>ordinary least squares</em>, OLS) nazywamy dowolny punkt minimum funkcji</p>
+<div class="ml-eq" id="eq-regresja-liniowa-rss">\[ S(\beta) = \sum_{i=1}^n \bigl(y_i - x_i^\top\beta\bigr)^2 = (y - X\beta)^\top (y - X\beta), \qquad \beta\in\mathbb{R}^p. \]</div>
+<p>Wektor \( \hat y = X\hat\beta \) to <em>wartości dopasowane</em>, a \( e = y - \hat y \) — <em>reszty</em> (ang. <em>residuals</em>).</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( n \)</td><td>liczba obserwacji (meczów)</td></tr>
+<tr><td>\( p \)</td><td>liczba kolumn macierzy planu (liczba współczynników, łącznie z wyrazem wolnym)</td></tr>
+<tr><td>\( y \in \mathbb{R}^n \)</td><td>wektor obserwacji zmiennej objaśnianej</td></tr>
+<tr><td>\( X \in \mathbb{R}^{n\times p} \)</td><td>macierz planu; wiersz \( x_i^\top \) opisuje obserwację \( i \)</td></tr>
+<tr><td>\( \beta \in \mathbb{R}^p \)</td><td>wektor nieznanych współczynników regresji</td></tr>
+<tr><td>\( \varepsilon \in \mathbb{R}^n \)</td><td>wektor błędów losowych</td></tr>
+<tr><td>\( \sigma^2 \)</td><td>wariancja błędu</td></tr>
+<tr><td>\( \hat\beta \)</td><td>estymator MNK wektora \( \beta \)</td></tr>
+<tr><td>\( \hat y,\ e \)</td><td>wartości dopasowane \( X\hat\beta \) i reszty \( y-\hat y \)</td></tr>
+<tr><td>\( H \)</td><td>macierz rzutowa („daszkowa”) \( X(X^\top X)^{-1}X^\top \)</td></tr>
+<tr><td>\( S(\beta),\ \mathrm{RSS} \)</td><td>suma kwadratów odchyleń i jej minimum (resztowa suma kwadratów)</td></tr>
+<tr><td>\( s^2 \)</td><td>nieobciążony estymator wariancji błędu \( \mathrm{RSS}/(n-p) \)</td></tr>
+<tr><td>\( R^2 \)</td><td>współczynnik determinacji</td></tr>
+<tr><td>\( I_n \)</td><td>macierz jednostkowa wymiaru \( n \)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<p>Klasyczny zestaw założeń (często oznaczany A1–A5) jest stopniowany — różne twierdzenia wymagają różnych jego podzbiorów:</p>
+<ol>
+<li><strong>A1 (liniowość):</strong> \( \mathbb{E}(y\mid X) = X\beta \) dla pewnego \( \beta \). Liniowość w parametrach, nie w zmiennych.</li>
+<li><strong>A2 (pełny rząd):</strong> \( \operatorname{rank}(X) = p \le n \). Bez tego \( X^\top X \) jest osobliwa, a \( \beta \) nie jest <a data-concept="identyfikowalnosc-parametrow">identyfikowalny</a> (np. zmienne idealnie współliniowe, zmienne zero-jedynkowe dla wszystkich poziomów czynnika razem z wyrazem wolnym).</li>
+<li><strong>A3 (egzogeniczność):</strong> \( \mathbb{E}(\varepsilon\mid X) = 0 \) — błąd nie zawiera informacji skorelowanej z predyktorami.</li>
+<li><strong>A4 (sferyczność błędów):</strong> \( \operatorname{Var}(\varepsilon\mid X) = \sigma^2 I_n \) — stała wariancja (homoskedastyczność) i brak korelacji między obserwacjami.</li>
+<li><strong>A5 (normalność, opcjonalnie):</strong> \( \varepsilon\mid X \sim N(0,\sigma^2 I_n) \). Potrzebna do dokładnych rozkładów statystyk testowych w małych próbach i do równoważności MNK z ENW.</li>
+</ol>
+<p>A1–A2 wystarczają, by \( \hat\beta \) był dobrze określony; A1–A3 dają nieobciążoność; A1–A4 — twierdzenie Gaussa–Markowa; A1–A5 — pełną teorię rozkładów w skończonej próbie <cite data-bib="casellaberger2002"></cite>.</p>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p><strong>Równania normalne</strong> i ich rozwiązanie przy założeniu A2:</p>
+<div class="ml-eq" id="eq-regresja-liniowa-normalne">\[ X^\top X\,\hat\beta = X^\top y \quad\Longrightarrow\quad \hat\beta = (X^\top X)^{-1} X^\top y. \]</div>
+<p><strong>Macierz rzutowa i reszty:</strong></p>
+<div class="ml-eq" id="eq-regresja-liniowa-rzut">\[ \hat y = Hy,\quad H = X(X^\top X)^{-1}X^\top,\quad e = (I_n - H)\,y,\quad X^\top e = 0. \]</div>
+<p><strong>Momenty estymatora</strong> (przy A1–A4):</p>
+<div class="ml-eq" id="eq-regresja-liniowa-momenty">\[ \mathbb{E}(\hat\beta\mid X) = \beta, \qquad \operatorname{Var}(\hat\beta\mid X) = \sigma^2 (X^\top X)^{-1}. \]</div>
+<p><strong>Estymator wariancji błędu</strong> i <strong>współczynnik determinacji</strong> (dla modelu z wyrazem wolnym):</p>
+<div class="ml-eq" id="eq-regresja-liniowa-s2">\[ s^2 = \frac{\mathrm{RSS}}{n-p} = \frac{e^\top e}{n-p}, \qquad R^2 = 1 - \frac{\mathrm{RSS}}{\sum_{i}(y_i-\bar y)^2}. \]</div>
+<p>W regresji prostej (\( p=2 \), \( x_i^\top = (1, x_i) \)) rozwiązanie <a class="ml-eqref" href="#eq-regresja-liniowa-normalne"></a> przyjmuje znaną postać</p>
+<div class="ml-eq" id="eq-regresja-liniowa-prosta">\[ \hat\beta_1 = \frac{S_{xy}}{S_{xx}} = \frac{\sum_i (x_i-\bar x)(y_i-\bar y)}{\sum_i (x_i-\bar x)^2}, \qquad \hat\beta_0 = \bar y - \hat\beta_1 \bar x, \qquad \operatorname{SE}(\hat\beta_1) = \sqrt{\frac{s^2}{S_{xx}}}. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-istnienie-mnk"><p class="ml-box-title">Twierdzenie (istnienie i jednoznaczność MNK)</p>
+<p>Przy założeniu A2 funkcja \( S(\beta) \) z <a class="ml-eqref" href="#eq-regresja-liniowa-rss"></a> ma dokładnie jedno minimum globalne, dane wzorem <a class="ml-eqref" href="#eq-regresja-liniowa-normalne"></a>. Wektor reszt jest ortogonalny do każdej kolumny \( X \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-gauss-markow"><p class="ml-box-title">Twierdzenie (Gaussa–Markowa)</p>
+<p>Przy założeniach A1–A4 estymator MNK \( \hat\beta \) jest <em>najlepszym liniowym nieobciążonym estymatorem</em> (BLUE, ang. <em>best linear unbiased estimator</em>) wektora \( \beta \): dla każdego estymatora postaci \( \tilde\beta = Cy \) (z macierzą \( C \) zależną tylko od \( X \)) spełniającego \( \mathbb{E}(\tilde\beta\mid X)=\beta \) dla wszystkich \( \beta \) macierz \( \operatorname{Var}(\tilde\beta\mid X) - \operatorname{Var}(\hat\beta\mid X) \) jest dodatnio półokreślona. W szczególności \( \operatorname{Var}(a^\top\tilde\beta) \ge \operatorname{Var}(a^\top\hat\beta) \) dla każdego \( a\in\mathbb{R}^p \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-mnk-enw"><p class="ml-box-title">Twierdzenie (MNK a estymator największej wiarygodności)</p>
+<p>Przy założeniach A1–A5 estymator największej wiarygodności (ENW) wektora \( \beta \) pokrywa się z \( \hat\beta \) MNK, a ENW wariancji wynosi \( \hat\sigma^2_{\mathrm{ENW}} = \mathrm{RSS}/n \). Ponadto \( \hat\beta\mid X \sim N\bigl(\beta, \sigma^2(X^\top X)^{-1}\bigr) \), \( (n-p)s^2/\sigma^2 \sim \chi^2_{n-p} \) i obie statystyki są niezależne.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-s2-nieobciazony"><p class="ml-box-title">Twierdzenie (nieobciążoność \( s^2 \))</p>
+<p>Przy A1–A4: \( \mathbb{E}(\mathrm{RSS}\mid X) = \sigma^2 (n-p) \), zatem \( \mathbb{E}(s^2\mid X)=\sigma^2 \), a \( \hat\sigma^2_{\mathrm{ENW}} \) jest obciążony w dół czynnikiem \( (n-p)/n \).</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="wyprowadzenie-rownania-normalne">Wyprowadzenie równań normalnych</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<ol>
+<li>Rozpisujemy formę kwadratową: \( S(\beta) = y^\top y - 2\beta^\top X^\top y + \beta^\top X^\top X \beta \) (skorzystaliśmy z tego, że \( y^\top X\beta \) jest skalarem, więc równa się swojej transpozycji \( \beta^\top X^\top y \)).</li>
+<li>Gradient względem \( \beta \): korzystając z \( \nabla_\beta (\beta^\top a) = a \) i \( \nabla_\beta(\beta^\top A\beta) = 2A\beta \) dla symetrycznej \( A \), dostajemy \( \nabla S(\beta) = -2X^\top y + 2X^\top X\beta \).</li>
+<li>Warunek konieczny minimum \( \nabla S = 0 \) daje równania normalne \( X^\top X\beta = X^\top y \).</li>
+<li>Hesjan \( \nabla^2 S = 2X^\top X \). Dla \( v\ne 0 \): \( v^\top X^\top X v = \lVert Xv\rVert^2 \gt 0 \), bo przy pełnym rzędzie \( Xv \ne 0 \). Hesjan jest więc dodatnio określony, \( S \) — ściśle wypukła, a punkt krytyczny jest jedynym minimum globalnym. Odwracalność \( X^\top X \) daje \( \hat\beta = (X^\top X)^{-1}X^\top y \).</li>
+<li>Ortogonalność reszt: \( X^\top e = X^\top y - X^\top X\hat\beta = 0 \) na mocy równań normalnych. Geometrycznie \( \hat y = Hy \) jest rzutem ortogonalnym \( y \) na przestrzeń kolumn \( X \); \( H \) jest symetryczna i idempotentna (\( H^2 = H \)).</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-momenty">Nieobciążoność i wariancja</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Podstawiając \( y = X\beta+\varepsilon \): \( \hat\beta = (X^\top X)^{-1}X^\top(X\beta+\varepsilon) = \beta + (X^\top X)^{-1}X^\top\varepsilon \). Z A3 \( \mathbb{E}(\hat\beta\mid X) = \beta \). Z A4 \( \operatorname{Var}(\hat\beta\mid X) = (X^\top X)^{-1}X^\top(\sigma^2 I)X(X^\top X)^{-1} = \sigma^2 (X^\top X)^{-1} \).</p>
+<p>Dla \( s^2 \): \( e = (I-H)\varepsilon \), bo \( (I-H)X = 0 \). Stąd \( \mathbb{E}(e^\top e) = \mathbb{E}\operatorname{tr}\bigl((I-H)\varepsilon\varepsilon^\top\bigr) = \sigma^2 \operatorname{tr}(I-H) = \sigma^2 (n - \operatorname{tr} H) \), a \( \operatorname{tr}H = \operatorname{tr}\bigl((X^\top X)^{-1}X^\top X\bigr) = \operatorname{tr} I_p = p \).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-gauss-markow">Szkic dowodu twierdzenia Gaussa–Markowa</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<ol>
+<li>Każdy estymator liniowy zapiszmy jako \( \tilde\beta = Cy \), gdzie \( C = (X^\top X)^{-1}X^\top + D \) dla pewnej macierzy \( D \in \mathbb{R}^{p\times n} \) (to tylko przepis „różnicy” względem MNK).</li>
+<li>Nieobciążoność: \( \mathbb{E}(\tilde\beta\mid X) = CX\beta = \beta + DX\beta \). Aby była równa \( \beta \) dla <em>każdego</em> \( \beta \), musi zachodzić \( DX = 0 \).</li>
+<li>Wariancja: \( \operatorname{Var}(\tilde\beta\mid X) = \sigma^2 CC^\top = \sigma^2\bigl[(X^\top X)^{-1} + (X^\top X)^{-1}X^\top D^\top + DX(X^\top X)^{-1} + DD^\top\bigr] \). Wyrazy mieszane znikają, bo \( DX=0 \).</li>
+<li>Zatem \( \operatorname{Var}(\tilde\beta) - \operatorname{Var}(\hat\beta) = \sigma^2 DD^\top \), a dla dowolnego \( a \): \( a^\top DD^\top a = \lVert D^\top a\rVert^2 \ge 0 \). Różnica jest dodatnio półokreślona; równość zachodzi wtedy i tylko wtedy, gdy \( D=0 \).</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-enw">Związek z ENW przy błędach normalnych</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Przy A5 gęstość \( y \) to \( N(X\beta, \sigma^2 I_n) \), więc <a data-concept="funkcja-wiarygodnosci">log-wiarygodność</a> ma postać</p>
+<div class="ml-eq" id="eq-regresja-liniowa-loglik">\[ \ell(\beta,\sigma^2) = -\frac{n}{2}\ln(2\pi\sigma^2) - \frac{1}{2\sigma^2}\,S(\beta). \]</div>
+<p>Dla każdego ustalonego \( \sigma^2 \) maksymalizacja \( \ell \) po \( \beta \) jest równoważna minimalizacji \( S(\beta) \), czyli \( \hat\beta_{\mathrm{ENW}} = \hat\beta_{\mathrm{MNK}} \). Podstawiając \( \hat\beta \) i różniczkując po \( \sigma^2 \): \( -\frac{n}{2\sigma^2} + \frac{\mathrm{RSS}}{2\sigma^4} = 0 \), skąd \( \hat\sigma^2_{\mathrm{ENW}} = \mathrm{RSS}/n \). Rozkład \( \hat\beta \) wynika z tego, że jest on liniową funkcją wektora normalnego; rozkład \( \chi^2 \) i niezależność — z rozkładu formy kwadratowej \( \varepsilon^\top(I-H)\varepsilon/\sigma^2 \) dla rzutu rzędu \( n-p \) i z ortogonalności \( H \) oraz \( I-H \) <cite data-bib="casellaberger2002"></cite>.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-box ml-note"><p>Twierdzenie Gaussa–Markowa nie wymaga normalności, ale ogranicza porównanie do estymatorów <em>liniowych</em> i <em>nieobciążonych</em>. Estymatory obciążone — np. bayesowskie z priorem ściągającym do zera — mogą mieć mniejszy błąd średniokwadratowy; to motywacja <a data-concept="efekty-stale-i-losowe">efektów losowych</a> i <a data-concept="partial-pooling">częściowego łączenia</a>.</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong> Pięć meczów domowych klubu Superligi. \( x_i \) — punkty zdobyte przez gospodarza w pięciu poprzednich meczach (0–10), \( y_i \) — liczba widzów w setkach.</p>
+<table class="ml-table">
+<thead><tr><th>\( i \)</th><th>\( x_i \)</th><th>\( y_i \) (setki)</th><th>\( x_i-\bar x \)</th><th>\( y_i-\bar y \)</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>2</td><td>8</td><td>−4</td><td>−3,2</td></tr>
+<tr><td>2</td><td>4</td><td>10</td><td>−2</td><td>−1,2</td></tr>
+<tr><td>3</td><td>6</td><td>11</td><td>0</td><td>−0,2</td></tr>
+<tr><td>4</td><td>8</td><td>13</td><td>2</td><td>1,8</td></tr>
+<tr><td>5</td><td>10</td><td>14</td><td>4</td><td>2,8</td></tr>
+</tbody>
+</table>
+<ol class="ml-steps">
+<li>Średnie: \( \bar x = 30/5 = 6 \), \( \bar y = 56/5 = 11{,}2 \).</li>
+<li>\( S_{xx} = 16+4+0+4+16 = 40 \); \( S_{xy} = 12{,}8 + 2{,}4 + 0 + 3{,}6 + 11{,}2 = 30 \).</li>
+<li>Ze wzoru <a class="ml-eqref" href="#eq-regresja-liniowa-prosta"></a>: \( \hat\beta_1 = 30/40 = 0{,}75 \), \( \hat\beta_0 = 11{,}2 - 0{,}75\cdot 6 = 6{,}7 \).</li>
+<li>Kontrola macierzowa: \( X^\top X = \begin{pmatrix}5 &amp; 30\\ 30 &amp; 220\end{pmatrix} \), \( X^\top y = \begin{pmatrix}56\\ 366\end{pmatrix} \), \( \det = 1100-900 = 200 \), \( (X^\top X)^{-1} = \frac{1}{200}\begin{pmatrix}220 &amp; -30\\ -30 &amp; 5\end{pmatrix} \). Stąd \( \hat\beta = \frac{1}{200}(220\cdot56 - 30\cdot366,\ -30\cdot56 + 5\cdot366)^\top = (1340/200,\ 150/200)^\top = (6{,}7;\ 0{,}75)^\top \) — zgodnie z krokiem 3.</li>
+<li>Wartości dopasowane: 8,2; 9,7; 11,2; 12,7; 14,2. Reszty: −0,2; 0,3; −0,2; 0,3; −0,2 (suma 0, jak wymaga ortogonalności do kolumny jedynek).</li>
+<li>\( \mathrm{RSS} = 0{,}04+0{,}09+0{,}04+0{,}09+0{,}04 = 0{,}30 \); \( s^2 = 0{,}30/(5-2) = 0{,}10 \); \( s \approx 0{,}316 \) (≈ 32 widzów).</li>
+<li>\( \operatorname{SE}(\hat\beta_1) = \sqrt{0{,}10/40} = \sqrt{0{,}0025} = 0{,}05 \).</li>
+<li>\( \sum(y_i-\bar y)^2 = 10{,}24+1{,}44+0{,}04+3{,}24+7{,}84 = 22{,}8 \); \( R^2 = 1 - 0{,}30/22{,}8 \approx 0{,}987 \).</li>
+<li>Prognoza punktowa dla \( x=7 \): \( 6{,}7 + 0{,}75\cdot7 = 11{,}95 \), czyli ok. 1195 widzów.</li>
+</ol>
+<div class="ml-plot" data-plot="normal" data-params='{"mu": 11.95, "sigma": 0.32}'></div>
+<p>Wykres pokazuje rozkład pojedynczej obserwacji wokół prostej dla \( x=7 \) przy \( \sigma\approx s \) (pomijamy niepewność samych współczynników). Zauważ, że przy normalnych błędach model dopuszcza wartości ujemne i niecałkowite — dla dużych liczb widzów to bez znaczenia, dla małych hal i wypełnienia bliskiego 100% staje się istotnym problemem.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>\( \hat\beta_1 = 0{,}75 \) oznacza, że mecze, przed którymi gospodarz miał o jeden punkt więcej w ostatnich pięciu spotkaniach, gromadziły <em>przeciętnie</em> o 75 widzów więcej (przy pozostałych zmiennych ustalonych, gdy jest ich więcej). To porównanie <em>warunkowych średnich</em>, a nie efekt przyczynowy — o różnicy pisze artykuł <a data-concept="interpretacja-wspolczynnikow" data-anchor="interpretacja">interpretacja współczynników</a>. Wyraz wolny \( \hat\beta_0 = 6{,}7 \) to prognoza dla \( x=0 \); bywa poza zakresem danych, dlatego często centruje się zmienne, aby wyraz wolny opisywał „typowy” mecz.</p>
+<p>\( R^2 \approx 0{,}987 \) mówi, że prosta wyjaśnia prawie całą zmienność <em>w tej próbie</em> — przy pięciu punktach i jednej zmiennej to wynik bardzo optymistyczny. Współczynnik determinacji nie mierzy jakości prognozy poza próbą; do tego służą <a data-concept="backtesting">walidacja chronologiczna</a>, <a data-concept="mae">MAE</a> i <a data-concept="rmse">RMSE</a>.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W modelu <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> regresja liniowa nie jest używana bezpośrednio jako model obserwacji — frekwencja jest ograniczona (\( 0 \le A_i \le C_i \)), dyskretna i heteroskedastyczna, co łamie założenia A4–A5. Jej <em>struktura</em> jest jednak rdzeniem modelu: predyktor liniowy</p>
+<div class="ml-eq" id="eq-regresja-liniowa-maf">\[ \eta_i = \alpha + H_{h(i)} + HS_{h(i),s(i)} + R_{r(i)} + RS_{r(i),s(i)} + S_{s(i)} + L_{l(i)} + x_i^\top\beta \]</div>
+<p>jest dokładnie wyrażeniem \( x_i^\top\beta \) z <a class="ml-eqref" href="#eq-regresja-liniowa"></a>, w którym macierz planu zawiera kolumny zero-jedynkowe dla gospodarzy, rywali, sezonów i rozgrywek oraz standaryzowane kowariaty warunków meczu (weekend, godzina, faza, forma i pozycja w tabeli). Różnica polega na tym, że \( \eta_i \) wchodzi do modelu przez funkcję łączącą (logit dla wypełnienia, logarytm dla liczby widzów) — zob. <a data-concept="uogolnione-modele-liniowe">uogólnione modele liniowe</a> — a współczynniki grup są <a data-concept="efekty-stale-i-losowe">efektami losowymi</a>.</p>
+<p>Z tego artykułu do MAF przenoszą się bezpośrednio: warunek pełnego rzędu (stąd problem <a data-concept="identyfikowalnosc-parametrow">identyfikowalności</a> \( \alpha \) i efektów grup), sens standaryzacji kowariat (porównywalność \( \beta_k \) i priory \( N(0,1) \)) oraz analiza reszt (<a data-concept="diagnostyka-reszt">diagnostyka reszt</a>). Regresja liniowa logarytmu frekwencji bywa też szybkim modelem odniesienia (ang. <em>baseline</em>) w walidacji.</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Zakres wartości:</strong> \( x^\top\beta \) jest nieograniczone, więc prognozy wypełnienia mogą wyjść poza \( [0,1] \), a liczby widzów — poniżej zera.</li>
+<li><strong>Heteroskedastyczność:</strong> wariancja frekwencji rośnie z jej poziomem i maleje przy wypełnieniu bliskim 100%. MNK pozostaje nieobciążona, ale traci optymalność, a klasyczne błędy standardowe są niepoprawne (można użyć estymatora odpornego <cite data-bib="white1980"></cite>).</li>
+<li><strong>Zależność obserwacji:</strong> mecze tego samego gospodarza są skorelowane — łamie to A4 i zaniża błędy standardowe; rozwiązaniem są efekty grupowe (<a data-concept="regresja-hierarchiczna">regresja hierarchiczna</a>).</li>
+<li><strong>Współliniowość:</strong> przy prawie zależnych kolumnach \( (X^\top X)^{-1} \) ma ogromne elementy — estymaty są niestabilne.</li>
+<li><strong>Wrażliwość na obserwacje odstające:</strong> kwadratowa funkcja straty mocno waży pojedyncze rekordy (np. mecz w dużej hali wyjazdowej).</li>
+<li><strong>Brak interpretacji przyczynowej</strong> bez dodatkowych założeń (A3 to założenie, nie wynik).</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="uogolnione-modele-liniowe">Uogólnione modele liniowe (GLM)</a> — rozszerzenie na rozkłady z rodziny wykładniczej i funkcję łączącą.</li>
+<li><a data-concept="interpretacja-wspolczynnikow">Interpretacja współczynników</a> — znaczenie \( \beta \) na różnych skalach.</li>
+<li><a data-concept="identyfikowalnosc-parametrow">Identyfikowalność parametrów</a> — co się dzieje, gdy \( X \) nie ma pełnego rzędu.</li>
+<li><a data-concept="funkcja-wiarygodnosci">Funkcja wiarygodności</a> i <a data-concept="rozklad-normalny">rozkład normalny</a> — podstawa równoważności MNK i ENW.</li>
+<li><a data-concept="standaryzacja">Standaryzacja</a> — przygotowanie kowariat.</li>
+<li><a data-concept="diagnostyka-reszt">Diagnostyka reszt</a> — sprawdzanie założeń.</li>
+<li><a data-concept="regresja-hierarchiczna">Regresja hierarchiczna</a> — regresja z efektami grup.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelmanhill2007"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="wasserman2004"></li>
+<li data-bib="white1980"></li>
+</ul>
+</section>

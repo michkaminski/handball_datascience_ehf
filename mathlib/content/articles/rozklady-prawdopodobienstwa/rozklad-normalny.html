@@ -1,0 +1,174 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Rozkład normalny (ang. <em>normal distribution</em>, rozkład Gaussa) opisuje wielkości, które powstają jako suma wielu drobnych, w przybliżeniu niezależnych wpływów. Jego gęstość ma kształt symetrycznego dzwonu: wartości bliskie środka są najbardziej prawdopodobne, a prawdopodobieństwo odchyleń maleje bardzo szybko — wykładniczo z kwadratem odległości od środka. Rozkład jest w pełni opisany przez dwie liczby: położenie środka \(\mu\) i szerokość \(\sigma\).</p>
+<p>W analizie danych sportowych rozkład normalny rzadko opisuje bezpośrednio surowe obserwacje — liczba widzów jest całkowita, nieujemna i zwykle prawoskośna. Pracuje jednak w trzech ważnych rolach: (1) jako punkt odniesienia przy <a data-concept="standaryzacja">standaryzacji</a> i ocenie nietypowości (<a data-concept="z-score">z-score</a>), (2) jako <a data-concept="rozklad-a-priori">rozkład a priori</a> dla współczynników regresji i efektów losowych, (3) jako przybliżenie rozkładów sum i średnich dzięki centralnemu twierdzeniu granicznemu.</p>
+<div class="ml-plot" data-plot="normal" data-params='{"mu": 0, "sigma": 1}'></div>
+<p>Zmieniając \(\mu\), przesuwasz krzywą bez zmiany kształtu; zwiększając \(\sigma\), spłaszczasz ją i poszerzasz, przy czym pole pod krzywą zawsze pozostaje równe 1.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-rozklad-normalny"><p class="ml-box-title">Definicja</p>
+<p>Niech \((\Omega, \mathcal F, P)\) będzie przestrzenią probabilistyczną, a \(X:\Omega\to\mathbb R\) <a data-concept="zmienna-losowa">zmienną losową</a>. Mówimy, że \(X\) ma rozkład normalny z parametrami \(\mu\in\mathbb R\) i \(\sigma^2\gt 0\), co zapisujemy \(X\sim N(\mu,\sigma^2)\), jeśli jej rozkład jest absolutnie ciągły względem miary Lebesgue’a na \(\mathbb R\) z gęstością</p>
+<div class="ml-eq" id="eq-rozklad-normalny">\[ f(x\mid\mu,\sigma) = \frac{1}{\sigma\sqrt{2\pi}}\exp\!\left(-\frac{(x-\mu)^2}{2\sigma^2}\right),\qquad x\in\mathbb R. \]</div>
+<p>Przypadek \(\mu=0,\ \sigma=1\) nazywamy standardowym rozkładem normalnym; jego gęstość oznaczamy \(\varphi\), a dystrybuantę \(\Phi(z)=\int_{-\infty}^{z}\varphi(t)\,dt\).</p>
+</div>
+<p>W literaturze bayesowskiej i w oprogramowaniu (Stan, PyMC) drugi parametr podaje się zwykle jako odchylenie standardowe \(\sigma\), a nie wariancję; w tym serwisie zapis \(N(\mu,\sigma)\) w opisach modeli oznacza parametr skali \(\sigma\), a zapis \(N(\mu,\sigma^2)\) w twierdzeniach — wariancję. Z kontekstu zawsze wynika, o którą konwencję chodzi.</p>
+<div class="ml-box ml-def" id="def-polnormalny"><p class="ml-box-title">Definicja (rozkład półnormalny)</p>
+<p>Jeśli \(X\sim N(0,\sigma^2)\), to \(Y=|X|\) ma rozkład półnormalny (ang. <em>half-normal</em>), \(Y\sim \text{Half-Normal}(0,\sigma)\), o gęstości \(g(y)=\dfrac{2}{\sigma\sqrt{2\pi}}\exp\!\left(-\dfrac{y^2}{2\sigma^2}\right)\) dla \(y\ge 0\) i \(g(y)=0\) dla \(y\lt 0\).</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(X\)</td><td>zmienna losowa o wartościach rzeczywistych</td></tr>
+<tr><td>\(\mu\)</td><td>parametr położenia; wartość oczekiwana, mediana i dominanta rozkładu</td></tr>
+<tr><td>\(\sigma\)</td><td>parametr skali (odchylenie standardowe), \(\sigma\gt 0\)</td></tr>
+<tr><td>\(\sigma^2\)</td><td>wariancja</td></tr>
+<tr><td>\(\varphi,\ \Phi\)</td><td>gęstość i dystrybuanta standardowego rozkładu normalnego</td></tr>
+<tr><td>\(Z\)</td><td>zmienna standaryzowana, \(Z=(X-\mu)/\sigma\sim N(0,1)\)</td></tr>
+<tr><td>\(M_X(t)\)</td><td>funkcja tworząca momenty, \(M_X(t)=E\,e^{tX}\)</td></tr>
+<tr><td>\(z_q\)</td><td>kwantyl rzędu \(q\) rozkładu \(N(0,1)\), \(\Phi(z_q)=q\)</td></tr>
+<tr><td>\(\sigma_R,\ z_j,\ R_j\)</td><td>w MAF: skala efektu rywala, zmienna standaryzowana i efekt rywala \(j\)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Nośnikiem jest cała prosta \(\mathbb R\): model przypisuje dodatnie prawdopodobieństwo dowolnie dużym i dowolnie ujemnym wartościom.</li>
+<li>Rozkład jest symetryczny wokół \(\mu\) i ma lekkie ogony (wszystkie momenty są skończone, kurtoza równa 3).</li>
+<li>Uzasadnieniem użycia do opisu danych jest zwykle addytywność wielu małych, słabo zależnych wpływów (centralne twierdzenie graniczne) albo świadomy wybór modelu na skali, na której efekty są addytywne (np. skala logitu lub logarytmu).</li>
+<li>Jako rozkład a priori: zakładamy, że parametr leży na nieograniczonej skali, a wiedza o nim jest symetryczna wokół wartości \(\mu\). Dla parametrów skali (\(\sigma\gt 0\)) stosujemy wariant półnormalny.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Momenty i charakterystyki:</p>
+<div class="ml-eq" id="eq-rozklad-normalny-momenty">\[ E X=\mu,\qquad \operatorname{Var} X=\sigma^2,\qquad \operatorname{med} X=\mu,\qquad \text{skośność}=0. \]</div>
+<p>Funkcja tworząca momenty:</p>
+<div class="ml-eq" id="eq-rozklad-normalny-mgf">\[ M_X(t)=\exp\!\left(\mu t+\tfrac12\sigma^2t^2\right),\qquad t\in\mathbb R. \]</div>
+<p>Standaryzacja i dystrybuanta:</p>
+<div class="ml-eq" id="eq-rozklad-normalny-standaryzacja">\[ Z=\frac{X-\mu}{\sigma}\sim N(0,1),\qquad P(X\le x)=\Phi\!\left(\frac{x-\mu}{\sigma}\right). \]</div>
+<p>Przedział centralny o prawdopodobieństwie \(1-\alpha\):</p>
+<div class="ml-eq" id="eq-rozklad-normalny-przedzial">\[ P\big(\mu-z_{1-\alpha/2}\,\sigma\le X\le \mu+z_{1-\alpha/2}\,\sigma\big)=1-\alpha,\qquad z_{0{,}975}\approx 1{,}96. \]</div>
+<p>Reguła „68–95–99,7”: \(P(|X-\mu|\le k\sigma)\approx 0{,}6827;\ 0{,}9545;\ 0{,}9973\) dla \(k=1,2,3\).</p>
+<p>Rozkład półnormalny \(Y=|X|,\ X\sim N(0,\sigma^2)\):</p>
+<div class="ml-eq" id="eq-rozklad-normalny-polnormalny">\[ E Y=\sigma\sqrt{\frac{2}{\pi}},\qquad \operatorname{Var}Y=\sigma^2\left(1-\frac{2}{\pi}\right),\qquad P(Y\le y)=2\Phi(y/\sigma)-1. \]</div>
+<p>Parametryzacja niecentrowana efektu losowego (używana w MAF):</p>
+<div class="ml-eq" id="eq-rozklad-normalny-niecentrowana">\[ R_j=\sigma_R\,z_j,\quad z_j\sim N(0,1)\quad\Longleftrightarrow\quad R_j\mid\sigma_R\sim N(0,\sigma_R^2). \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-liniowe"><p class="ml-box-title">Twierdzenie (przekształcenie liniowe)</p>
+<p>Jeśli \(X\sim N(\mu,\sigma^2)\) oraz \(a,b\in\mathbb R,\ a\ne 0\), to \(aX+b\sim N(a\mu+b,\ a^2\sigma^2)\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-suma"><p class="ml-box-title">Twierdzenie (suma niezależnych zmiennych normalnych)</p>
+<p>Jeśli \(X_1,\dots,X_n\) są niezależne i \(X_k\sim N(\mu_k,\sigma_k^2)\), to \(\sum_{k=1}^n X_k\sim N\!\left(\sum_k\mu_k,\ \sum_k\sigma_k^2\right)\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-ctg"><p class="ml-box-title">Twierdzenie (centralne twierdzenie graniczne Lindeberga–Lévy’ego)</p>
+<p>Niech \(X_1,X_2,\dots\) będą niezależne, o jednakowym rozkładzie, z \(EX_1=\mu\) i \(0\lt\operatorname{Var}X_1=\sigma^2\lt\infty\). Wtedy dla \(\bar X_n=\frac1n\sum_{k=1}^n X_k\)</p>
+\[ \sqrt n\,\frac{\bar X_n-\mu}{\sigma}\ \xrightarrow{d}\ N(0,1)\qquad (n\to\infty). \]
+<p>Dowód (przez funkcje charakterystyczne) podaje <cite data-bib="casellaberger2002"></cite>; tu go pomijamy.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-polnormalny"><p class="ml-box-title">Twierdzenie (momenty rozkładu półnormalnego)</p>
+<p>Dla \(Y\sim\text{Half-Normal}(0,\sigma)\) zachodzą wzory <a class="ml-eqref" href="#eq-rozklad-normalny-polnormalny"></a>.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="normalizacja">Gęstość całkuje się do jedności</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Podstawienie \(z=(x-\mu)/\sigma\), \(dx=\sigma\,dz\) sprowadza zadanie do pokazania, że \(I=\int_{\mathbb R}e^{-z^2/2}\,dz=\sqrt{2\pi}\). Liczymy kwadrat całki jako całkę podwójną i przechodzimy do współrzędnych biegunowych \((x,y)=(r\cos\theta,r\sin\theta)\), \(dx\,dy=r\,dr\,d\theta\):</p>
+\[ I^2=\int_{\mathbb R}\int_{\mathbb R}e^{-(x^2+y^2)/2}\,dx\,dy=\int_0^{2\pi}\!\!\int_0^\infty e^{-r^2/2}\,r\,dr\,d\theta=2\pi\Big[-e^{-r^2/2}\Big]_0^\infty=2\pi. \]
+<p>Ponieważ \(I\gt 0\), mamy \(I=\sqrt{2\pi}\), więc \(\int f(x\mid\mu,\sigma)\,dx=\frac{1}{\sigma\sqrt{2\pi}}\cdot\sigma\sqrt{2\pi}=1\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="momenty-dowod">Wartość oczekiwana i wariancja</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Niech \(Z\sim N(0,1)\). Funkcja \(z\varphi(z)\) jest nieparzysta i całkowalna, więc \(EZ=0\). Dla drugiego momentu całkujemy przez części z \(u=z\), \(dv=z\varphi(z)\,dz\), \(v=-\varphi(z)\):</p>
+\[ EZ^2=\int_{\mathbb R}z^2\varphi(z)\,dz=\Big[-z\varphi(z)\Big]_{-\infty}^{\infty}+\int_{\mathbb R}\varphi(z)\,dz=0+1=1. \]
+<p>Zatem \(\operatorname{Var}Z=1\). Ponieważ \(X=\mu+\sigma Z\), z liniowości <a data-concept="wartosc-oczekiwana">wartości oczekiwanej</a> \(EX=\mu\), a z własności wariancji \(\operatorname{Var}X=\sigma^2\operatorname{Var}Z=\sigma^2\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="mgf-dowod">Funkcja tworząca momenty</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla \(Z\sim N(0,1)\) uzupełniamy wykładnik do pełnego kwadratu: \(tz-\tfrac12z^2=-\tfrac12(z-t)^2+\tfrac12t^2\). Stąd</p>
+\[ M_Z(t)=\int_{\mathbb R}\frac{1}{\sqrt{2\pi}}e^{tz-z^2/2}\,dz=e^{t^2/2}\int_{\mathbb R}\frac{1}{\sqrt{2\pi}}e^{-(z-t)^2/2}\,dz=e^{t^2/2}, \]
+<p>bo ostatnia całka jest całką gęstości \(N(t,1)\). Dla \(X=\mu+\sigma Z\): \(M_X(t)=e^{\mu t}M_Z(\sigma t)=\exp(\mu t+\tfrac12\sigma^2t^2)\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="liniowe-dowod">Przekształcenie liniowe i suma niezależnych zmiennych</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Funkcja tworząca momenty, skończona w otoczeniu zera, wyznacza rozkład jednoznacznie. Dla \(Y=aX+b\):</p>
+\[ M_Y(t)=e^{bt}M_X(at)=\exp\!\big((a\mu+b)t+\tfrac12a^2\sigma^2t^2\big), \]
+<p>co jest funkcją tworzącą \(N(a\mu+b,a^2\sigma^2)\). Dla sumy niezależnych zmiennych funkcja tworząca jest iloczynem funkcji tworzących:</p>
+\[ M_{\sum X_k}(t)=\prod_{k=1}^n\exp\!\big(\mu_kt+\tfrac12\sigma_k^2t^2\big)=\exp\!\Big(t\sum_k\mu_k+\tfrac12t^2\sum_k\sigma_k^2\Big). \]
+<p>W szczególności, z twierdzenia o przekształceniu liniowym dla \(a=\sigma_R\), \(b=0\) wynika równoważność parametryzacji <a class="ml-eqref" href="#eq-rozklad-normalny-niecentrowana"></a>.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="polnormalny-dowod">Momenty rozkładu półnormalnego</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Wystarczy przypadek \(\sigma=1\) (ogólny dostajemy, mnożąc przez \(\sigma\)). Ponieważ \(\frac{d}{dy}\big(-e^{-y^2/2}\big)=y\,e^{-y^2/2}\),</p>
+\[ EY=\int_0^\infty y\,\frac{2}{\sqrt{2\pi}}e^{-y^2/2}\,dy=\frac{2}{\sqrt{2\pi}}\Big[-e^{-y^2/2}\Big]_0^\infty=\frac{2}{\sqrt{2\pi}}=\sqrt{\frac2\pi}. \]
+<p>Dalej \(EY^2=EX^2=1\), więc \(\operatorname{Var}Y=1-2/\pi\). Dystrybuanta: \(P(Y\le y)=P(-y\le X\le y)=\Phi(y)-\Phi(-y)=2\Phi(y)-1\).</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong> Przyjmijmy, że frekwencja meczów pewnego klubu Superligi w sezonie jest w przybliżeniu opisana rozkładem \(N(1200,\ 300^2)\).</p>
+<ol class="ml-steps">
+<li><strong>Prawdopodobieństwo frekwencji powyżej 1500.</strong> Standaryzujemy: \(z=(1500-1200)/300=1{,}00\). Zatem \(P(A\gt 1500)=1-\Phi(1{,}00)=1-0{,}8413=0{,}1587\) (zaokr. do 4 miejsc).</li>
+<li><strong>Prawdopodobieństwo frekwencji poniżej 800.</strong> \(z=(800-1200)/300=-1{,}333\); \(P(A\lt 800)=\Phi(-1{,}333)=0{,}0912\).</li>
+<li><strong>Przedział centralny 95%.</strong> \(1200\pm1{,}96\cdot300=1200\pm588\), czyli \([612,\ 1788]\).</li>
+<li><strong>Efekt losowy w parametryzacji niecentrowanej.</strong> Niech w wariancie „liczba widzów” MAF \(\sigma_R=0{,}30\), a dla pewnego rywala \(z_j=1{,}5\). Wtedy \(R_j=0{,}30\cdot1{,}5=0{,}45\) na skali \(\log\mu\), co oznacza mnożnik oczekiwanej frekwencji \(e^{0{,}45}=1{,}568\), czyli ok. \(+57\%\) względem rywala przeciętnego.</li>
+<li><strong>Suma niezależnych efektów.</strong> Jeśli efekt gospodarza \(H\sim N(0,0{,}5^2)\) i efekt rywala \(R\sim N(0,0{,}3^2)\) są niezależne, to \(H+R\sim N(0,\ 0{,}25+0{,}09)=N(0,\ 0{,}34)\), odchylenie standardowe \(\sqrt{0{,}34}=0{,}5831\). Wariancje się dodają, odchylenia standardowe — nie (\(0{,}5+0{,}3=0{,}8\ne0{,}5831\)).</li>
+<li><strong>Hiperprior półnormalny.</strong> Dla \(\sigma\sim\text{Half-Normal}(0,1)\): \(E\sigma=\sqrt{2/\pi}=0{,}798\); \(P(\sigma\le0{,}5)=2\Phi(0{,}5)-1=0{,}383\); \(P(\sigma\le1)=0{,}683\); \(P(\sigma\le2)=0{,}954\).</li>
+</ol>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Z kroków 1–3 wynika, że przy założonym modelu mniej więcej co szósty mecz przekracza 1500 widzów, a co jedenasty spada poniżej 800. Przedział \([612, 1788]\) jest przedziałem dla <em>pojedynczej obserwacji</em>, a nie dla średniej — średnia z wielu meczów ma odchylenie \(\sigma/\sqrt n\).</p>
+<p>Krok 4 pokazuje, że w modelu z łączem logarytmicznym efekt addytywny na skali predyktora przekłada się na efekt multiplikatywny na skali widzów. Krok 5 przypomina, że składniki niepewności łączą się przez wariancje. Krok 6 opisuje, co w praktyce znaczy prior \(\text{Half-Normal}(0,1)\): wartości skali do ok. 2 są dopuszczalne, ale niezbyt duże wartości są preferowane — typowy prior słabo informacyjny <cite data-bib="gelman2006prior"></cite>.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">Modelu Atrakcyjności Frekwencyjnej</a> rozkład normalny nie opisuje samej frekwencji, lecz pracuje w warstwie parametrów:</p>
+<ul>
+<li><strong>Efekty losowe.</strong> Efekty gospodarza \(H\), rywala \(R\), interakcji z sezonem \(HS, RS\), sezonu \(S\) i rozgrywek \(L\) mają rozkłady normalne o średniej 0 i skalach \(\sigma_\cdot\) — to typowa konstrukcja <a data-concept="efekty-stale-i-losowe">efektów losowych</a> w <a data-concept="modele-hierarchiczne">modelach hierarchicznych</a>. Implementacja używa parametryzacji niecentrowanej <a class="ml-eqref" href="#eq-rozklad-normalny-niecentrowana"></a>, która poprawia geometrię posterior dla próbnika NUTS <cite data-bib="papaspiliopoulos2007"></cite>.</li>
+<li><strong>Priory współczynników.</strong> \(\beta_k\sim N(0,1)\) dla standaryzowanych warunków meczu (weekend, godzina, forma, pozycja w tabeli): zmiana o jedno odchylenie standardowe zmiennej rzadko zmienia logit wypełnienia o więcej niż 2 jednostki.</li>
+<li><strong>Hiperpriory.</strong> Skale efektów mają rozkład \(\text{Half-Normal}(0,1)\) — zob. <a data-concept="hiperpriory">hiperpriory</a>.</li>
+<li><strong>Diagnostyka.</strong> Standaryzowane reszty porównuje się z \(N(0,1)\) w <a data-concept="diagnostyka-reszt">diagnostyce reszt</a>; wartości \(|z|\gt 3\) sygnalizują mecze nietypowe (np. derby, mecz przeniesiony do większej hali).</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Nośnik.</strong> Rozkład normalny przypisuje dodatnie prawdopodobieństwo wartościom ujemnym i wartościom większym od pojemności hali; dla liczby widzów lepsze są rozkłady dyskretne: <a data-concept="rozklad-beta-dwumianowy">beta-dwumianowy</a> lub <a data-concept="rozklad-ujemny-dwumianowy">ujemny dwumianowy</a>.</li>
+<li><strong>Symetria.</strong> Frekwencja jest zwykle prawoskośna (kilka meczów derbowych, finałów i spotkań z czołowymi klubami EHF o bardzo wysokiej frekwencji), czego rozkład normalny nie odtworzy.</li>
+<li><strong>Lekkie ogony.</strong> Prawdopodobieństwo odchyleń większych niż \(4\sigma\) jest rzędu \(6\cdot10^{-5}\); dane z obserwacjami odstającymi wymagają rozkładów o cięższych ogonach (np. t-Studenta) lub odpornych miar.</li>
+<li><strong>Centralne twierdzenie graniczne ma charakter asymptotyczny</strong> — dla małych prób lub silnej skośności przybliżenie normalne bywa słabe.</li>
+<li><strong>Jako prior</strong> \(N(0,\sigma)\) z bardzo dużym \(\sigma\) na skali logitu nie jest „nieinformacyjny” — skupia masę przy wartościach 0 i 1 na skali prawdopodobieństwa (zob. <a data-concept="rozklad-a-priori" data-anchor="przyklad">rozkład a priori</a>).</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="standaryzacja">Standaryzacja</a> i <a data-concept="z-score">z-score</a> — sprowadzanie do \(N(0,1)\).</li>
+<li><a data-concept="rozklad-a-priori">Rozkład a priori</a> i <a data-concept="priory">dobór priorów</a>.</li>
+<li><a data-concept="efekty-stale-i-losowe">Efekty stałe i losowe</a>, <a data-concept="partial-pooling">partial pooling</a>.</li>
+<li><a data-concept="hiperpriory">Hiperpriory</a> — rozkład półnormalny dla skal.</li>
+<li><a data-concept="wariancja-zmiennej-losowej">Wariancja zmiennej losowej</a>.</li>
+<li><a data-concept="diagnostyka-reszt">Diagnostyka reszt</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="casellaberger2002"></li>
+<li data-bib="johnson1995continuous"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="gelman2006prior"></li>
+<li data-bib="papaspiliopoulos2007"></li>
+</ul>
+</section>

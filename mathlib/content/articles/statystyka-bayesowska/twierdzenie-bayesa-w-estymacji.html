@@ -1,0 +1,211 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Klasyczne <a data-concept="twierdzenie-bayesa">twierdzenie Bayesa</a> odwraca warunkowanie między zdarzeniami: z \(P(B\mid A)\) i \(P(A)\) pozwala obliczyć \(P(A\mid B)\). W estymacji bayesowskiej (ang. <em>Bayesian estimation</em>) stosujemy dokładnie ten sam mechanizm, ale „zdarzeniem”, o które pytamy, jest wartość nieznanego parametru modelu, a „obserwacją” — zebrane dane. Parametr przestaje być nieznaną stałą, o której wolno mówić jedynie przez pryzmat hipotetycznych powtórzeń eksperymentu; staje się wielkością, o której niepewność opisujemy rozkładem prawdopodobieństwa.</p>
+<p>Schemat jest trzystopniowy. Przed obejrzeniem danych wyrażamy wiedzę o parametrze \(\theta\) w postaci <a data-concept="rozklad-a-priori">rozkładu a priori</a> \(p(\theta)\). Model obserwacji mówi, jak prawdopodobne byłyby dane \(y\) przy każdej możliwej wartości \(\theta\) — to <a data-concept="funkcja-wiarygodnosci">funkcja wiarygodności</a> \(p(y\mid\theta)\). Twierdzenie Bayesa łączy oba składniki w <a data-concept="rozklad-posterior">rozkład a posteriori</a> (posterior) \(p(\theta\mid y)\): wartości parametru, które dobrze tłumaczą dane i były a priori dopuszczalne, zyskują masę prawdopodobieństwa; pozostałe ją tracą.</p>
+<p>Przykład z hali: chcemy ocenić, jak często mecze danego klubu kończą się wypełnieniem trybun powyżej 90%. Z doświadczenia ligowego wiemy, że to raczej rzadkie zdarzenie (prior skupiony w okolicy 20%). Po dwunastu meczach, z których pięć przekroczyło próg, posterior przesuwa się w stronę wyższych wartości, ale nie aż do surowej częstości 5/12 — dwanaście meczów to wciąż niewiele. To „ważenie” wiedzy wstępnej i danych jest istotą estymacji bayesowskiej i źródłem jej odporności przy małych próbach.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \((\mathcal{Y},\mathcal{F}_{\mathcal{Y}})\) będzie przestrzenią obserwacji, a \(\Theta\subseteq\mathbb{R}^d\) — przestrzenią parametrów z \(\sigma\)-ciałem borelowskim. Model statystyczny to rodzina rozkładów \(\{P_\theta:\theta\in\Theta\}\) na \(\mathcal{Y}\), z gęstościami \(p(y\mid\theta)\) względem miary dominującej \(\nu\) (miary Lebesgue’a dla danych ciągłych, miary liczącej dla danych dyskretnych). W ujęciu bayesowskim parametr jest <a data-concept="zmienna-losowa">zmienną losową</a> \(\vartheta\) o rozkładzie \(\Pi\) na \(\Theta\) z gęstością \(p(\theta)\) względem miary \(\lambda\) na \(\Theta\).</p>
+<div class="ml-box ml-def" id="def-posterior"><p class="ml-box-title">Definicja</p>
+<p>Niech łączny rozkład pary \((\vartheta, Y)\) ma gęstość \(p(\theta, y) = p(y\mid\theta)\,p(\theta)\) względem \(\lambda\otimes\nu\). Jeżeli <em>wiarygodność brzegowa</em> (ang. <em>marginal likelihood, evidence</em>)
+\(p(y)=\int_\Theta p(y\mid\theta)\,p(\theta)\,\lambda(d\theta)\) spełnia \(0\lt p(y)\lt\infty\), to <strong>rozkładem a posteriori</strong> parametru przy danych \(y\) nazywamy rozkład na \(\Theta\) o gęstości</p>
+<div class="ml-eq" id="eq-twierdzenie-bayesa-w-estymacji">\[ p(\theta\mid y)=\frac{p(y\mid\theta)\,p(\theta)}{\displaystyle\int_\Theta p(y\mid\theta')\,p(\theta')\,\lambda(d\theta')} . \]</div>
+<p><strong>Estymacją bayesowską</strong> nazywamy wnioskowanie o \(\theta\) (oraz o funkcjach \(g(\theta)\) i o przyszłych obserwacjach) wyłącznie za pośrednictwem rozkładu \(p(\theta\mid y)\).</p>
+</div>
+<p>Ponieważ mianownik nie zależy od \(\theta\), wzór zapisuje się zwykle w postaci proporcjonalności „posterior \(\propto\) wiarygodność \(\times\) prior”, z którą pracują algorytmy MCMC. Wzór <a class="ml-eqref" href="#eq-twierdzenie-bayesa-w-estymacji"></a> jest uogólnieniem rozumowania Bayesa i Price’a <cite data-bib="bayes1763"></cite> z przypadku dwumianowego na dowolny model; współczesne ujęcie podręcznikowe podają <cite data-bib="gelman2013bda"></cite> i <cite data-bib="mcelreath2020"></cite>.</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(\theta\in\Theta\)</td><td>parametr (wektor parametrów) modelu; \(\Theta\) — przestrzeń parametrów</td></tr>
+<tr><td>\(y=(y_1,\dots,y_n)\)</td><td>zaobserwowane dane</td></tr>
+<tr><td>\(p(\theta)\)</td><td>gęstość rozkładu a priori (prior)</td></tr>
+<tr><td>\(p(y\mid\theta)\), \(L(\theta;y)\)</td><td>model obserwacji; jako funkcja \(\theta\) przy ustalonym \(y\) — funkcja wiarygodności</td></tr>
+<tr><td>\(p(y)\)</td><td>wiarygodność brzegowa (stała normująca, „evidence”)</td></tr>
+<tr><td>\(p(\theta\mid y)\)</td><td>gęstość rozkładu a posteriori (posterior)</td></tr>
+<tr><td>\(\tilde y\)</td><td>przyszła (nowa) obserwacja</td></tr>
+<tr><td>\(\operatorname{Beta}(a,b)\)</td><td>rozkład beta o parametrach kształtu \(a,b\gt0\)</td></tr>
+<tr><td>\(B(a,b)\)</td><td>funkcja beta Eulera, \(B(a,b)=\Gamma(a)\Gamma(b)/\Gamma(a+b)\)</td></tr>
+<tr><td>\(k,\ n\)</td><td>liczba „sukcesów” i liczba prób w przykładzie dwumianowym</td></tr>
+<tr><td>\(\propto\)</td><td>„proporcjonalne do” (równość z dokładnością do czynnika niezależnego od \(\theta\))</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li><strong>Poprawny model łączny.</strong> Określone są prior \(p(\theta)\) oraz model obserwacji \(p(y\mid\theta)\), mierzalny względem \(\theta\). Twierdzenie Bayesa jest tożsamością rachunku prawdopodobieństwa — nie „zakłada” niczego ponad istnienie rozkładu łącznego.</li>
+<li><strong>Właściwość posterioru.</strong> Musi zachodzić \(0\lt p(y)\lt\infty\). Przy właściwym priorze (\(\int p(\theta)\,d\theta=1\)) warunek \(p(y)\lt\infty\) jest automatyczny, gdy wiarygodność jest ograniczona; przy priorze niewłaściwym trzeba go sprawdzić osobno (zob. <a data-concept="priory" data-anchor="twierdzenia">priory niewłaściwe</a>).</li>
+<li><strong>Warunkowa niezależność obserwacji</strong> (gdy ją wykorzystujemy): \(p(y\mid\theta)=\prod_{i=1}^n p(y_i\mid\theta)\). Nie jest to wymóg samego twierdzenia, lecz typowe założenie modelu; w modelach hierarchicznych obowiązuje ono warunkowo na efektach grupowych.</li>
+<li><strong>Prior nie zależy od danych.</strong> Prior wyraża wiedzę sprzed obejrzenia \(y\). Dobranie priora „pod” te same dane, które potem wchodzą do wiarygodności, liczy informację dwukrotnie.</li>
+<li><strong>Dane są tym, co faktycznie zaobserwowano.</strong> Brak obserwacji (np. brak danych o frekwencji) nie jest obserwacją wartości zero; mechanizm braków musi być ignorowalny lub jawnie modelowany.</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Postać proporcjonalna, z której korzystają algorytmy próbkujące:</p>
+<div class="ml-eq" id="eq-twierdzenie-bayesa-w-estymacji-proporcjonalnosc">\[ p(\theta\mid y)\ \propto\ p(y\mid\theta)\,p(\theta),\qquad \log p(\theta\mid y)=\log p(y\mid\theta)+\log p(\theta)+\text{const}. \]</div>
+<p>Wiarygodność brzegowa (stała normująca):</p>
+<div class="ml-eq" id="eq-twierdzenie-bayesa-w-estymacji-brzegowa">\[ p(y)=\int_\Theta p(y\mid\theta)\,p(\theta)\,d\theta=\mathbb{E}_{p(\theta)}\big[p(y\mid\theta)\big]. \]</div>
+<p>Rozkład predykcyjny a posteriori nowej obserwacji \(\tilde y\), warunkowo niezależnej od \(y\) przy danym \(\theta\) (zob. <a data-concept="rozklad-predykcyjny">rozkład predykcyjny</a>):</p>
+<div class="ml-eq" id="eq-twierdzenie-bayesa-w-estymacji-predykcja">\[ p(\tilde y\mid y)=\int_\Theta p(\tilde y\mid\theta)\,p(\theta\mid y)\,d\theta . \]</div>
+<p>Model beta–dwumianowy (sprzężony): jeśli \(\theta\sim\operatorname{Beta}(a,b)\) i \(k\mid\theta\sim\operatorname{Bin}(n,\theta)\), to</p>
+<div class="ml-eq" id="eq-twierdzenie-bayesa-w-estymacji-beta">\[ \theta\mid k\ \sim\ \operatorname{Beta}(a+k,\ b+n-k),\qquad \mathbb{E}(\theta\mid k)=\frac{a+k}{a+b+n}. \]</div>
+<p>Wiarygodność brzegowa w tym modelu jest rozkładem <a data-concept="rozklad-beta-dwumianowy">beta-dwumianowym</a>:</p>
+<div class="ml-eq" id="eq-twierdzenie-bayesa-w-estymacji-betabin">\[ p(k)=\binom{n}{k}\frac{B(a+k,\ b+n-k)}{B(a,b)},\qquad k=0,1,\dots,n. \]</div>
+<p>Aktualizacja sekwencyjna dla danych \(y=(y^{(1)},y^{(2)})\) warunkowo niezależnych przy \(\theta\):</p>
+<div class="ml-eq" id="eq-twierdzenie-bayesa-w-estymacji-sekwencyjna">\[ p(\theta\mid y^{(1)},y^{(2)})\ \propto\ p(y^{(2)}\mid\theta)\,p(\theta\mid y^{(1)}). \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-bayes-gestosci"><p class="ml-box-title">Twierdzenie (wzór Bayesa dla gęstości)</p>
+<p>Przy założeniach z sekcji <a href="#definicja">Definicja formalna</a> funkcja \(p(\theta\mid y)\) dana wzorem <a class="ml-eqref" href="#eq-twierdzenie-bayesa-w-estymacji"></a> jest gęstością warunkowego rozkładu \(\vartheta\) przy \(Y=y\), tzn. dla każdego zbioru mierzalnego \(A\subseteq\Theta\) zachodzi \(P(\vartheta\in A\mid Y=y)=\int_A p(\theta\mid y)\,d\theta\) dla \(P_Y\)-prawie wszystkich \(y\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-sprzezenie-beta"><p class="ml-box-title">Twierdzenie (sprzężenie beta–dwumian)</p>
+<p>Jeżeli \(\theta\sim\operatorname{Beta}(a,b)\), \(a,b\gt0\), oraz \(k\mid\theta\sim\operatorname{Bin}(n,\theta)\), to posterior jest rozkładem \(\operatorname{Beta}(a+k,b+n-k)\), a wiarygodność brzegowa ma postać <a class="ml-eqref" href="#eq-twierdzenie-bayesa-w-estymacji-betabin"></a>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-srednia-wazona"><p class="ml-box-title">Twierdzenie (średnia posterior jako kompromis)</p>
+<p>W modelu beta–dwumianowym, przy \(n\ge1\),
+\(\mathbb{E}(\theta\mid k)=w\,\dfrac{a}{a+b}+(1-w)\,\dfrac{k}{n}\), gdzie \(w=\dfrac{a+b}{a+b+n}\in(0,1)\). Waga priora maleje do zera, gdy \(n\to\infty\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-sekwencyjnosc"><p class="ml-box-title">Twierdzenie (spójność aktualizacji sekwencyjnej)</p>
+<p>Jeżeli \(y^{(1)}\) i \(y^{(2)}\) są warunkowo niezależne przy \(\theta\), to posterior obliczony ze wszystkich danych naraz jest równy posteriorowi otrzymanemu przez użycie \(p(\theta\mid y^{(1)})\) jako priora dla \(y^{(2)}\) (wzór <a class="ml-eqref" href="#eq-twierdzenie-bayesa-w-estymacji-sekwencyjna"></a>). Kolejność porcji danych nie ma znaczenia.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-bvm"><p class="ml-box-title">Twierdzenie (Bernstein–von Mises, sformułowanie nieformalne)</p>
+<p>Jeżeli model jest regularny i identyfikowalny, prawdziwa wartość \(\theta_0\) leży we wnętrzu \(\Theta\), a prior ma w otoczeniu \(\theta_0\) ciągłą, dodatnią gęstość, to przy \(n\to\infty\) posterior zbliża się (w normie całkowitej zmienności) do rozkładu normalnego o średniej równej estymatorowi największej wiarygodności i kowariancji równej odwrotności obserwowanej informacji Fishera. W dużych próbach wpływ priora zanika. Dowód i dokładne warunki: <cite data-bib="gelman2013bda"></cite> (rozdz. 4 i dodatek B).</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-bayes-gestosci">Wzór Bayesa dla gęstości</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Krok 1. Z definicji gęstości łącznej, dla mierzalnych \(A\subseteq\Theta\), \(D\subseteq\mathcal{Y}\):
+\(P(\vartheta\in A,\ Y\in D)=\int_D\int_A p(y\mid\theta)p(\theta)\,d\theta\,\nu(dy)\).</p>
+<p>Krok 2. Rozkład brzegowy \(Y\) otrzymujemy, biorąc \(A=\Theta\): \(P(Y\in D)=\int_D p(y)\,\nu(dy)\), więc \(p(y)\) jest gęstością \(Y\).</p>
+<p>Krok 3. Zdefiniujmy \(q(A\mid y)=\int_A p(y\mid\theta)p(\theta)\,d\theta\,/\,p(y)\) dla \(y\) z \(p(y)\in(0,\infty)\). Wtedy
+\[ \int_D q(A\mid y)\,p(y)\,\nu(dy)=\int_D\int_A p(y\mid\theta)p(\theta)\,d\theta\,\nu(dy)=P(\vartheta\in A,\ Y\in D). \]</p>
+<p>Krok 4. Właśnie ta równość (dla wszystkich \(D\)) definiuje warunkowy rozkład \(\vartheta\) przy \(Y\); z jednoznaczności rozkładu warunkowego (z dokładnością do zbiorów miary zero) \(q(\cdot\mid y)=P(\vartheta\in\cdot\mid Y=y)\). Zbiór \(\{y:p(y)=0\}\) ma \(P_Y\)-miarę zero, a \(\{y: p(y)=\infty\}\) również, bo \(\int p(y)\,\nu(dy)=1\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-sprzezenie">Sprzężenie beta–dwumian</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Krok 1. Iloczyn wiarygodności i priora:
+\[ p(k\mid\theta)\,p(\theta)=\binom{n}{k}\theta^{k}(1-\theta)^{n-k}\cdot\frac{\theta^{a-1}(1-\theta)^{b-1}}{B(a,b)}=\frac{\binom{n}{k}}{B(a,b)}\,\theta^{a+k-1}(1-\theta)^{b+n-k-1}. \]</p>
+<p>Krok 2. Jako funkcja \(\theta\) jest to jądro gęstości \(\operatorname{Beta}(a+k,b+n-k)\); oba parametry są dodatnie, bo \(a,b\gt0\) i \(0\le k\le n\).</p>
+<p>Krok 3. Stała normująca: \(\int_0^1\theta^{a+k-1}(1-\theta)^{b+n-k-1}d\theta=B(a+k,b+n-k)\), więc \(p(k)=\binom{n}{k}B(a+k,b+n-k)/B(a,b)\), co daje <a class="ml-eqref" href="#eq-twierdzenie-bayesa-w-estymacji-betabin"></a>.</p>
+<p>Krok 4. Dzieląc iloczyn z kroku 1 przez \(p(k)\), otrzymujemy \(\theta^{a+k-1}(1-\theta)^{b+n-k-1}/B(a+k,b+n-k)\), czyli gęstość \(\operatorname{Beta}(a+k,b+n-k)\). Średnia rozkładu \(\operatorname{Beta}(\alpha,\beta)\) wynosi \(\alpha/(\alpha+\beta)\), stąd wzór <a class="ml-eqref" href="#eq-twierdzenie-bayesa-w-estymacji-beta"></a>.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-srednia-wazona">Średnia posterior jako średnia ważona</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Rozpisujemy licznik:
+\[ \begin{aligned}
+\frac{a+k}{a+b+n}&amp;=\frac{a+b}{a+b+n}\cdot\frac{a}{a+b}+\frac{n}{a+b+n}\cdot\frac{k}{n}\\
+&amp;=w\,\frac{a}{a+b}+(1-w)\,\frac{k}{n},\qquad w=\frac{a+b}{a+b+n}.
+\end{aligned} \]
+Pierwsza równość: \(\frac{a+b}{a+b+n}\cdot\frac{a}{a+b}=\frac{a}{a+b+n}\) i \(\frac{n}{a+b+n}\cdot\frac{k}{n}=\frac{k}{a+b+n}\); ich suma to lewa strona. Ponieważ \(a+b\gt0\) i \(n\ge1\), mamy \(w\in(0,1)\) oraz \(w\to0\) przy \(n\to\infty\). Wielkość \(a+b\) gra rolę „liczby pseudoobserwacji” priora.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-sekwencyjnosc">Aktualizacja sekwencyjna</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z warunkowej niezależności \(p(y^{(1)},y^{(2)}\mid\theta)=p(y^{(1)}\mid\theta)\,p(y^{(2)}\mid\theta)\). Zatem
+\[ \begin{aligned}
+p(\theta\mid y^{(1)},y^{(2)})&amp;\propto p(y^{(2)}\mid\theta)\,\big[p(y^{(1)}\mid\theta)\,p(\theta)\big]\\
+&amp;\propto p(y^{(2)}\mid\theta)\,p(\theta\mid y^{(1)}),
+\end{aligned} \]
+bo \(p(\theta\mid y^{(1)})=p(y^{(1)}\mid\theta)p(\theta)/p(y^{(1)})\), a \(p(y^{(1)})\) nie zależy od \(\theta\). Obie strony są gęstościami (całkują się do 1), więc stałe proporcjonalności są równe i rozkłady identyczne. Iloczyn jest przemienny, więc kolejność porcji nie ma znaczenia.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-predykcja">Rozkład predykcyjny</h3>
+<p>Z prawa całkowitego prawdopodobieństwa (wersja dla gęstości, zob. <a data-concept="prawo-calkowitego-prawdopodobienstwa">prawo całkowitego prawdopodobieństwa</a>) \(p(\tilde y\mid y)=\int p(\tilde y\mid\theta,y)\,p(\theta\mid y)\,d\theta\). Warunkowa niezależność \(\tilde y\) i \(y\) przy danym \(\theta\) daje \(p(\tilde y\mid\theta,y)=p(\tilde y\mid\theta)\), co prowadzi do <a class="ml-eqref" href="#eq-twierdzenie-bayesa-w-estymacji-predykcja"></a>. W praktyce całkę zastępuje się symulacją: dla każdej próbki \(\theta^{(s)}\) z posterioru losujemy \(\tilde y^{(s)}\sim p(\tilde y\mid\theta^{(s)})\).</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><em>Dane ilustracyjne.</em> Klub z Superligi rozegrał w hali o pojemności 2500 miejsc \(n=12\) meczów domowych; w \(k=5\) z nich wypełnienie przekroczyło 90%. Szukamy rozkładu a posteriori prawdopodobieństwa \(\theta\), że losowy mecz domowy przekroczy ten próg.</p>
+<h3 id="przyklad-siatka">Wariant A: prior dyskretny (siatka trzech wartości)</h3>
+<ol class="ml-steps">
+<li><strong>Prior.</strong> Dopuszczamy \(\theta\in\{0{,}2;\ 0{,}4;\ 0{,}6\}\) z prawdopodobieństwami a priori \(0{,}5;\ 0{,}3;\ 0{,}2\).</li>
+<li><strong>Wiarygodność.</strong> \(p(k=5\mid\theta)=\binom{12}{5}\theta^5(1-\theta)^7\), \(\binom{12}{5}=792\):
+<br>\(\theta=0{,}2\): \(792\cdot0{,}00032\cdot0{,}2097152\approx0{,}05315\);
+<br>\(\theta=0{,}4\): \(792\cdot0{,}01024\cdot0{,}0279936\approx0{,}22703\);
+<br>\(\theta=0{,}6\): \(792\cdot0{,}07776\cdot0{,}0016384\approx0{,}10090\).</li>
+<li><strong>Iloczyny prior × wiarygodność.</strong> \(0{,}5\cdot0{,}05315=0{,}02658\); \(0{,}3\cdot0{,}22703=0{,}06811\); \(0{,}2\cdot0{,}10090=0{,}02018\).</li>
+<li><strong>Wiarygodność brzegowa.</strong> \(p(y)=0{,}02658+0{,}06811+0{,}02018=0{,}11486\) (zaokrąglenie do 5 miejsc).</li>
+<li><strong>Posterior.</strong> \(0{,}02658/0{,}11486\approx0{,}231\); \(0{,}06811/0{,}11486\approx0{,}593\); \(0{,}02018/0{,}11486\approx0{,}176\). Suma: \(1{,}000\).</li>
+</ol>
+<table class="ml-table">
+<thead><tr><th>\(\theta\)</th><th>prior</th><th>wiarygodność</th><th>prior × wiarygodność</th><th>posterior</th></tr></thead>
+<tbody>
+<tr><td>0,2</td><td>0,500</td><td>0,05315</td><td>0,02658</td><td>0,231</td></tr>
+<tr><td>0,4</td><td>0,300</td><td>0,22703</td><td>0,06811</td><td>0,593</td></tr>
+<tr><td>0,6</td><td>0,200</td><td>0,10090</td><td>0,02018</td><td>0,176</td></tr>
+<tr><td>suma</td><td>1,000</td><td>—</td><td>0,11486</td><td>1,000</td></tr>
+</tbody>
+</table>
+<p>Najbardziej prawdopodobna a priori wartość 0,2 straciła na rzecz 0,4, która najlepiej tłumaczy obserwowaną częstość \(5/12\approx0{,}417\).</p>
+<h3 id="przyklad-sprzezony">Wariant B: prior ciągły Beta(2, 8)</h3>
+<ol class="ml-steps">
+<li><strong>Prior.</strong> \(\theta\sim\operatorname{Beta}(2,8)\): średnia \(2/10=0{,}20\), „siła” \(a+b=10\) pseudomeczów.</li>
+<li><strong>Posterior</strong> (wzór <a class="ml-eqref" href="#eq-twierdzenie-bayesa-w-estymacji-beta"></a>): \(\operatorname{Beta}(2+5,\ 8+12-5)=\operatorname{Beta}(7,15)\).</li>
+<li><strong>Średnia posterior.</strong> \(7/22\approx0{,}3182\). Kontrola wzorem kompromisu: \(w=10/22\approx0{,}4545\); \(0{,}4545\cdot0{,}20+0{,}5455\cdot0{,}4167=0{,}0909+0{,}2273=0{,}3182\). ✓</li>
+<li><strong>Inne podsumowania.</strong> Dominanta \((7-1)/(7+15-2)=6/20=0{,}300\); mediana \(\approx0{,}313\); odchylenie standardowe \(\sqrt{7\cdot15/(22^2\cdot23)}=\sqrt{105/11132}\approx0{,}0971\).</li>
+<li><strong>95% przedział wiarygodności</strong> (kwantyle 2,5% i 97,5% rozkładu Beta(7, 15), obliczone numerycznie): \([0{,}146;\ 0{,}522]\).</li>
+<li><strong>Prawdopodobieństwo hipotezy.</strong> \(P(\theta\gt0{,}25\mid y)\approx0{,}744\).</li>
+<li><strong>Wiarygodność brzegowa</strong> (wzór <a class="ml-eqref" href="#eq-twierdzenie-bayesa-w-estymacji-betabin"></a>): \(p(k=5)=792\cdot B(7,15)/B(2,8)\approx0{,}0701\).</li>
+</ol>
+<div class="ml-plot" data-plot="beta-update" data-params='{"a": 2, "b": 8, "k": 5, "n": 12}'></div>
+<p>Zwróć uwagę, że posterior leży między priorem a surową częstością \(k/n\) i jest od priora węższy; zwiększając \(n\) przy stałym stosunku \(k/n\), zobaczysz, jak wpływ priora zanika.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Posterior \(\operatorname{Beta}(7,15)\) to pełna odpowiedź na pytanie o \(\theta\) przy przyjętym modelu i priorze. Zdanie „z prawdopodobieństwem 95% częstość meczów z wypełnieniem powyżej 90% leży między 14,6% a 52,2%” ma w ujęciu bayesowskim dosłowny sens — w odróżnieniu od przedziału ufności, którego poziom dotyczy procedury, a nie konkretnego przedziału (zob. <a data-concept="przedzial-wiarygodnosci">przedział wiarygodności</a>).</p>
+<p>Szerokość przedziału jest uczciwą miarą tego, jak mało mówi dwanaście meczów. Średnia 0,318 leży bliżej danych (0,417) niż priora (0,20), bo dane „ważą” 12 obserwacji, a prior 10 pseudoobserwacji. Wybór podsumowania punktowego (średnia, mediana, dominanta) zależy od funkcji straty — omawia to artykuł <a data-concept="estymacja-posterior">estymacja posterior</a>.</p>
+<p>Wiarygodność brzegowa \(p(y)\approx0{,}070\) nie jest prawdopodobieństwem parametru; mówi, jak dobrze cały model (prior + wiarygodność) przewidywał dane przed ich obejrzeniem, i służy do porównywania modeli. Jest przy tym bardzo czuła na szerokość priora, dlatego w praktyce do porównań predykcyjnych częściej używa się walidacji krzyżowej <cite data-bib="vehtari2017loo"></cite>.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>Cały <a data-concept="atrakcyjnosc-frekwencyjna">Model Atrakcyjności Frekwencyjnej (MAF)</a> jest jednym wielkim zastosowaniem wzoru <a class="ml-eqref" href="#eq-twierdzenie-bayesa-w-estymacji"></a>. Wektor parametrów \(\theta\) obejmuje wyraz wolny \(\alpha\), efekty gospodarzy \(H\), rywali \(R\), interakcje z sezonem \(HS, RS\), efekty sezonu \(S\) i rozgrywek \(L\), współczynniki warunków meczu \(\beta\), odchylenia \(\sigma\) efektów losowych oraz parametr precyzji \(\phi\) (lub dyspersji \(\kappa\)). Dane \(y\) to liczby widzów \(A_i\) z ok. 24 tys. meczów lig ZPRP i ok. 2,8 tys. meczów pucharów EHF.</p>
+<ul>
+<li><strong>Wiarygodność</strong> to iloczyn beta-dwumianowych \(p(A_i\mid C_i,\mu_i,\phi)\) (wariant „wypełnienie”) lub ujemnych dwumianowych \(p(A_i\mid\mu_i,\kappa)\) (wariant „liczba widzów”) — zob. <a data-concept="funkcja-wiarygodnosci">funkcja wiarygodności</a>.</li>
+<li><strong>Prior</strong> to iloczyn rozkładów \(N(0,1)\) dla \(\beta_k\), Half-Normal\((0,1)\) dla odchyleń \(\sigma\) i \(N(0,1)\) dla standaryzowanych efektów \(z_j\) — zob. <a data-concept="priory">priory</a> i <a data-concept="hiperpriory">hiperpriory</a>.</li>
+<li><strong>Posterior</strong> nie ma postaci analitycznej (wymiar w tysiącach); zamiast stałej \(p(y)\) korzystamy z postaci proporcjonalnej <a class="ml-eqref" href="#eq-twierdzenie-bayesa-w-estymacji-proporcjonalnosc"></a> i próbkujemy algorytmem NUTS (<a data-concept="mcmc">MCMC i Hamiltonian Monte Carlo</a>).</li>
+<li><strong>Indeks IAF</strong> rywala oraz prognozy frekwencji są funkcjami parametrów, więc ich rozkłady a posteriori uzyskujemy, licząc je dla każdej próbki; prognoza to rozkład predykcyjny <a class="ml-eqref" href="#eq-twierdzenie-bayesa-w-estymacji-predykcja"></a>.</li>
+</ul>
+<p>Aktualizacja sekwencyjna (twierdzenie o spójności) uzasadnia logikę cotygodniowego odświeżania: posterior po nowej kolejce jest taki sam, jak gdyby model dopasowano od zera do wszystkich danych — pod warunkiem, że struktura modelu i priory się nie zmieniły. W MAF dopasowujemy model ponownie do pełnych danych, co jest numerycznie bezpieczniejsze niż przybliżanie posterioru i podstawianie go jako priora.</p>
+<p>Wariant B przykładu odpowiada pytaniu, które pojawia się w raportach klubowych: „jak często grywamy przy prawie pełnych trybunach?”. Przy kilkunastu meczach surowa częstość jest mało stabilna; posterior daje ocenę z uczciwym przedziałem.</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Zależność od modelu.</strong> Posterior jest poprawny tylko względem przyjętego modelu. Źle wyspecyfikowana wiarygodność (np. dwumian zamiast rozkładu z nadmierną dyspersją) daje fałszywie wąskie przedziały; wymaga to kontroli <a data-concept="posterior-predictive-checks">posterior predictive checks</a>.</li>
+<li><strong>Wrażliwość na prior przy małych próbach.</strong> Przy kilku obserwacjach na grupę prior realnie współdecyduje o wyniku; należy to raportować i badać wrażliwość.</li>
+<li><strong>Koszt obliczeniowy.</strong> Poza modelami sprzężonymi posterior wymaga MCMC lub aproksymacji; błędy numeryczne (brak zbieżności, dywergencje) trzeba diagnozować (<a data-concept="r-hat">R-hat</a>, <a data-concept="effective-sample-size">ESS</a>).</li>
+<li><strong>Niewłaściwe priory</strong> mogą prowadzić do niewłaściwego posterioru, którego algorytm próbkujący nie zasygnalizuje wprost.</li>
+<li><strong>Wiarygodność brzegowa</strong> jest silnie zależna od szerokości priorów i trudna do obliczenia; nie należy jej traktować jako jedynego kryterium wyboru modelu.</li>
+<li><strong>Brak danych ≠ zero.</strong> Pominięcie lub błędne zakodowanie braków (np. NULL frekwencji jako 0 widzów) zniekształca wiarygodność w sposób, którego żaden prior nie naprawi.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="twierdzenie-bayesa">Twierdzenie Bayesa</a> — wersja dla zdarzeń.</li>
+<li><a data-concept="funkcja-wiarygodnosci">Funkcja wiarygodności</a> i <a data-concept="rozklad-a-priori">rozkład a priori</a> — dwa składniki wzoru.</li>
+<li><a data-concept="rozklad-posterior">Rozkład posterior</a>, <a data-concept="estymacja-posterior">estymacja posterior</a>, <a data-concept="przedzial-wiarygodnosci">przedział wiarygodności</a>.</li>
+<li><a data-concept="priory">Priory — dobór rozkładów a priori</a>, <a data-concept="hiperpriory">hiperpriory</a>.</li>
+<li><a data-concept="rozklad-predykcyjny">Rozkład predykcyjny</a>, <a data-concept="rozklad-beta-dwumianowy">rozkład beta-dwumianowy</a>, <a data-concept="rozklad-beta">rozkład beta</a>.</li>
+<li><a data-concept="modele-hierarchiczne">Modele hierarchiczne</a>, <a data-concept="mcmc">MCMC</a>, <a data-concept="atrakcyjnosc-frekwencyjna">MAF i indeks IAF</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelman2013bda"></li>
+<li data-bib="bayes1763"></li>
+<li data-bib="mcelreath2020"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="kruschke2015"></li>
+<li data-bib="vehtari2017loo"></li>
+</ul>
+</section>

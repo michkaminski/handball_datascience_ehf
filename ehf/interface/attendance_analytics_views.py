@@ -7,11 +7,17 @@ from ehf.domain.errors import DataReadError
 from ehf.interface.attendance_analytics_chart import attendance_charts_payload
 from ehf.interface.attendance_analytics_filters import attendance_filters_from_args
 from ehf.services.attendance_analytics import AttendanceAnalyticsService
+from ehf.services.attendance_appeal import AttendanceAppealService
 
 
 class AttendanceAnalyticsView(MethodView):
-    def __init__(self, service: AttendanceAnalyticsService) -> None:
+    def __init__(
+        self,
+        service: AttendanceAnalyticsService,
+        appeal_service: AttendanceAppealService | None = None,
+    ) -> None:
         self._service = service
+        self._appeal_service = appeal_service
 
     def get(self) -> str:
         try:
@@ -31,4 +37,5 @@ class AttendanceAnalyticsView(MethodView):
             choices=choices,
             genders=self._service.genders(),
             charts=attendance_charts_payload(report),
+            appeal_models=self._appeal_service.models() if self._appeal_service else (),
         )

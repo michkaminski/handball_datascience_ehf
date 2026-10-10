@@ -1,0 +1,171 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Dlaczego prognoza frekwencji na najbliższy mecz jest niepewna? Z dwóch zupełnie różnych powodów. Po pierwsze, <em>nawet gdybyśmy znali model idealnie</em>, frekwencja meczu jest losowa: pogoda, korki, inne wydarzenia w mieście, dyspozycja kibiców — mecz o „prawdziwym” średnim wypełnieniu 60% może skończyć się wypełnieniem 45% albo 75%. Po drugie, <em>nie znamy modelu idealnie</em>: parametry (efekt gospodarza, efekt rywala, wpływ weekendu) szacujemy ze skończonej liczby meczów, więc samo „prawdziwe” średnie wypełnienie jest niepewne.</p>
+<p><strong>Prawo całkowitej wariancji</strong> (ang. <em>law of total variance</em>, także <em>Eve’s law</em> lub wzór na rozkład wariancji) mówi, że całkowita wariancja jest dokładnie sumą tych dwóch składników:</p>
+<p style="text-align:center">\(\operatorname{Var}(X)=\underbrace{\mathbb E[\operatorname{Var}(X\mid Y)]}_{\text{średnia zmienność wewnątrz}}+\underbrace{\operatorname{Var}(\mathbb E[X\mid Y])}_{\text{zmienność średnich}}\).</p>
+<p>Ta sama tożsamość opisuje klasyczny podział zmienności na część wewnątrzgrupową i międzygrupową (analiza wariancji), wyjaśnia, skąd bierze się nadmierna dyspersja rozkładów beta-dwumianowego i ujemnego dwumianowego, a w modelu MAF — z czego składa się szerokość przedziałów predykcyjnych.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-wariancja-warunkowa"><p class="ml-box-title">Definicja (wariancja warunkowa)</p>
+<p>Niech \(\mathbb E[X^2]\lt\infty\). <strong>Wariancją warunkową</strong> \(X\) przy danym \(Y\) nazywamy zmienną losową</p>
+<div class="ml-eq" id="eq-prawo-calkowitej-wariancji-warunkowa">\[ \operatorname{Var}(X\mid Y)=\mathbb E\Big[\big(X-\mathbb E[X\mid Y]\big)^2\,\Big|\,Y\Big]=\mathbb E[X^2\mid Y]-\big(\mathbb E[X\mid Y]\big)^2. \]</div>
+<p>Jest ona funkcją \(Y\): dla \(Y=y\) to wariancja rozkładu warunkowego \(X\mid Y=y\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-prawo-calkowitej-wariancji"><p class="ml-box-title">Twierdzenie (prawo całkowitej wariancji)</p>
+<p>Jeśli \(\mathbb E[X^2]\lt\infty\), to dla dowolnej zmiennej (wektora, σ-ciała) \(Y\):</p>
+<div class="ml-eq" id="eq-prawo-calkowitej-wariancji">\[ \operatorname{Var}(X)=\mathbb E\big[\operatorname{Var}(X\mid Y)\big]+\operatorname{Var}\big(\mathbb E[X\mid Y]\big). \]</div>
+<p>Oba składniki są nieujemne.</p>
+</div>
+<p>Pierwszy składnik nazywamy <strong>wariancją wewnątrzwarunkową</strong> (niewyjaśnioną przez \(Y\)), drugi — <strong>wariancją międzywarunkową</strong> (wyjaśnioną przez \(Y\)). Ich stosunek \(\operatorname{Var}(\mathbb E[X\mid Y])/\operatorname{Var}(X)\in[0,1]\) to odsetek wariancji wyjaśnionej przez \(Y\) (populacyjny odpowiednik \(R^2\) i współczynnika korelacji wewnątrzklasowej).</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(\operatorname{Var}(X\mid Y)\)</td><td>wariancja warunkowa (zmienna losowa, funkcja \(Y\))</td></tr>
+<tr><td>\(\mathbb E[X\mid Y]\)</td><td>warunkowa wartość oczekiwana</td></tr>
+<tr><td>\(\mathbb E[\operatorname{Var}(X\mid Y)]\)</td><td>średnia wariancja wewnątrzwarunkowa (w MAF: zmienność meczu)</td></tr>
+<tr><td>\(\operatorname{Var}(\mathbb E[X\mid Y])\)</td><td>wariancja średnich warunkowych (w MAF: niepewność parametrów)</td></tr>
+<tr><td>\(\theta,\theta^{(s)}\)</td><td>parametry modelu; próbka a posteriori</td></tr>
+<tr><td>\(\tilde A\)</td><td>przyszła frekwencja (wielkość prognozowana)</td></tr>
+<tr><td>\(C\)</td><td>pojemność hali</td></tr>
+<tr><td>\(\mu,\phi\)</td><td>średnie wypełnienie i precyzja rozkładu beta-dwumianowego</td></tr>
+<tr><td>\(\kappa\)</td><td>parametr dyspersji rozkładu ujemnego dwumianowego</td></tr>
+<tr><td>\(\Lambda\)</td><td>losowa intensywność w mieszaninie Poissona–gamma</td></tr>
+<tr><td>\(\mathrm{SST},\mathrm{SSW},\mathrm{SSB}\)</td><td>całkowita, wewnątrzgrupowa i międzygrupowa suma kwadratów</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>\(\mathbb E[X^2]\lt\infty\); wtedy wszystkie występujące wielkości są skończone.</li>
+<li>Twierdzenie jest tożsamością — nie wymaga niezależności, normalności ani liniowości. Wymaga jedynie, by \(\mathbb E\) i \(\operatorname{Var}\) w zewnętrznych operacjach liczone były względem <em>rozkładu \(Y\)</em> (w zastosowaniu bayesowskim: rozkładu a posteriori parametrów).</li>
+<li>Interpretacja „aleatoryczna + epistemiczna” wymaga, by \(Y\) obejmowało <em>wszystkie</em> parametry modelu; warunkowanie tylko na części parametrów przesuwa resztę niepewności parametrycznej do pierwszego składnika.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Rozkład niepewności predykcyjnej w modelu bayesowskim:</p>
+<div class="ml-eq" id="eq-prawo-calkowitej-wariancji-predykcja">\[ \operatorname{Var}(\tilde A\mid y)=\underbrace{\mathbb E_{\theta\mid y}\big[\operatorname{Var}(\tilde A\mid\theta)\big]}_{\text{zmienność meczu (aleatoryczna)}}+\underbrace{\operatorname{Var}_{\theta\mid y}\big(\mathbb E[\tilde A\mid\theta]\big)}_{\text{niepewność parametrów (epistemiczna)}}. \]</div>
+<p>Przybliżenie Monte Carlo z \(S\) próbek posterior:</p>
+<div class="ml-eq" id="eq-prawo-calkowitej-wariancji-mc">\[ \operatorname{Var}(\tilde A\mid y)\approx\frac1S\sum_{s=1}^{S}v^{(s)}+\frac1S\sum_{s=1}^{S}\big(m^{(s)}-\bar m\big)^2, \qquad m^{(s)}=\mathbb E[\tilde A\mid\theta^{(s)}],\ v^{(s)}=\operatorname{Var}(\tilde A\mid\theta^{(s)}),\ \bar m=\tfrac1S\textstyle\sum_sm^{(s)}. \]</div>
+<p>Wariancje mieszanin (wyprowadzenia poniżej):</p>
+<div class="ml-eq" id="eq-prawo-calkowitej-wariancji-betabin">\[ A\mid p\sim\mathrm{Bin}(C,p),\ p\sim\mathrm{Beta}(\mu\phi,(1-\mu)\phi)\ \Rightarrow\ \operatorname{Var}(A)=C\mu(1-\mu)\,\frac{\phi+C}{\phi+1}, \]</div>
+<div class="ml-eq" id="eq-prawo-calkowitej-wariancji-negbin">\[ A\mid\Lambda\sim\mathrm{Poisson}(\Lambda),\ \Lambda\sim\mathrm{Gamma}(\kappa,\kappa/\mu)\ \Rightarrow\ \operatorname{Var}(A)=\mu+\frac{\mu^2}{\kappa}. \]</div>
+<p>Wersja empiryczna (analiza wariancji) dla \(n\) obserwacji w grupach \(g\) o licznościach \(n_g\) i średnich \(\bar x_g\):</p>
+<div class="ml-eq" id="eq-prawo-calkowitej-wariancji-anova">\[ \underbrace{\sum_{i}(x_i-\bar x)^2}_{\mathrm{SST}}=\underbrace{\sum_g\sum_{i\in g}(x_i-\bar x_g)^2}_{\mathrm{SSW}}+\underbrace{\sum_gn_g(\bar x_g-\bar x)^2}_{\mathrm{SSB}}. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<p>Główne twierdzenie sformułowano w sekcji <a href="#definicja">Definicja formalna</a>. Wnioski:</p>
+<div class="ml-box ml-thm" id="thm-warunkowanie-zmniejsza"><p class="ml-box-title">Twierdzenie (warunkowanie średnio zmniejsza wariancję)</p>
+<p>\(\mathbb E[\operatorname{Var}(X\mid Y)]\le\operatorname{Var}(X)\), z równością wtedy i tylko wtedy, gdy \(\mathbb E[X\mid Y]\) jest stała prawie na pewno. Również \(\operatorname{Var}(\mathbb E[X\mid Y])\le\operatorname{Var}(X)\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-nadmierna-dyspersja"><p class="ml-box-title">Twierdzenie (mieszaniny są nadmiernie zdyspergowane)</p>
+<p>Jeśli \(A\mid p\sim\mathrm{Bin}(C,p)\) i \(\operatorname{Var}(p)\gt0\), to \(\operatorname{Var}(A)\gt C\,\mathbb E[p](1-\mathbb E[p])\) dla \(C\ge2\). Jeśli \(A\mid\Lambda\sim\mathrm{Poisson}(\Lambda)\) i \(\operatorname{Var}(\Lambda)\gt0\), to \(\operatorname{Var}(A)\gt\mathbb E[A]\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-wielopoziomowe"><p class="ml-box-title">Twierdzenie (rozkład wielopoziomowy)</p>
+<p>Dla zagnieżdżonej informacji \(\sigma(Y_1)\subseteq\sigma(Y_1,Y_2)\): \(\operatorname{Var}(X)=\mathbb E[\operatorname{Var}(X\mid Y_1,Y_2)]+\mathbb E\big[\operatorname{Var}(\mathbb E[X\mid Y_1,Y_2]\mid Y_1)\big]+\operatorname{Var}(\mathbb E[X\mid Y_1])\).</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<div class="ml-proof"><p class="ml-box-title">Dowód prawa całkowitej wariancji</p>
+<p>Oznaczmy \(m(Y)=\mathbb E[X\mid Y]\). Korzystamy ze wzoru \(\operatorname{Var}(X)=\mathbb E[X^2]-(\mathbb EX)^2\) i z <a data-concept="prawo-calkowitej-wartosci-oczekiwanej">prawa całkowitej wartości oczekiwanej</a> zastosowanego do \(X\) i do \(X^2\):</p>
+<div class="ml-eq" id="eq-prawo-calkowitej-wariancji-dowod">\[ \begin{aligned} \operatorname{Var}(X) &amp;= \mathbb E\big[\mathbb E[X^2\mid Y]\big]-\big(\mathbb E[m(Y)]\big)^2\\ &amp;= \mathbb E\big[\operatorname{Var}(X\mid Y)+m(Y)^2\big]-\big(\mathbb E[m(Y)]\big)^2 &amp;&amp;\text{(definicja wariancji warunkowej)}\\ &amp;= \mathbb E\big[\operatorname{Var}(X\mid Y)\big]+\Big(\mathbb E\big[m(Y)^2\big]-\big(\mathbb E[m(Y)]\big)^2\Big)\\ &amp;= \mathbb E\big[\operatorname{Var}(X\mid Y)\big]+\operatorname{Var}\big(m(Y)\big). \end{aligned} \]</div>
+<p>Nieujemność: \(\operatorname{Var}(X\mid Y)\ge0\) punktowo (jako warunkowa wartość oczekiwana kwadratu), więc jej średnia jest nieujemna; drugi składnik jest wariancją.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód alternatywny (ortogonalność)</p>
+<p>Rozpiszmy \(X-\mathbb EX=(X-m(Y))+(m(Y)-\mathbb EX)\). Po podniesieniu do kwadratu wyraz mieszany \(2\,\mathbb E[(X-m(Y))(m(Y)-\mathbb EX)]\) znika, bo warunkując na \(Y\), czynnik \(m(Y)-\mathbb EX\) jest znany, a \(\mathbb E[X-m(Y)\mid Y]=0\). Zostaje \(\mathbb E[(X-m(Y))^2]+\mathbb E[(m(Y)-\mathbb EX)^2]\); pierwszy wyraz to \(\mathbb E[\operatorname{Var}(X\mid Y)]\) (prawo całkowitej wartości oczekiwanej), drugi — \(\operatorname{Var}(m(Y))\), bo \(\mathbb E[m(Y)]=\mathbb EX\). Geometrycznie: \(m(Y)\) jest rzutem ortogonalnym \(X\) na przestrzeń funkcji \(Y\), a tożsamość to twierdzenie Pitagorasa w \(L^2\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Wyprowadzenie wariancji rozkładu beta-dwumianowego <a class="ml-eqref" href="#eq-prawo-calkowitej-wariancji-betabin"></a></p>
+<p>Dla \(p\sim\mathrm{Beta}(\mu\phi,(1-\mu)\phi)\): \(\mathbb E[p]=\mu\), \(\operatorname{Var}(p)=\mu(1-\mu)/(\phi+1)\). Warunkowo \(\mathbb E[A\mid p]=Cp\), \(\operatorname{Var}(A\mid p)=Cp(1-p)\).</p>
+<div class="ml-eq" id="eq-prawo-calkowitej-wariancji-dowod-betabin">\[ \begin{aligned} \mathbb E[\operatorname{Var}(A\mid p)] &amp;= C\big(\mathbb E[p]-\mathbb E[p^2]\big)=C\big(\mu-\operatorname{Var}(p)-\mu^2\big)=C\mu(1-\mu)\Big(1-\frac1{\phi+1}\Big)=C\mu(1-\mu)\frac{\phi}{\phi+1},\\ \operatorname{Var}(\mathbb E[A\mid p]) &amp;= C^2\operatorname{Var}(p)=C\mu(1-\mu)\frac{C}{\phi+1},\\ \operatorname{Var}(A) &amp;= C\mu(1-\mu)\,\frac{\phi+C}{\phi+1}. \end{aligned} \]</div>
+<p>Czynnik \((\phi+C)/(\phi+1)\gt1\) dla \(C\ge2\) to <strong>nadmierna dyspersja</strong> względem rozkładu dwumianowego; przy \(\phi\to\infty\) (brak zmienności \(p\)) wraca się do \(C\mu(1-\mu)\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Wyprowadzenie wariancji rozkładu ujemnego dwumianowego <a class="ml-eqref" href="#eq-prawo-calkowitej-wariancji-negbin"></a></p>
+<p>Dla \(\Lambda\sim\mathrm{Gamma}(\kappa,\kappa/\mu)\): \(\mathbb E\Lambda=\mu\), \(\operatorname{Var}\Lambda=\kappa/(\kappa/\mu)^2=\mu^2/\kappa\). Warunkowo \(\mathbb E[A\mid\Lambda]=\operatorname{Var}(A\mid\Lambda)=\Lambda\). Zatem \(\operatorname{Var}(A)=\mathbb E[\Lambda]+\operatorname{Var}(\Lambda)=\mu+\mu^2/\kappa\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód wniosków</p>
+<p>Warunkowanie zmniejsza wariancję: oba składniki <a class="ml-eqref" href="#eq-prawo-calkowitej-wariancji"></a> są nieujemne, więc każdy z nich jest nie większy niż suma; równość \(\mathbb E[\operatorname{Var}(X\mid Y)]=\operatorname{Var}(X)\) zachodzi dokładnie wtedy, gdy \(\operatorname{Var}(m(Y))=0\), czyli \(m(Y)\) jest stała p.n. Nadmierna dyspersja wynika z wyprowadzeń powyżej. Wersję wielopoziomową otrzymujemy, stosując twierdzenie do \(\operatorname{Var}(X)\) z warunkiem \(Y_1\), a następnie do \(\operatorname{Var}(X\mid Y_1)\) z warunkiem \(Y_2\) (w mierze warunkowej przy danym \(Y_1\)).</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong> Prognozujemy frekwencję \(\tilde A\) meczu w hali na \(C=2000\) miejsc. Mamy cztery próbki posterior średniego wypełnienia \(\mu^{(s)}\): 0,55; 0,62; 0,48; 0,65 (w praktyce — tysiące). Dla prostoty precyzja \(\phi=30\) jest znana. Warunkowo \(\tilde A\mid\mu\sim\mathrm{BetaBinomial}(2000,30\mu,30(1-\mu))\). Wyniki zaokrąglamy do 0,1.</p>
+<ol class="ml-steps">
+<li><strong>Średnie warunkowe</strong> \(m^{(s)}=C\mu^{(s)}\): 1100; 1240; 960; 1300. Średnia \(\bar m=1150\).</li>
+<li><strong>Wariancja średnich (epistemiczna).</strong> Odchylenia od 1150: \(-50\), \(+90\), \(-190\), \(+150\); kwadraty: 2500; 8100; 36 100; 22 500; średnia \(=69\,200/4=17\,300\).</li>
+<li><strong>Czynnik dyspersji:</strong> \((\phi+C)/(\phi+1)=2030/31\approx65{,}484\).</li>
+<li><strong>Wariancje warunkowe (aleatoryczne)</strong> \(v^{(s)}=C\mu(1-\mu)\cdot65{,}484\):
+<ul>
+<li>\(\mu=0{,}55\): \(2000\cdot0{,}2475\cdot65{,}484\approx32\,414{,}5\);</li>
+<li>\(\mu=0{,}62\): \(2000\cdot0{,}2356\cdot65{,}484\approx30\,856{,}0\);</li>
+<li>\(\mu=0{,}48\): \(2000\cdot0{,}2496\cdot65{,}484\approx32\,689{,}5\);</li>
+<li>\(\mu=0{,}65\): \(2000\cdot0{,}2275\cdot65{,}484\approx29\,795{,}2\).</li>
+</ul>
+Średnia: \((32\,414{,}5+30\,856{,}0+32\,689{,}5+29\,795{,}2)/4\approx31\,438{,}8\).</li>
+<li><strong>Wariancja całkowita</strong> <a class="ml-eqref" href="#eq-prawo-calkowitej-wariancji-mc"></a>: \(31\,438{,}8+17\,300=48\,738{,}8\); odchylenie standardowe predykcyjne \(\sqrt{48\,738{,}8}\approx220{,}8\) widza.</li>
+<li><strong>Udziały.</strong> Niepewność parametrów: \(17\,300/48\,738{,}8\approx35{,}5\%\); zmienność meczu: \(64{,}5\%\).</li>
+<li><strong>Prognoza „plug-in” zaniża niepewność.</strong> Gdyby wstawić tylko \(\bar\mu=0{,}575\) i pominąć niepewność parametrów: \(2000\cdot0{,}575\cdot0{,}425\cdot65{,}484\approx32\,005{,}2\), SD \(\approx178{,}9\) — o ok. 19% mniej niż 220,8. Przedziały predykcyjne byłyby za wąskie.</li>
+<li><strong>Więcej danych.</strong> Gdyby dłuższa historia zmniejszyła rozrzut posterior o połowę (odchylenia \(-25,+45,-95,+75\)), składnik epistemiczny spadłby czterokrotnie do 4325, a całkowita wariancja do ok. \(31\,439+4325=35\,764\) (SD \(\approx189{,}1\)). Składnika aleatorycznego nie da się usunąć danymi historycznymi.</li>
+</ol>
+<div class="ml-plot" data-plot="betabinomial" data-params='{"n": 50, "a": 6, "b": 4}'></div>
+<p>Rozkład beta-dwumianowy \(\mathrm{BetaBin}(50,6,4)\) (\(\mu=0{,}6\), \(\phi=10\)) ma wariancję \(50\cdot0{,}24\cdot60/11\approx65{,}5\) — ponad pięć razy więcej niż rozkład dwumianowy poniżej. Nadwyżka to składnik \(\operatorname{Var}(\mathbb E[A\mid p])\) pochodzący od zmienności \(p\).</p>
+<div class="ml-plot" data-plot="binomial" data-params='{"n": 50, "p": 0.6}'></div>
+<p>Rozkład dwumianowy \(\mathrm{Bin}(50;\,0{,}6)\) — wariancja \(50\cdot0{,}6\cdot0{,}4=12\): tylko składnik „wewnętrzny”, bez zmienności \(p\).</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>SD predykcyjne 220,8 widza składa się z dwóch źródeł, które sumują się na poziomie <em>wariancji</em>, a nie odchyleń standardowych (\(\sqrt{31\,439}\approx177{,}3\) i \(\sqrt{17\,300}\approx131{,}5\) nie sumują się do 220,8; sumują się ich kwadraty). Interpretacja:</p>
+<ul>
+<li><strong>Zmienność meczu</strong> (aleatoryczna, ang. <em>aleatoric</em>) — nieredukowalna losowość pojedynczego wydarzenia przy znanych parametrach. Odpowiada za ok. 2/3 niepewności w przykładzie.</li>
+<li><strong>Niepewność parametrów</strong> (epistemiczna, ang. <em>epistemic</em>) — wynik ograniczonej wiedzy; maleje wraz z liczbą danych (krok 8). Jej duży udział sygnalizuje, że prognoza dotyczy klubu lub sytuacji słabo reprezentowanej w danych (nowy klub w lidze, nowa hala, rzadka faza rozgrywek).</li>
+</ul>
+<p>Rozbicie jest diagnostyczne: jeśli przedziały predykcyjne są szerokie głównie przez składnik epistemiczny, warto zbierać dane lub wzmocnić model; jeśli przez aleatoryczny — szersze przedziały są po prostu uczciwym opisem rzeczywistości.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<ul>
+<li><strong>Szerokość przedziałów predykcyjnych MAF.</strong> Prognoza meczu \(i\) łączy próbki parametrów i losowanie liczby widzów: \(\theta^{(s)}\sim p(\theta\mid y)\), \(\tilde A_i^{(s)}\sim p(\tilde A_i\mid\theta^{(s)})\). Wariancja otrzymanej próbki jest dokładnie sumą <a class="ml-eqref" href="#eq-prawo-calkowitej-wariancji-predykcja"></a>: zmienności meczu (sterowanej przez \(\phi\) w wariancie „wypełnienie” lub \(\kappa\) w wariancie „liczba widzów”) i niepewności parametrów (rozrzutu \(\eta_i^{(s)}\)). Pominięcie którejkolwiek części daje zbyt wąskie przedziały 50/80/95% i złe pokrycie w walidacji (zob. <a data-concept="niepewnosc-predykcyjna">niepewność predykcyjna</a>, <a data-concept="przedzialy-predykcyjne">przedziały predykcyjne</a>, <a data-concept="pokrycie-przedzialow-predykcyjnych">pokrycie przedziałów predykcyjnych</a>).</li>
+<li><strong>Wybór rozkładu obserwacji.</strong> Obserwowana wariancja frekwencji wielokrotnie przewyższa dwumianową (lub poissonowską). Prawo całkowitej wariancji tłumaczy to mieszaniną: „skłonność do przyjścia” zmienia się od meczu do meczu. Dlatego MAF używa rozkładu <a data-concept="rozklad-beta-dwumianowy">beta-dwumianowego</a> (gdy pojemność jest znana) lub <a data-concept="rozklad-ujemny-dwumianowy">ujemnego dwumianowego</a> (gdy nie jest), a nie dwumianowego czy Poissona.</li>
+<li><strong>Struktura hierarchiczna.</strong> Wariancja predyktora rozkłada się na składowe efektów losowych: \(\sigma_H^2\) (gospodarze), \(\sigma_{HS}^2\) (gospodarz × sezon), \(\sigma_R^2\) (rywale), \(\sigma_{RS}^2\), \(\sigma_S^2\), \(\sigma_L^2\). Porównanie ich wielkości mówi, czy frekwencję bardziej różnicuje to, <em>kto gra u siebie</em>, czy to, <em>kto przyjeżdża</em> — wersja wielopoziomowa twierdzenia (zob. <a data-concept="modele-hierarchiczne">modele hierarchiczne</a>, <a data-concept="efekty-stale-i-losowe">efekty stałe i losowe</a>).</li>
+<li><strong>Niepewność IAF.</strong> Indeks \(\mathrm{IAF}_j\) jest funkcją <em>wartości oczekiwanych</em> \(\mathbb E(W\mid\eta)\), więc jego rozkład a posteriori zawiera wyłącznie niepewność epistemiczną — składnik aleatoryczny meczów został „wycałkowany”. Dlatego przedział wiarygodności IAF zwęża się z liczbą meczów rywala, a przedział predykcyjny frekwencji pojedynczego meczu — nie poniżej poziomu wyznaczonego przez \(\phi\).</li>
+<li><strong>Walidacja.</strong> Reszty standaryzowane dzieli się przez pełne SD predykcyjne; użycie tylko składnika aleatorycznego zawyżałoby reszty dla klubów z małą liczbą meczów (zob. <a data-concept="diagnostyka-reszt">diagnostyka reszt</a>).</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Rozkład zależy od wyboru \(Y\).</strong> Podział na „aleatoryczne” i „epistemiczne” jest względny: warunkując tylko na części parametrów (np. bez \(\phi\)), przesuwamy niepewność między składnikami.</li>
+<li><strong>Wariancja to nie cały rozkład.</strong> Dwa składniki mogą mieć bardzo różne kształty (asymetria, masa przy komplecie); kwantyle predykcyjne liczy się z próbek, a nie z \(\pm z\cdot\mathrm{SD}\).</li>
+<li><strong>Błędna specyfikacja.</strong> Twierdzenie rozkłada wariancję <em>w ramach modelu</em>; niepewność strukturalna (zły wybór predyktorów, niestacjonarność) nie pojawia się w żadnym składniku i ujawnia się dopiero w walidacji (PIT, pokrycie).</li>
+<li><strong>Estymacja składników.</strong> Przy małej liczbie próbek posterior składnik epistemiczny jest szacowany z błędem Monte Carlo; potrzebna jest odpowiednia efektywna liczność próby.</li>
+<li><strong>Brak addytywności SD.</strong> Raportując udziały, trzeba operować wariancjami, nie odchyleniami standardowymi.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="prawo-calkowitej-wartosci-oczekiwanej">Prawo całkowitej wartości oczekiwanej</a>.</li>
+<li><a data-concept="wariancja-zmiennej-losowej">Wariancja zmiennej losowej</a>.</li>
+<li><a data-concept="niepewnosc-predykcyjna">Niepewność predykcyjna</a>, <a data-concept="przedzialy-predykcyjne">przedziały predykcyjne</a>, <a data-concept="rozklad-predykcyjny">rozkład predykcyjny</a>.</li>
+<li><a data-concept="rozklad-beta-dwumianowy">Rozkład beta-dwumianowy</a>, <a data-concept="rozklad-ujemny-dwumianowy">rozkład ujemny dwumianowy</a>.</li>
+<li><a data-concept="modele-hierarchiczne">Modele hierarchiczne</a>, <a data-concept="partial-pooling">partial pooling</a>.</li>
+<li><a data-concept="pokrycie-przedzialow-predykcyjnych">Pokrycie przedziałów predykcyjnych</a>.</li>
+<li><a data-concept="atrakcyjnosc-frekwencyjna">Atrakcyjność frekwencyjna (MAF)</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="casellaberger2002"></li>
+<li data-bib="wasserman2004"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="gelmanhill2007"></li>
+<li data-bib="hilbe2011"></li>
+<li data-bib="johnson2005discrete"></li>
+</ul>
+</section>

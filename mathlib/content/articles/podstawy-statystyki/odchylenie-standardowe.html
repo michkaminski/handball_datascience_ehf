@@ -1,0 +1,163 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Odchylenie standardowe (ang. <em>standard deviation</em>, SD) to pierwiastek z <a data-concept="wariancja">wariancji</a>. Pierwiastkowanie przywraca jednostki danych: jeżeli wariancja frekwencji wynosi 18 250 „widzów do kwadratu”, to odchylenie standardowe ≈ 135 widzów. Taką liczbę można już bezpośrednio porównać ze średnią (1280) i powiedzieć: „typowy mecz odbiega od średniej klubu o ok. 135 widzów”.</p>
+<p>Odchylenie standardowe jest „miarką” rozproszenia, w której wyraża się wiele innych pojęć: <a data-concept="standaryzacja">z-score</a> mówi, o ile odchyleń standardowych obserwacja leży od średniej; reguła trzech sigm opisuje, jaka część rozkładu normalnego leży w odległości 1, 2 i 3 SD; nierówność Czebyszewa daje podobne (słabsze) gwarancje dla <em>dowolnego</em> rozkładu o skończonej wariancji.</p>
+<p>Trzeba odróżniać dwie wielkości o podobnych nazwach. <strong>Odchylenie standardowe</strong> opisuje rozrzut <em>pojedynczych obserwacji</em>. <strong>Błąd standardowy</strong> (ang. <em>standard error</em>, SE) to odchylenie standardowe <em>estymatora</em> — np. średniej z próby — i maleje jak \(1/\sqrt n\). Pomylenie ich jest jednym z najczęstszych błędów w raportach.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-odchylenie-standardowe"><p class="ml-box-title">Definicja</p>
+<p>Dla próby \(x_1,\dots,x_n\), \(n\ge2\), <strong>odchyleniem standardowym z próby</strong> nazywamy</p>
+<div class="ml-eq" id="eq-odchylenie-standardowe">\[ s = \sqrt{s^2} = \sqrt{\frac{1}{n-1}\sum_{i=1}^{n}(x_i-\bar x)^2} . \]</div>
+<p>Dla zmiennej losowej \(X\) z \(E X^2\lt\infty\) odchyleniem standardowym jest \(\sigma=\sqrt{\operatorname{Var}(X)}=\sqrt{E(X-EX)^2}\). Wersję z dzielnikiem \(n\) oznaczamy \(\hat\sigma=\sqrt{\hat\sigma^2}\).</p>
+</div>
+<div class="ml-box ml-def" id="def-blad-standardowy"><p class="ml-box-title">Definicja (błąd standardowy)</p>
+<p><strong>Błędem standardowym</strong> estymatora \(\hat\theta\) nazywamy jego odchylenie standardowe \(\operatorname{SE}(\hat\theta)=\sqrt{\operatorname{Var}(\hat\theta)}\), a w praktyce — jego oszacowanie z danych. Dla średniej z próby i.i.d.: \(\operatorname{SE}(\bar X)=\sigma/\sqrt n\), szacowany przez \(s/\sqrt n\).</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(s\)</td><td>odchylenie standardowe z próby (dzielnik \(n-1\) pod pierwiastkiem)</td></tr>
+<tr><td>\(\hat\sigma\)</td><td>odchylenie standardowe z dzielnikiem \(n\)</td></tr>
+<tr><td>\(\sigma\)</td><td>odchylenie standardowe rozkładu (populacji)</td></tr>
+<tr><td>\(\operatorname{SE}\)</td><td>błąd standardowy estymatora</td></tr>
+<tr><td>\(c_4(n)\)</td><td>stała korygująca obciążenie \(S\) przy rozkładzie normalnym</td></tr>
+<tr><td>\(k\)</td><td>wielokrotność odchylenia standardowego w nierównościach</td></tr>
+<tr><td>\(\Gamma\)</td><td>funkcja gamma Eulera</td></tr>
+<tr><td>\(\Phi\)</td><td>dystrybuanta standardowego rozkładu normalnego</td></tr>
+<tr><td>\(\mathrm{ESS}\)</td><td>efektywna liczba próbek MCMC</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Jak dla wariancji: skala co najmniej przedziałowa, skończona wariancja rozkładu.</li>
+<li>Nierówność Czebyszewa: tylko \(\operatorname{Var}(X)\lt\infty\) — bez założeń o kształcie rozkładu.</li>
+<li>Reguła 68–95–99,7 oraz stała \(c_4(n)\): obserwacje z rozkładu normalnego (i.i.d.).</li>
+<li>Wzór \(\sigma/\sqrt n\) na błąd standardowy średniej: obserwacje nieskorelowane o wspólnej wariancji. Dla skorelowanych próbek (MCMC) zastępuje się \(n\) przez efektywną liczbę próbek.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Przekształcenie liniowe:</p>
+<div class="ml-eq" id="eq-odchylenie-standardowe-liniowe">\[ y_i=a+bx_i \ \Longrightarrow\ s_y=|b|\,s_x . \]</div>
+<p>Odchylenie standardowe sumy niezależnych składników („dodawanie w kwadraturze”):</p>
+<div class="ml-eq" id="eq-odchylenie-standardowe-suma">\[ \sigma_{X+Y}=\sqrt{\sigma_X^2+\sigma_Y^2} \qquad (X,Y \text{ nieskorelowane}) . \]</div>
+<p>Błąd standardowy średniej i błąd Monte Carlo:</p>
+<div class="ml-eq" id="eq-odchylenie-standardowe-se">\[ \operatorname{SE}(\bar X)=\frac{\sigma}{\sqrt n}\approx\frac{s}{\sqrt n}, \qquad \mathrm{MCSE}\approx\frac{s_{\text{posterior}}}{\sqrt{\mathrm{ESS}}} . \]</div>
+<p>Nierówność Czebyszewa:</p>
+<div class="ml-eq" id="eq-odchylenie-standardowe-czebyszew">\[ P\big(|X-\mu|\ge k\sigma\big)\le\frac{1}{k^2}, \qquad k\gt0 . \]</div>
+<p>Reguła trzech sigm dla \(X\sim N(\mu,\sigma^2)\):</p>
+<div class="ml-eq" id="eq-odchylenie-standardowe-regula">\[ P(|X-\mu|\le k\sigma)=2\Phi(k)-1\approx\begin{cases}0{,}6827, &amp; k=1,\\ 0{,}9545, &amp; k=2,\\ 0{,}9973, &amp; k=3.\end{cases} \]</div>
+<p>Odchylenie standardowe łączone (ang. <em>pooled</em>) z \(G\) grup o licznościach \(n_g\) i odchyleniach \(s_g\), przy założeniu wspólnej wariancji wewnątrzgrupowej:</p>
+<div class="ml-eq" id="eq-odchylenie-standardowe-laczone">\[ s_p=\sqrt{\frac{\sum_{g=1}^{G}(n_g-1)\,s_g^2}{\sum_{g=1}^{G}(n_g-1)}} . \]</div>
+<p>Odchylenie standardowe częstości (np. odsetka meczów z kompletem widzów) w \(n\) niezależnych próbach Bernoulliego z prawdopodobieństwem \(p\):</p>
+<div class="ml-eq" id="eq-odchylenie-standardowe-proporcja">\[ \operatorname{SD}(\hat p)=\sqrt{\frac{p(1-p)}{n}}\ \le\ \frac{1}{2\sqrt n} . \]</div>
+<p>Korekta obciążenia przy normalności:</p>
+<div class="ml-eq" id="eq-odchylenie-standardowe-c4">\[ E(S)=c_4(n)\,\sigma, \qquad c_4(n)=\sqrt{\frac{2}{n-1}}\;\frac{\Gamma(n/2)}{\Gamma\big((n-1)/2\big)} . \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-obciazenie-s"><p class="ml-box-title">Twierdzenie (odchylenie standardowe z próby jest obciążone)</p>
+<p>Jeżeli \(E(S^2)=\sigma^2\) (np. przy obserwacjach i.i.d. o skończonej wariancji), to \(E(S)\le\sigma\), z równością wtedy i tylko wtedy, gdy \(S\) jest prawie na pewno stała. W szczególności dla danych normalnych \(E(S)=c_4(n)\sigma\lt\sigma\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-czebyszew"><p class="ml-box-title">Twierdzenie (nierówność Czebyszewa)</p>
+<p>Dla każdej zmiennej losowej z \(E X=\mu\), \(\operatorname{Var}X=\sigma^2\lt\infty\) i każdego \(k\gt0\) zachodzi <a class="ml-eqref" href="#eq-odchylenie-standardowe-czebyszew"></a>. Nierówność jest ostra: istnieją rozkłady, dla których zachodzi równość.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-sd-suma"><p class="ml-box-title">Twierdzenie (odchylenie sumy)</p>
+<p>Dla dowolnych \(X,Y\) o skończonych wariancjach \(\sigma_{X+Y}\le\sigma_X+\sigma_Y\) (nierówność trójkąta), a dla nieskorelowanych zachodzi <a class="ml-eqref" href="#eq-odchylenie-standardowe-suma"></a>.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-jensen">Obciążenie \(S\)</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Funkcja \(t\mapsto\sqrt t\) jest ściśle wklęsła na \([0,\infty)\). Z nierówności Jensena dla funkcji wklęsłej: \(E\sqrt{S^2}\le\sqrt{E S^2}=\sqrt{\sigma^2}=\sigma\). Równość w nierówności Jensena dla funkcji ściśle wklęsłej zachodzi tylko wtedy, gdy argument jest prawie na pewno stały. Alternatywnie, bez Jensena: \(0\le\operatorname{Var}(S)=E S^2-(E S)^2=\sigma^2-(E S)^2\), więc \((ES)^2\le\sigma^2\), a obciążenie \(\sigma-ES\) jest tym większe, im większa wariancja \(S\).</p>
+<p>Dla danych normalnych \((n-1)S^2/\sigma^2\sim\chi^2_{n-1}\). Dla \(V\sim\chi^2_\nu\) mamy \(E\sqrt V=\sqrt2\,\Gamma\big(\frac{\nu+1}{2}\big)/\Gamma\big(\frac\nu2\big)\), więc z \(\nu=n-1\):</p>
+\[ E(S)=\frac{\sigma}{\sqrt{n-1}}\,E\sqrt V=\sigma\sqrt{\frac{2}{n-1}}\;\frac{\Gamma(n/2)}{\Gamma\big((n-1)/2\big)}=c_4(n)\,\sigma . \]
+<p class="ml-qed">∎</p></div>
+<p>Wartości: \(c_4(5)\approx0{,}9400\), \(c_4(10)\approx0{,}9727\), \(c_4(30)\approx0{,}9914\). Obciążenie jest więc rzędu kilku procent tylko przy bardzo małych próbach.</p>
+
+<h3 id="dowod-czebyszew">Nierówność Czebyszewa</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p><em>Krok 1 (nierówność Markowa).</em> Dla nieujemnej zmiennej \(Y\) i \(a\gt0\): \(Y\ge a\cdot\mathbf 1\{Y\ge a\}\) punktowo, więc \(E Y\ge a\,P(Y\ge a)\), czyli \(P(Y\ge a)\le E Y/a\).</p>
+<p><em>Krok 2.</em> Stosujemy Markowa do \(Y=(X-\mu)^2\) i \(a=k^2\sigma^2\): \(P\big(|X-\mu|\ge k\sigma\big)=P\big((X-\mu)^2\ge k^2\sigma^2\big)\le\frac{E(X-\mu)^2}{k^2\sigma^2}=\frac{1}{k^2}\).</p>
+<p><em>Ostrość.</em> Dla \(k\ge1\) niech \(X\) przyjmuje wartości \(\mu\pm k\sigma\) z prawdopodobieństwem \(\frac{1}{2k^2}\) każda i \(\mu\) z prawdopodobieństwem \(1-\frac1{k^2}\). Wtedy \(\operatorname{Var}X=k^2\sigma^2\cdot\frac{1}{k^2}=\sigma^2\) i \(P(|X-\mu|\ge k\sigma)=\frac1{k^2}\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-suma">Odchylenie sumy</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>\(\operatorname{Var}(X+Y)=\sigma_X^2+\sigma_Y^2+2\operatorname{Cov}(X,Y)\). Z nierówności Cauchy’ego–Schwarza \(|\operatorname{Cov}(X,Y)|\le\sigma_X\sigma_Y\), więc \(\operatorname{Var}(X+Y)\le(\sigma_X+\sigma_Y)^2\). Dla nieskorelowanych \(\operatorname{Cov}=0\) i dostajemy <a class="ml-eqref" href="#eq-odchylenie-standardowe-suma"></a>. Wzór na \(\operatorname{SE}(\bar X)\) wynika stąd przez indukcję: \(\operatorname{Var}(\sum X_i)=n\sigma^2\), więc \(\operatorname{SD}(\bar X)=\sqrt{n\sigma^2}/n=\sigma/\sqrt n\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-laczone">Odchylenie łączone i odchylenie częstości</h3>
+<p>Jeżeli grupy (np. sezony) mają różne średnie, ale wspólną wariancję \(\sigma^2\), to każde \(S_g^2\) jest nieobciążonym estymatorem \(\sigma^2\) (poprawka Bessela, zob. <a data-concept="wariancja" data-anchor="wyprowadzenie">wariancja</a>), a suma \(\sum_g(n_g-1)S_g^2\) ma wartość oczekiwaną \(\sigma^2\sum_g(n_g-1)\). Dzieląc przez liczbę stopni swobody \(\sum_g(n_g-1)=n-G\), otrzymujemy nieobciążony estymator \(\sigma^2\), którego pierwiastek to <a class="ml-eqref" href="#eq-odchylenie-standardowe-laczone"></a>. Wagi \(n_g-1\) są wagami stopni swobody — większe grupy niosą więcej informacji o \(\sigma^2\).</p>
+<p>Dla częstości: \(\hat p=\frac1n\sum_iB_i\), gdzie \(B_i\in\{0,1\}\), \(E B_i=p\), \(\operatorname{Var}B_i=E B_i^2-p^2=p-p^2=p(1-p)\). Z <a class="ml-eqref" href="#eq-odchylenie-standardowe-suma"></a> i niezależności \(\operatorname{Var}\hat p=p(1-p)/n\). Funkcja \(p(1-p)\) osiąga maksimum \(1/4\) w \(p=1/2\), co daje ograniczenie w <a class="ml-eqref" href="#eq-odchylenie-standardowe-proporcja"></a>.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p>Dane ilustracyjne z artykułu o <a data-concept="wariancja" data-anchor="przyklad">wariancji</a>: frekwencja 1200, 1350, 1100, 1450, 1300; \(\bar x=1280\), \(SS=73\,000\).</p>
+<ol class="ml-steps">
+<li>\(s=\sqrt{73\,000/4}=\sqrt{18\,250}\approx135{,}09\) widza; \(\hat\sigma=\sqrt{14\,600}\approx120{,}83\).</li>
+<li>Błąd standardowy średniej: \(\operatorname{SE}=135{,}09/\sqrt5=135{,}09/2{,}2361\approx60{,}42\) widza. Średnia 1280 jest więc znana z dokładnością rzędu ±60, choć pojedyncze mecze wahają się o ±135.</li>
+<li>Korekta obciążenia (przy założeniu normalności): \(s/c_4(5)=135{,}09/0{,}9400\approx143{,}72\).</li>
+<li>Czebyszew dla \(k=2\): co najmniej \(1-1/4=75\%\) rozkładu leży w \(1280\pm2\cdot135{,}09=[1009{,}8;\ 1550{,}2]\). Przy rozkładzie normalnym byłoby to ok. 95,45%.</li>
+<li>Skalowanie: po przeliczeniu frekwencji na wypełnienie hali o pojemności 2000 miejsc (\(y=x/2000\)) odchylenie wynosi \(135{,}09/2000\approx0{,}0675\), czyli ok. 6,8 punktu procentowego.</li>
+<li>Odchylenie łączone dwóch sezonów (dane ilustracyjne): sezon A to powyższe 5 meczów (\(s_A^2=18\,250\)), sezon B — 8 meczów z artykułu o <a data-concept="srednia-arytmetyczna" data-anchor="przyklad">średniej arytmetycznej</a> (\(SS_B=144\,600\), \(s_B^2\approx20\,657{,}14\)). Z <a class="ml-eqref" href="#eq-odchylenie-standardowe-laczone"></a>: \(s_p^2=(4\cdot18\,250+7\cdot20\,657{,}14)/(4+7)=(73\,000+144\,600)/11\approx19\,781{,}8\), \(s_p\approx140{,}65\) widza.</li>
+<li>Częstość kompletów (dane ilustracyjne): komplet widzów w 12 z 40 meczów, \(\hat p=0{,}30\); \(\operatorname{SD}(\hat p)\approx\sqrt{0{,}30\cdot0{,}70/40}=\sqrt{0{,}00525}\approx0{,}0725\), czyli ok. 7,2 punktu procentowego.</li>
+<li>Błąd Monte Carlo (dane ilustracyjne): jeżeli odchylenie standardowe próbek posterior IAF wynosi 8 punktów, a efektywna liczba próbek 1600, to \(\mathrm{MCSE}\approx8/\sqrt{1600}=0{,}2\) punktu — szum symulacji jest pomijalny wobec niepewności posterior.</li>
+</ol>
+<div class="ml-plot" data-plot="normal" data-params='{"mu": 0, "sigma": 1}'></div>
+<p>Dla standardowego rozkładu normalnego ok. 68% masy leży w przedziale \([-1;\,1]\), 95% w \([-2;\,2]\) i 99,7% w \([-3;\,3]\). Zmień \(\sigma\): proporcje pozostają te same, zmienia się tylko szerokość przedziałów wyrażona w jednostkach osi.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li>\(s\approx135\) widzów to typowa wielkość odchylenia pojedynczego meczu od średniej; nie jest to ani maksymalne, ani średnie bezwzględne odchylenie (to ostatnie wynosi tu \((80+70+180+170+20)/5=104\)).</li>
+<li>\(\operatorname{SE}\approx60\) opisuje niepewność <em>średniej</em>. Przedziały „średnia ± 2 SD” i „średnia ± 2 SE” odpowiadają na różne pytania: gdzie wypadnie następny mecz, a gdzie leży prawdziwa średnia.</li>
+<li>Reguła 68–95–99,7 obowiązuje tylko przy normalności; dla skośnej frekwencji lepiej opisywać rozproszenie <a data-concept="percentyle">percentylami</a>. Nierówność Czebyszewa obowiązuje zawsze, ale jest konserwatywna.</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<ul>
+<li><strong>Hiperparametry \(\sigma\) w MAF.</strong> W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> efekty losowe mają postać \(R_j=\sigma_Rz_j\), \(z_j\sim N(0,1)\), z priorem \(\sigma\sim\text{Half-Normal}(0,1)\) (zob. <a data-concept="hiperpriory">hiperpriory</a>). \(\sigma_R\) jest odchyleniem standardowym efektów rywali na skali logitu: przy \(\sigma_R=0{,}3\) rywal „o jedno SD atrakcyjniejszy” od przeciętnego mnoży iloraz szans wypełnienia przez \(e^{0{,}3}\approx1{,}35\), a o dwa SD — przez \(e^{0{,}6}\approx1{,}82\).</li>
+<li><strong>Niepewność posterior.</strong> Odchylenie standardowe próbek posterior jest podstawową miarą niepewności parametru, a \(\mathrm{MCSE}=\mathrm{SD}/\sqrt{\mathrm{ESS}}\) — miarą błędu wynikającego ze skończonej liczby próbek; dlatego wymagamy bulk-ESS i tail-ESS ≥ 400 (zob. <a data-concept="effective-sample-size">ESS</a>).</li>
+<li><strong>Standaryzacja kowariatów.</strong> Warunki meczu (forma, pozycja w tabeli itp.) są dzielone przez swoje SD, aby priory \(\beta_k\sim N(0,1)\) miały porównywalną skalę — zob. <a data-concept="standaryzacja">standaryzacja</a>.</li>
+<li><strong>Reszty i walidacja.</strong> Reszta podzielona przez predykcyjne odchylenie standardowe mówi, czy błąd prognozy jest „duży” w skali niepewności modelu (<a data-concept="diagnostyka-reszt">diagnostyka reszt</a>); RMSE jest odchyleniem standardowym błędów wokół zera.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Brak odporności:</strong> jedna skrajna obserwacja może kilkukrotnie zawyżyć \(s\) i jednocześnie „zamaskować” sama siebie (jej z-score nie wyda się duży). Odporne miary: MAD i <a data-concept="kwartyle">IQR</a> (dla rozkładu normalnego \(\sigma\approx\mathrm{IQR}/1{,}349\approx1{,}4826\,\mathrm{MAD}\)).</li>
+<li><strong>Interpretacja zależna od kształtu rozkładu:</strong> w rozkładach skośnych SD nie mówi, w którą stronę rozciąga się rozrzut.</li>
+<li><strong>Obciążenie dla małych \(n\)</strong> i duża zmienność samego \(s\): przy \(n=5\) względny błąd standardowy \(s\) to ok. 35% (dla danych normalnych ≈ \(1/\sqrt{2(n-1)}\)).</li>
+<li><strong>Zależność od poziomu:</strong> SD frekwencji rośnie wraz ze średnią; do porównań między ligami o różnych skalach używaj <a data-concept="wspolczynnik-zmiennosci">współczynnika zmienności</a> lub skali logarytmicznej.</li>
+<li><strong>Zmienne ograniczone</strong> (wypełnienie w \([0;1]\)): \(\mathrm{SD}\le\sqrt{\bar W(1-\bar W)}\le0{,}5\); przedziały „średnia ± 2 SD” mogą wychodzić poza zakres.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="wariancja">Wariancja</a> — kwadrat odchylenia standardowego.</li>
+<li><a data-concept="standaryzacja">Standaryzacja</a> i <a data-concept="z-score">z-score</a> — pomiar w jednostkach SD.</li>
+<li><a data-concept="wspolczynnik-zmiennosci">Współczynnik zmienności</a> — SD względem średniej.</li>
+<li><a data-concept="rozklad-normalny">Rozkład normalny</a> — reguła 68–95–99,7.</li>
+<li><a data-concept="effective-sample-size">Effective Sample Size</a> — błąd Monte Carlo.</li>
+<li><a data-concept="rmse">RMSE</a> — odchylenie błędów prognozy.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="openintro2019"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="wasserman2004"></li>
+<li data-bib="rousseeuw1993"></li>
+<li data-bib="vehtari2021rhat"></li>
+</ul>
+</section>

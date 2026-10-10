@@ -1,0 +1,181 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Gdy prognozujemy frekwencję na meczach, najprostsze pytanie oceniające brzmi: <em>o ile średnio się mylimy?</em> Średni błąd bezwzględny (ang. <em>mean absolute error</em>, MAE) odpowiada na nie wprost: dla każdego meczu bierzemy różnicę między faktyczną a prognozowaną liczbą widzów, pomijamy znak (pomyłka o 200 w górę jest tak samo zła jak o 200 w dół) i uśredniamy. Wynik ma jednostkę danych — „MAE = 180 widzów” rozumie każdy kierownik klubu.</p>
+<p>MAE traktuje wszystkie błędy liniowo: jeden błąd o 1000 widzów waży tyle samo co pięć błędów po 200. W porównaniu z <a data-concept="rmse">RMSE</a>, który podnosi błędy do kwadratu, MAE jest mniej wrażliwy na pojedyncze ekstremalne pomyłki (np. derby, mecz z rekordową publicznością). Ma też ważną własność teoretyczną: prognozą punktową minimalizującą oczekiwany błąd bezwzględny jest <a data-concept="mediana">mediana</a> rozkładu predykcyjnego, a nie jego średnia <cite data-bib="hyndman2021fpp3"></cite>.</p>
+<p>Ta druga obserwacja ma praktyczne konsekwencje: miara błędu i rodzaj prognozy punktowej powinny do siebie pasować. Jeśli model probabilistyczny podaje cały rozkład liczby widzów, a sukces mierzymy przez MAE, to jako prognozę punktową należy raportować medianę tego rozkładu.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \( y_1,\dots,y_n \in \mathbb{R} \) będą wartościami zaobserwowanymi (np. liczbami widzów w meczach zbioru testowego), a \( \hat y_1,\dots,\hat y_n \in \mathbb{R} \) — prognozami punktowymi wyznaczonymi <em>przed</em> poznaniem \( y_i \). Błąd prognozy to \( e_i = y_i - \hat y_i \).</p>
+<div class="ml-box ml-def" id="def-mae"><p class="ml-box-title">Definicja (MAE)</p>
+<p>Średnim błędem bezwzględnym nazywamy</p>
+<div class="ml-eq" id="eq-mae">\[ \text{MAE} \;=\; \frac1n\sum_{i=1}^{n} |y_i - \hat y_i| \;=\; \frac1n\sum_{i=1}^n |e_i|. \]</div>
+<p>Wersją populacyjną (oczekiwanym błędem bezwzględnym prognozy \( c \) dla zmiennej losowej \( Y \) o rozkładzie \( F \) z \( \mathbb{E}|Y| \lt \infty \)) jest \( L(c) = \mathbb{E}|Y - c| \).</p>
+</div>
+<div class="ml-box ml-def" id="def-mase"><p class="ml-box-title">Definicja (MASE — skalowany błąd bezwzględny)</p>
+<p>Niech \( Q \gt 0 \) będzie średnim błędem bezwzględnym prognozy referencyjnej na danych treningowych, np. prognozy naiwnej „jak w poprzednim meczu”: \( Q = \frac{1}{T-1}\sum_{t=2}^{T}|y_t - y_{t-1}| \). Skalowany średni błąd bezwzględny <cite data-bib="hyndman2006"></cite> to</p>
+<div class="ml-eq" id="eq-mae-mase">\[ \text{MASE} \;=\; \frac{\text{MAE}}{Q} \;=\; \frac1n\sum_{i=1}^n \frac{|e_i|}{Q}. \]</div>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( n \)</td><td>liczba prognoz w zbiorze testowym</td></tr>
+<tr><td>\( y_i \)</td><td>wartość zaobserwowana (np. liczba widzów \( A_i \))</td></tr>
+<tr><td>\( \hat y_i \)</td><td>prognoza punktowa</td></tr>
+<tr><td>\( e_i = y_i - \hat y_i \)</td><td>błąd prognozy (dodatni: niedoszacowanie)</td></tr>
+<tr><td>\( Y,\ F \)</td><td>zmienna losowa (wynik przyszły) i jej dystrybuanta</td></tr>
+<tr><td>\( L(c) \)</td><td>oczekiwana strata bezwzględna prognozy \( c \)</td></tr>
+<tr><td>\( m \)</td><td>mediana rozkładu \( F \)</td></tr>
+<tr><td>\( Q \)</td><td>skala odniesienia (MAE prognozy naiwnej na danych treningowych)</td></tr>
+<tr><td>\( \sigma \)</td><td>odchylenie standardowe błędów (w modelu normalnym)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li><strong>Prognozy rzeczywiście „ex ante”.</strong> \( \hat y_i \) muszą powstać bez wiedzy o \( y_i \) — w praktyce w ramach <a data-concept="backtesting">walidacji chronologicznej</a> (model uczony na sezonach wcześniejszych, oceniany na późniejszym). MAE policzony na danych treningowych mierzy dopasowanie, nie jakość prognoz.</li>
+<li><strong>Wspólna skala.</strong> MAE sumuje błędy w jednostkach danych, więc wszystkie obserwacje powinny być w tej samej skali i mieć porównywalne znaczenie. Mieszanie meczów ligi z 200 widzami i meczów Ligi Mistrzów z 6000 widzami sprawia, że MAE jest zdominowany przez mecze duże.</li>
+<li><strong>Skończony pierwszy moment.</strong> Wersja populacyjna wymaga \( \mathbb{E}|Y| \lt \infty \).</li>
+<li><strong>Zgodność z funkcją straty.</strong> MAE jest właściwą miarą, gdy koszt pomyłki rośnie liniowo z jej wielkością i jest symetryczny. Jeśli przeszacowanie jest dla klubu kosztowniejsze niż niedoszacowanie (np. zamówienie zbyt dużej ochrony), lepsza jest asymetryczna strata kwantylowa.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Pochodna (subgradient) oczekiwanej straty bezwzględnej względem prognozy \( c \) dla rozkładu ciągłego:</p>
+<div class="ml-eq" id="eq-mae-pochodna">\[ L'(c) \;=\; \frac{d}{dc}\,\mathbb{E}|Y-c| \;=\; F(c) - \big(1 - F(c)\big) \;=\; 2F(c) - 1. \]</div>
+<p>Warunek optymalności — prognoza optymalna w sensie MAE to mediana:</p>
+<div class="ml-eq" id="eq-mae-mediana">\[ \arg\min_{c\in\mathbb{R}} \mathbb{E}|Y - c| \;=\; \{\, m : F(m^-) \le \tfrac12 \le F(m) \,\} \;\ni\; \operatorname{med}(Y). \]</div>
+<p>Dla błędów normalnych \( e \sim N(0,\sigma^2) \) oczekiwany błąd bezwzględny jest proporcjonalny do \( \sigma \):</p>
+<div class="ml-eq" id="eq-mae-normal">\[ \mathbb{E}|e| \;=\; \sigma\sqrt{\frac{2}{\pi}} \;\approx\; 0{,}798\,\sigma. \]</div>
+<p>Przybliżony błąd standardowy MAE (gdy błędy są w przybliżeniu niezależne), oraz porównanie dwóch modeli A i B na tych samych meczach przez różnice sparowane \( d_i = |e_i^{A}| - |e_i^{B}| \):</p>
+<div class="ml-eq" id="eq-mae-se">\[ \operatorname{SE}(\text{MAE}) \approx \frac{s_{|e|}}{\sqrt n}, \qquad \operatorname{SE}(\bar d) \approx \frac{s_d}{\sqrt n}, \]</div>
+<p>gdzie \( s_{|e|} \) i \( s_d \) są odchyleniami standardowymi próbkowymi wartości \( |e_i| \) i \( d_i \).</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-mae-mediana"><p class="ml-box-title">Twierdzenie (optymalność mediany)</p>
+<p>Niech \( Y \) ma dystrybuantę \( F \) i \( \mathbb{E}|Y| \lt \infty \). Funkcja \( L(c) = \mathbb{E}|Y-c| \) jest wypukła, a jej minimum jest osiągane dokładnie w zbiorze median \( F \). Wersja empiryczna: funkcja \( c \mapsto \sum_{i=1}^n |y_i - c| \) osiąga minimum w każdej medianie próbkowej; dla \( n \) parzystego — w każdym punkcie odcinka \( [y_{(n/2)},\ y_{(n/2+1)}] \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-mae-normal"><p class="ml-box-title">Twierdzenie (MAE dla błędów normalnych)</p>
+<p>Jeśli \( e \sim N(0,\sigma^2) \), to \( \mathbb{E}|e| = \sigma\sqrt{2/\pi} \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-mae-rmse"><p class="ml-box-title">Twierdzenie (MAE a RMSE)</p>
+<p>Dla dowolnych błędów \( e_1,\dots,e_n \): \( \text{MAE} \le \text{RMSE} \le \sqrt n\,\text{MAE} \). Dowód podajemy w artykule o <a data-concept="rmse" data-anchor="wyprowadzenie">RMSE</a>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-mae-skala"><p class="ml-box-title">Twierdzenie (zachowanie przy zmianie skali)</p>
+<p>Jeśli wszystkie obserwacje i prognozy przemnożymy przez \( k \gt 0 \) i przesuniemy o \( b \), to MAE zmieni się o czynnik \( k \), a MASE pozostanie bez zmian.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<div class="ml-proof"><p class="ml-box-title">Dowód (optymalność mediany)</p>
+<ol>
+<li><strong>Wypukłość.</strong> Dla każdego \( y \) funkcja \( c\mapsto|y-c| \) jest wypukła; wartość oczekiwana (całka z nieujemnymi wagami) zachowuje wypukłość.</li>
+<li><strong>Różnica wartości.</strong> Dla \( c \lt c' \) rozważmy \( |y-c'| - |y-c| \). Jeśli \( y \le c \): równa się \( c'-c \). Jeśli \( y \ge c' \): równa się \( -(c'-c) \). Jeśli \( c \lt y \lt c' \): leży między \( -(c'-c) \) a \( c'-c \).</li>
+<li>Stąd \( L(c') - L(c) \le (c'-c)\,\big[P(Y \lt c') - P(Y \ge c')\big] \) i \( L(c') - L(c) \ge (c'-c)\,\big[P(Y\le c) - P(Y \gt c)\big] = (c'-c)\,(2F(c)-1) \).</li>
+<li>Jeśli \( F(c) \gt 1/2 \), to dla każdego \( c' \gt c \) zachodzi \( L(c') \gt L(c) \) — przesuwanie prognozy w prawo od punktu, w którym \( F \gt 1/2 \), zwiększa stratę. Symetrycznie: jeśli \( P(Y \lt c') \lt 1/2 \), to \( L(c) \gt L(c') \) dla każdego \( c \lt c' \) — przesuwanie w lewo od punktu, w którym \( F(c'^-) \lt 1/2 \), zwiększa stratę.</li>
+<li>Zatem minimum leży w zbiorze punktów \( m \) z \( F(m^-) \le 1/2 \le F(m) \), czyli w zbiorze median. Na tym zbiorze (odcinku) \( L \) jest stała, bo dla \( m \lt m' \) obu będących medianami masa w \( (m, m') \) jest zerowa, a \( P(Y\le m) = P(Y \ge m') = 1/2 \), więc obie nierówności z kroku 3 dają \( L(m') = L(m) \).</li>
+<li><strong>Wersja empiryczna</strong> jest szczególnym przypadkiem dla rozkładu empirycznego \( F_n \) (masa \( 1/n \) w każdym \( y_i \)). Intuicyjnie: przesunięcie \( c \) w prawo o \( \delta \) zmienia sumę o \( \delta\,(\#\{y_i \le c\} - \#\{y_i \gt c\}) \) (dla małych \( \delta \)); suma maleje, dopóki po lewej jest mniej obserwacji niż po prawej, i zaczyna rosnąć, gdy po lewej jest ich więcej — przełom następuje w medianie.</li>
+</ol>
+<p>Dla rozkładu z gęstością \( f \) można też różniczkować: \( L(c) = \int_{-\infty}^c (c-y)f(y)\,dy + \int_c^\infty (y-c)f(y)\,dy \), skąd z reguły Leibniza \( L'(c) = F(c) - (1-F(c)) \), co daje <a class="ml-eqref" href="#eq-mae-pochodna"></a>; zero pochodnej to \( F(c) = 1/2 \).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (MAE dla błędów normalnych)</p>
+<ol>
+<li>Z symetrii: \( \mathbb{E}|e| = 2\int_0^\infty x\,\frac{1}{\sigma\sqrt{2\pi}}e^{-x^2/(2\sigma^2)}\,dx \).</li>
+<li>Podstawienie \( u = x^2/(2\sigma^2) \), \( du = x\,dx/\sigma^2 \): \( \int_0^\infty x\,e^{-x^2/(2\sigma^2)}dx = \sigma^2\int_0^\infty e^{-u}du = \sigma^2 \).</li>
+<li>Stąd \( \mathbb{E}|e| = \frac{2\sigma^2}{\sigma\sqrt{2\pi}} = \sigma\sqrt{\frac{2}{\pi}} \approx 0{,}7979\,\sigma \).</li>
+</ol>
+<p>Wniosek: przy normalnych, nieobciążonych błędach \( \text{RMSE} \approx \sigma \) i \( \text{MAE}/\text{RMSE} \approx 0{,}80 \). Stosunek wyraźnie mniejszy (np. 0,55) sygnalizuje ciężkie ogony błędów — kilka bardzo dużych pomyłek.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (zmiana skali)</p>
+<ol>
+<li>Po przekształceniu \( y_i' = ky_i + b \), \( \hat y_i' = k\hat y_i + b \) błędy wynoszą \( e_i' = k e_i \), więc \( |e_i'| = k|e_i| \) i \( \text{MAE}' = k\,\text{MAE} \).</li>
+<li>Skala odniesienia też jest różnicą obserwacji: \( Q' = kQ \). Zatem \( \text{MASE}' = k\,\text{MAE}/(kQ) = \text{MASE} \).</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne:</strong> 8 meczów ligowych z sezonu testowego, prognozy punktowe (mediany rozkładu predykcyjnego) i faktyczna liczba widzów. Te same dane wykorzystujemy w artykule o <a data-concept="rmse" data-anchor="przyklad">RMSE</a>.</p>
+<table class="ml-table">
+<thead><tr><th>Mecz</th><th>\( y_i \)</th><th>\( \hat y_i \)</th><th>\( e_i \)</th><th>\( |e_i| \)</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>1450</td><td>1300</td><td>150</td><td>150</td></tr>
+<tr><td>2</td><td>980</td><td>1050</td><td>−70</td><td>70</td></tr>
+<tr><td>3</td><td>2100</td><td>1900</td><td>200</td><td>200</td></tr>
+<tr><td>4</td><td>1200</td><td>1250</td><td>−50</td><td>50</td></tr>
+<tr><td>5</td><td>760</td><td>900</td><td>−140</td><td>140</td></tr>
+<tr><td>6</td><td>1650</td><td>1500</td><td>150</td><td>150</td></tr>
+<tr><td>7 (derby)</td><td>3900</td><td>2600</td><td>1300</td><td>1300</td></tr>
+<tr><td>8</td><td>1100</td><td>1150</td><td>−50</td><td>50</td></tr>
+</tbody>
+</table>
+<ol class="ml-steps">
+<li><strong>Suma błędów bezwzględnych:</strong> \( 150+70+200+50+140+150+1300+50 = 2110 \).</li>
+<li><strong>MAE:</strong> \( 2110/8 = 263{,}75 \) widza.</li>
+<li><strong>Wpływ derbów:</strong> bez meczu 7 suma wynosi \( 810 \), a MAE \( = 810/7 \approx 115{,}7 \). Jeden mecz ponad dwukrotnie podnosi MAE — ale, jak pokazuje artykuł o RMSE, RMSE rośnie jeszcze silniej (z ok. 127,9 do 474,9).</li>
+<li><strong>Niepewność MAE:</strong> odchylenie standardowe wartości \( |e_i| \) wynosi \( s_{|e|} \approx 422{,}2 \), więc \( \operatorname{SE}(\text{MAE}) \approx 422{,}2/\sqrt8 \approx 149{,}3 \). Na 8 meczach MAE jest bardzo niepewny — porównania modeli wymagają całego sezonu testowego (setek meczów).</li>
+<li><strong>MASE:</strong> jeżeli na danych treningowych prognoza naiwna „liczba widzów z poprzedniego meczu domowego” myliła się średnio o \( Q = 310 \) widzów (dane ilustracyjne), to \( \text{MASE} = 263{,}75/310 \approx 0{,}85 \lt 1 \): model jest lepszy od prognozy naiwnej.</li>
+<li><strong>Optymalność mediany — prognoza stała.</strong> Gdybyśmy dla wszystkich 8 meczów prognozowali tę samą liczbę \( c \): wartości uporządkowane \( 760, 980, 1100, 1200, 1450, 1650, 2100, 3900 \); mediana to dowolny punkt odcinka \( [1200, 1450] \), np. 1325. Średnia wynosi \( 13\,140/8 = 1642{,}5 \).
+<ul>
+<li>\( c = 1325 \): błędy bezwzględne \( 565, 345, 225, 125, 125, 325, 775, 2575 \); suma \( 5060 \); MAE \( = 632{,}5 \).</li>
+<li>\( c = 1200 \) i \( c = 1450 \): również MAE \( = 632{,}5 \) (cały odcinek median jest optymalny).</li>
+<li>\( c = 1642{,}5 \) (średnia): błędy \( 882{,}5;\ 662{,}5;\ 542{,}5;\ 442{,}5;\ 192{,}5;\ 7{,}5;\ 457{,}5;\ 2257{,}5 \); suma \( 5445 \); MAE \( \approx 680{,}6 \) — gorzej niż mediana.</li>
+</ul></li>
+</ol>
+<div class="ml-plot" data-plot="normal" data-params='{"mu": 0, "sigma": 150}'></div>
+<p>Wykres przedstawia rozkład błędów \( N(0, \sigma) \). Zmieniając \( \sigma \), zauważ, że typowa wartość bezwzględna błędu (MAE \( \approx 0{,}8\sigma \)) rośnie proporcjonalnie do szerokości rozkładu — MAE jest miarą skali błędów wyrażoną w jednostkach danych.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li><strong>Jednostki.</strong> MAE = 263,75 oznacza, że prognoza myliła się „przeciętnie” o ok. 264 widzów. Dla wypełnienia hali (\( W \in [0,1] \)) MAE wyraża się w punktach procentowych pojemności, co ułatwia porównania między halami różnej wielkości.</li>
+<li><strong>Odniesienie.</strong> Sam MAE nie mówi, czy prognoza jest dobra. Zawsze porównujemy go z prostą prognozą odniesienia (naiwną, średnią klubu z poprzedniego sezonu) — stąd MASE: wartość poniżej 1 oznacza poprawę względem prognozy naiwnej.</li>
+<li><strong>Mediana, nie średnia.</strong> Model oceniany przez MAE powinien raportować medianę rozkładu predykcyjnego. Przy prawostronnie skośnych rozkładach liczby widzów mediana jest mniejsza od średniej; podawanie średniej zawyża MAE.</li>
+<li><strong>Brak informacji o kierunku.</strong> MAE nie mówi, czy model systematycznie przeszacowuje, czy niedoszacowuje. Dlatego obok MAE raportujemy średni błąd \( \bar e \) (obciążenie) — w przykładzie \( \bar e = 1490/8 = 186{,}25 \), czyli model przeciętnie niedoszacowywał frekwencję.</li>
+<li><strong>Prognozy probabilistyczne.</strong> MAE ocenia tylko prognozę punktową. Jakość całego rozkładu ocenia się regułami punktacji (np. CRPS, który dla prognozy zdegenerowanej redukuje się do błędu bezwzględnego <cite data-bib="gneiting2007scoring"></cite>) oraz <a data-concept="pokrycie-przedzialow-predykcyjnych">pokryciem przedziałów</a>.</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> MAE jest podstawową, „czytelną dla klubów” miarą jakości prognoz w walidacji chronologicznej: model uczy się na sezonach wcześniejszych i prognozuje wszystkie mecze ostatniego sezonu.</p>
+<ul>
+<li><strong>Dwie skale.</strong> Dla wariantu „wypełnienie” raportujemy MAE wypełnienia (w punktach procentowych) i MAE liczby widzów; dla wariantu „liczba widzów” (puchary EHF, mecze bez znanej pojemności) — tylko MAE liczby widzów.</li>
+<li><strong>Rozbicie na rozgrywki.</strong> MAE liczony łącznie dla Superligi (średnio ok. 1100–1300 widzów), niższych lig (100–300) i pucharów EHF (średnio kilka tysięcy) byłby zdominowany przez mecze o dużej frekwencji. Dlatego MAE raportujemy osobno dla każdych rozgrywek, a do porównań między nimi używamy MASE lub MAE wypełnienia.</li>
+<li><strong>Prognoza punktowa.</strong> Jako prognozę punktową w raportach pokazujemy medianę rozkładu predykcyjnego (zgodnie z twierdzeniem o optymalności mediany), a obok przedziały predykcyjne 50/80/95% (por. <a data-concept="przedzialy-predykcyjne">przedziały predykcyjne</a>).</li>
+<li><strong>Porównanie wariantów modelu.</strong> Różnice MAE między wariantami (np. z formą drużyn i bez) oceniamy na różnicach sparowanych \( d_i \) z tych samych meczów (wzór <a class="ml-eqref" href="#eq-mae-se"></a>), bo trudność meczów jest wspólna dla obu modeli i silnie redukuje wariancję porównania.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Zależność od skali.</strong> MAE nie nadaje się do porównań między zbiorami o różnej skali (ligi, sezony z innymi halami) bez normalizacji <cite data-bib="hyndman2006"></cite>.</li>
+<li><strong>Problemy miar procentowych.</strong> Naturalna alternatywa — średni bezwzględny błąd procentowy (MAPE) — jest niestabilna dla małych \( y_i \) (mecze z kilkudziesięcioma widzami) i nieokreślona dla \( y_i = 0 \) (mecze bez publiczności). Dlatego jej nie stosujemy.</li>
+<li><strong>Ślepota na ryzyko ogonów.</strong> Liniowa kara sprawia, że model rzadko, ale bardzo mocno chybiający (np. w meczach o dużej stawce) może mieć dobry MAE. Jeśli duże błędy są szczególnie kosztowne, uzupełniamy MAE o <a data-concept="rmse">RMSE</a> lub kwantyle błędów.</li>
+<li><strong>Tylko prognoza punktowa.</strong> MAE ignoruje niepewność prognozy; dwa modele o tym samym MAE mogą mieć skrajnie różną jakość przedziałów predykcyjnych.</li>
+<li><strong>Niezależność błędów.</strong> Przybliżenie \( \operatorname{SE} \) w <a class="ml-eqref" href="#eq-mae-se"></a> zakłada niezależność; błędy z tego samego klubu lub kolejki są skorelowane, więc rzeczywista niepewność bywa większa.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="rmse">RMSE</a> — miara kwadratowa, optymalna dla średniej.</li>
+<li><a data-concept="mediana">Mediana</a> — prognoza optymalna w sensie MAE.</li>
+<li><a data-concept="backtesting">Backtesting (walidacja chronologiczna)</a> — schemat, w którym liczymy MAE.</li>
+<li><a data-concept="wartosc-oczekiwana-prognozy">Wartość oczekiwana prognozy</a> i <a data-concept="przedzialy-predykcyjne">przedziały predykcyjne</a>.</li>
+<li><a data-concept="pokrycie-przedzialow-predykcyjnych">Pokrycie przedziałów predykcyjnych</a> i <a data-concept="diagnostyka-reszt">diagnostyka reszt</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="hyndman2006"></li>
+<li data-bib="hyndman2021fpp3"></li>
+<li data-bib="gneiting2007scoring"></li>
+<li data-bib="tashman2000"></li>
+<li data-bib="casellaberger2002"></li>
+</ul>
+</section>

@@ -1,0 +1,202 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Każdy model bayesowski wymaga <a data-concept="rozklad-a-priori">rozkładu a priori</a> (ang. <em>prior distribution</em>, krótko: prior) dla każdego nieznanego parametru. Prior nie jest „opinią eksperta doklejoną do danych”, lecz częścią specyfikacji modelu — na równi z wyborem rozkładu obserwacji. Dobrze dobrany prior wyklucza wartości absurdalne (np. średnie wypełnienie hali na poziomie 0,0001% albo 99,999% we wszystkich meczach), stabilizuje estymację przy małej liczbie obserwacji i nie przeszkadza danym tam, gdzie jest ich dużo.</p>
+<p>Intuicja, że „najbezpieczniejszy jest prior płaski, bo nic nie zakłada”, jest myląca. Płaskość zależy od skali: rozkład jednostajny na wypełnieniu hali \(W\in(0,1)\) <em>nie</em> jest płaski na skali logitu, a bardzo szeroki rozkład normalny na logicie — pozornie „nieinformacyjny” — po przeniesieniu na skalę wypełnienia twierdzi, że mecze odbywają się niemal zawsze przy pustych albo przy pełnych trybunach. Dlatego nowoczesna praktyka <cite data-bib="gelman2020workflow"></cite> zaleca priory <em>słabo informacyjne</em> (ang. <em>weakly informative</em>) i sprawdzanie ich konsekwencji przez <em>symulację predykcyjną z priora</em> (ang. <em>prior predictive check</em>): losujemy parametry z priora, generujemy z nich sztuczne dane i oceniamy, czy wyglądają jak coś, co mogłoby się zdarzyć w hali.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \(\Theta\subseteq\mathbb{R}^d\) będzie przestrzenią parametrów modelu \(\{p(y\mid\theta):\theta\in\Theta\}\).</p>
+<div class="ml-box ml-def" id="def-prior"><p class="ml-box-title">Definicja</p>
+<p><strong>Priorem właściwym</strong> nazywamy miarę probabilistyczną \(\Pi\) na \(\Theta\), zwykle z gęstością \(p(\theta)\ge0\), \(\int_\Theta p(\theta)\,d\theta=1\). <strong>Priorem niewłaściwym</strong> (ang. <em>improper prior</em>) nazywamy nieujemną funkcję \(p(\theta)\) o \(\int_\Theta p(\theta)\,d\theta=\infty\) (miarę \(\sigma\)-skończoną o nieskończonej masie); jest on dopuszczalny tylko wtedy, gdy \(\int_\Theta p(y\mid\theta)p(\theta)\,d\theta\lt\infty\), czyli posterior jest właściwy.</p>
+<p><strong>Rozkładem predykcyjnym a priori</strong> (ang. <em>prior predictive distribution</em>) nazywamy rozkład danych implikowany przez prior:</p>
+<div class="ml-eq" id="eq-priory">\[ p(y)=\int_\Theta p(y\mid\theta)\,p(\theta)\,d\theta . \]</div>
+</div>
+<p>Klasyfikacja priorów według zawartej w nich informacji (bez ostrych granic):</p>
+<ul>
+<li><strong>Informacyjny</strong> (ang. <em>informative</em>) — koncentruje masę w wąskim zakresie, wynikającym z wcześniejszych badań lub twardej wiedzy dziedzinowej; przy małych próbach istotnie wpływa na wynik.</li>
+<li><strong>Słabo informacyjny</strong> — skala dopasowana do problemu tak, by wykluczać wartości nierealne (o rzędy wielkości), ale nie rozstrzygać między realnymi; działa jak łagodna regularyzacja (prior <em>regularyzujący</em>).</li>
+<li><strong>Płaski / jednostajny</strong> (ang. <em>flat, uniform</em>) — stała gęstość na \(\Theta\) lub na przedziale; płaskość jest własnością konkretnej parametryzacji, nie modelu.</li>
+<li><strong>Referencyjny / „nieinformacyjny”</strong> — konstruowany regułą formalną, np. prior Jeffreysa \(p(\theta)\propto\sqrt{\det I(\theta)}\), niezmienniczy względem reparametryzacji; często niewłaściwy.</li>
+<li><strong>Sprzężony</strong> (ang. <em>conjugate</em>) — należy do rodziny zamkniętej względem aktualizacji przez daną wiarygodność (np. beta dla dwumianu); własność obliczeniowa, nie merytoryczna.</li>
+</ul>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(p(\theta)\)</td><td>gęstość priora parametru \(\theta\)</td></tr>
+<tr><td>\(p(y)\)</td><td>rozkład predykcyjny a priori danych</td></tr>
+<tr><td>\(\alpha\)</td><td>wyraz wolny predyktora liniowego na skali logitu</td></tr>
+<tr><td>\(s\)</td><td>odchylenie standardowe priora normalnego \(N(0,s^2)\)</td></tr>
+<tr><td>\(W=\operatorname{logit}^{-1}(\alpha)\)</td><td>wypełnienie hali implikowane przez \(\alpha\), \(W\in(0,1)\)</td></tr>
+<tr><td>\(\operatorname{logit}(w)\)</td><td>\(\log\frac{w}{1-w}\); \(\operatorname{logit}^{-1}(x)=\frac{1}{1+e^{-x}}\)</td></tr>
+<tr><td>\(\varphi,\ \Phi\)</td><td>gęstość i dystrybuanta standardowego rozkładu normalnego</td></tr>
+<tr><td>\(I(\theta)\)</td><td>informacja Fishera</td></tr>
+<tr><td>\(\operatorname{Beta}(a,b)\)</td><td>rozkład beta; \(a+b\) — liczba pseudoobserwacji priora</td></tr>
+<tr><td>\(m,\ s_0^2\)</td><td>średnia i wariancja priora normalnego w modelu normalno-normalnym</td></tr>
+<tr><td>\(\sigma^2,\ n,\ \bar y\)</td><td>wariancja obserwacji, liczba obserwacji, średnia z próby</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li>Prior ustala się przed analizą danych używanych w wiarygodności (lub na podstawie danych rozłącznych z nimi).</li>
+<li>Prior formułuje się na skali, na której parametr wchodzi do modelu (np. logit, log), ale <em>ocenia</em> na skali interpretowalnej (wypełnienie, liczba widzów) — przez symulację predykcyjną.</li>
+<li>Predyktory są standaryzowane (zob. <a data-concept="standaryzacja">standaryzacja</a>), dzięki czemu jeden prior \(N(0,1)\) dla współczynników ma porównywalny sens dla wszystkich zmiennych.</li>
+<li>Prior niewłaściwy wolno stosować tylko po wykazaniu, że posterior jest właściwy dla <em>każdego</em> możliwego zbioru danych, który może się pojawić (także skrajnego, np. zero sukcesów).</li>
+<li>Prior łączny jest zwykle iloczynem priorów brzegowych (niezależność a priori); trzeba pamiętać, że rozkład funkcji wielu parametrów (np. sumy efektów w predyktorze) jest szerszy niż rozkład każdego składnika.</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Rozkład predykcyjny a priori — wzór <a class="ml-eqref" href="#eq-priory"></a> — w praktyce realizuje się symulacyjnie: \(\theta^{(s)}\sim p(\theta)\), \(y^{(s)}\sim p(y\mid\theta^{(s)})\), \(s=1,\dots,S\).</p>
+<p>Gęstość wypełnienia \(W=\operatorname{logit}^{-1}(\alpha)\) przy \(\alpha\sim N(0,s^2)\) (rozkład logit-normalny):</p>
+<div class="ml-eq" id="eq-priory-logit">\[ p_W(w)=\frac{1}{s\,w(1-w)}\,\varphi\!\left(\frac{\operatorname{logit}w}{s}\right),\qquad 0\lt w\lt1 . \]</div>
+<p>Prawdopodobieństwo, że prior przypisuje wypełnieniu wartość skrajną (\(W\lt\varepsilon\) lub \(W\gt1-\varepsilon\)):</p>
+<div class="ml-eq" id="eq-priory-skrajne">\[ P\big(W\notin[\varepsilon,1-\varepsilon]\big)=2\left[1-\Phi\!\left(\frac{\operatorname{logit}(1-\varepsilon)}{s}\right)\right]. \]</div>
+<p>Zamiana zmiennych dla priora (dla monotonicznej, różniczkowalnej \(\psi=g(\theta)\)):</p>
+<div class="ml-eq" id="eq-priory-zamiana">\[ p_\psi(\psi)=p_\theta\big(g^{-1}(\psi)\big)\left|\frac{d g^{-1}(\psi)}{d\psi}\right| . \]</div>
+<p>Model normalno-normalny: przy \(\theta\sim N(m,s_0^2)\) i \(y_i\mid\theta\sim N(\theta,\sigma^2)\) niezależnych:</p>
+<div class="ml-eq" id="eq-priory-normalny">\[ \theta\mid y\sim N\!\left(\frac{m/s_0^2+n\bar y/\sigma^2}{1/s_0^2+n/\sigma^2},\ \frac{1}{1/s_0^2+n/\sigma^2}\right). \]</div>
+<p>Prior Jeffreysa dla prawdopodobieństwa sukcesu w rozkładzie dwumianowym: \(I(p)=n/(p(1-p))\), więc \(p(p)\propto p^{-1/2}(1-p)^{-1/2}\), czyli \(\operatorname{Beta}(\tfrac12,\tfrac12)\).</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-plaskosc-zalezy-od-skali"><p class="ml-box-title">Twierdzenie (płaskość nie jest niezmiennicza)</p>
+<p>(a) Jeżeli \(W\sim U(0,1)\), to \(\alpha=\operatorname{logit}W\) ma standardowy rozkład logistyczny o gęstości \(e^{-\alpha}/(1+e^{-\alpha})^2\) i odchyleniu standardowym \(\pi/\sqrt3\approx1{,}81\).
+(b) Jeżeli \(\alpha\) ma płaską (niewłaściwą) gęstość na \(\mathbb{R}\), to implikowana gęstość \(W\) jest proporcjonalna do \(w^{-1}(1-w)^{-1}\) — jest to niewłaściwy prior Haldane’a „\(\operatorname{Beta}(0,0)\)”.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-haldane-niewlasciwy"><p class="ml-box-title">Twierdzenie (niewłaściwy posterior przy priorze Haldane’a)</p>
+<p>W modelu \(k\mid p\sim\operatorname{Bin}(n,p)\) z priorem \(p(p)\propto p^{-1}(1-p)^{-1}\) posterior jest właściwy wtedy i tylko wtedy, gdy \(1\le k\le n-1\). Dla \(k=0\) lub \(k=n\) jest niewłaściwy.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-szeroki-normalny"><p class="ml-box-title">Twierdzenie (szeroki prior na logicie skupia masę na krańcach)</p>
+<p>Niech \(\alpha\sim N(0,s^2)\) i \(W=\operatorname{logit}^{-1}(\alpha)\). Dla każdego \(\varepsilon\in(0,\tfrac12)\): \(P(W\notin[\varepsilon,1-\varepsilon])\to1\) przy \(s\to\infty\). Ponadto gęstość \(p_W\) ma w \(w=\tfrac12\) maksimum lokalne dla \(s^2\lt2\) i minimum lokalne dla \(s^2\gt2\) (rozkład staje się dwumodalny).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-wplyw-priora"><p class="ml-box-title">Twierdzenie (wpływ priora w modelu normalno-normalnym)</p>
+<p>Przy założeniach wzoru <a class="ml-eqref" href="#eq-priory-normalny"></a> średnia posterior jest średnią ważoną precyzjami: \(\mathbb{E}(\theta\mid y)=\lambda m+(1-\lambda)\bar y\), gdzie \(\lambda=\dfrac{\sigma^2/n}{\sigma^2/n+s_0^2}\). Waga priora \(\lambda\) maleje do 0 przy \(n\to\infty\) i rośnie do 1 przy \(s_0\to0\).</p>
+</div>
+<p>Analogiczny wynik dla modelu beta–dwumianowego podaje artykuł <a data-concept="twierdzenie-bayesa-w-estymacji" data-anchor="twierdzenia">Twierdzenie Bayesa w estymacji</a>.</p>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-zamiana">Gęstość logit-normalna i płaskość</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Krok 1 (wzór <a class="ml-eqref" href="#eq-priory-logit"></a>). Odwzorowanie \(w\mapsto\operatorname{logit}w\) jest ściśle rosnące i różniczkowalne na \((0,1)\), \(\frac{d}{dw}\log\frac{w}{1-w}=\frac1w+\frac1{1-w}=\frac{1}{w(1-w)}\). Ze wzoru <a class="ml-eqref" href="#eq-priory-zamiana"></a>: \(p_W(w)=\frac1s\varphi(\operatorname{logit}w/s)\cdot\frac{1}{w(1-w)}\).</p>
+<p>Krok 2 (część (a)). Dla \(W\sim U(0,1)\): \(P(\alpha\le x)=P(W\le\operatorname{logit}^{-1}x)=\frac{1}{1+e^{-x}}\) — dystrybuanta rozkładu logistycznego; różniczkując, \(e^{-x}/(1+e^{-x})^2\). Wariancja standardowego rozkładu logistycznego to \(\pi^2/3\).</p>
+<p>Krok 3 (część (b)). Dla \(p_\alpha\equiv c\): \(p_W(w)=c\cdot\left|\frac{d\,\operatorname{logit}w}{dw}\right|=\frac{c}{w(1-w)}\), a \(\int_0^1\frac{dw}{w(1-w)}=\infty\) (rozbieżność logarytmiczna na obu krańcach).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-haldane">Niewłaściwy posterior przy priorze Haldane’a</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Posterior jest proporcjonalny do \(p^{k}(1-p)^{n-k}\cdot p^{-1}(1-p)^{-1}=p^{k-1}(1-p)^{n-k-1}\). Całka \(\int_0^1p^{k-1}(1-p)^{n-k-1}dp\) jest skończona wtedy i tylko wtedy, gdy oba wykładniki są większe od \(-1\), czyli \(k\gt0\) i \(n-k\gt0\) (wtedy równa się \(B(k,n-k)\)). Dla \(k=0\) całka zawiera czynnik \(\int_0^{1/2}p^{-1}dp=\infty\); symetrycznie dla \(k=n\).</p>
+<p class="ml-qed">∎</p></div>
+<p>Wniosek praktyczny: „płaski prior na logicie” w modelu wypełnienia daje niewłaściwy posterior dla każdej grupy, która nie ma żadnego meczu z kompletem (lub żadnego meczu bez kompletu). Program MCMC nie zgłosi błędu — łańcuchy będą dryfować w stronę \(\pm\infty\).</p>
+
+<h3 id="dowod-szeroki">Szeroki prior normalny na logicie</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Krok 1. \(W\notin[\varepsilon,1-\varepsilon]\iff|\alpha|\gt c_\varepsilon\), gdzie \(c_\varepsilon=\operatorname{logit}(1-\varepsilon)\gt0\). Zatem \(P=2[1-\Phi(c_\varepsilon/s)]\) (wzór <a class="ml-eqref" href="#eq-priory-skrajne"></a>), a przy \(s\to\infty\) mamy \(c_\varepsilon/s\to0\), \(\Phi(0)=\tfrac12\), więc \(P\to1\).</p>
+<p>Krok 2. Z <a class="ml-eqref" href="#eq-priory-logit"></a>: \(\log p_W(w)=-\frac{\ell^2}{2s^2}-\log w-\log(1-w)+\text{const}\), gdzie \(\ell=\operatorname{logit}w\). Różniczkując:
+\[ \frac{d}{dw}\log p_W(w)=\frac{1}{w(1-w)}\left[(2w-1)-\frac{\ell}{s^2}\right]=:\frac{f(w)}{w(1-w)} . \]</p>
+<p>Krok 3. \(f(\tfrac12)=0\), więc \(w=\tfrac12\) jest punktem krytycznym. Ponieważ \(\ell'(\tfrac12)=4\), mamy \(f'(\tfrac12)=2-4/s^2\). Dla \(s^2\lt2\): \(f'\lt0\), pochodna \(\log p_W\) zmienia znak z \(+\) na \(-\) — maksimum. Dla \(s^2\gt2\): \(f'\gt0\) — minimum, a mody leżą symetrycznie po obu stronach.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-normalny">Model normalno-normalny</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Krok 1. \(\log p(\theta\mid y)=-\frac{(\theta-m)^2}{2s_0^2}-\sum_i\frac{(y_i-\theta)^2}{2\sigma^2}+\text{const}\).</p>
+<p>Krok 2. \(\sum_i(y_i-\theta)^2=n(\theta-\bar y)^2+\sum_i(y_i-\bar y)^2\); drugi składnik nie zależy od \(\theta\).</p>
+<p>Krok 3. Współczynnik przy \(\theta^2\): \(-\tfrac12(1/s_0^2+n/\sigma^2)\); przy \(\theta\): \(m/s_0^2+n\bar y/\sigma^2\). Forma kwadratowa \(-\tfrac{1}{2}P\theta^2+b\theta\) to jądro \(N(b/P,1/P)\), co daje <a class="ml-eqref" href="#eq-priory-normalny"></a>.</p>
+<p>Krok 4. Dzieląc licznik i mianownik średniej przez \(1/s_0^2+n/\sigma^2\): waga przy \(m\) to \(\frac{1/s_0^2}{1/s_0^2+n/\sigma^2}=\frac{\sigma^2/n}{\sigma^2/n+s_0^2}=\lambda\). Granice \(\lambda\) są natychmiastowe.</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<h3 id="przyklad-prior-predictive">Symulacja predykcyjna z priora na skali logitu</h3>
+<p>Rozważamy prior dla wyrazu wolnego \(\alpha\) w modelu wypełnienia \(\operatorname{logit}\mu=\alpha\). Porównujemy \(s=1\), \(s=1{,}5\) i „nieinformacyjne” \(s=10\).</p>
+<ol class="ml-steps">
+<li><strong>Próg skrajności.</strong> Bierzemy \(\varepsilon=0{,}01\): \(c=\operatorname{logit}0{,}99=\log 99\approx4{,}595\).</li>
+<li><strong>\(s=1{,}5\).</strong> \(c/s=3{,}063\), \(\Phi(3{,}063)\approx0{,}99891\), więc \(P(W\notin[0{,}01;0{,}99])=2\cdot0{,}00109\approx0{,}0022\).</li>
+<li><strong>\(s=10\).</strong> \(c/s=0{,}4595\), \(\Phi(0{,}4595)\approx0{,}6771\), więc \(P=2\cdot0{,}3229\approx0{,}646\). Prawie dwie trzecie masy priora odpowiada wypełnieniu poniżej 1% lub powyżej 99%.</li>
+<li><strong>Kwantyle \(W\)</strong> (przekształcamy kwantyle \(\alpha\), bo \(\operatorname{logit}^{-1}\) jest rosnąca): np. dla \(s=1{,}5\) kwantyl 2,5% to \(\operatorname{logit}^{-1}(-1{,}96\cdot1{,}5)=\operatorname{logit}^{-1}(-2{,}940)\approx0{,}050\).</li>
+<li><strong>Kształt.</strong> Ze wzoru <a class="ml-eqref" href="#eq-priory-logit"></a> dla \(s=1{,}5\): \(p_W(0{,}5)\approx1{,}064\), \(p_W(0{,}25)\approx1{,}085\), \(p_W(0{,}1)\approx1{,}011\). Gęstość jest prawie stała na \([0{,}1;0{,}9]\) — \(N(0;1{,}5)\) na logicie to w przybliżeniu rozkład jednostajny wypełnienia (\(s^2=2{,}25\) tylko nieznacznie przekracza próg dwumodalności 2; płytkie mody w \(0{,}224\) i \(0{,}776\)).</li>
+</ol>
+<table class="ml-table">
+<thead><tr><th>Prior \(\alpha\)</th><th>kwantyl 2,5% \(W\)</th><th>kwartyl dolny</th><th>mediana</th><th>kwartyl górny</th><th>kwantyl 97,5%</th><th>\(P(0{,}1\lt W\lt0{,}9)\)</th><th>\(P(W\notin[0{,}01;0{,}99])\)</th></tr></thead>
+<tbody>
+<tr><td>\(N(0,1)\)</td><td>0,123</td><td>0,337</td><td>0,500</td><td>0,663</td><td>0,877</td><td>0,972</td><td>0,000004</td></tr>
+<tr><td>\(N(0;1{,}5)\)</td><td>0,050</td><td>0,267</td><td>0,500</td><td>0,733</td><td>0,950</td><td>0,857</td><td>0,0022</td></tr>
+<tr><td>\(N(0,10)\)</td><td>\(3\cdot10^{-9}\)</td><td>0,001</td><td>0,500</td><td>0,999</td><td>\(1-3\cdot10^{-9}\)</td><td>0,174</td><td>0,646</td></tr>
+</tbody>
+</table>
+<h3 id="przyklad-predyktor">Symulacja całego predyktora</h3>
+<ol class="ml-steps">
+<li><strong>Składniki.</strong> \(\alpha\sim N(0;1{,}5)\) oraz sześć efektów losowych postaci \(\sigma z\), \(\sigma\sim\text{Half-Normal}(0,1)\), \(z\sim N(0,1)\) (gospodarz, gospodarz×sezon, rywal, rywal×sezon, sezon, rozgrywki).</li>
+<li><strong>Wariancja sumy.</strong> \(\operatorname{Var}(\sigma z)=\mathbb{E}\sigma^2\cdot\mathbb{E}z^2=1\cdot1=1\), więc \(\operatorname{Var}(\eta)=2{,}25+6=8{,}25\), \(\operatorname{sd}(\eta)\approx2{,}87\).</li>
+<li><strong>Symulacja</strong> (\(S=200\,000\) losowań): \(P(W\notin[0{,}01;0{,}99])\approx0{,}106\); mediana \(W\approx0{,}50\), kwartyle \(\approx0{,}14\) i \(0{,}86\).</li>
+<li><strong>Z ośmioma standaryzowanymi predyktorami</strong> (\(\beta_k\sim N(0,1)\), \(\operatorname{Var}(x_k)=1\)): \(\operatorname{Var}(\eta)=16{,}25\), \(\operatorname{sd}\approx4{,}03\), a udział wartości skrajnych rośnie do \(\approx0{,}25\).</li>
+</ol>
+<p>Każdy prior osobno jest rozsądny, ale ich suma implikuje szerszy rozkład wypełnienia, niż sugeruje intuicja. Przy kilkudziesięciu tysiącach meczów dane i tak zdominują ten efekt, lecz symulacja pokazuje, gdzie ewentualnie zawęzić skale (np. Half-Normal\((0;0{,}5)\) dla słabiej zmiennych efektów).</p>
+<h3 id="przyklad-mala-proba">Wpływ priora przy małej próbie</h3>
+<p><em>Dane ilustracyjne.</em> Odsetek meczów z wypełnieniem powyżej 90%; obserwowana częstość zawsze 2/3. Średnia posterior \((a+k)/(a+b+n)\):</p>
+<table class="ml-table">
+<thead><tr><th>Dane \(k/n\)</th><th>Beta(1, 1)</th><th>Beta(2, 8)</th><th>Beta(20, 80)</th></tr></thead>
+<tbody>
+<tr><td>2/3</td><td>3/5 = 0,600</td><td>4/13 ≈ 0,308</td><td>22/103 ≈ 0,214</td></tr>
+<tr><td>20/30</td><td>21/32 ≈ 0,656</td><td>22/40 = 0,550</td><td>40/130 ≈ 0,308</td></tr>
+<tr><td>200/300</td><td>201/302 ≈ 0,666</td><td>202/310 ≈ 0,652</td><td>220/400 = 0,550</td></tr>
+</tbody>
+</table>
+<div class="ml-plot" data-plot="beta-update" data-params='{"a": 2, "b": 8, "k": 2, "n": 3}'></div>
+<p>Przy trzech meczach posterior niemal pokrywa się z priorem; zwiększ \(n\) i \(k\) w proporcji 2:3, aby zobaczyć, jak dane przejmują kontrolę, oraz zwiększ \(a+b\), aby zobaczyć, ile danych potrzeba do „przegłosowania” mocnego priora.</p>
+<div class="ml-plot" data-plot="normal" data-params='{"mu": 0, "sigma": 1.5}'></div>
+<p>Prior \(N(0;1{,}5)\) dla wyrazu wolnego na skali logitu: prawie cała masa leży w przedziale \((-3,3)\), czyli wypełnieniach od ok. 5% do 95%.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Symulacja z priora odpowiada na pytanie: „co mój model uważał za możliwe, zanim zobaczył dane?”. Prior \(N(0;1{,}5)\) na logicie twierdzi, że średnie wypełnienie może być w zasadzie dowolne w przedziale 5–95% i żadnej wartości nie faworyzuje — to rozsądny słabo informacyjny wybór. Prior \(N(0,10)\) „nic nie zakłada” na skali logitu, ale na skali wypełnienia twierdzi coś mocnego i fałszywego: że typowy mecz odbywa się przy pustej albo przepełnionej hali. Przy dużej liczbie danych ta różnica zanika; przy małej (nowy klub, nowa hala, pojedynczy sezon) — decyduje o wyniku.</p>
+<p>Tabela małej próby pokazuje mechanikę „pseudoobserwacji”: prior \(\operatorname{Beta}(20,80)\) waży tyle co 100 meczów i przy 3 rzeczywistych meczach praktycznie się nie zmienia. To nie jest błąd metody, lecz konsekwencja deklaracji: jeśli naprawdę wiemy tyle, ile dałoby 100 meczów, to 3 nowe niewiele zmieniają. Jeśli nie wiemy — prior jest zbyt informacyjny.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> priory są słabo informacyjne i zdefiniowane na skalach, na których parametry wchodzą do predyktora:</p>
+<ul>
+<li>\(\beta_k\sim N(0,1)\) dla standaryzowanych warunków meczu (weekend, godzina, faza, forma i pozycja w tabeli). Na skali logitu zmiana o 1 odchylenie standardowe predyktora o efekcie \(\beta=1\) zmienia wypełnienie z 50% do 73% — to górna granica realnych efektów, więc prior nie tłumi efektów prawdziwych, a wyklucza absurdalne.</li>
+<li>Efekty losowe w parametryzacji niecentrowanej \(R_j=\sigma_Rz_j\), \(z_j\sim N(0,1)\), z hiperpriorem \(\sigma\sim\text{Half-Normal}(0,1)\) — zob. <a data-concept="hiperpriory">hiperpriory</a>.</li>
+<li>Wyraz wolny: w wariancie „wypełnienie” prior rzędu \(N(0;1{,}5)\) na logicie jest naturalnym wyborem; w wariancie „liczba widzów” (\(\log\mu\)) prior należy wycentrować na logarytmie typowej frekwencji (np. \(\log1200\approx7{,}1\) dla ekstraklasy, \(\log4500\approx8{,}4\) dla Ligi Mistrzów) z odchyleniem ok. 1, co odpowiada mnożnikowi \(e^{\pm2}\approx\times7{,}4\) w przedziale 95%.</li>
+<li>Parametry precyzji \(\phi\) (beta-dwumian) i dyspersji \(\kappa\) (ujemny dwumian) — dodatnie; prior na skali logarytmicznej lub z rodziny gamma/wykładniczej, sprawdzany symulacją: czy implikowany rozrzut frekwencji w hali o 2500 miejscach jest realny.</li>
+</ul>
+<p>Symulacja z priora całego modelu (sekcja przykładu) jest elementem procesu budowy MAF zgodnego z <cite data-bib="gelman2020workflow"></cite>: przed dopasowaniem generujemy sztuczne sezony, sprawdzamy rozkład wypełnień i liczby widzów, a dopiero potem dopasowujemy model. Mała próba ma w MAF realne znaczenie dla interakcji gospodarz×sezon i rywal×sezon (kilka–kilkanaście meczów na komórkę) oraz dla klubów pucharowych z pojedynczymi meczami — tam prior wraz z <a data-concept="partial-pooling">partial pooling</a> decyduje o stabilności indeksu IAF.</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Brak „neutralnego” priora.</strong> Każdy prior coś zakłada; płaskość zależy od parametryzacji, a priory referencyjne bywają niewłaściwe.</li>
+<li><strong>Priory niewłaściwe</strong> wymagają dowodu właściwości posterioru dla wszystkich możliwych danych; w modelach hierarchicznych (np. \(p(\sigma)\propto1/\sigma\)) prowadzą do niewłaściwego posterioru <cite data-bib="gelman2006prior"></cite>.</li>
+<li><strong>Interakcje priorów.</strong> Priory brzegowe niezależne mogą implikować nierealny prior łączny dla wielkości pochodnych (suma efektów, iloraz w IAF); tylko symulacja to ujawnia.</li>
+<li><strong>Ryzyko dopasowania priora do danych.</strong> Iteracyjne „poprawianie” priora po obejrzeniu posterioru liczy dane dwukrotnie; zmiany należy uzasadniać symulacją z priora, nie wynikiem.</li>
+<li><strong>Wrażliwość</strong> w małych grupach jest nieusuwalna — należy ją raportować (analiza wrażliwości na alternatywne skale priorów).</li>
+<li>Słabo informacyjne priory są dobierane do <em>skali</em> problemu; po zmianie jednostek (np. liczba widzów zamiast tysięcy widzów) bez standaryzacji przestają być słabo informacyjne.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="rozklad-a-priori">Rozkład a priori</a> — definicja i podstawowe rodziny.</li>
+<li><a data-concept="hiperpriory">Hiperpriory</a> — priory dla odchyleń efektów losowych.</li>
+<li><a data-concept="modele-hierarchiczne">Modele hierarchiczne</a>, <a data-concept="partial-pooling">partial pooling</a>.</li>
+<li><a data-concept="twierdzenie-bayesa-w-estymacji">Twierdzenie Bayesa w estymacji</a>, <a data-concept="funkcja-wiarygodnosci">funkcja wiarygodności</a>.</li>
+<li><a data-concept="funkcja-logit">Funkcja logit</a>, <a data-concept="standaryzacja">standaryzacja</a>.</li>
+<li><a data-concept="posterior-predictive-checks">Posterior predictive checks</a> — odpowiednik kontroli predykcyjnej po dopasowaniu.</li>
+<li><a data-concept="atrakcyjnosc-frekwencyjna">MAF i indeks IAF</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelman2006prior"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="gelman2020workflow"></li>
+<li data-bib="gabry2019"></li>
+<li data-bib="mcelreath2020"></li>
+</ul>
+</section>

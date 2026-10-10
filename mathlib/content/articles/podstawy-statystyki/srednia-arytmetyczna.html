@@ -1,0 +1,181 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Średnia arytmetyczna (ang. <em>arithmetic mean</em>) to najstarsza i najczęściej używana miara położenia: sumujemy wszystkie obserwacje i dzielimy przez ich liczbę. Jeżeli klub rozegrał w sezonie osiem meczów domowych i łącznie obejrzało je 9600 widzów, to „przeciętny” mecz przyciągnął 1200 osób. Średnia odpowiada na pytanie: <em>ile przypadałoby na jedną obserwację, gdyby całą sumę rozdzielić po równo</em>.</p>
+<p>Fizyczna analogia jest pouczająca: jeżeli na nieważkiej linijce umieścimy jednakowe ciężarki w punktach odpowiadających obserwacjom, to średnia jest <em>środkiem ciężkości</em> — punktem, w którym linijka pozostaje w równowadze. Z tej analogii wynikają dwie najważniejsze cechy średniej. Po pierwsze, odchylenia na lewo i na prawo od niej się równoważą (ich suma wynosi zero). Po drugie, jedna bardzo odległa obserwacja (np. derby z rekordową widownią) potrafi przesunąć punkt równowagi daleko od „typowych” wartości — średnia nie jest odporna na wartości odstające.</p>
+<p>W statystyce średnia ma podwójną rolę. Jest <em>opisem</em> konkretnego zbioru danych, a jednocześnie — gdy dane traktujemy jako próbę z pewnego rozkładu — <em>estymatorem</em> nieznanej <a data-concept="wartosc-oczekiwana">wartości oczekiwanej</a>. Ten artykuł omawia obie role, pokazuje, w jakim sensie średnia jest „najlepszym” pojedynczym podsumowaniem danych (minimalizuje sumę kwadratów odchyleń), i dlaczego jest estymatorem nieobciążonym.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-srednia-arytmetyczna"><p class="ml-box-title">Definicja</p>
+<p>Niech \(x_1, x_2, \dots, x_n\) będzie skończonym ciągiem liczb rzeczywistych, \(n \ge 1\). <strong>Średnią arytmetyczną</strong> nazywamy liczbę</p>
+<div class="ml-eq" id="eq-srednia-arytmetyczna">\[ \bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i . \]</div>
+</div>
+<p>Definicja ma sens dla danych mierzonych na skali co najmniej przedziałowej (różnice wartości są znaczące): liczby widzów, wypełnienia hal, liczby bramek, czasu. Dla zmiennych porządkowych (miejsce w tabeli traktowane jako ranga) średnia jest formalnie obliczalna, lecz jej interpretacja zakłada równe odstępy między kategoriami.</p>
+<div class="ml-box ml-def" id="def-srednia-z-proby"><p class="ml-box-title">Definicja (średnia z próby jako statystyka)</p>
+<p>Niech \(X_1, \dots, X_n\) będą zmiennymi losowymi określonymi na wspólnej <a data-concept="przestrzen-probabilistyczna">przestrzeni probabilistycznej</a> \((\Omega, \mathcal{F}, P)\) o wartościach w \(\mathbb{R}\). <strong>Średnią z próby</strong> nazywamy zmienną losową \(\bar{X}_n = \frac1n \sum_{i=1}^n X_i\). Jej realizacją dla zaobserwowanych danych jest liczba \(\bar{x}\) z <a class="ml-eqref" href="#eq-srednia-arytmetyczna"></a>.</p>
+</div>
+<p>Rozróżnienie między liczbą \(\bar x\) (opis danych) a zmienną losową \(\bar X_n\) (estymator) jest kluczowe: o nieobciążoności czy wariancji mówimy wyłącznie w odniesieniu do \(\bar X_n\) <cite data-bib="casellaberger2002"></cite>.</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(n\)</td><td>liczba obserwacji (liczność próby)</td></tr>
+<tr><td>\(x_i\)</td><td>\(i\)-ta zaobserwowana wartość (np. liczba widzów w meczu \(i\))</td></tr>
+<tr><td>\(\bar{x}\)</td><td>średnia arytmetyczna danych</td></tr>
+<tr><td>\(X_i\)</td><td>\(i\)-ta obserwacja traktowana jako zmienna losowa</td></tr>
+<tr><td>\(\bar{X}_n\)</td><td>średnia z próby (estymator)</td></tr>
+<tr><td>\(\mu = E(X_i)\)</td><td>wartość oczekiwana rozkładu, z którego pochodzą obserwacje</td></tr>
+<tr><td>\(\sigma^2 = \operatorname{Var}(X_i)\)</td><td>wariancja rozkładu obserwacji</td></tr>
+<tr><td>\(Q(c)\)</td><td>suma kwadratów odchyleń danych od punktu \(c\)</td></tr>
+<tr><td>\(a, b\)</td><td>stałe przekształcenia liniowego \(y_i = a + b x_i\)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li><strong>Opisowo</strong> (sama liczba \(\bar x\)): wystarczy, by wartości były liczbami rzeczywistymi na skali co najmniej przedziałowej. Żadne założenia probabilistyczne nie są potrzebne.</li>
+<li><strong>Nieobciążoność</strong> \(\bar X_n\): każda obserwacja ma tę samą, skończoną wartość oczekiwaną \(E(X_i) = \mu\). Niezależność nie jest wymagana.</li>
+<li><strong>Wzór na wariancję</strong> \(\sigma^2/n\): obserwacje są nieskorelowane i mają wspólną skończoną wariancję \(\sigma^2\) (najczęściej zakłada się, że są niezależne i o jednakowym rozkładzie — i.i.d.).</li>
+<li><strong>Zgodność</strong> (zbieżność do \(\mu\)): wystarczają założenia poprzedniego punktu (słabe prawo wielkich liczb w wersji Czebyszewa).</li>
+</ul>
+<p>W danych frekwencyjnych założenie jednakowego rozkładu bywa naruszone: mecze różnią się dniem tygodnia, rywalem i stawką. Wtedy \(\bar x\) nadal jest poprawnym opisem, ale estymuje <em>średnią z mieszaniny</em> warunków, a nie wartość oczekiwaną jednego „typowego” meczu.</p>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Suma odchyleń od średniej jest zawsze równa zeru:</p>
+<div class="ml-eq" id="eq-srednia-arytmetyczna-odchylenia">\[ \sum_{i=1}^{n} (x_i - \bar{x}) = 0 . \]</div>
+<p>Rozkład sumy kwadratów odchyleń od dowolnego punktu \(c\in\mathbb{R}\) (tożsamość, z której wynika własność najmniejszych kwadratów):</p>
+<div class="ml-eq" id="eq-srednia-arytmetyczna-rozklad-sk">\[ Q(c) = \sum_{i=1}^{n}(x_i - c)^2 = \sum_{i=1}^{n}(x_i - \bar{x})^2 + n(\bar{x} - c)^2 . \]</div>
+<p>Ekwiwariancja względem przekształceń liniowych:</p>
+<div class="ml-eq" id="eq-srednia-arytmetyczna-liniowosc">\[ y_i = a + b x_i \quad\Longrightarrow\quad \bar{y} = a + b\,\bar{x} . \]</div>
+<p>Wartość oczekiwana i wariancja średniej z próby:</p>
+<div class="ml-eq" id="eq-srednia-arytmetyczna-momenty">\[ E(\bar X_n) = \mu, \qquad \operatorname{Var}(\bar X_n) = \frac{\sigma^2}{n}, \qquad \operatorname{SE}(\bar X_n) = \frac{\sigma}{\sqrt{n}} . \]</div>
+<p>Aktualizacja przyrostowa (po dopisaniu obserwacji \(x_{n+1}\)):</p>
+<div class="ml-eq" id="eq-srednia-arytmetyczna-aktualizacja">\[ \bar{x}_{n+1} = \bar{x}_n + \frac{x_{n+1} - \bar{x}_n}{n+1} . \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-najmniejsze-kwadraty"><p class="ml-box-title">Twierdzenie (średnia minimalizuje sumę kwadratów)</p>
+<p>Dla dowolnych \(x_1,\dots,x_n\in\mathbb{R}\) funkcja \(Q(c)=\sum_{i}(x_i-c)^2\) osiąga jedyne minimum globalne w punkcie \(c=\bar x\), a wartość minimalna wynosi \(\sum_i (x_i-\bar x)^2\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-nieobciazonosc"><p class="ml-box-title">Twierdzenie (nieobciążoność i wariancja średniej)</p>
+<p>Jeżeli \(E(X_i)=\mu\) dla \(i=1,\dots,n\), to \(E(\bar X_n)=\mu\). Jeżeli ponadto \(X_i\) są parami nieskorelowane i \(\operatorname{Var}(X_i)=\sigma^2\lt\infty\), to \(\operatorname{Var}(\bar X_n)=\sigma^2/n\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-slabe-pwl"><p class="ml-box-title">Twierdzenie (słabe prawo wielkich liczb, wersja Czebyszewa)</p>
+<p>Przy założeniach poprzedniego twierdzenia dla każdego \(\varepsilon\gt 0\) zachodzi \(P(|\bar X_n-\mu|\ge\varepsilon)\le \sigma^2/(n\varepsilon^2)\to 0\), tzn. \(\bar X_n\) jest estymatorem zgodnym parametru \(\mu\).</p>
+</div>
+<div class="ml-box ml-note"><p>Gdy obserwacje są i.i.d. o skończonej wariancji, centralne twierdzenie graniczne mówi ponadto, że \(\sqrt{n}(\bar X_n-\mu)/\sigma\) ma w granicy rozkład \(N(0,1)\) <cite data-bib="casellaberger2002"></cite>; stąd przybliżone przedziały ufności \(\bar x \pm 1{,}96\,s/\sqrt n\). Wśród estymatorów <em>liniowych</em> i nieobciążonych postaci \(\sum_i w_i X_i\) średnia ma najmniejszą wariancję — zob. <a data-concept="srednia-wazona" data-anchor="twierdzenia">średnia ważona</a>.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-suma-odchylen">Suma odchyleń równa zeru</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>\(\sum_i (x_i-\bar x)=\sum_i x_i - n\bar x = \sum_i x_i - n\cdot\frac1n\sum_i x_i = 0.\)</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-najmniejsze-kwadraty">Własność najmniejszych kwadratów</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dodajemy i odejmujemy \(\bar x\) w każdym składniku:</p>
+\[ \begin{aligned}
+Q(c) &amp;= \sum_{i=1}^n \big((x_i-\bar x) + (\bar x - c)\big)^2 \\
+&amp;= \sum_{i=1}^n (x_i-\bar x)^2 + 2(\bar x - c)\sum_{i=1}^n (x_i-\bar x) + n(\bar x-c)^2 \\
+&amp;= \sum_{i=1}^n (x_i-\bar x)^2 + n(\bar x-c)^2 ,
+\end{aligned} \]
+<p>bo środkowa suma znika na mocy <a class="ml-eqref" href="#eq-srednia-arytmetyczna-odchylenia"></a>. Otrzymaliśmy <a class="ml-eqref" href="#eq-srednia-arytmetyczna-rozklad-sk"></a>. Pierwszy składnik nie zależy od \(c\), drugi jest nieujemny i równy zeru wtedy i tylko wtedy, gdy \(c=\bar x\). Zatem \(\bar x\) jest jedynym punktem minimum.</p>
+<p>Ten sam wynik daje rachunek różniczkowy: \(Q'(c)=-2\sum_i(x_i-c)=0 \iff c=\bar x\), a \(Q''(c)=2n\gt 0\), więc funkcja jest ściśle wypukła.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-nieobciazonosc">Nieobciążoność i wariancja</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z liniowości wartości oczekiwanej: \(E(\bar X_n)=\frac1n\sum_i E(X_i)=\frac1n\cdot n\mu=\mu\). Wariancja sumy zmiennych parami nieskorelowanych jest sumą wariancji, a \(\operatorname{Var}(aY)=a^2\operatorname{Var}(Y)\), więc</p>
+\[ \operatorname{Var}(\bar X_n)=\frac{1}{n^2}\operatorname{Var}\Big(\sum_{i=1}^n X_i\Big)=\frac{1}{n^2}\sum_{i=1}^n \operatorname{Var}(X_i) = \frac{n\sigma^2}{n^2}=\frac{\sigma^2}{n}. \]
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-pwl">Zgodność (prawo wielkich liczb)</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Nierówność Czebyszewa zastosowana do \(\bar X_n\), dla której \(E(\bar X_n)=\mu\) i \(\operatorname{Var}(\bar X_n)=\sigma^2/n\), daje \(P(|\bar X_n-\mu|\ge\varepsilon)\le \operatorname{Var}(\bar X_n)/\varepsilon^2 = \sigma^2/(n\varepsilon^2)\), a prawa strona dąży do zera przy \(n\to\infty\). Dowód samej nierówności Czebyszewa — zob. <a data-concept="odchylenie-standardowe" data-anchor="wyprowadzenie">odchylenie standardowe</a>.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-aktualizacja">Aktualizacja przyrostowa</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>\(\bar x_{n+1}=\frac{n\bar x_n + x_{n+1}}{n+1}=\frac{(n+1)\bar x_n + x_{n+1}-\bar x_n}{n+1}=\bar x_n+\frac{x_{n+1}-\bar x_n}{n+1}.\) Wzór ten jest pierwszym krokiem algorytmu Welforda — zob. <a data-concept="wariancja" data-anchor="wyprowadzenie">wariancja</a>.</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p>Klub Superligi rozegrał osiem meczów domowych z następującą frekwencją (dane ilustracyjne):</p>
+<table class="ml-table">
+<thead><tr><th>Mecz \(i\)</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr></thead>
+<tbody>
+<tr><td>\(x_i\) (widzowie)</td><td>1120</td><td>1250</td><td>980</td><td>1340</td><td>1180</td><td>1410</td><td>1060</td><td>1260</td></tr>
+<tr><td>\(x_i-\bar x\)</td><td>−80</td><td>50</td><td>−220</td><td>140</td><td>−20</td><td>210</td><td>−140</td><td>60</td></tr>
+<tr><td>\((x_i-\bar x)^2\)</td><td>6400</td><td>2500</td><td>48400</td><td>19600</td><td>400</td><td>44100</td><td>19600</td><td>3600</td></tr>
+</tbody>
+</table>
+<ol class="ml-steps">
+<li>Suma: \(1120+1250+980+1340+1180+1410+1060+1260 = 9600\).</li>
+<li>Średnia: \(\bar x = 9600/8 = 1200\) widzów.</li>
+<li>Kontrola <a class="ml-eqref" href="#eq-srednia-arytmetyczna-odchylenia"></a>: \(-80+50-220+140-20+210-140+60 = 0\). ✓</li>
+<li>Suma kwadratów odchyleń od średniej: \(Q(\bar x)=6400+2500+48400+19600+400+44100+19600+3600=144\,600\).</li>
+<li>Sprawdzenie własności minimum dla \(c=1250\) (np. „deklarowana” średnia klubu): z <a class="ml-eqref" href="#eq-srednia-arytmetyczna-rozklad-sk"></a> \(Q(1250)=144\,600+8\cdot(1200-1250)^2=144\,600+20\,000=164\,600\gt Q(\bar x)\).</li>
+<li>Błąd standardowy średniej: odchylenie standardowe z próby \(s=\sqrt{144\,600/7}=\sqrt{20\,657{,}14}\approx 143{,}73\), stąd \(\operatorname{SE}\approx 143{,}73/\sqrt 8 \approx 143{,}73/2{,}828 \approx 50{,}81\) widza.</li>
+<li>Przybliżony 95% przedział ufności dla \(\mu\) (aproksymacja normalna; przy \(n=8\) dokładniejszy byłby kwantyl rozkładu t, \(2{,}365\)): \(1200 \pm 1{,}96\cdot 50{,}81 \approx 1200\pm 99{,}6\), czyli około \([1100;\,1300]\); z kwantylem t: \(1200\pm 120{,}2\).</li>
+<li>Aktualizacja <a class="ml-eqref" href="#eq-srednia-arytmetyczna-aktualizacja"></a> po dziewiątym meczu z 2950 widzami (derby): \(\bar x_9 = 1200 + (2950-1200)/9 = 1200 + 194{,}44 \approx 1394{,}4\). Jeden mecz przesunął średnią o niemal 200 widzów, choć osiem z dziewięciu meczów leżało w przedziale 980–1410.</li>
+</ol>
+<div class="ml-plot" data-plot="normal" data-params='{"mu": 1200, "sigma": 50.8}'></div>
+<p>Wykres przedstawia przybliżony rozkład średniej z próby \(\bar X_8\) (\(\mu=1200\), \(\sigma/\sqrt n\approx 50{,}8\)). Zmniejszając \(\sigma\) suwakiem, zobaczysz, jak rosnąca liczba meczów (\(\sigma/\sqrt n\) maleje) zawęża niepewność co do średniej frekwencji.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li>\(\bar x = 1200\) oznacza, że łączna widownia ośmiu meczów odpowiada ośmiu meczom po 1200 widzów. Nie oznacza, że „typowy” mecz miał 1200 widzów — o typowości lepiej informuje <a data-concept="mediana">mediana</a>, zwłaszcza przy rozkładach skośnych.</li>
+<li>Średnia jest wartością w <em>jednostkach danych</em>; jej niepewność jako estymatora opisuje błąd standardowy \(s/\sqrt n\) (tu ok. 51 widzów), a nie odchylenie standardowe \(s\) (ok. 144 widzów), które opisuje rozrzut pojedynczych meczów.</li>
+<li>Przykład z derbami pokazuje, że średnia ma <em>punkt załamania</em> (ang. <em>breakdown point</em>) równy \(1/n\): zmiana jednej obserwacji może przesunąć ją dowolnie daleko. Dla porównania mediana dziewięciu meczów z derbami wynosi 1250 (piąta wartość po uporządkowaniu) i w ogóle nie reaguje na wielkość rekordu.</li>
+<li>Średnia ułamków (np. wypełnień hal) nie jest na ogół równa ilorazowi sum (łącznej widowni do łącznej pojemności); ten drugi jest <a data-concept="srednia-wazona">średnią ważoną</a> wypełnień z wagami równymi pojemnościom.</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">Modelu Atrakcyjności Frekwencyjnej (MAF)</a> średnia arytmetyczna pojawia się w kilku, pozornie odległych miejscach:</p>
+<ul>
+<li><strong>Parametr modelu.</strong> W wariancie „liczba widzów” \(A_i\sim\mathrm{NegBin}(\mu_i,\kappa)\) parametr \(\mu_i=E(A_i)\) jest wartością oczekiwaną, a w wariancie „wypełnienie” \(\mu_i=E(W_i)\) w <a data-concept="rozklad-beta-dwumianowy">rozkładzie beta-dwumianowym</a>. Średnia z prób jest naturalnym (i nieobciążonym) estymatorem tych wielkości w grupie meczów o identycznych warunkach.</li>
+<li><strong>Podsumowanie rozkładu posterior.</strong> Wartość oczekiwana a posteriori parametru jest w praktyce liczona jako średnia arytmetyczna próbek NUTS (<a data-concept="metody-monte-carlo">estymator Monte Carlo</a>). Twierdzenie o wariancji \(\sigma^2/n\) przenosi się na ten przypadek z \(n\) zastąpionym przez <a data-concept="effective-sample-size">efektywną liczbę próbek</a>, bo próbki z łańcucha Markowa są skorelowane.</li>
+<li><strong>Indeks IAF.</strong> Licznik i mianownik IAF są średnimi arytmetycznymi oczekiwanego wypełnienia po populacji referencyjnej meczów \(X_{ref}\): \(\frac1{|X_{ref}|}\sum_{i\in X_{ref}}E(W\mid\eta_i^{(0)}+R_j)\). Uśrednienie po tej samej populacji w liczniku i mianowniku sprawia, że indeks porównuje rywali w identycznych warunkach meczowych.</li>
+<li><strong>Miary błędu.</strong> <a data-concept="mae">MAE</a> i <a data-concept="rmse">RMSE</a> są średnimi (odpowiednio wartości bezwzględnych i kwadratów) błędów prognoz w walidacji chronologicznej. Na mocy twierdzenia o najmniejszych kwadratach punktową prognozą minimalizującą oczekiwany błąd kwadratowy jest wartość oczekiwana rozkładu predykcyjnego.</li>
+<li><strong>Raporty opisowe.</strong> Średnia frekwencja ligi w sezonie (typowo ok. 1100–1300 widzów w Superlidze mężczyzn) jest liczona wyłącznie z meczów ze znaną frekwencją — brak danych (NULL) nie jest zerem widzów i nie może zaniżać średniej.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Wrażliwość na wartości odstające</strong> (punkt załamania \(1/n\)): mecze derbowe, finały czy błędy wprowadzania danych (np. 12 000 zamiast 1200) silnie zniekształcają średnią. W takich sytuacjach uzupełniaj ją <a data-concept="mediana">medianą</a> i <a data-concept="kwartyle">kwartylami</a>.</li>
+<li><strong>Rozkłady skośne.</strong> Frekwencja jest prawostronnie skośna; średnia leży wtedy zwykle powyżej mediany i źle opisuje „typowy” mecz.</li>
+<li><strong>Brak niezmienniczości względem przekształceń nieliniowych.</strong> Na ogół \(\overline{g(x)}\ne g(\bar x)\) (nierówność Jensena): średnia z logitów wypełnień nie jest logitem średniego wypełnienia. Ma to znaczenie przy przechodzeniu między skalą predyktora liniowego \(\eta\) a skalą wypełnienia.</li>
+<li><strong>Heterogeniczność.</strong> Średnia z mieszaniny warunków (weekend/dzień roboczy, faza ligowa/play-off) zależy od proporcji tych warunków w próbie; porównania klubów wymagają standaryzacji warunków, co robi model regresyjny.</li>
+<li><strong>Zależność obserwacji.</strong> Wzór \(\sigma/\sqrt n\) zakłada nieskorelowanie; przy autokorelacji (np. trend frekwencji w sezonie, por. <a data-concept="autokorelacja">autokorelacja</a>) zaniża rzeczywistą niepewność.</li>
+<li><strong>Dane brakujące.</strong> Średnia z obserwowanych meczów jest nieobciążona dla całej populacji tylko wtedy, gdy braki są losowe; jeżeli frekwencji nie raportują głównie małe kluby, średnia jest zawyżona.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="srednia-wazona">Średnia ważona</a> — uogólnienie, w którym obserwacje mają różne udziały.</li>
+<li><a data-concept="mediana">Mediana</a> — odporna miara położenia minimalizująca sumę wartości bezwzględnych.</li>
+<li><a data-concept="wartosc-oczekiwana">Wartość oczekiwana</a> — populacyjny odpowiednik średniej.</li>
+<li><a data-concept="wariancja">Wariancja</a> i <a data-concept="odchylenie-standardowe">odchylenie standardowe</a> — miary rozproszenia wokół średniej.</li>
+<li><a data-concept="srednia-ruchoma">Średnia ruchoma</a> — średnia liczona w przesuwającym się oknie czasowym.</li>
+<li><a data-concept="metody-monte-carlo">Metody Monte Carlo</a> — średnia próbek jako estymator wartości oczekiwanej.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="openintro2019"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="wasserman2004"></li>
+<li data-bib="tukey1977"></li>
+</ul>
+</section>

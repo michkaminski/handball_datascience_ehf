@@ -1,0 +1,165 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Wynik meczu jako zdarzenie elementarne \(\omega\) to złożony obiekt: data, rywale, pogoda, kolejka w hali, decyzje kibiców. Analityk rzadko potrzebuje całego \(\omega\) — interesuje go <em>liczba</em>: ilu widzów przyszło, jaki ułamek miejsc zajęto, ile bramek padło. <strong>Zmienna losowa</strong> (ang. <em>random variable</em>) to właśnie reguła, która każdemu wynikowi \(\omega\) przypisuje liczbę \(X(\omega)\).</p>
+<p>Nie każda reguła się nadaje. Chcemy móc zapytać „jakie jest prawdopodobieństwo, że \(X\le 1000\)?”, a to wymaga, by zbiór wyników \(\{\omega: X(\omega)\le1000\}\) był zdarzeniem, czyli elementem σ-ciała \(\mathcal F\) (zob. <a data-concept="przestrzen-probabilistyczna">przestrzeń probabilistyczna</a>). Ten warunek techniczny nazywa się <strong>mierzalnością</strong>. Gdy jest spełniony, cała informacja probabilistyczna o \(X\) mieści się w jednej funkcji — <strong>dystrybuancie</strong> \(F_X(x)=P(X\le x)\).</p>
+<p>Zmienna losowa nie jest „losową liczbą” w sensie potocznym — jest deterministyczną funkcją; losowy jest argument \(\omega\). To rozróżnienie pozwala na jednej przestrzeni zdefiniować wiele zmiennych (liczba widzów \(A\), pojemność \(C\), wypełnienie \(W=A/C\)) i badać zależności między nimi.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-zmienna-losowa"><p class="ml-box-title">Definicja (zmienna losowa)</p>
+<p>Niech \((\Omega,\mathcal F,P)\) będzie przestrzenią probabilistyczną. Funkcję \(X:\Omega\to\mathbb R\) nazywamy <strong>zmienną losową</strong>, jeśli jest <strong>mierzalna</strong> względem \(\mathcal F\) i σ-ciała borelowskiego \(\mathcal B(\mathbb R)\), tzn.</p>
+<div class="ml-eq" id="eq-zmienna-losowa">\[ X^{-1}(B)=\{\omega\in\Omega : X(\omega)\in B\}\in\mathcal F \qquad \text{dla każdego } B\in\mathcal B(\mathbb R). \]</div>
+</div>
+<div class="ml-box ml-def" id="def-rozklad"><p class="ml-box-title">Definicja (rozkład i dystrybuanta)</p>
+<p><strong>Rozkładem</strong> zmiennej \(X\) nazywamy miarę \(P_X(B)=P\big(X^{-1}(B)\big)\) na \((\mathbb R,\mathcal B(\mathbb R))\). <strong>Dystrybuantą</strong> (ang. <em>cumulative distribution function</em>, CDF) nazywamy funkcję \(F_X:\mathbb R\to[0,1]\),</p>
+<div class="ml-eq" id="eq-zmienna-losowa-dystrybuanta">\[ F_X(x)=P(X\le x)=P\big(\{\omega: X(\omega)\le x\}\big). \]</div>
+</div>
+<div class="ml-box ml-def" id="def-typy"><p class="ml-box-title">Definicja (zmienne dyskretne i ciągłe)</p>
+<p>\(X\) jest <strong>dyskretna</strong>, jeśli istnieje zbiór przeliczalny \(S=\{x_1,x_2,\ldots\}\) z \(P(X\in S)=1\); wtedy <strong>funkcja prawdopodobieństwa</strong> (ang. <em>probability mass function</em>) to \(p_X(x)=P(X=x)\). \(X\) jest <strong>(absolutnie) ciągła</strong>, jeśli istnieje nieujemna funkcja \(f_X\), <strong>gęstość</strong> (ang. <em>probability density function</em>), taka że</p>
+<div class="ml-eq" id="eq-zmienna-losowa-gestosc">\[ F_X(x)=\int_{-\infty}^{x} f_X(t)\,dt \quad \text{dla wszystkich } x\in\mathbb R. \]</div>
+<p>Istnieją także zmienne <strong>mieszane</strong> — z częścią dyskretną (atomami) i ciągłą — np. wypełnienie hali z dodatnią masą w punkcie \(W=1\) (komplet).</p>
+</div>
+<p>Wektor losowy \((X_1,\ldots,X_d)\) definiuje się analogicznie: jest to funkcja mierzalna \(\Omega\to\mathbb R^d\) względem \(\mathcal B(\mathbb R^d)\) <cite data-bib="billingsley1995"></cite>.</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(X, Y, A, W\)</td><td>zmienne losowe (funkcje \(\Omega\to\mathbb R\))</td></tr>
+<tr><td>\(x\)</td><td>ustalona liczba rzeczywista (realizacja, argument dystrybuanty)</td></tr>
+<tr><td>\(X^{-1}(B)\)</td><td>przeciwobraz zbioru \(B\): wyniki \(\omega\), dla których \(X(\omega)\in B\)</td></tr>
+<tr><td>\(\mathcal B(\mathbb R)\)</td><td>σ-ciało zbiorów borelowskich</td></tr>
+<tr><td>\(P_X\)</td><td>rozkład zmiennej \(X\) (miara na \(\mathbb R\))</td></tr>
+<tr><td>\(F_X\)</td><td>dystrybuanta zmiennej \(X\)</td></tr>
+<tr><td>\(p_X\)</td><td>funkcja prawdopodobieństwa (zmienna dyskretna)</td></tr>
+<tr><td>\(f_X\)</td><td>gęstość (zmienna ciągła)</td></tr>
+<tr><td>\(F_X(x^-)\)</td><td>granica lewostronna dystrybuanty w punkcie \(x\)</td></tr>
+<tr><td>\(\sigma(X)\)</td><td>σ-ciało generowane przez \(X\): \(\{X^{-1}(B): B\in\mathcal B(\mathbb R)\}\)</td></tr>
+<tr><td>\(g\)</td><td>funkcja borelowska \(\mathbb R\to\mathbb R\) (np. \(\operatorname{logit}^{-1}\))</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Istnieje ustalona przestrzeń probabilistyczna \((\Omega,\mathcal F,P)\); w praktyce rzadko się ją konstruuje jawnie — wystarcza podanie rozkładu (twierdzenie o istnieniu: każda funkcja o własnościach dystrybuanty jest dystrybuantą pewnej zmiennej losowej).</li>
+<li>Zmienna przyjmuje wartości rzeczywiste (skończone). Zmienne o wartościach w \(\overline{\mathbb R}\) wymagają osobnego traktowania.</li>
+<li>Gęstość istnieje tylko dla rozkładów absolutnie ciągłych; jest wyznaczona jednoznacznie z dokładnością do zbiorów miary Lebesgue’a zero.</li>
+<li>Funkcje zmiennych losowych (np. \(W=A/C\), \(\operatorname{logit}^{-1}(\eta)\)) są zmiennymi losowymi, o ile funkcja jest borelowska — wszystkie funkcje ciągłe i przedziałami ciągłe takie są.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Prawdopodobieństwa przedziałów wyrażają się przez dystrybuantę:</p>
+<div class="ml-eq" id="eq-zmienna-losowa-przedzial">\[ P(a\lt X\le b)=F_X(b)-F_X(a), \qquad P(X\gt x)=1-F_X(x), \qquad P(X=x)=F_X(x)-F_X(x^-). \]</div>
+<p>Dla zmiennej dyskretnej i ciągłej odpowiednio:</p>
+<div class="ml-eq" id="eq-zmienna-losowa-dyskretna">\[ F_X(x)=\sum_{x_k\le x}p_X(x_k), \qquad \sum_k p_X(x_k)=1, \]</div>
+<div class="ml-eq" id="eq-zmienna-losowa-ciagla">\[ P(a\le X\le b)=\int_a^b f_X(t)\,dt, \qquad f_X(x)=F_X'(x) \ \text{(w punktach ciągłości } f_X), \qquad \int_{-\infty}^{\infty}f_X=1. \]</div>
+<p>Zamiana zmiennych dla ściśle monotonicznej, różniczkowalnej \(g\) i \(Y=g(X)\):</p>
+<div class="ml-eq" id="eq-zmienna-losowa-zamiana">\[ f_Y(y)=f_X\big(g^{-1}(y)\big)\,\left|\frac{d}{dy}g^{-1}(y)\right|. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-kryterium-mierzalnosci"><p class="ml-box-title">Twierdzenie (kryterium mierzalności)</p>
+<p>Funkcja \(X:\Omega\to\mathbb R\) jest zmienną losową wtedy i tylko wtedy, gdy \(\{X\le x\}\in\mathcal F\) dla każdego \(x\in\mathbb R\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-wlasnosci-dystrybuanty"><p class="ml-box-title">Twierdzenie (własności dystrybuanty)</p>
+<p>Dystrybuanta \(F_X\) dowolnej zmiennej losowej: (i) jest niemalejąca; (ii) jest prawostronnie ciągła; (iii) \(\lim_{x\to-\infty}F_X(x)=0\), \(\lim_{x\to\infty}F_X(x)=1\). Odwrotnie, każda funkcja o własnościach (i)–(iii) jest dystrybuantą pewnej zmiennej losowej, a dystrybuanta wyznacza rozkład jednoznacznie <cite data-bib="billingsley1995"></cite>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-zlozenie"><p class="ml-box-title">Twierdzenie (funkcja zmiennej losowej)</p>
+<p>Jeśli \(X\) jest zmienną losową, a \(g:\mathbb R\to\mathbb R\) funkcją borelowską, to \(Y=g(X)\) jest zmienną losową. Podobnie suma, iloczyn i iloraz (o niezerowym mianowniku) zmiennych losowych są zmiennymi losowymi.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<div class="ml-proof"><p class="ml-box-title">Dowód kryterium mierzalności</p>
+<p>Konieczność jest oczywista, bo \((-\infty,x]\in\mathcal B(\mathbb R)\). Dla dostateczności rozważmy rodzinę</p>
+<div class="ml-eq" id="eq-zmienna-losowa-rodzina-dobra">\[ \mathcal D=\{B\subseteq\mathbb R:\ X^{-1}(B)\in\mathcal F\}. \]</div>
+<p>Jest ona σ-ciałem, bo przeciwobraz zachowuje operacje mnogościowe: \(X^{-1}(\mathbb R)=\Omega\in\mathcal F\); \(X^{-1}(B^c)=\big(X^{-1}(B)\big)^c\); \(X^{-1}\big(\bigcup_nB_n\big)=\bigcup_nX^{-1}(B_n)\). Z założenia \(\mathcal D\) zawiera wszystkie półproste \((-\infty,x]\), więc zawiera generowane przez nie σ-ciało, czyli \(\mathcal B(\mathbb R)\subseteq\mathcal D\). To jest dokładnie warunek <a class="ml-eqref" href="#eq-zmienna-losowa"></a>.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód własności dystrybuanty</p>
+<p>(i) Dla \(x\lt y\): \(\{X\le x\}\subseteq\{X\le y\}\), więc z monotoniczności miary \(F_X(x)\le F_X(y)\).</p>
+<p>(ii) Niech \(x_n\downarrow x\). Zdarzenia \(\{X\le x_n\}\) tworzą ciąg zstępujący, a \(\bigcap_n\{X\le x_n\}=\{X\le x\}\). Z ciągłości miary prawdopodobieństwa (zob. <a data-concept="przestrzen-probabilistyczna" data-anchor="twierdzenia">twierdzenie o ciągłości</a>) \(F_X(x_n)\to F_X(x)\). Ponieważ \(F_X\) jest monotoniczna, wystarcza to dla dowolnego ciągu zbieżnego z prawej.</p>
+<p>(iii) Dla \(x_n\downarrow-\infty\): \(\{X\le x_n\}\downarrow\varnothing\), więc \(F_X(x_n)\to P(\varnothing)=0\). Dla \(x_n\uparrow\infty\): \(\{X\le x_n\}\uparrow\Omega\) (bo \(X\) przyjmuje wartości skończone), więc \(F_X(x_n)\to1\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Wyprowadzenie wzorów <a class="ml-eqref" href="#eq-zmienna-losowa-przedzial"></a></p>
+<p>Dla \(a\lt b\): \(\{X\le b\}=\{X\le a\}\cup\{a\lt X\le b\}\) — suma rozłączna, więc \(F_X(b)=F_X(a)+P(a\lt X\le b)\). Wzór \(P(X\gt x)=1-F_X(x)\) to reguła dopełnienia. Wreszcie \(\{X=x\}=\bigcap_n\{x-\tfrac1n\lt X\le x\}\), zatem z ciągłości miary \(P(X=x)=\lim_n\big(F_X(x)-F_X(x-\tfrac1n)\big)=F_X(x)-F_X(x^-)\). Wynika stąd, że skoki dystrybuanty to dokładnie atomy rozkładu, a dla zmiennej ciągłej \(P(X=x)=0\) dla każdego \(x\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód twierdzenia o funkcji zmiennej losowej</p>
+<p>Dla \(B\in\mathcal B(\mathbb R)\): \(Y^{-1}(B)=X^{-1}\big(g^{-1}(B)\big)\). Ponieważ \(g\) jest borelowska, \(g^{-1}(B)\in\mathcal B(\mathbb R)\), a ponieważ \(X\) jest mierzalna, \(X^{-1}(g^{-1}(B))\in\mathcal F\). Dla sumy \(X+Y\) korzysta się z tożsamości \(\{X+Y\lt x\}=\bigcup_{q\in\mathbb Q}\big(\{X\lt q\}\cap\{Y\lt x-q\}\big)\) — przeliczalnej sumy zdarzeń.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Wyprowadzenie wzoru na zamianę zmiennych</p>
+<p>Niech \(g\) będzie ściśle rosnąca i różniczkowalna. Wtedy \(F_Y(y)=P(g(X)\le y)=P(X\le g^{-1}(y))=F_X(g^{-1}(y))\). Różniczkując (reguła łańcuchowa): \(f_Y(y)=f_X(g^{-1}(y))\cdot (g^{-1})'(y)\). Dla \(g\) malejącej \(F_Y(y)=1-F_X(g^{-1}(y))\), a pochodna ma znak ujemny, stąd moduł w <a class="ml-eqref" href="#eq-zmienna-losowa-zamiana"></a>.</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<h3 id="przyklad-dyskretny">Zmienna dyskretna: liczba kompletów w trzech meczach</h3>
+<p><strong>Dane ilustracyjne.</strong> Klub rozgrywa trzy mecze domowe; w każdym, niezależnie od pozostałych, komplet widzów występuje z prawdopodobieństwem \(p=0{,}2\). Niech \(X\) — liczba meczów z kompletem.</p>
+<ol class="ml-steps">
+<li><strong>Przestrzeń i zmienna.</strong> \(\Omega=\{\mathrm{K},\mathrm{N}\}^3\) (8 ciągów: komplet/niekomplet), \(\mathcal F=2^\Omega\). \(X(\omega)\) = liczba liter K w \(\omega\). Każda funkcja na skończonym \(\Omega\) z \(\mathcal F=2^\Omega\) jest mierzalna.</li>
+<li><strong>Funkcja prawdopodobieństwa</strong> (<a data-concept="rozklad-dwumianowy">rozkład dwumianowy</a>, \(\binom{3}{k}0{,}2^k0{,}8^{3-k}\)):
+\(p_X(0)=0{,}8^3=0{,}512\); \(p_X(1)=3\cdot0{,}2\cdot0{,}64=0{,}384\); \(p_X(2)=3\cdot0{,}04\cdot0{,}8=0{,}096\); \(p_X(3)=0{,}008\). Suma: \(0{,}512+0{,}384+0{,}096+0{,}008=1{,}000\). ✓</li>
+<li><strong>Dystrybuanta</strong> (schodkowa, prawostronnie ciągła): \(F_X(x)=0\) dla \(x\lt0\); \(0{,}512\) dla \(0\le x\lt1\); \(0{,}896\) dla \(1\le x\lt2\); \(0{,}992\) dla \(2\le x\lt3\); \(1\) dla \(x\ge3\).</li>
+<li><strong>Odczyty.</strong> \(P(X\ge1)=1-F_X(0)=0{,}488\). \(P(X=2)=F_X(2)-F_X(2^-)=0{,}992-0{,}896=0{,}096\) — wysokość skoku. \(P(0\lt X\le2)=F_X(2)-F_X(0)=0{,}992-0{,}512=0{,}480\).</li>
+</ol>
+<div class="ml-plot" data-plot="binomial" data-params='{"n": 3, "p": 0.2}'></div>
+<p>Słupki to wartości \(p_X(k)\); dystrybuanta jest ich skumulowaną sumą i ma skoki dokładnie w punktach słupków. Zwiększ \(n\), aby zobaczyć, jak masa rozkłada się na więcej wartości.</p>
+<h3 id="przyklad-ciagly">Zmienna ciągła: wypełnienie hali</h3>
+<p><strong>Dane ilustracyjne.</strong> Niech wypełnienie \(W\) ma rozkład <a data-concept="rozklad-beta">Beta</a>(2, 1), tj. gęstość \(f_W(w)=2w\) na \([0,1]\).</p>
+<ol class="ml-steps">
+<li><strong>Normowanie.</strong> \(\int_0^1 2w\,dw=[w^2]_0^1=1\). ✓</li>
+<li><strong>Dystrybuanta.</strong> \(F_W(w)=\int_0^w 2t\,dt=w^2\) dla \(w\in[0,1]\), \(0\) dla \(w\lt0\), \(1\) dla \(w\gt1\).</li>
+<li><strong>Przedział.</strong> \(P(0{,}5\lt W\le0{,}8)=F_W(0{,}8)-F_W(0{,}5)=0{,}64-0{,}25=0{,}39\).</li>
+<li><strong>Ogon.</strong> \(P(W\gt0{,}9)=1-0{,}81=0{,}19\); natomiast \(P(W=1)=0\) — model ciągły nie przypisuje masy kompletowi.</li>
+<li><strong>Zamiana zmiennych.</strong> Dla hali o pojemności \(C=2000\) liczba widzów (w przybliżeniu ciągłym) \(Y=2000W\): \(g^{-1}(y)=y/2000\), więc \(f_Y(y)=2\cdot\frac{y}{2000}\cdot\frac1{2000}=\frac{y}{2\,000\,000}\) na \([0,2000]\). Kontrola: \(P(Y\le1000)=F_W(0{,}5)=0{,}25\).</li>
+</ol>
+<div class="ml-plot" data-plot="beta" data-params='{"a": 2, "b": 1}'></div>
+<p>Pole pod krzywą między dwoma punktami to prawdopodobieństwo przedziału; wartość gęstości w punkcie nie jest prawdopodobieństwem (może przekraczać 1, jak tu \(f_W(1)=2\)).</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>W przykładzie dyskretnym \(F_X(1)=0{,}896\) oznacza, że w ok. 90% „sezonów po trzy mecze” klub zanotuje co najwyżej jeden komplet. W przykładzie ciągłym \(P(0{,}5\lt W\le0{,}8)=0{,}39\) to prawdopodobieństwo, że hala będzie zapełniona w przedziale od połowy do 80%.</p>
+<p>Ważne rozróżnienie: dla zmiennych dyskretnych pojedyncze wartości mają dodatnie prawdopodobieństwo, dla ciągłych — nie. Model ciągły daje \(P(W=1)=0\), co kłóci się z obserwacją, że niektóre mecze kończą się kompletem. To argument za modelami dyskretnymi (liczba widzów jako zmienna całkowita z górną granicą \(C\)) albo mieszanymi.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> występują zmienne losowe kilku typów:</p>
+<ul>
+<li>\(A_i\) — liczba widzów meczu \(i\): zmienna <strong>dyskretna</strong>. W wariancie „wypełnienie” \(A_i\in\{0,\ldots,C_i\}\) i \(A_i\sim\mathrm{BetaBinomial}(C_i,\mu_i\phi,(1-\mu_i)\phi)\) (zob. <a data-concept="rozklad-beta-dwumianowy">rozkład beta-dwumianowy</a>); w wariancie „liczba widzów” \(A_i\sim\mathrm{NegBin}(\mu_i,\kappa)\) na \(\{0,1,2,\ldots\}\) (zob. <a data-concept="rozklad-ujemny-dwumianowy">rozkład ujemny dwumianowy</a>).</li>
+<li>\(W_i=A_i/C_i\) — wypełnienie: funkcja zmiennej losowej, a więc zmienna losowa (twierdzenie o złożeniu). Ma atomy w 0 i 1, co jest kluczowe przy liczeniu \(P(W_i\ge1)\), czyli prawdopodobieństwa kompletu.</li>
+<li>\(\eta_i\) i \(\mu_i=\operatorname{logit}^{-1}(\eta_i)\) — w ujęciu bayesowskim zmienne <strong>ciągłe</strong> (funkcje parametrów o rozkładzie a posteriori); \(\operatorname{logit}^{-1}\) jest ciągła, więc złożenie jest mierzalne (zob. <a data-concept="funkcja-logit">funkcja logit</a>).</li>
+<li>\(\mathrm{IAF}_j\) — indeks klubu liczony dla każdej próbki posterior; jest funkcją wektora parametrów, a więc zmienną losową z własnym rozkładem, z którego raportujemy medianę, 95% przedział wiarygodności i \(P(\mathrm{IAF}_j\gt100)=1-F_{\mathrm{IAF}_j}(100)\).</li>
+</ul>
+<p>Walidacja przez PIT (ang. <em>probability integral transform</em>) korzysta wprost z dystrybuanty: jeśli prognoza jest skalibrowana, wartości \(F_{A_i}(a_i)\) (dla zmiennych dyskretnych w wersji zrandomizowanej) mają rozkład jednostajny na \([0,1]\) <cite data-bib="gneiting2007calibration"></cite>.</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Zmienna losowa nie opisuje mechanizmu.</strong> Zna tylko rozkład wartości; to, <em>dlaczego</em> przychodzi tylu widzów, modeluje się przez zależność rozkładu od predyktorów.</li>
+<li><strong>Ciągłe przybliżenia zmiennych dyskretnych</strong> (np. wypełnienie jako Beta) gubią atomy w 0 i 1; regresja beta wymaga \(W\in(0,1)\) i nie obsługuje kompletów bez dodatkowych składników (zob. <a data-concept="rozklady-z-masa-na-granicach">rozkłady z masą na granicach</a>).</li>
+<li><strong>Gęstość nie jest prawdopodobieństwem.</strong> Porównywanie wartości gęstości między zmiennymi o różnych skalach (widzowie vs. wypełnienie) jest błędem — zmienia je jakobian zamiany zmiennych.</li>
+<li><strong>Brak danych to nie wartość zmiennej.</strong> Nieznana frekwencja (NULL) nie jest realizacją \(A_i=0\).</li>
+<li><strong>Dystrybuanta jednowymiarowa nie opisuje zależności.</strong> Do relacji między zmiennymi (np. frekwencja a pozycja w tabeli) potrzebny jest rozkład łączny.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="przestrzen-probabilistyczna">Przestrzeń probabilistyczna</a> — dziedzina zmiennej losowej.</li>
+<li><a data-concept="wartosc-oczekiwana">Wartość oczekiwana</a> i <a data-concept="wariancja-zmiennej-losowej">wariancja zmiennej losowej</a> — charakterystyki rozkładu.</li>
+<li><a data-concept="rozklad-dwumianowy">Rozkład dwumianowy</a>, <a data-concept="rozklad-beta">rozkład beta</a>, <a data-concept="rozklad-normalny">rozkład normalny</a>.</li>
+<li><a data-concept="rozklad-beta-dwumianowy">Rozkład beta-dwumianowy</a>, <a data-concept="rozklad-ujemny-dwumianowy">rozkład ujemny dwumianowy</a>.</li>
+<li><a data-concept="funkcja-logit">Funkcja logit</a> — przekształcenie borelowskie używane w MAF.</li>
+<li><a data-concept="kalibracja-prawdopodobienstw">Kalibracja prawdopodobieństw</a> — PIT oparty na dystrybuancie.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="billingsley1995"></li>
+<li data-bib="pishronik2014"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="gneiting2007calibration"></li>
+</ul>
+</section>

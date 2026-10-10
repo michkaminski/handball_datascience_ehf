@@ -1,0 +1,40 @@
+{% extends "mathematics/_layout.html" %}
+{% set active_category = None %}
+{% set active_article = None %}
+{% block tytul %}Mathematics — {{ nazwa_projektu }}{% endblock %}
+{% block mathematics %}
+<div class="pagehead">
+<div class="crumb">Start › Mathematics</div>
+<h1>Mathematics library</h1>
+<p class="ml-lead">A central handbook of the statistics, probability and Bayesian modelling concepts used by the handball data science analyses. Every concept has a formal definition, formulas, theorems with proofs, a numerical example, an application in handball and a bibliography.</p>
+<p class="note">Article content is in Polish (shared library with the national app).</p>
+</div>
+<div class="ml-search panel"><div class="panel-body">
+<label for="ml-search-input" class="ml-search-label">Search concept</label>
+<input id="ml-search-input" type="search" placeholder="e.g. przedział wiarygodności, R-hat, rozkład beta" data-ml-search>
+</div></div>
+<div class="ml-grid">
+{% for item in categories %}
+<section class="panel ml-card" data-ml-category>
+<div class="panel-body">
+<h2><a href="{{ url_for('panel.math_category', category=item.category.id) }}">{{ loop.index }}. {{ item.category.name }}</a></h2>
+<p class="note">{{ item.category.description }}</p>
+{% if item.articles %}
+<ul class="ml-list">
+{% for article in item.articles %}
+<li data-ml-item="{{ article.name|lower }} {{ article.summary|lower }}"><a href="{{ registry.url(article.id) }}">{{ article.name }}</a><span>{{ article.summary }}</span></li>
+{% endfor %}
+</ul>
+{% else %}
+<p class="ml-empty">Section in preparation — the registry architecture allows adding articles without code changes.</p>
+{% endif %}
+{% if item.category.id == 'modele-sportowe' and planned %}
+<p class="ml-planned-title">Planned models</p>
+<ul class="ml-planned">{% for model in planned %}<li>{{ model.name }}</li>{% endfor %}</ul>
+{% endif %}
+</div>
+</section>
+{% endfor %}
+</div>
+<p class="note">Concept registry version {{ registry.version }} · {{ registry.concepts|length }} concepts · {{ registry.bibliography|length }} verified sources.</p>
+{% endblock %}

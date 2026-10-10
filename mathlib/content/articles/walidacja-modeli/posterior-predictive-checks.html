@@ -1,0 +1,173 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Model bayesowski jest generatorem danych: jeśli dobrze opisuje rzeczywistość, to dane, które sam „wyprodukuje”, powinny być podobne do danych, które naprawdę zaobserwowaliśmy. Sprawdzanie predykcyjne a posteriori (ang. <em>posterior predictive checks</em>, PPC) polega na tym, by tę obietnicę zweryfikować: z dopasowanego modelu losujemy wiele replik zbioru danych \( y^{\text{rep}} \) — takich, jakie mogłyby powstać, gdyby te same mecze rozegrano jeszcze raz — i porównujemy je z danymi rzeczywistymi \( y \).</p>
+<p>Porównania nie robimy „na oko” dla każdej obserwacji, lecz za pomocą <em>statystyk testowych</em> \( T(y) \) wybranych tak, by odpowiadały ważnym cechom danych: średniej, rozrzutowi, odsetkowi meczów z kompletem widzów, liczbie meczów bez publiczności, kwantylom. Jeżeli wartość \( T(y) \) dla danych rzeczywistych leży w typowym zakresie wartości \( T(y^{\text{rep}}) \), model tę cechę odtwarza. Jeśli leży na skraju albo poza nim, znaleźliśmy konkretny, nazwany aspekt, w którym model się myli <cite data-bib="gelman2013bda"></cite>.</p>
+<p>PPC nie jest testem „czy model jest prawdziwy” — każdy model jest uproszczeniem. Jest narzędziem odpowiadającym na pytanie: <em>w których aspektach istotnych dla naszego zastosowania model jest niewiarygodny</em>. Dlatego w praktyce PPC jest przede wszystkim graficzne <cite data-bib="gabry2019"></cite>: nakładamy rozkład danych rzeczywistych na rozkłady kilkudziesięciu replik i szukamy systematycznych różnic.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \( y = (y_1,\dots,y_N) \in \mathcal{Y}^N \) będą danymi, \( \theta \in \Theta \) — parametrami modelu o wiarygodności \( p(y\mid\theta) \) i rozkładzie a priori \( p(\theta) \), a \( p(\theta \mid y) \) — <a data-concept="rozklad-posterior">rozkładem a posteriori</a>.</p>
+<div class="ml-box ml-def" id="def-rozklad-predykcyjny-replik"><p class="ml-box-title">Definicja (rozkład predykcyjny replik)</p>
+<p>Repliką danych nazywamy zmienną losową \( y^{\text{rep}} \in \mathcal{Y}^N \) o tej samej strukturze co \( y \) (te same mecze, te same zmienne objaśniające, te same pojemności hal), której rozkład jest <a data-concept="rozklad-predykcyjny">rozkładem predykcyjnym</a> a posteriori:</p>
+<div class="ml-eq" id="eq-posterior-predictive-checks-rep">\[ p(y^{\text{rep}} \mid y) \;=\; \int_\Theta p(y^{\text{rep}} \mid \theta)\, p(\theta \mid y)\, d\theta. \]</div>
+<p>Zakładamy, że \( y^{\text{rep}} \) i \( y \) są warunkowo niezależne przy danym \( \theta \).</p>
+</div>
+<div class="ml-box ml-def" id="def-ppp"><p class="ml-box-title">Definicja (statystyka testowa i predykcyjna wartość p Bayesa)</p>
+<p>Statystyką testową (miarą rozbieżności, ang. <em>test quantity, discrepancy</em>) nazywamy dowolną funkcję mierzalną \( T: \mathcal{Y}^N\times\Theta \to \mathbb{R} \); najczęściej \( T \) zależy tylko od danych, \( T(y,\theta) = T(y) \). Predykcyjną wartością p Bayesa (ang. <em>posterior predictive p-value</em>) nazywamy</p>
+<div class="ml-eq" id="eq-posterior-predictive-checks">\[ p_B \;=\; P\big( T(y^{\text{rep}},\theta) \ge T(y,\theta) \;\big|\; y \big) \;=\; \iint I\big(T(y^{\text{rep}},\theta) \ge T(y,\theta)\big)\, p(y^{\text{rep}}\mid\theta)\,p(\theta\mid y)\,dy^{\text{rep}}\,d\theta. \]</div>
+</div>
+<p>Wartości \( p_B \) bliskie 0 lub 1 oznaczają, że obserwowana wartość statystyki byłaby dla modelu nietypowa (odpowiednio: zbyt duża lub zbyt mała w porównaniu z replikami).</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( y,\ y^{\text{rep}} \)</td><td>dane obserwowane i replika danych z modelu</td></tr>
+<tr><td>\( \theta,\ \Theta \)</td><td>wektor parametrów i przestrzeń parametrów</td></tr>
+<tr><td>\( p(\theta\mid y) \)</td><td>rozkład a posteriori</td></tr>
+<tr><td>\( p(y^{\text{rep}}\mid y) \)</td><td>rozkład predykcyjny a posteriori replik</td></tr>
+<tr><td>\( T(y),\ T(y,\theta) \)</td><td>statystyka testowa / miara rozbieżności</td></tr>
+<tr><td>\( p_B \)</td><td>predykcyjna wartość p Bayesa</td></tr>
+<tr><td>\( S \)</td><td>liczba próbek a posteriori (i replik)</td></tr>
+<tr><td>\( \theta^{(s)},\ y^{\text{rep},(s)} \)</td><td>\( s \)-ta próbka parametrów i odpowiadająca jej replika</td></tr>
+<tr><td>\( A_i,\ C_i,\ W_i \)</td><td>liczba widzów, pojemność hali, wypełnienie \( A_i/C_i \) w meczu \( i \)</td></tr>
+<tr><td>\( \mu_i,\ \phi \)</td><td>średnie wypełnienie i precyzja w rozkładzie beta-dwumianowym</td></tr>
+<tr><td>\( I(\cdot) \)</td><td>funkcja wskaźnikowa zdarzenia</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li><strong>Replika odtwarza plan obserwacji.</strong> \( y^{\text{rep}} \) generujemy dla dokładnie tych samych jednostek i zmiennych objaśniających co \( y \) (ten sam terminarz, te same hale). Zmiana struktury (np. losowanie nowych klubów) daje inne, też sensowne, ale odmienne sprawdzenie — trzeba to zaznaczyć.</li>
+<li><strong>Dostęp do próbek a posteriori.</strong> W praktyce \( p_B \) i rozkład \( T(y^{\text{rep}}) \) wyznacza się metodą <a data-concept="metody-monte-carlo">Monte Carlo</a> z próbek \( \theta^{(s)} \) uzyskanych <a data-concept="mcmc">MCMC</a>, które przeszły diagnostykę zbieżności (<a data-concept="r-hat">R-hat</a>, <a data-concept="effective-sample-size">ESS</a>).</li>
+<li><strong>Statystyki wybrane merytorycznie.</strong> \( T \) powinny mierzyć cechy ważne dla zastosowania, a nie tylko te, które model z konstrukcji dopasowuje (np. średnia w modelu z wyrazem wolnym jest prawie zawsze odtworzona).</li>
+<li><strong>Dane użyte dwukrotnie.</strong> Te same dane służą do dopasowania i do sprawdzenia. To świadome założenie metody, z którego wynika konserwatywność \( p_B \) (patrz twierdzenia). Walidacja na danych niewykorzystanych w estymacji to <a data-concept="backtesting">backtesting</a>.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Algorytm Monte Carlo: dla \( s = 1,\dots,S \) losujemy \( \theta^{(s)} \sim p(\theta\mid y) \) i \( y^{\text{rep},(s)} \sim p(y\mid\theta^{(s)}) \). Estymator wartości p:</p>
+<div class="ml-eq" id="eq-posterior-predictive-checks-mc">\[ \hat p_B \;=\; \frac1S\sum_{s=1}^S I\Big( T\big(y^{\text{rep},(s)},\theta^{(s)}\big) \ge T\big(y,\theta^{(s)}\big) \Big). \]</div>
+<p>Dla statystyk dyskretnych (np. liczby meczów z kompletem) wygodnie jest raportować oba ogony lub wersję „mid-p”:</p>
+<div class="ml-eq" id="eq-posterior-predictive-checks-midp">\[ p_B^{\text{mid}} \;=\; P\big(T(y^{\text{rep}}) \gt T(y)\mid y\big) + \tfrac12\,P\big(T(y^{\text{rep}}) = T(y)\mid y\big). \]</div>
+<p>Statystyki testowe dla wypełnienia hali w MAF (\( W_i = A_i/C_i \), \( N \) meczów ze znaną pojemnością):</p>
+<div class="ml-eq" id="eq-posterior-predictive-checks-stat">\[ \begin{aligned} T_{\text{full}}(y) &amp;= \frac1N\sum_{i=1}^N I(A_i = C_i), &amp; T_{95}(y) &amp;= \frac1N\sum_{i=1}^N I(W_i \ge 0{,}95),\\ T_{\text{mean}}(y) &amp;= \frac1N\sum_{i=1}^N W_i, &amp; T_{\text{sd}}(y) &amp;= \sqrt{\frac{1}{N-1}\sum_{i=1}^N\big(W_i - \bar W\big)^2},\\ T_{q}(y) &amp;= \hat q_{q}(W_1,\dots,W_N), &amp; q &amp;\in\{0{,}1;\ 0{,}5;\ 0{,}9\}. \end{aligned} \]</div>
+<p>W modelu beta-dwumianowym \( A_i \sim \text{BetaBin}(C_i, a_i, b_i) \), \( a_i = \mu_i\phi \), \( b_i = (1-\mu_i)\phi \) prawdopodobieństwo kompletu widzów ma postać zamkniętą:</p>
+<div class="ml-eq" id="eq-posterior-predictive-checks-full">\[ P(A_i = C_i \mid \theta) \;=\; \frac{\mathrm{B}(C_i + a_i,\ b_i)}{\mathrm{B}(a_i,\ b_i)}, \]</div>
+<p>gdzie \( \mathrm{B} \) jest funkcją beta. Jest to szczególny przypadek funkcji prawdopodobieństwa <a data-concept="rozklad-beta-dwumianowy">rozkładu beta-dwumianowego</a> dla \( k = n \).</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-ppc-srednia-pwartosci"><p class="ml-box-title">Twierdzenie (\( p_B \) jako uśredniona klasyczna wartość p)</p>
+<p>Dla statystyki \( T \) zależnej tylko od danych: \( p_B = \mathbb{E}\big[\,p_C(\theta)\mid y\,\big] \), gdzie \( p_C(\theta) = P\big(T(y^{\text{rep}}) \ge T(y)\mid\theta\big) \) jest klasyczną wartością p przy ustalonym \( \theta \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-ppc-mc"><p class="ml-box-title">Twierdzenie (estymator Monte Carlo)</p>
+<p>Jeśli \( \theta^{(s)} \) są niezależnymi próbkami z \( p(\theta\mid y) \), to \( \hat p_B \) z <a class="ml-eqref" href="#eq-posterior-predictive-checks-mc"></a> jest nieobciążonym i zgodnym estymatorem \( p_B \), o wariancji \( p_B(1-p_B)/S \). Dla próbek MCMC w miejsce \( S \) wstawia się ESS ciągu wskaźnikowego.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-ppc-konserwatywnosc"><p class="ml-box-title">Twierdzenie (konserwatywność \( p_B \) — przykład normalny)</p>
+<p>Niech \( y_i \mid \mu \sim N(\mu,\sigma^2) \) niezależnie, \( \sigma \) znane, z płaskim priorem na \( \mu \), i \( T(y) = \bar y \). Wtedy \( p_B = 1/2 \) dla <em>każdych</em> danych. Ogólnie, gdy \( T \) jest statystyką silnie związaną z parametrami estymowanymi z tych samych danych, rozkład \( p_B \) przy prawdziwym modelu jest skupiony wokół \( 1/2 \), a nie jednostajny.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-ppc-prior"><p class="ml-box-title">Twierdzenie (jednostajność predykcyjnej wartości p a priori)</p>
+<p>Jeśli dane pochodzą z rozkładu brzegowego modelu \( p(y) = \int p(y\mid\theta)p(\theta)\,d\theta \), a \( T(y) \) ma pod tym rozkładem ciągłą dystrybuantę \( F \), to wartość p liczona względem rozkładu predykcyjnego <em>a priori</em>, \( p_{\text{prior}} = 1 - F(T(y)) \), ma rozkład jednostajny na \( [0,1] \).</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<div class="ml-proof"><p class="ml-box-title">Dowód (\( p_B \) jako uśredniona wartość p)</p>
+<ol>
+<li>Z definicji <a class="ml-eqref" href="#eq-posterior-predictive-checks"></a> i twierdzenia Fubiniego (całkowana funkcja jest ograniczona): \( p_B = \int_\Theta \Big[\int I\big(T(y^{\text{rep}}) \ge T(y)\big)\,p(y^{\text{rep}}\mid\theta)\,dy^{\text{rep}}\Big]\, p(\theta\mid y)\,d\theta \).</li>
+<li>Całka wewnętrzna to \( P\big(T(y^{\text{rep}}) \ge T(y)\mid\theta\big) = p_C(\theta) \) (\( y \) jest ustalone, a \( y^{\text{rep}} \) zależy tylko od \( \theta \)).</li>
+<li>Zatem \( p_B = \int p_C(\theta)\,p(\theta\mid y)\,d\theta = \mathbb{E}[p_C(\theta)\mid y] \) — prawo całkowitego prawdopodobieństwa.</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (estymator Monte Carlo)</p>
+<ol>
+<li>Pary \( (\theta^{(s)}, y^{\text{rep},(s)}) \) są niezależne i mają rozkład łączny \( p(y^{\text{rep}}\mid\theta)p(\theta\mid y) \).</li>
+<li>Zmienne \( Z_s = I(T(y^{\text{rep},(s)},\theta^{(s)}) \ge T(y,\theta^{(s)})) \) są więc i.i.d. z rozkładu Bernoulliego o parametrze \( p_B \).</li>
+<li>Stąd \( \mathbb{E}\hat p_B = p_B \), \( \operatorname{Var}\hat p_B = p_B(1-p_B)/S \), a zgodność wynika z mocnego prawa wielkich liczb.</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (przykład normalny)</p>
+<ol>
+<li>Przy płaskim priorze \( \mu\mid y \sim N(\bar y,\ \sigma^2/N) \).</li>
+<li>Przy danym \( \mu \): \( \bar y^{\text{rep}}\mid\mu \sim N(\mu,\ \sigma^2/N) \). Całkując po \( \mu \) (suma niezależnych zmiennych normalnych): \( \bar y^{\text{rep}}\mid y \sim N(\bar y,\ 2\sigma^2/N) \).</li>
+<li>Rozkład ten jest symetryczny wokół \( \bar y \) i ciągły, więc \( p_B = P(\bar y^{\text{rep}} \ge \bar y\mid y) = 1/2 \) niezależnie od \( y \).</li>
+</ol>
+<p>Statystyka „średnia” jest w tym modelu bezużyteczna do sprawdzania — model dopasował ją z definicji. Wniosek ogólny: <em>wybieramy statystyki, których model nie dopasowuje bezpośrednio</em> (ogony, odsetek wartości granicznych, zróżnicowanie między grupami).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (jednostajność wartości p a priori)</p>
+<ol>
+<li>Niech \( X = T(y) \), gdzie \( y \sim p(y) \); z założenia \( X \) ma ciągłą dystrybuantę \( F \).</li>
+<li>Z twierdzenia o przekształceniu całkowym (ang. <em>probability integral transform</em>) \( F(X) \sim U(0,1) \): dla \( u\in(0,1) \), \( P(F(X) \le u) = P(X \le F^{-1}(u)) = F(F^{-1}(u)) = u \) (dla ciągłej \( F \) i jej uogólnionej odwrotności).</li>
+<li>Zatem \( p_{\text{prior}} = 1 - F(X) \sim U(0,1) \).</li>
+</ol>
+<p>Dla \( p_B \) ten argument nie działa, bo rozkład odniesienia \( p(y^{\text{rep}}\mid y) \) sam zależy od \( y \) — stąd konserwatywność z poprzedniego twierdzenia.</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong> Klub gra w hali o pojemności \( C = 1500 \) miejsc. W sezonie rozegrał \( N = 15 \) meczów domowych; w 4 z nich hala była wypełniona do ostatniego miejsca (\( A_i = C \)), a w 6 wypełnienie wyniosło co najmniej 95%. Dla przejrzystości rachunku przyjmujemy uproszczenie: wszystkie mecze mają ten sam rozkład predykcyjny z parametrami równymi medianom a posteriori \( \mu = 0{,}85 \), \( \phi = 4 \) (tzw. sprawdzenie typu <em>plug-in</em>; pełne PPC uśrednia dodatkowo po próbkach \( \theta^{(s)} \)), a mecze są warunkowo niezależne.</p>
+<ol class="ml-steps">
+<li><strong>Parametry rozkładu.</strong> \( a = \mu\phi = 0{,}85\cdot4 = 3{,}4 \); \( b = (1-\mu)\phi = 0{,}15\cdot4 = 0{,}6 \). Średnia liczba widzów \( C\mu = 1275 \); odchylenie standardowe \( \sqrt{C\mu(1-\mu)(\phi+C)/(\phi+1)} = \sqrt{1500\cdot0{,}85\cdot0{,}15\cdot1504/5} \approx 239{,}8 \).</li>
+<li><strong>Prawdopodobieństwo kompletu</strong> ze wzoru <a class="ml-eqref" href="#eq-posterior-predictive-checks-full"></a>: \( P(A = C) = \mathrm{B}(1503{,}4;\ 0{,}6)/\mathrm{B}(3{,}4;\ 0{,}6) \approx 0{,}0250 \) (obliczone numerycznie przez logarytmy funkcji gamma).</li>
+<li><strong>Rozkład statystyki \( T_1 \)</strong> = liczba kompletów w 15 meczach: przy założonej niezależności \( T_1(y^{\text{rep}}) \sim \text{Bin}(15;\ 0{,}0250) \). Wartość oczekiwana \( 15\cdot0{,}0250 = 0{,}375 \); \( P(T_1=0) \approx 0{,}68426 \), \( P(T_1=1) \approx 0{,}26293 \), \( P(T_1=2) \approx 0{,}04715 \), \( P(T_1=3) \approx 0{,}00523 \).</li>
+<li><strong>Predykcyjna wartość p dla kompletów.</strong> \( p_B = P(T_1 \ge 4) = 1 - (0{,}68426 + 0{,}26293 + 0{,}04715 + 0{,}00523) = 1 - 0{,}99957 \approx 0{,}0004 \). Obserwowane 4 komplety są dla modelu skrajnie nietypowe.</li>
+<li><strong>Statystyka \( T_2 \)</strong> = liczba meczów z \( W \ge 0{,}95 \): numerycznie \( P(A \ge 1425) \approx 0{,}359 \), więc \( T_2(y^{\text{rep}}) \sim \text{Bin}(15;\ 0{,}359) \), \( \mathbb{E}T_2 \approx 5{,}38 \). Obserwowane 6: \( P(T_2 \ge 6) \approx 0{,}464 \), \( P(T_2 \le 6) \approx 0{,}731 \) — wartość zupełnie typowa.</li>
+<li><strong>Wniosek.</strong> Model poprawnie odtwarza, jak często hala jest „prawie pełna”, ale nie odtwarza masy prawdopodobieństwa dokładnie w punkcie \( A = C \). W rzeczywistości popyt przekraczający pojemność jest „ucinany” na poziomie \( C \) (sprzedaż kończy się na ostatnim bilecie), co tworzy atom w \( W = 1 \).</li>
+</ol>
+<div class="ml-plot" data-plot="betabinomial" data-params='{"n": 1500, "a": 3.4, "b": 0.6}'></div>
+<p>Zwróć uwagę, że przy \( b \lt 1 \) gęstość rośnie przy prawym końcu, ale masa skupiona w <em>pojedynczym</em> punkcie \( A = C \) pozostaje mała; zwiększając \( b \) powyżej 1 zobaczysz, że prawdopodobieństwo kompletu szybko spada praktycznie do zera.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li><strong>\( p_B \) nie jest prawdopodobieństwem, że model jest prawdziwy.</strong> To miara tego, jak nietypowa jest obserwowana statystyka w świetle modelu. Wartość \( p_B = 0{,}0004 \) mówi: „model prawie nigdy nie generuje tylu kompletów”.</li>
+<li><strong>Brak progu 0,05.</strong> Ponieważ \( p_B \) jest konserwatywne (skupione wokół 0,5), nie ma sensu automatyczne odrzucanie przy \( p_B \lt 0{,}05 \). Wartości skrajne (np. \( \lt 0{,}01 \) lub \( \gt 0{,}99 \)) wskazują problem, wartości umiarkowane nie dowodzą dopasowania.</li>
+<li><strong>Kierunek ma znaczenie.</strong> \( p_B \) bliskie 0 przy \( T_{\text{sd}} \) oznacza, że dane są bardziej rozproszone niż repliki (niedoszacowana wariancja, np. za duże \( \phi \)); bliskie 1 — że model przewiduje za duży rozrzut.</li>
+<li><strong>Grafika przed liczbą.</strong> Nakładanie histogramów/ECDF danych na kilkadziesiąt replik, wykresy statystyk w grupach (np. per klub, per sezon) i wykresy PIT ujawniają <em>rodzaj</em> niedopasowania, czego pojedyncza \( p_B \) nie robi <cite data-bib="gabry2019"></cite>.</li>
+<li><strong>Istotność praktyczna.</strong> Duży zbiór danych pozwala wykryć nawet nieistotne praktycznie rozbieżności; zawsze pytamy, czy niedopasowanie wpływa na wnioski, dla których model zbudowano (IAF, prognozy).</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">Modelu Atrakcyjności Frekwencyjnej</a> PPC jest stałym elementem przeglądu dopasowania, wykonywanym osobno dla wariantu „wypełnienie” (beta-dwumianowego) i wariantu „liczba widzów” (ujemnego dwumianowego).</p>
+<ul>
+<li><strong>PPC wypełnienia.</strong> Dla meczów ze znaną pojemnością porównujemy: odsetek kompletów \( T_{\text{full}} \), odsetek meczów z \( W \ge 0{,}95 \), średnie wypełnienie \( T_{\text{mean}} \), odchylenie standardowe \( T_{\text{sd}} \) oraz kwantyle 10%, 50% i 90% wypełnienia (wzór <a class="ml-eqref" href="#eq-posterior-predictive-checks-stat"></a>). Przykład powyżej pokazuje typowe odkrycie: rozkład beta-dwumianowy dobrze odtwarza „prawie pełne” hale, ale może niedoszacowywać atomu w \( W = 1 \). Możliwe reakcje to model popytu cenzurowanego na poziomie pojemności lub rozkład z dodatkową masą na granicy (por. <a data-concept="rozklady-z-masa-na-granicach">rozkłady z masą na granicach</a>).</li>
+<li><strong>PPC grupowe.</strong> Statystyki liczymy też w podziale na kluby-gospodarzy, sezony i rozgrywki. Hierarchiczny model może poprawnie odtwarzać średnią ligi, a jednocześnie systematycznie zaniżać rozrzut frekwencji u klubów z dużymi halami — to widać dopiero w PPC per klub.</li>
+<li><strong>Wariant „liczba widzów”.</strong> Dla meczów pucharów EHF (bez pojemności) sprawdzamy kwantyle i maksimum liczby widzów oraz odsetek meczów powyżej np. 5000 widzów: rozkład ujemny dwumianowy o zbyt małej dyspersji nie generuje rekordowych frekwencji rzędu kilkunastu tysięcy.</li>
+<li><strong>Granica z walidacją prognoz.</strong> PPC sprawdza dopasowanie na danych treningowych. Jakość prognoz na nowym sezonie oceniamy osobno: <a data-concept="mae">MAE</a>, <a data-concept="rmse">RMSE</a>, <a data-concept="pokrycie-przedzialow-predykcyjnych">pokrycie przedziałów</a> i <a data-concept="diagnostyka-reszt">diagnostyka reszt</a> w ramach <a data-concept="backtesting">walidacji chronologicznej</a>.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Podwójne użycie danych.</strong> Te same dane służą do dopasowania i oceny, więc PPC jest zbyt łagodne: \( p_B \) nie ma rozkładu jednostajnego przy prawdziwym modelu i ma ograniczoną moc. Bardziej rygorystyczne są walidacja krzyżowa (np. LOO-PIT, <cite data-bib="vehtari2017loo"></cite>) i walidacja chronologiczna.</li>
+<li><strong>Zależność od wyboru \( T \).</strong> PPC wykrywa tylko te niedopasowania, których szukamy. Statystyki „dopasowane z konstrukcji” (średnia przy wyrazie wolnym, średnie grupowe przy efektach losowych o dużej liczbie obserwacji) są mało informatywne.</li>
+<li><strong>Wielokrotne porównania.</strong> Przy dziesiątkach statystyk i grup kilka skrajnych \( p_B \) pojawi się przypadkiem; wyniki interpretujemy łącznie i merytorycznie.</li>
+<li><strong>Uproszczenie plug-in.</strong> Ustalenie parametrów na wartości punktowej (jak w przykładzie) pomija niepewność a posteriori i daje zbyt wąski rozkład replik; w produkcji używamy pełnej procedury Monte Carlo <a class="ml-eqref" href="#eq-posterior-predictive-checks-mc"></a>.</li>
+<li><strong>PPC nie diagnozuje algorytmu.</strong> Błędy próbkowania wykrywają <a data-concept="r-hat">R-hat</a> i <a data-concept="effective-sample-size">ESS</a>; poprawność samego algorytmu — kalibracja oparta na symulacji <cite data-bib="talts2018"></cite>.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="rozklad-predykcyjny">Rozkład predykcyjny</a> — źródło replik \( y^{\text{rep}} \).</li>
+<li><a data-concept="rozklad-posterior">Rozkład posterior</a> i <a data-concept="estymacja-posterior">estymacja posterior</a>.</li>
+<li><a data-concept="diagnostyka-reszt">Diagnostyka reszt</a> — sprawdzenie na poziomie pojedynczych obserwacji.</li>
+<li><a data-concept="rozklad-beta-dwumianowy">Rozkład beta-dwumianowy</a> i <a data-concept="rozklady-z-masa-na-granicach">rozkłady z masą na granicach</a>.</li>
+<li><a data-concept="kalibracja-prawdopodobienstw">Kalibracja prawdopodobieństw</a> i <a data-concept="pokrycie-przedzialow-predykcyjnych">pokrycie przedziałów predykcyjnych</a>.</li>
+<li><a data-concept="metody-monte-carlo">Metody Monte Carlo</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelman2013bda"></li>
+<li data-bib="gabry2019"></li>
+<li data-bib="gelman2020workflow"></li>
+<li data-bib="vehtari2017loo"></li>
+<li data-bib="talts2018"></li>
+<li data-bib="kumar2019arviz"></li>
+</ul>
+</section>

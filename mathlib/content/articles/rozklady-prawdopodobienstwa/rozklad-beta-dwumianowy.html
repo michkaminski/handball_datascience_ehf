@@ -1,0 +1,192 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Rozkład beta-dwumianowy (ang. <em>beta-binomial distribution</em>) powstaje w dwóch krokach. Najpierw los wybiera „klimat” konkretnego meczu — prawdopodobieństwo \(p\), że dane miejsce w hali zostanie zajęte — z <a data-concept="rozklad-beta">rozkładu beta</a>. Potem, przy tym \(p\), liczba zajętych miejsc spośród \(C\) dostępnych ma <a data-concept="rozklad-dwumianowy">rozkład dwumianowy</a>. Ponieważ nie obserwujemy \(p\), interesuje nas rozkład brzegowy liczby widzów, uśredniony po wszystkich możliwych \(p\).</p>
+<p>Ta konstrukcja usuwa główną wadę modelu dwumianowego: decyzje widzów przestają być niezależne, bo wszyscy „dzielą” to samo \(p\). Wariancja rośnie wtedy wielokrotnie (nadmierna dyspersja), a jednocześnie wynik pozostaje liczbą całkowitą z przedziału \(\{0,\dots,C\}\). Dzięki temu model w naturalny sposób przypisuje dodatnie prawdopodobieństwo zarówno kompletowi widzów \(A=C\), jak i pustej hali \(A=0\) — czego nie potrafi ciągła regresja beta.</p>
+<div class="ml-plot" data-plot="betabinomial" data-params='{"n": 30, "a": 12, "b": 8}'></div>
+<p>Porównaj z rozkładem dwumianowym o tej samej średniej: przy dużych \(a+b\) oba niemal się pokrywają, a przy małych \(a+b\) rozkład beta-dwumianowy staje się płaski lub nawet U-kształtny. Zmniejsz \(b\) poniżej 1, aby zobaczyć, jak rośnie słupek przy \(k=n\) (komplet).</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-rozklad-beta-dwumianowy"><p class="ml-box-title">Definicja</p>
+<p>Niech \(n\in\mathbb N\), \(a\gt0\), \(b\gt0\). Zmienna losowa \(Y\) o wartościach w \(\{0,\dots,n\}\) ma rozkład beta-dwumianowy, \(Y\sim\text{BetaBinomial}(n,a,b)\), jeśli</p>
+<div class="ml-eq" id="eq-rozklad-beta-dwumianowy">\[ P(Y=k)=\binom nk\frac{B(k+a,\ n-k+b)}{B(a,b)},\qquad k=0,1,\dots,n. \]</div>
+<p>Równoważnie: istnieje zmienna \(p\sim\text{Beta}(a,b)\) taka, że \(Y\mid p\sim\text{Bin}(n,p)\) (reprezentacja hierarchiczna, twierdzenie poniżej).</p>
+</div>
+<div class="ml-box ml-def" id="def-bb-mu-phi"><p class="ml-box-title">Definicja (parametryzacja średnia–precyzja)</p>
+<p>Dla \(\mu\in(0,1)\), \(\phi\gt0\) zapisujemy \(Y\sim\text{BetaBinomial}(n,\ \mu\phi,\ (1-\mu)\phi)\); wówczas \(\mu\) jest średnim odsetkiem sukcesów, a \(\phi\) — precyzją rozkładu mieszającego. Wielkość \(\rho=1/(1+\phi)\) nazywamy współczynnikiem korelacji wewnątrzgrupowej (ang. <em>intra-class correlation</em>).</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(n\)</td><td>liczba prób; w MAF pojemność hali \(C_i\)</td></tr>
+<tr><td>\(Y\)</td><td>liczba sukcesów; w MAF liczba widzów \(A_i\)</td></tr>
+<tr><td>\(p\)</td><td>losowe (nieobserwowane) prawdopodobieństwo sukcesu</td></tr>
+<tr><td>\(a,\ b\)</td><td>parametry kształtu rozkładu beta mieszającego</td></tr>
+<tr><td>\(\mu,\ \phi\)</td><td>średnia i precyzja: \(\mu=a/(a+b)\), \(\phi=a+b\)</td></tr>
+<tr><td>\(\rho\)</td><td>korelacja wewnątrzgrupowa, \(\rho=1/(1+\phi)\)</td></tr>
+<tr><td>\(B(\cdot,\cdot)\)</td><td>funkcja beta Eulera</td></tr>
+<tr><td>\(W\)</td><td>wypełnienie hali, \(W=A/C\)</td></tr>
+<tr><td>\(\eta_i\)</td><td>predyktor liniowy meczu \(i\), \(\operatorname{logit}\mu_i=\eta_i\)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Liczba prób \(n\) jest znana. W MAF oznacza to znaną pojemność hali \(C_i\) w danym meczu (dla ok. 55% meczów ZPRP); bez niej używa się <a data-concept="rozklad-ujemny-dwumianowy">rozkładu ujemnego dwumianowego</a>.</li>
+<li>Przy danym \(p\) próby są warunkowo niezależne i jednakowo rozłożone (wymienialność — ang. <em>exchangeability</em> — miejsc w hali).</li>
+<li>Zmienność \(p\) między meczami (po uwzględnieniu predyktorów) jest dobrze opisana rozkładem beta o stałej precyzji \(\phi\).</li>
+<li>Wartości brzegowe \(A=0\) i \(A=C\) powstają w tym samym mechanizmie co pozostałe; jeśli mają odrębną przyczynę (mecz przy zamkniętych drzwiach, administracyjny limit miejsc), należy je modelować osobno — zob. <a data-concept="rozklady-z-masa-na-granicach">rozkłady z masą na granicach</a>.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Momenty (w obu parametryzacjach):</p>
+<div class="ml-eq" id="eq-rozklad-beta-dwumianowy-srednia">\[ EY=\frac{na}{a+b}=n\mu, \]</div>
+<div class="ml-eq" id="eq-rozklad-beta-dwumianowy-wariancja">\[ \operatorname{Var}Y=\frac{nab\,(a+b+n)}{(a+b)^2(a+b+1)}=n\mu(1-\mu)\,\frac{n+\phi}{1+\phi}=n\mu(1-\mu)\big[1+(n-1)\rho\big]. \]</div>
+<p>Rekurencja dla kolejnych prawdopodobieństw:</p>
+<div class="ml-eq" id="eq-rozklad-beta-dwumianowy-rekurencja">\[ \frac{P(Y=k+1)}{P(Y=k)}=\frac{n-k}{k+1}\cdot\frac{k+a}{n-k-1+b}. \]</div>
+<p>Prawdopodobieństwa brzegowe:</p>
+<div class="ml-eq" id="eq-rozklad-beta-dwumianowy-brzegi">\[ P(Y=0)=\frac{B(a,\ n+b)}{B(a,b)},\qquad P(Y=n)=\frac{B(a+n,\ b)}{B(a,b)}\ \sim\ \frac{\Gamma(a+b)}{\Gamma(a)}\,n^{-b}\quad(n\to\infty). \]</div>
+<p>Wypełnienie i jego granica dla dużej pojemności:</p>
+<div class="ml-eq" id="eq-rozklad-beta-dwumianowy-granica">\[ E\Big(\frac Yn\Big)=\mu,\qquad \operatorname{Var}\Big(\frac Yn\Big)=\frac{\mu(1-\mu)}{1+\phi}+\frac{\mu(1-\mu)\phi}{n(1+\phi)},\qquad \frac{Y_n}{n}\xrightarrow{d}\text{Beta}(a,b). \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-mieszanina"><p class="ml-box-title">Twierdzenie (reprezentacja jako mieszanina)</p>
+<p>Jeśli \(p\sim\text{Beta}(a,b)\) i \(Y\mid p\sim\text{Bin}(n,p)\), to brzegowo \(Y\sim\text{BetaBinomial}(n,a,b)\) z funkcją prawdopodobieństwa <a class="ml-eqref" href="#eq-rozklad-beta-dwumianowy"></a>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-momenty-bb"><p class="ml-box-title">Twierdzenie (momenty i korelacja wewnątrzgrupowa)</p>
+<p>Zachodzą wzory <a class="ml-eqref" href="#eq-rozklad-beta-dwumianowy-srednia"></a>–<a class="ml-eqref" href="#eq-rozklad-beta-dwumianowy-wariancja"></a>. Ponadto, jeśli \(Y=\sum_{j=1}^nX_j\), gdzie \(X_j\mid p\) są niezależnymi \(\text{Bernoulli}(p)\), to dla \(j\ne k\): \(\operatorname{Corr}(X_j,X_k)=\rho=1/(1+\phi)\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-granica-bb"><p class="ml-box-title">Twierdzenie (granica dla dużego \(n\))</p>
+<p>Przy ustalonych \(a,b\) i \(n\to\infty\): \(Y_n/n\xrightarrow{d}\text{Beta}(a,b)\). Dla dużej hali rozkład wypełnienia \(A/C\) w modelu beta-dwumianowym jest więc praktycznie rozkładem beta.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-szczegolne"><p class="ml-box-title">Twierdzenie (przypadki graniczne)</p>
+<p>(i) Dla \(\phi\to\infty\) przy stałym \(\mu\): \(\text{BetaBinomial}(n,\mu\phi,(1-\mu)\phi)\xrightarrow{d}\text{Bin}(n,\mu)\). (ii) Dla \(n=1\) rozkład jest rozkładem \(\text{Bernoulli}(\mu)\) — z pojedynczej próby nie da się wykryć nadmiernej dyspersji. (iii) \(\text{BetaBinomial}(n,1,1)\) jest rozkładem jednostajnym na \(\{0,\dots,n\}\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-masa-brzegowa"><p class="ml-box-title">Twierdzenie (masa w kompletach widzów)</p>
+<p>\(P(Y=n)\gt0\) dla każdego \(n\), a jej asymptotyka <a class="ml-eqref" href="#eq-rozklad-beta-dwumianowy-brzegi"></a> zależy wyłącznie od \(b=(1-\mu)\phi\): im mniejsze \(b\), tym wolniej maleje prawdopodobieństwo kompletu wraz z pojemnością. Dla porównania w modelu dwumianowym \(P(Y=n)=p^n\) maleje wykładniczo.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="pmf-calkowanie">Funkcja prawdopodobieństwa przez całkowanie</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z <a data-concept="prawo-calkowitego-prawdopodobienstwa">prawa całkowitego prawdopodobieństwa</a> w wersji ciągłej:</p>
+\[ \begin{aligned} P(Y=k)&amp;=\int_0^1P(Y=k\mid p)\,f(p\mid a,b)\,dp=\int_0^1\binom nkp^k(1-p)^{n-k}\,\frac{p^{a-1}(1-p)^{b-1}}{B(a,b)}\,dp\\ &amp;=\binom nk\frac{1}{B(a,b)}\int_0^1p^{k+a-1}(1-p)^{n-k+b-1}\,dp=\binom nk\frac{B(k+a,\ n-k+b)}{B(a,b)}. \end{aligned} \]
+<p>Ostatnia całka to z definicji \(B(k+a,n-k+b)\). Sumowanie po \(k\) daje 1, bo zamiana sumy i całki (wyrazy nieujemne) prowadzi do \(\int_0^1\sum_k P(Y=k\mid p)f(p)\,dp=\int_0^1f(p)\,dp=1\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="rekurencja-wyprowadzenie">Rekurencja</h3>
+<p>Ponieważ \(B(x,y)=\Gamma(x)\Gamma(y)/\Gamma(x+y)\), a \((k+1+a)+(n-k-1+b)=(k+a)+(n-k+b)=n+a+b\), mianowniki się skracają:</p>
+\[ \frac{B(k+1+a,\ n-k-1+b)}{B(k+a,\ n-k+b)}=\frac{\Gamma(k+a+1)\,\Gamma(n-k-1+b)}{\Gamma(k+a)\,\Gamma(n-k+b)}=\frac{k+a}{n-k-1+b}, \]
+<p>a \(\binom n{k+1}/\binom nk=\frac{n-k}{k+1}\). Daje to <a class="ml-eqref" href="#eq-rozklad-beta-dwumianowy-rekurencja"></a>.</p>
+
+<h3 id="momenty-calkowita-wariancja">Wartość oczekiwana i wariancja (prawo całkowitej wariancji)</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Korzystamy z <a data-concept="prawo-calkowitej-wartosci-oczekiwanej">prawa całkowitej wartości oczekiwanej</a> i <a data-concept="prawo-calkowitej-wariancji">prawa całkowitej wariancji</a> \(\operatorname{Var}Y=E[\operatorname{Var}(Y\mid p)]+\operatorname{Var}(E[Y\mid p])\). Dla \(p\sim\text{Beta}(\mu\phi,(1-\mu)\phi)\) mamy \(Ep=\mu\), \(\operatorname{Var}p=\frac{\mu(1-\mu)}{1+\phi}\).</p>
+<p><em>Krok 1 (średnia).</em> \(EY=E[E(Y\mid p)]=E[np]=n\mu\).</p>
+<p><em>Krok 2 (średnia wariancji warunkowej).</em> \(\operatorname{Var}(Y\mid p)=np(1-p)\), więc</p>
+\[ E[np(1-p)]=n\big(Ep-Ep^2\big)=n\big(\mu-\operatorname{Var}p-\mu^2\big)=n\mu(1-\mu)\Big(1-\frac1{1+\phi}\Big)=n\mu(1-\mu)\frac{\phi}{1+\phi}. \]
+<p><em>Krok 3 (wariancja średniej warunkowej).</em> \(\operatorname{Var}(np)=n^2\operatorname{Var}p=n^2\frac{\mu(1-\mu)}{1+\phi}\).</p>
+<p><em>Krok 4 (suma).</em></p>
+\[ \operatorname{Var}Y=\frac{n\mu(1-\mu)}{1+\phi}\big(\phi+n\big)=n\mu(1-\mu)\frac{n+\phi}{1+\phi}. \]
+<p>Ponieważ \(\frac{n+\phi}{1+\phi}=1+\frac{n-1}{1+\phi}=1+(n-1)\rho\), dostajemy ostatnią postać <a class="ml-eqref" href="#eq-rozklad-beta-dwumianowy-wariancja"></a>; podstawiając \(\mu=a/(a+b)\), \(\phi=a+b\) — pierwszą.</p>
+<p><em>Krok 5 (korelacja).</em> Dla \(j\ne k\): \(\operatorname{Cov}(X_j,X_k)=E[\operatorname{Cov}(X_j,X_k\mid p)]+\operatorname{Cov}(E[X_j\mid p],E[X_k\mid p])=0+\operatorname{Var}p\), a \(\operatorname{Var}X_j=\mu(1-\mu)\) (bo \(X_j\) jest brzegowo \(\text{Bernoulli}(\mu)\)). Zatem \(\operatorname{Corr}(X_j,X_k)=\frac{\mu(1-\mu)/(1+\phi)}{\mu(1-\mu)}=\frac1{1+\phi}\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="granica-wyprowadzenie">Granica \(Y_n/n\to\text{Beta}(a,b)\)</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Zbudujmy wszystkie \(Y_n\) na jednej zmiennej \(p\sim\text{Beta}(a,b)\): \(Y_n\mid p\sim\text{Bin}(n,p)\). Wtedy</p>
+\[ E\Big[\Big(\frac{Y_n}{n}-p\Big)^2\Big]=E\Big[E\Big[\Big(\frac{Y_n}{n}-p\Big)^2\,\Big|\,p\Big]\Big]=E\Big[\frac{p(1-p)}{n}\Big]\le\frac{1}{4n}\to0. \]
+<p>Zatem \(Y_n/n-p\to0\) w \(L^2\), a więc według prawdopodobieństwa. Z lematu Słuckiego \(Y_n/n=p+(Y_n/n-p)\xrightarrow{d}p\sim\text{Beta}(a,b)\). Rozkład \(Y_n/n\) zależy tylko od rozkładu brzegowego, więc wniosek obowiązuje dla dowolnych \(Y_n\sim\text{BetaBinomial}(n,a,b)\). Ten sam rachunek daje wzór na \(\operatorname{Var}(Y/n)\) w <a class="ml-eqref" href="#eq-rozklad-beta-dwumianowy-granica"></a>: pierwszy składnik to wariancja \(p\), drugi — „szum dwumianowy”, znikający jak \(1/n\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="brzegi-wyprowadzenie">Masa w punktach \(0\) i \(n\)</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Wzory dokładne wynikają z <a class="ml-eqref" href="#eq-rozklad-beta-dwumianowy"></a> dla \(k=0\) i \(k=n\). Dla asymptotyki: \(\frac{B(a+n,b)}{B(a,b)}=\frac{\Gamma(a+b)}{\Gamma(a)}\cdot\frac{\Gamma(a+n)}{\Gamma(a+n+b)}\), a z wzoru Stirlinga \(\Gamma(x)/\Gamma(x+b)\sim x^{-b}\) dla \(x\to\infty\). Stąd \(P(Y=n)\sim\frac{\Gamma(a+b)}{\Gamma(a)}(a+n)^{-b}\sim\frac{\Gamma(a+b)}{\Gamma(a)}n^{-b}\). Analogicznie \(P(Y=0)\sim\frac{\Gamma(a+b)}{\Gamma(b)}n^{-a}\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="granice-szczegolne">Przypadki graniczne</h3>
+<p>(i) Gdy \(\phi\to\infty\), \(p\to\mu\) według prawdopodobieństwa (zob. <a data-concept="rozklad-beta" data-anchor="wyprowadzenie">rozkład beta</a>), a funkcja \(p\mapsto P(Y=k\mid p)\) jest ciągła i ograniczona, więc \(P(Y=k)\to\binom nk\mu^k(1-\mu)^{n-k}\). (ii) Dla \(n=1\): \(P(Y=1)=B(1+a,b)/B(a,b)=a/(a+b)=\mu\). (iii) Dla \(a=b=1\): \(\binom nk B(k+1,n-k+1)=\binom nk\frac{k!\,(n-k)!}{(n+1)!}=\frac1{n+1}\).</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<h3 id="przyklad-maly">Mały przykład: \(n=3,\ a=2,\ b=1\)</h3>
+<ol class="ml-steps">
+<li>\(B(2,1)=\frac{\Gamma(2)\Gamma(1)}{\Gamma(3)}=\frac{1\cdot1}{2}=0{,}5\).</li>
+<li>\(k=0\): \(\binom30B(2,4)=\frac{1!\,3!}{5!}=\frac{6}{120}=0{,}05\); \(P(Y=0)=0{,}05/0{,}5=0{,}1\).</li>
+<li>\(k=1\): \(\binom31B(3,3)=3\cdot\frac{2!\,2!}{5!}=3\cdot\frac{4}{120}=0{,}1\); \(P(Y=1)=0{,}2\).</li>
+<li>\(k=2\): \(\binom32B(4,2)=3\cdot\frac{3!\,1!}{5!}=3\cdot\frac{6}{120}=0{,}15\); \(P(Y=2)=0{,}3\).</li>
+<li>\(k=3\): \(B(5,1)=\frac{4!\,0!}{5!}=0{,}2\); \(P(Y=3)=0{,}4\). Suma \(0{,}1+0{,}2+0{,}3+0{,}4=1\). Kontrola rekurencją: \(P(1)/P(0)=\frac31\cdot\frac{2}{2+1}=2\) ✓.</li>
+<li>Momenty: \(\mu=2/3\), \(\phi=3\). \(EY=3\cdot\frac23=2\) (bezpośrednio: \(0{,}2+0{,}6+1{,}2=2\)). \(\operatorname{Var}Y=3\cdot\frac23\cdot\frac13\cdot\frac{3+3}{1+3}=\frac23\cdot1{,}5=1\); bezpośrednio \(EY^2=0{,}2+1{,}2+3{,}6=5\), \(5-4=1\) ✓. Rozkład dwumianowy \(\text{Bin}(3,2/3)\) miałby wariancję tylko \(0{,}667\).</li>
+</ol>
+
+<h3 id="przyklad-hala">Hala na 2000 miejsc (dane ilustracyjne)</h3>
+<ol class="ml-steps">
+<li>Pojemność \(C=2000\), \(\mu=0{,}6\), \(\phi=20\), czyli \(a=12\), \(b=8\), \(\rho=1/21=0{,}0476\).</li>
+<li>\(EA=2000\cdot0{,}6=1200\).</li>
+<li>\(\operatorname{Var}A=2000\cdot0{,}24\cdot\frac{2020}{21}=480\cdot96{,}19=46\,171{,}4\); odchylenie standardowe \(214{,}9\). Rozkład dwumianowy dawał wariancję 480 (odchylenie 21,9) — czynnik nadmiernej dyspersji \(1+(n-1)\rho=96{,}19\).</li>
+<li>Rozkład (sumowanie pmf numerycznie): przedział centralny 95% to \([765,\ 1597]\), mediana 1207, \(P(A\ge1500)=0{,}079\).</li>
+<li>Porównanie z granicą beta: \(2000\cdot\sqrt{\operatorname{Var}W}\) dla \(W\sim\text{Beta}(12,8)\) to \(2000\cdot0{,}1069=213{,}8\) — prawie to samo co 214,9, bo składnik dwumianowy \(\frac{\mu(1-\mu)\phi}{n(1+\phi)}\) jest przy \(n=2000\) zaniedbywalny.</li>
+</ol>
+
+<h3 id="przyklad-komplet">Klub, który często wyprzedaje halę (dane ilustracyjne)</h3>
+<ol class="ml-steps">
+<li>\(C=1500\), \(\mu=0{,}9\), \(\phi=5\): \(a=4{,}5\), \(b=0{,}5\). \(EA=1350\), odchylenie standardowe \(\sqrt{1500\cdot0{,}09\cdot\frac{1505}{6}}=184{,}0\).</li>
+<li>Komplet: \(P(A=1500)=B(1504{,}5;\ 0{,}5)/B(4{,}5;\ 0{,}5)=0{,}0532\) (przez \(\log\Gamma\)). Przybliżenie: \(\frac{\Gamma(5)}{\Gamma(4{,}5)}\cdot1500^{-0{,}5}=2{,}0633\cdot0{,}02582=0{,}0533\).</li>
+<li>Wypełnienie co najmniej 95%: \(P(A\ge1425)=0{,}493\).</li>
+<li>Dla porównania w modelu \(\text{Bin}(1500;\ 0{,}9)\): \(P(A=1500)=0{,}9^{1500}\approx2\cdot10^{-69}\) — komplet jest w praktyce niemożliwy.</li>
+</ol>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Przykład z halą na 2000 miejsc pokazuje, że model beta-dwumianowy daje realistyczny rozrzut frekwencji (setki widzów), podczas gdy model dwumianowy przy tej samej średniej był o rząd wielkości zbyt pewny siebie. Przy dużej pojemności wypełnienie zachowuje się jak zmienna beta, więc parametry \(\mu\) i \(\phi\) mają tę samą interpretację co w <a data-concept="regresja-beta">regresji beta</a>.</p>
+<p>Przykład z kompletem pokazuje drugą zaletę: gdy klub regularnie wypełnia halę, model przypisuje kompletowi wyraźne, dodatnie prawdopodobieństwo (ok. 5%), a połowa meczów ma wypełnienie co najmniej 95%. Nie trzeba niczego „ściskać” ani dodawać osobnego komponentu — mała wartość \(b\) wystarcza. Zero widzów jest również w nośniku rozkładu, choć przy typowych parametrach ma znikome prawdopodobieństwo (dla \(a=12,\ b=8,\ C=2000\) rzędu \(10^{-27}\)).</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W wariancie „wypełnienie” <a data-concept="atrakcyjnosc-frekwencyjna">Modelu Atrakcyjności Frekwencyjnej</a>, stosowanym, gdy znana jest pojemność hali:</p>
+<div class="ml-eq" id="eq-rozklad-beta-dwumianowy-maf">\[ A_i\sim\text{BetaBinomial}\big(C_i,\ \mu_i\phi,\ (1-\mu_i)\phi\big),\qquad \operatorname{logit}\mu_i=\eta_i. \]</div>
+<ul>
+<li><strong>Dlaczego ten rozkład.</strong> (1) Respektuje ograniczenie \(0\le A_i\le C_i\). (2) Naturalnie obsługuje mecze z kompletem (\(A=C\)) i — w nośniku — bez widzów (\(A=0\)), bez przekształceń danych. (3) Daje nadmierną dyspersję sterowaną jednym parametrem \(\phi\). (4) \(E(W_i\mid\eta_i)=\operatorname{logit}^{-1}(\eta_i)\), co upraszcza definicję indeksu IAF.</li>
+<li><strong>Alternatywy.</strong> <a data-concept="regresja-beta">Regresja beta</a> na \(W_i=A_i/C_i\) wymaga \(W_i\in(0,1)\) i odrzuca lub przekształca komplety; model ZOIB (<a data-concept="rozklady-z-masa-na-granicach">masa na granicach</a>) modeluje komplety osobnym procesem kosztem dodatkowych parametrów.</li>
+<li><strong>Dane.</strong> Pojemność jest znana dla ok. 55% meczów ZPRP; pozostałe mecze i puchary EHF trafiają do wariantu „liczba widzów” z <a data-concept="rozklad-ujemny-dwumianowy">rozkładem ujemnym dwumianowym</a>. Mecze z brakiem danych o frekwencji (NULL) są pomijane — nie są meczami z zerem widzów.</li>
+<li><strong>Prognozy.</strong> <a data-concept="rozklad-predykcyjny">Rozkład predykcyjny</a> liczby widzów to mieszanina rozkładów beta-dwumianowych po próbkach posterior; z niego liczymy przedziały 50/80/95% i \(P(W\ge0{,}9)\) czy \(P(W=1)\).</li>
+<li><strong>Kontekst bayesowski.</strong> Rozkład beta-dwumianowy jest też rozkładem predykcyjnym w sprzężonym modelu beta–dwumian <cite data-bib="gelman2013bda"></cite>.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li>Wymaga znanej i poprawnej pojemności \(C_i\). Błędna pojemność (np. hala z dostawionymi trybunami, sektor wyłączony) przesuwa masę w kompletach i zniekształca \(\mu_i\).</li>
+<li>Jedna precyzja \(\phi\) zakłada jednakową względną zmienność we wszystkich halach; różne rozgrywki lub kluby mogą wymagać \(\phi\) zależnego od grupy.</li>
+<li>Komplety i puste hale nie mają osobnych parametrów — jeśli wynikają z innych mechanizmów (limit sanitarny, kara zamknięcia hali), model może je źle odtworzyć.</li>
+<li>Raportowana frekwencja bywa zaokrąglona (np. do 50 lub 100 widzów), czego model nie uwzględnia.</li>
+<li>Funkcja prawdopodobieństwa wymaga obliczeń przez \(\log\Gamma\) — bezpośrednie liczenie \(B(\cdot,\cdot)\) dla \(n\) rzędu tysięcy prowadzi do niedomiaru.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="rozklad-dwumianowy">Rozkład dwumianowy</a> — rozkład warunkowy przy danym \(p\).</li>
+<li><a data-concept="rozklad-beta">Rozkład beta</a> — rozkład mieszający i granica wypełnienia.</li>
+<li><a data-concept="rozklady-z-masa-na-granicach">Rozkłady z masą na granicach</a> — ZOIB jako alternatywa.</li>
+<li><a data-concept="prawo-calkowitej-wariancji">Prawo całkowitej wariancji</a>.</li>
+<li><a data-concept="rozklad-predykcyjny">Rozkład predykcyjny</a>.</li>
+<li><a data-concept="atrakcyjnosc-frekwencyjna">MAF i indeks IAF</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="johnson2005discrete"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="ferrari2004"></li>
+<li data-bib="ospina2012"></li>
+</ul>
+</section>

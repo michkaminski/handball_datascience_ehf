@@ -1,0 +1,154 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Klub Superligi ma średnio 1200 widzów z odchyleniem standardowym 167, a klub I ligi — 180 widzów z odchyleniem 49. Który ma bardziej „chwiejną” frekwencję? W liczbach bezwzględnych pierwszy: 167 to ponad trzy razy więcej niż 49. Ale 167 widzów to ok. 14% średniej Superligowca, a 49 widzów to ok. 27% średniej klubu I ligi. Względnie bardziej zmienna jest frekwencja mniejszego klubu.</p>
+<p>Współczynnik zmienności (ang. <em>coefficient of variation</em>, CV) to właśnie ten iloraz: odchylenie standardowe podzielone przez średnią. Jest liczbą bezwymiarową, często wyrażaną w procentach, która pozwala porównywać rozproszenie wielkości o bardzo różnych poziomach, a nawet w różnych jednostkach (widzowie vs przychód z biletów).</p>
+<p>Ta wygoda ma cenę: CV ma sens wyłącznie dla zmiennych mierzonych na <em>skali ilorazowej</em> (ang. <em>ratio scale</em>) — takich, w których zero oznacza rzeczywisty brak wielkości, a stosunek „dwa razy więcej” jest znaczący. Liczba widzów, pojemność hali, przychód — tak. Temperatura w stopniach Celsjusza, predyktor liniowy na skali logitu, z-score, efekt rywala w MAF — nie. Ten artykuł dowodzi, dlaczego, i pokazuje, jak CV wynika z parametrów rozkładów używanych w modelach frekwencji.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-wspolczynnik-zmiennosci"><p class="ml-box-title">Definicja</p>
+<p>Niech \(x_1,\dots,x_n\) będą obserwacjami zmiennej mierzonej na skali ilorazowej, \(x_i\ge0\), o średniej \(\bar x\gt0\) i odchyleniu standardowym \(s\). <strong>Współczynnikiem zmienności z próby</strong> nazywamy</p>
+<div class="ml-eq" id="eq-wspolczynnik-zmiennosci">\[ \widehat{\mathrm{CV}}=\frac{s}{\bar x} . \]</div>
+<p>Dla zmiennej losowej \(X\ge0\) z \(\mu=E X\gt0\) i \(\sigma^2=\operatorname{Var}X\lt\infty\) współczynnik zmienności to \(\mathrm{CV}=\sigma/\mu\).</p>
+</div>
+<div class="ml-box ml-def" id="def-skala-ilorazowa"><p class="ml-box-title">Definicja (skala ilorazowa)</p>
+<p>Zmienna jest mierzona na <strong>skali ilorazowej</strong>, jeżeli dopuszczalne przekształcenia jej wartości (zmiany jednostek niezmieniające treści pomiaru) mają postać \(x\mapsto bx\), \(b\gt0\). Na <strong>skali przedziałowej</strong> dopuszczalne są przekształcenia \(x\mapsto a+bx\), \(b\gt0\) — punkt zerowy jest umowny.</p>
+</div>
+<p>Miara statystyczna jest sensowna na danej skali tylko wtedy, gdy jej wartość (albo wnioski z niej) nie zależy od wyboru dopuszczalnego przekształcenia. Dla CV warunek ten jest spełniony na skali ilorazowej i łamany na przedziałowej (twierdzenia poniżej).</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(\mathrm{CV},\ \widehat{\mathrm{CV}}\)</td><td>współczynnik zmienności rozkładu i z próby</td></tr>
+<tr><td>\(\bar x,\ s\)</td><td>średnia i odchylenie standardowe z próby</td></tr>
+<tr><td>\(\mu,\ \sigma\)</td><td>wartość oczekiwana i odchylenie standardowe rozkładu</td></tr>
+<tr><td>\(a,\ b\)</td><td>przesunięcie i czynnik skali przekształcenia</td></tr>
+<tr><td>\(\kappa\)</td><td>parametr dyspersji rozkładu ujemnego dwumianowego</td></tr>
+<tr><td>\(C,\ \phi\)</td><td>pojemność hali i precyzja rozkładu beta-dwumianowego</td></tr>
+<tr><td>\(W\)</td><td>wypełnienie hali, \(W=A/C\in[0;1]\)</td></tr>
+<tr><td>\(\sigma_{\log}\)</td><td>odchylenie standardowe logarytmu zmiennej (rozkład logarytmicznie normalny)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li><strong>Skala ilorazowa</strong> z naturalnym zerem; w praktyce \(x_i\ge0\) i \(\bar x\gt0\) wyraźnie oddalone od zera.</li>
+<li>Skończona wariancja rozkładu.</li>
+<li>Porównania CV między grupami mają sens, gdy grupy mierzą tę samą wielkość w tej samej skali ilorazowej (np. frekwencję), a nie dowolnie przekształconą.</li>
+<li>Przybliżone wzory na błąd i obciążenie \(\widehat{\mathrm{CV}}\) zakładają obserwacje i.i.d. (często także normalność).</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Zachowanie względem przekształceń:</p>
+<div class="ml-eq" id="eq-wspolczynnik-zmiennosci-skala">\[ \mathrm{CV}(bX)=\mathrm{CV}(X)\ \ (b\gt0), \qquad \mathrm{CV}(X+a)=\frac{\sigma}{\mu+a}\ne\mathrm{CV}(X)\ \ (a\ne0) . \]</div>
+<p>Rozkład Poissona i ujemny dwumianowy (\(\operatorname{Var}=\mu+\mu^2/\kappa\)):</p>
+<div class="ml-eq" id="eq-wspolczynnik-zmiennosci-negbin">\[ \mathrm{CV}_{\mathrm{Pois}}=\frac{1}{\sqrt\mu}, \qquad \mathrm{CV}_{\mathrm{NB}}^2=\frac{1}{\mu}+\frac{1}{\kappa}\ \xrightarrow{\ \mu\to\infty\ }\ \frac1\kappa . \]</div>
+<p>Rozkład logarytmicznie normalny, \(\log X\sim N(m,\sigma_{\log}^2)\):</p>
+<div class="ml-eq" id="eq-wspolczynnik-zmiennosci-lognormal">\[ \mathrm{CV}=\sqrt{e^{\sigma_{\log}^2}-1}\approx\sigma_{\log}\ \ \text{dla małych } \sigma_{\log} . \]</div>
+<p>Wypełnienie w modelu beta-dwumianowym, \(A\sim\mathrm{BetaBin}(C,\mu\phi,(1-\mu)\phi)\), \(W=A/C\):</p>
+<div class="ml-eq" id="eq-wspolczynnik-zmiennosci-betabin">\[ \mathrm{CV}(W)=\sqrt{\frac{1-\mu}{\mu}\cdot\frac{\phi+C}{C(\phi+1)}} . \]</div>
+<p>Ograniczenie dla zmiennych o wartościach w \([0;1]\) z \(E X=\mu\):</p>
+<div class="ml-eq" id="eq-wspolczynnik-zmiennosci-ograniczenie">\[ \mathrm{CV}(X)\le\sqrt{\frac{1-\mu}{\mu}}, \qquad \mathrm{CV}(1-X)=\mathrm{CV}(X)\cdot\frac{\mu}{1-\mu} . \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-cv-skala"><p class="ml-box-title">Twierdzenie (CV jest miarą skali ilorazowej)</p>
+<p>(a) Dla \(b\gt0\) zachodzi \(\mathrm{CV}(bX)=\mathrm{CV}(X)\) — CV nie zależy od jednostki. (b) Dla \(a\ne0\) \(\mathrm{CV}(X+a)\ne\mathrm{CV}(X)\) (o ile \(\sigma\gt0\)); co więcej, dobierając \(a\), można uzyskać dowolną dodatnią wartość CV, a także zmienić kolejność CV dwóch zmiennych. Zatem CV nie jest sensowną miarą na skali przedziałowej.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-cv-negbin"><p class="ml-box-title">Twierdzenie (CV rozkładu ujemnego dwumianowego)</p>
+<p>Jeżeli \(A\sim\mathrm{NegBin}(\mu,\kappa)\) z \(\operatorname{Var}A=\mu+\mu^2/\kappa\), to \(\mathrm{CV}^2=1/\mu+1/\kappa\). Dla dużych średnich CV przestaje zależeć od \(\mu\) i dąży do \(1/\sqrt\kappa\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-cv-ograniczona"><p class="ml-box-title">Twierdzenie (zmienne ograniczone)</p>
+<p>Jeżeli \(0\le X\le1\) i \(\mu=EX\in(0,1)\), to \(\operatorname{Var}X\le\mu(1-\mu)\), a więc zachodzi <a class="ml-eqref" href="#eq-wspolczynnik-zmiennosci-ograniczenie"></a>. Równość — wtedy i tylko wtedy, gdy \(X\in\{0,1\}\) prawie na pewno.</p>
+</div>
+<div class="ml-box ml-note"><p>\(\widehat{\mathrm{CV}}\) jest obciążonym estymatorem CV (iloraz estymatorów, a \(s\) sam jest obciążony); przy danych normalnych często stosuje się przybliżoną korektę \(\big(1+\frac{1}{4n}\big)\widehat{\mathrm{CV}}\). Przy \(\bar x\) bliskim zeru estymator jest skrajnie niestabilny.</p></div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-skala">Niezmienniczość względem skali i jej brak względem przesunięć</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>(a) \(E(bX)=b\mu\), \(\mathrm{SD}(bX)=|b|\sigma=b\sigma\), więc \(\mathrm{CV}(bX)=b\sigma/(b\mu)=\sigma/\mu\).</p>
+<p>(b) Przesunięcie nie zmienia odchylenia standardowego, a zmienia średnią: \(\mathrm{CV}(X+a)=\sigma/(\mu+a)\), co równa się \(\sigma/\mu\) tylko dla \(a=0\). Dla dowolnej docelowej wartości \(c\gt0\) wystarczy \(a=\sigma/c-\mu\). Zmiana kolejności: niech \(\mathrm{CV}(X)=\sigma_X/\mu_X\lt\sigma_Y/\mu_Y=\mathrm{CV}(Y)\) przy \(\sigma_X\gt\sigma_Y\). Po wspólnym przesunięciu o \(a\) mamy \(\mathrm{CV}(X+a)\gt\mathrm{CV}(Y+a)\iff\sigma_X(\mu_Y+a)\gt\sigma_Y(\mu_X+a)\iff a(\sigma_X-\sigma_Y)\gt\sigma_Y\mu_X-\sigma_X\mu_Y\), co jest spełnione dla dostatecznie dużego \(a\). Wniosek „\(Y\) jest względnie bardziej zmienna” zależy więc od umownego punktu zerowego.</p>
+<p class="ml-qed">∎</p></div>
+<p><strong>Przykład.</strong> Temperatury w hali 10°C i 20°C mają średnią 15°C i (z dzielnikiem \(n-1\)) SD \(\approx7{,}07\)°C, więc „CV” ≈ 0,47. Te same temperatury w kelwinach (283,15 K i 293,15 K) dają CV ≈ 0,024. Żadna z tych liczb nie ma treści merytorycznej, bo zero skali Celsjusza (i Fahrenheita) jest umowne.</p>
+
+<h3 id="dowod-negbin">CV rozkładu ujemnego dwumianowego</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>\(\mathrm{CV}^2=\frac{\operatorname{Var}A}{(EA)^2}=\frac{\mu+\mu^2/\kappa}{\mu^2}=\frac1\mu+\frac1\kappa\). Granica przy \(\mu\to\infty\) jest natychmiastowa. Rozkład Poissona to przypadek \(\kappa\to\infty\): \(\mathrm{CV}^2=1/\mu\).</p>
+<p class="ml-qed">∎</p></div>
+<p>Interpretacja: składnik \(1/\mu\) to zmienność „losowania widzów” (jak w Poissonie), znikoma przy setkach widzów; składnik \(1/\kappa\) to nadmierna dyspersja — zmienność atrakcyjności meczów niewyjaśniona przez model. Dla frekwencji rzędu tysiąca widzów CV prawie w całości zależy od \(\kappa\) <cite data-bib="hilbe2011"></cite>.</p>
+
+<h3 id="dowod-lognormal">Rozkład logarytmicznie normalny</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z funkcji tworzącej momenty rozkładu normalnego: \(E X=E e^{\log X}=e^{m+\sigma_{\log}^2/2}\), \(E X^2=e^{2m+2\sigma_{\log}^2}\). Zatem \(\operatorname{Var}X=e^{2m+\sigma_{\log}^2}\big(e^{\sigma_{\log}^2}-1\big)\) i \(\mathrm{CV}^2=e^{\sigma_{\log}^2}-1\). Rozwinięcie \(e^t-1=t+O(t^2)\) daje \(\mathrm{CV}\approx\sigma_{\log}\). Wniosek: CV na skali ilorazowej odpowiada w przybliżeniu odchyleniu standardowemu na skali logarytmicznej — dlatego modele frekwencji z łącznikiem log (\(\log\mu_i=\eta_i\)) naturalnie opisują zmienność względną.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-ograniczona">Zmienne ograniczone i dopełnienie</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla \(0\le X\le1\) mamy \(X^2\le X\), więc \(E X^2\le\mu\) i \(\operatorname{Var}X=EX^2-\mu^2\le\mu-\mu^2=\mu(1-\mu)\). Równość wymaga \(X^2=X\) p.n., tj. \(X\in\{0,1\}\). Dzieląc przez \(\mu^2\): \(\mathrm{CV}^2\le(1-\mu)/\mu\). Dla dopełnienia: \(\mathrm{SD}(1-X)=\mathrm{SD}(X)\), \(E(1-X)=1-\mu\), więc \(\mathrm{CV}(1-X)=\sigma/(1-\mu)=\mathrm{CV}(X)\cdot\mu/(1-\mu)\).</p>
+<p>Wzór <a class="ml-eqref" href="#eq-wspolczynnik-zmiennosci-betabin"></a>: w rozkładzie beta-dwumianowym \(EA=C\mu\), \(\operatorname{Var}A=C\mu(1-\mu)\frac{\phi+C}{\phi+1}\); dla \(W=A/C\): \(\operatorname{Var}W=\frac{\mu(1-\mu)}{C}\cdot\frac{\phi+C}{\phi+1}\), a dzieląc przez \(\mu^2\) otrzymujemy tezę.</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p>Dwa kluby, po sześć meczów domowych (dane ilustracyjne): klub A (Superliga) 1050, 1180, 1320, 1240, 980, 1430; klub B (I liga) 120, 160, 250, 190, 140, 220.</p>
+<ol class="ml-steps">
+<li>Klub A: \(\bar x=7200/6=1200\); odchylenia \(-150,-20,120,40,-220,230\); kwadraty \(22\,500+400+14\,400+1600+48\,400+52\,900=140\,200\); \(s^2=140\,200/5=28\,040\), \(s\approx167{,}45\).</li>
+<li>Klub B: \(\bar x=1080/6=180\); odchylenia \(-60,-20,70,10,-40,40\); kwadraty \(3600+400+4900+100+1600+1600=12\,200\); \(s^2=2440\), \(s\approx49{,}40\).</li>
+<li>Współczynniki zmienności: \(\mathrm{CV}_A=167{,}45/1200\approx0{,}140\) (14,0%), \(\mathrm{CV}_B=49{,}40/180\approx0{,}274\) (27,4%). Względna zmienność klubu B jest prawie dwukrotnie większa, choć jego SD jest ponad trzykrotnie mniejsze.</li>
+<li>Niezależność od jednostek: przychód z biletów przy stałej cenie 25 zł daje dla A \(\bar x=30\,000\) zł, \(s\approx4186\) zł i ten sam \(\mathrm{CV}\approx0{,}140\).</li>
+<li>Model NB (dane ilustracyjne): przy \(\kappa=20\) i \(\mu=1200\): \(\mathrm{CV}=\sqrt{1/1200+1/20}=\sqrt{0{,}000833+0{,}05}\approx0{,}225\); przy \(\mu=180\): \(\sqrt{0{,}005556+0{,}05}\approx0{,}236\). Ten sam \(\kappa\) daje prawie ten sam CV niezależnie od poziomu — czynnik Poissona \(1/\sqrt{1200}\approx0{,}029\) jest pomijalny.</li>
+<li>Wypełnienie i jego dopełnienie: wypełnienia 0,80; 0,90; 0,55; 0,95 mają średnią 0,80 i SD \(\sqrt{0{,}095/3}\approx0{,}178\), więc \(\mathrm{CV}(W)\approx0{,}222\). Odsetek <em>pustych</em> miejsc \(1-W\) ma średnią 0,20 i to samo SD, więc \(\mathrm{CV}(1-W)\approx0{,}890=0{,}222\cdot0{,}8/0{,}2\). Ograniczenie: \(\sqrt{0{,}2/0{,}8}=0{,}5\ge0{,}222\) ✓.</li>
+</ol>
+<div class="ml-plot" data-plot="negbinomial" data-params='{"mu": 1200, "kappa": 20}'></div>
+<p>Rozkład NB z \(\mu=1200\), \(\kappa=20\) ma CV ≈ 0,225. Zmieniając \(\mu\) przy stałym \(\kappa\), zobaczysz, że rozkład przesuwa się i rozszerza proporcjonalnie — względna szerokość pozostaje niemal stała; zmniejszenie \(\kappa\) zwiększa CV.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li>\(\mathrm{CV}_B\approx27\%\) oznacza, że typowe odchylenie meczu od średniej klubu B to ok. ćwierć tej średniej; dla A — ok. jedna siódma. Mniejsze kluby mają względnie mniej przewidywalną frekwencję, co jest typowe, gdy pojedyncze wydarzenia (rywal, termin) mają duży udział w widowni.</li>
+<li>CV wypełnienia i CV pustych miejsc różnią się czterokrotnie, choć opisują ten sam zbiór meczów — dla wielkości będących udziałami CV zależy od wyboru, co nazwiemy „zero”. Lepiej raportować SD w punktach procentowych.</li>
+<li>Porównując CV z modelu (np. \(\approx0{,}225\) przy \(\kappa=20\)) z CV empirycznym w grupie podobnych meczów, sprawdzamy, czy model nie zaniża zmienności.</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<ul>
+<li><strong>Wariant „liczba widzów” MAF.</strong> W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> dla rozgrywek bez znanych pojemności hal (m.in. puchary EHF, gdzie średnia frekwencja Ligi Mistrzów to ok. 4500 widzów) \(A_i\sim\mathrm{NegBin}(\mu_i,\kappa)\). Parametr \(\kappa\) jest w praktyce parametrem współczynnika zmienności resztowej: \(\mathrm{CV}\approx1/\sqrt\kappa\) przy tysiącach widzów, co pozwala sensownie stosować jeden \(\kappa\) do meczów o bardzo różnej skali. Zob. <a data-concept="rozklad-ujemny-dwumianowy">rozkład ujemny dwumianowy</a>.</li>
+<li><strong>Raporty stabilności widowni.</strong> CV frekwencji klubu w sezonie (tylko mecze ze znaną frekwencją; NULL ≠ 0) pozwala porównywać stabilność widowni klubów Superligi i niższych lig.</li>
+<li><strong>IAF.</strong> Indeks IAF jest ilorazem (100 = przeciętny rywal), a jego zero ma sens („zerowe oczekiwane wypełnienie”), więc względną niepewność, np. SD posterior / mediana posterior, można interpretować; nie dotyczy to jednak efektów \(R_j\), które na skali logitu mają średnią 0.</li>
+<li><strong>Czego nie liczyć.</strong> CV nie stosujemy do predyktora liniowego \(\eta\), standaryzowanych kowariatów (średnia 0 z definicji), efektów losowych, pozycji w tabeli ani godziny rozpoczęcia meczu — to nie są skale ilorazowe.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Tylko skale ilorazowe</strong>; na skali przedziałowej CV można dowolnie zmieniać, przesuwając zero.</li>
+<li><strong>Niestabilność przy średniej bliskiej zera</strong> (np. frekwencja meczów rozgrywanych bez publiczności lub w bardzo małych salach): mały mianownik wzmacnia szum.</li>
+<li><strong>Brak odporności:</strong> licznik (\(s\)) i mianownik (\(\bar x\)) są wrażliwe na wartości odstające. Odporną alternatywą jest np. \(\mathrm{IQR}/\operatorname{med}\) lub \(1{,}4826\,\mathrm{MAD}/\operatorname{med}\).</li>
+<li><strong>Zmienne ograniczone i udziały:</strong> CV zależy od wyboru, czy liczymy udział, czy jego dopełnienie, i jest ograniczony przez \(\sqrt{(1-\mu)/\mu}\).</li>
+<li><strong>Obciążenie i niepewność w małych próbach</strong>: przy sześciu meczach \(\widehat{\mathrm{CV}}\) ma duży błąd; porównania klubów wymagają przedziałów niepewności (np. z modelu lub bootstrapu).</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="odchylenie-standardowe">Odchylenie standardowe</a> — licznik CV.</li>
+<li><a data-concept="srednia-arytmetyczna">Średnia arytmetyczna</a> — mianownik CV.</li>
+<li><a data-concept="rozklad-ujemny-dwumianowy">Rozkład ujemny dwumianowy</a> — CV a parametr \(\kappa\).</li>
+<li><a data-concept="rozklad-beta-dwumianowy">Rozkład beta-dwumianowy</a> — zmienność wypełnienia.</li>
+<li><a data-concept="wariancja">Wariancja</a> — zależność wariancji od średniej.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="openintro2019"></li>
+<li data-bib="hilbe2011"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="johnson1995continuous"></li>
+</ul>
+</section>

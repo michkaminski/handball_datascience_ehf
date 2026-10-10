@@ -20,6 +20,7 @@ GORNY_PASEK: tuple[PozycjaMenu, ...] = (
     PozycjaMenu("start", "Start", "panel.start"),
     PozycjaMenu("mecze", "Data", "panel.match_list"),
     PozycjaMenu("raporty", "Reports", "panel.match_sheet"),
+    PozycjaMenu("matematyka", "Mathematics", "panel.math_index"),
     PozycjaMenu("import", "Import", "panel.import_danych"),
     PozycjaMenu("kontrola", "Kontrola danych", "panel.kontrola_danych"),
     PozycjaMenu("logi", "Logi", "panel.logi_aplikacji"),
@@ -50,6 +51,10 @@ SIDEBAR: tuple[tuple[str, tuple[PozycjaMenu, ...]], ...] = (
             PozycjaMenu("rozkłady", "Distributions", "panel.lista_rozkladow", "▥"),
             PozycjaMenu("attendance", "Attendance", "panel.attendance_analytics", "◔"),
         ),
+    ),
+    (
+        "Mathematics",
+        (PozycjaMenu("matematyka", "Mathematics library", "panel.math_index", "∑"),),
     ),
     (
         "Import / eksport",

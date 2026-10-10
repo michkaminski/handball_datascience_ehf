@@ -1,0 +1,207 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Wynikiem analizy bayesowskiej jest cały <a data-concept="rozklad-posterior">rozkład a posteriori</a>, a nie jedna liczba. Raport, tabela czy wykres potrzebują jednak podsumowań: wartości „najbardziej reprezentatywnej”, przedziału niepewności, prawdopodobieństwa, że coś przekracza próg. Estymacja posterior (ang. <em>posterior estimation, posterior summarization</em>) to zasady wyboru takich podsumowań i sposób ich obliczania z próbek MCMC.</p>
+<p>Wybór podsumowania punktowego nie jest kwestią gustu. Teoria decyzji mówi, że „najlepsza” liczba zależy od tego, jak karzemy pomyłki: jeśli kara rośnie z kwadratem błędu, optymalna jest średnia posterior; jeśli liniowo — mediana; jeśli liczy się tylko trafienie dokładnie w punkt — dominanta. Dla rozkładów skośnych (a takie są rozkłady wypełnienia, liczby widzów czy ilorazu IAF) te trzy liczby wyraźnie się różnią.</p>
+<p>Drugim wątkiem jest dokładność numeryczna. Posterior znamy tylko przez skończoną liczbę próbek z łańcuchów Markowa, więc każde podsumowanie jest estymatą obarczoną <em>błędem Monte Carlo</em> (ang. <em>Monte Carlo standard error</em>, MCSE). Raportowanie IAF z dokładnością do 0,01, gdy MCSE wynosi 0,2, sugeruje precyzję, której nie ma.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \(p(\theta\mid y)\) będzie rozkładem a posteriori na \(\Theta\subseteq\mathbb{R}\) (dla parametrów wektorowych — każda współrzędna lub funkcja \(g(\theta)\) osobno), \(\mathcal{A}\) — zbiorem dopuszczalnych decyzji (zwykle \(\mathcal{A}=\Theta\)), a \(\mathcal{L}:\Theta\times\mathcal{A}\to[0,\infty)\) — funkcją straty.</p>
+<div class="ml-box ml-def" id="def-estymator-bayesa"><p class="ml-box-title">Definicja</p>
+<p><strong>Oczekiwaną stratą a posteriori</strong> decyzji \(a\) nazywamy \(\rho(a\mid y)=\int_\Theta\mathcal{L}(\theta,a)\,p(\theta\mid y)\,d\theta\). <strong>Estymatorem bayesowskim</strong> względem straty \(\mathcal{L}\) nazywamy</p>
+<div class="ml-eq" id="eq-estymacja-posterior">\[ \hat\theta_{\mathcal{L}}(y)=\arg\min_{a\in\mathcal{A}}\ \int_\Theta\mathcal{L}(\theta,a)\,p(\theta\mid y)\,d\theta . \]</div>
+<p><strong>Estymacją posterior z próbek</strong> nazywamy przybliżanie funkcjonałów rozkładu \(p(\theta\mid y)\) (wartości oczekiwanych, kwantyli, prawdopodobieństw) ich odpowiednikami empirycznymi obliczonymi z próbek \(\theta^{(1)},\dots,\theta^{(S)}\) wygenerowanych metodą Monte Carlo lub MCMC.</p>
+</div>
+<p>Podstawowe podsumowania: średnia \(\mathbb{E}(\theta\mid y)\), mediana, dominanta (MAP, ang. <em>maximum a posteriori</em>), kwantyle \(q_\tau\), centralny przedział wiarygodności \([q_{\alpha/2},q_{1-\alpha/2}]\) (zob. <a data-concept="przedzial-wiarygodnosci">przedział wiarygodności</a>) oraz prawdopodobieństwa \(P(g(\theta)\in A\mid y)\) (zob. <a data-concept="probabilistyczne-porownanie-parametrow">probabilistyczne porównanie parametrów</a>).</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(\mathcal{L}(\theta,a)\)</td><td>funkcja straty: koszt decyzji \(a\), gdy prawdziwa wartość to \(\theta\)</td></tr>
+<tr><td>\(\rho(a\mid y)\)</td><td>oczekiwana strata a posteriori</td></tr>
+<tr><td>\(F(\cdot\mid y)\)</td><td>dystrybuanta posterioru</td></tr>
+<tr><td>\(q_\tau\)</td><td>kwantyl rzędu \(\tau\in(0,1)\) posterioru</td></tr>
+<tr><td>\(\theta^{(s)}\), \(S\)</td><td>\(s\)-ta próbka z posterioru, liczba próbek</td></tr>
+<tr><td>\(g(\theta)\)</td><td>funkcja parametrów (np. IAF, wypełnienie)</td></tr>
+<tr><td>\(\bar g_S\)</td><td>średnia z próbek \(\frac1S\sum_s g(\theta^{(s)})\)</td></tr>
+<tr><td>\(\rho_t\)</td><td>autokorelacja łańcucha na opóźnieniu \(t\)</td></tr>
+<tr><td>\(\mathrm{ESS}\)</td><td>efektywna liczba próbek (zob. <a data-concept="effective-sample-size">ESS</a>)</td></tr>
+<tr><td>\(\mathrm{MCSE}\)</td><td>błąd standardowy Monte Carlo</td></tr>
+<tr><td>\(f(q_\tau)\)</td><td>gęstość posterioru w kwantylu \(q_\tau\)</td></tr>
+<tr><td>\(\mathbb 1\{\cdot\}\)</td><td>indykator zdarzenia</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li>Posterior jest właściwy, a podsumowywane funkcjonały istnieją (np. średnia wymaga \(\mathbb{E}|\theta|\lt\infty\) — dla rozkładów o ciężkich ogonach, takich jak iloraz zmiennych, warto preferować medianę).</li>
+<li>Próbki pochodzą z rozkładu stacjonarnego łańcucha: łańcuchy są zbieżne (<a data-concept="r-hat">R-hat</a> \(\lt1{,}01\)), okres rozgrzewania (ang. <em>warm-up</em>) odrzucono, brak dywergencji.</li>
+<li>Dla twierdzenia granicznego Monte Carlo: \(\operatorname{Var}g(\theta)\lt\infty\) oraz łańcuch jest geometrycznie ergodyczny (wtedy autokorelacje są sumowalne) <cite data-bib="robert2004"></cite>.</li>
+<li>Funkcja straty odzwierciedla rzeczywiste konsekwencje decyzji; w raportach ogólnego przeznaczenia przyjmuje się konwencje (mediana + przedział centralny).</li>
+<li>Funkcje parametrów \(g(\theta)\) liczy się <em>na każdej próbce</em> osobno, a dopiero potem podsumowuje — nigdy przez wstawienie podsumowania parametrów do \(g\).</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Estymatory bayesowskie dla klasycznych strat:</p>
+<div class="ml-eq" id="eq-estymacja-posterior-straty">\[ \begin{aligned}
+\mathcal{L}(\theta,a)&amp;=(\theta-a)^2&amp;&amp;\Rightarrow\ \hat\theta=\mathbb{E}(\theta\mid y),\\
+\mathcal{L}(\theta,a)&amp;=|\theta-a|&amp;&amp;\Rightarrow\ \hat\theta=\operatorname{mediana}(\theta\mid y),\\
+\mathcal{L}_\tau(\theta,a)&amp;=(\theta-a)\big(\tau-\mathbb 1\{\theta\lt a\}\big)&amp;&amp;\Rightarrow\ \hat\theta=q_\tau,\\
+\mathcal{L}_\varepsilon(\theta,a)&amp;=\mathbb 1\{|\theta-a|\gt\varepsilon\},\ \varepsilon\to0&amp;&amp;\Rightarrow\ \hat\theta\to\text{dominanta (MAP)}.
+\end{aligned} \]</div>
+<p>Rozkład oczekiwanej straty kwadratowej:</p>
+<div class="ml-eq" id="eq-estymacja-posterior-rozklad-straty">\[ \mathbb{E}\big[(\theta-a)^2\mid y\big]=\operatorname{Var}(\theta\mid y)+\big(\mathbb{E}(\theta\mid y)-a\big)^2 . \]</div>
+<p>Estymatory z próbek:</p>
+<div class="ml-eq" id="eq-estymacja-posterior-mc">\[ \widehat{\mathbb{E}g}=\frac1S\sum_{s=1}^S g(\theta^{(s)}),\qquad \widehat{P}(g\in A)=\frac1S\sum_{s=1}^S\mathbb 1\{g(\theta^{(s)})\in A\},\qquad \hat q_\tau=g_{(\lceil\tau S\rceil)}, \]</div>
+<p>gdzie \(g_{(k)}\) to \(k\)-ta statystyka pozycyjna (w praktyce stosuje się interpolowane definicje kwantyli <cite data-bib="hyndmanfan1996"></cite>).</p>
+<p>Błąd standardowy Monte Carlo:</p>
+<div class="ml-eq" id="eq-estymacja-posterior-mcse">\[ \mathrm{MCSE}(\bar g_S)\approx\frac{\operatorname{sd}(g\mid y)}{\sqrt{\mathrm{ESS}}},\qquad \mathrm{ESS}=\frac{S}{1+2\sum_{t=1}^\infty\rho_t} . \]</div>
+<p>Dla prawdopodobieństwa i kwantyla (przybliżenia asymptotyczne):</p>
+<div class="ml-eq" id="eq-estymacja-posterior-mcse-kwantyl">\[ \mathrm{MCSE}(\widehat P)\approx\sqrt{\frac{\widehat P(1-\widehat P)}{\mathrm{ESS}}},\qquad \mathrm{MCSE}(\hat q_\tau)\approx\frac{1}{f(q_\tau)}\sqrt{\frac{\tau(1-\tau)}{\mathrm{ESS}}} . \]</div>
+<p>W praktyce ArviZ i Stan liczą ESS osobno dla środka rozkładu (<em>bulk-ESS</em>) i ogonów (<em>tail-ESS</em>, dla kwantyli 5% i 95%) z rangową normalizacją <cite data-bib="vehtari2021rhat"></cite>; MCSE kwantyli oblicza się metodą przedziałów dla indykatorów, bez jawnego szacowania \(f\) <cite data-bib="doc-arviz"></cite>.</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-srednia-strata-kwadratowa"><p class="ml-box-title">Twierdzenie (średnia minimalizuje stratę kwadratową)</p>
+<p>Jeżeli \(\mathbb{E}(\theta^2\mid y)\lt\infty\), to \(a\mapsto\mathbb{E}[(\theta-a)^2\mid y]\) ma jedyne minimum w \(a^*=\mathbb{E}(\theta\mid y)\), a wartość minimalna to \(\operatorname{Var}(\theta\mid y)\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-mediana-strata-bezwzgledna"><p class="ml-box-title">Twierdzenie (mediana minimalizuje stratę bezwzględną)</p>
+<p>Jeżeli \(\mathbb{E}(|\theta|\mid y)\lt\infty\), to każda mediana \(m\) posterioru (tj. \(P(\theta\le m\mid y)\ge\tfrac12\) i \(P(\theta\ge m\mid y)\ge\tfrac12\)) minimalizuje \(\mathbb{E}[|\theta-a|\mid y]\). Ogólniej, kwantyl \(q_\tau\) minimalizuje oczekiwaną stratę \(\mathcal{L}_\tau\) (strata „pinball”).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-ekwiwariancja"><p class="ml-box-title">Twierdzenie (kwantyle przechodzą przez przekształcenia monotoniczne)</p>
+<p>Jeżeli \(h\) jest ciągła i ściśle rosnąca, to \(q_\tau\big(h(\theta)\mid y\big)=h\big(q_\tau(\theta\mid y)\big)\); w szczególności mediana i przedziały kwantylowe są ekwiwariantne. Dla średniej w ogólności \(\mathbb{E}[h(\theta)\mid y]\ne h(\mathbb{E}[\theta\mid y])\); jeśli \(h\) jest wypukła, zachodzi \(\mathbb{E}h(\theta)\ge h(\mathbb{E}\theta)\) (nierówność Jensena).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-clt-mc"><p class="ml-box-title">Twierdzenie (centralne twierdzenie graniczne Monte Carlo)</p>
+<p>(a) Dla niezależnych \(\theta^{(s)}\sim p(\theta\mid y)\) i \(\sigma_g^2=\operatorname{Var}(g(\theta)\mid y)\lt\infty\): \(\sqrt S(\bar g_S-\mathbb{E}g)\xrightarrow{d}N(0,\sigma_g^2)\), więc \(\mathrm{MCSE}=\sigma_g/\sqrt S\).
+(b) Dla geometrycznie ergodycznego łańcucha Markowa o rozkładzie stacjonarnym \(p(\theta\mid y)\) i \(\mathbb{E}|g|^{2+\delta}\lt\infty\) zachodzi to samo z wariancją asymptotyczną \(\sigma_g^2(1+2\sum_{t\ge1}\rho_t)\), czyli z \(S\) zastąpionym przez ESS <cite data-bib="robert2004"></cite> <cite data-bib="geyer1992"></cite>.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-srednia">Średnia a strata kwadratowa</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Krok 1. Oznaczmy \(\bar\theta=\mathbb{E}(\theta\mid y)\). Dodajemy i odejmujemy \(\bar\theta\):
+\[ \begin{aligned}
+\mathbb{E}[(\theta-a)^2\mid y]&amp;=\mathbb{E}[(\theta-\bar\theta+\bar\theta-a)^2\mid y]\\
+&amp;=\mathbb{E}[(\theta-\bar\theta)^2\mid y]+2(\bar\theta-a)\,\mathbb{E}[\theta-\bar\theta\mid y]+(\bar\theta-a)^2.
+\end{aligned} \]</p>
+<p>Krok 2. Wyraz środkowy znika, bo \(\mathbb{E}[\theta-\bar\theta\mid y]=0\). Otrzymujemy <a class="ml-eqref" href="#eq-estymacja-posterior-rozklad-straty"></a>: \(\operatorname{Var}(\theta\mid y)+(\bar\theta-a)^2\).</p>
+<p>Krok 3. Pierwszy składnik nie zależy od \(a\), drugi jest nieujemny i równy zeru wtedy i tylko wtedy, gdy \(a=\bar\theta\). Minimum jest jedyne, a jego wartość to wariancja posterior.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-mediana">Mediana i kwantyle a strata liniowa</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Krok 1. Dla \(a\lt b\) rozpatrzmy różnicę strat \(|\theta-b|-|\theta-a|\). Rozważając trzy przypadki:
+\[ |\theta-b|-|\theta-a|=\begin{cases} b-a, &amp; \theta\le a,\\ a+b-2\theta\in[a-b,\,b-a], &amp; a\lt\theta\lt b,\\ a-b, &amp; \theta\ge b.\end{cases} \]</p>
+<p>Krok 2. Niech \(m\) będzie medianą i \(b\gt m\). Biorąc \(a=m\): na zdarzeniu \(\{\theta\le m\}\) różnica wynosi \(b-m\), a na jego dopełnieniu jest \(\ge-(b-m)\). Zatem
+\[ \mathbb{E}\big[|\theta-b|-|\theta-m|\,\big|\,y\big]\ge(b-m)\big[P(\theta\le m\mid y)-P(\theta\gt m\mid y)\big]\ge0, \]
+bo \(P(\theta\le m\mid y)\ge\tfrac12\ge P(\theta\gt m\mid y)\).</p>
+<p>Krok 3. Symetrycznie dla \(b\lt m\) (korzystając z \(P(\theta\ge m\mid y)\ge\tfrac12\)). Żadne \(b\) nie daje mniejszej oczekiwanej straty niż \(m\). Założenie \(\mathbb{E}|\theta|\lt\infty\) gwarantuje skończoność obu wartości oczekiwanych.</p>
+<p>Krok 4 (kwantyle, rozkład ciągły). \(\rho_\tau(a)=\tau\int_a^\infty(\theta-a)\,dF+(1-\tau)\int_{-\infty}^a(a-\theta)\,dF\). Różniczkując (reguła Leibniza): \(\rho_\tau'(a)=-\tau(1-F(a))+(1-\tau)F(a)=F(a)-\tau\). Pochodna jest niemalejąca (funkcja wypukła) i zeruje się w \(F(a)=\tau\), tj. \(a=q_\tau\). Dla \(\tau=\tfrac12\): \(\mathcal{L}_{1/2}=\tfrac12|\theta-a|\) — mediana.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-ekwiwariancja">Ekwiwariancja kwantyli</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla ściśle rosnącej, ciągłej \(h\): \(\{h(\theta)\le h(c)\}=\{\theta\le c\}\). Stąd \(P(h(\theta)\le h(q_\tau)\mid y)=P(\theta\le q_\tau\mid y)\ge\tau\) i analogicznie dla nierówności przeciwnej, więc \(h(q_\tau)\) spełnia definicję kwantyla rzędu \(\tau\) zmiennej \(h(\theta)\). Nierówność Jensena dla wypukłej \(h\): \(h(\theta)\ge h(\bar\theta)+h'(\bar\theta)(\theta-\bar\theta)\) (styczna leży pod wykresem); biorąc wartość oczekiwaną, \(\mathbb{E}h(\theta)\ge h(\bar\theta)\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-mcse">Błąd Monte Carlo</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Krok 1 (próbki niezależne). \(\operatorname{Var}(\bar g_S)=\frac{1}{S^2}\sum_s\operatorname{Var}g(\theta^{(s)})=\sigma_g^2/S\); zbieżność do rozkładu normalnego wynika z klasycznego CTG.</p>
+<p>Krok 2 (łańcuch stacjonarny). Z kowariancjami \(\operatorname{Cov}(g^{(s)},g^{(s+t)})=\sigma_g^2\rho_t\):
+\[ \operatorname{Var}(\bar g_S)=\frac{\sigma_g^2}{S}\left[1+2\sum_{t=1}^{S-1}\Big(1-\frac tS\Big)\rho_t\right]\ \approx\ \frac{\sigma_g^2}{S}\Big(1+2\sum_{t\ge1}\rho_t\Big)=\frac{\sigma_g^2}{\mathrm{ESS}} , \]
+gdzie przybliżenie jest uzasadnione sumowalnością autokorelacji (twierdzenie o zbieżności zdominowanej).</p>
+<p>Krok 3 (prawdopodobieństwo). \(\widehat P\) jest średnią indykatorów o wariancji \(P(1-P)\), co daje pierwszy wzór <a class="ml-eqref" href="#eq-estymacja-posterior-mcse-kwantyl"></a>.</p>
+<p>Krok 4 (kwantyl, metoda delta). \(\hat q_\tau\) spełnia \(\widehat F(\hat q_\tau)\approx\tau\); rozwijając \(F(\hat q_\tau)\approx\tau+f(q_\tau)(\hat q_\tau-q_\tau)\) i korzystając z \(\operatorname{Var}\widehat F(q_\tau)\approx\tau(1-\tau)/\mathrm{ESS}\), dostajemy \(\operatorname{Var}\hat q_\tau\approx\tau(1-\tau)/(\mathrm{ESS}\,f(q_\tau)^2)\).</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<h3 id="przyklad-straty">Podsumowania punktowe i straty</h3>
+<p><em>Dane ilustracyjne.</em> Dziewięć próbek posterior indeksu IAF klubu (w praktyce jest ich kilka tysięcy): \(96,\ 102,\ 105,\ 108,\ 110,\ 112,\ 115,\ 121,\ 140\).</p>
+<ol class="ml-steps">
+<li><strong>Średnia.</strong> Suma \(=1009\), średnia \(=1009/9\approx112{,}11\).</li>
+<li><strong>Mediana.</strong> Piąta z dziewięciu uporządkowanych wartości: \(110\). Średnia jest wyższa od mediany o 2,1 — prawy ogon (próbka 140) „ciągnie” średnią.</li>
+<li><strong>Wariancja posterior</strong> (dzielnik \(S\)): kwadraty odchyleń od 112,11: \(259{,}57;\ 102{,}23;\ 50{,}57;\ 16{,}90;\ 4{,}46;\ 0{,}01;\ 8{,}35;\ 79{,}01;\ 777{,}79\); suma \(\approx1298{,}9\); wariancja \(\approx144{,}32\).</li>
+<li><strong>Oczekiwana strata kwadratowa</strong> (wzór <a class="ml-eqref" href="#eq-estymacja-posterior-rozklad-straty"></a>): dla \(a=112{,}11\): \(144{,}32\); dla \(a=110\): \(144{,}32+2{,}11^2\approx148{,}78\). Średnia wygrywa.</li>
+<li><strong>Oczekiwana strata bezwzględna.</strong> Dla \(a=110\): \(|x-110|=14,8,5,2,0,2,5,11,30\), suma 77, średnio \(8{,}556\). Dla \(a=112{,}11\): \(\approx8{,}815\). Mediana wygrywa.</li>
+<li><strong>Prawdopodobieństwo.</strong> \(P(\mathrm{IAF}\gt100\mid y)\approx8/9\approx0{,}889\) (jedna próbka z dziewięciu poniżej 100).</li>
+</ol>
+<table class="ml-table">
+<thead><tr><th>Decyzja \(a\)</th><th>100</th><th>105</th><th>110 (mediana)</th><th>112,11 (średnia)</th><th>115</th></tr></thead>
+<tbody>
+<tr><td>\(\mathbb{E}(\theta-a)^2\)</td><td>291,00</td><td>194,89</td><td>148,78</td><td><strong>144,32</strong></td><td>152,67</td></tr>
+<tr><td>\(\mathbb{E}|\theta-a|\)</td><td>13,00</td><td>9,78</td><td><strong>8,56</strong></td><td>8,81</td><td>9,78</td></tr>
+</tbody>
+</table>
+<h3 id="przyklad-transformacja">Funkcja parametru: najpierw przekształć, potem podsumuj</h3>
+<ol class="ml-steps">
+<li><em>Dane ilustracyjne:</em> trzy równoprawdopodobne próbki predyktora \(\eta\in\{0,\ 1,\ 2\}\) na skali logitu.</li>
+<li>Wypełnienia: \(\operatorname{logit}^{-1}(0)=0{,}500\), \(\operatorname{logit}^{-1}(1)\approx0{,}731\), \(\operatorname{logit}^{-1}(2)\approx0{,}881\).</li>
+<li>Średnia wypełnień: \((0{,}500+0{,}731+0{,}881)/3\approx0{,}704\). Wstawienie średniej \(\eta\) daje \(\operatorname{logit}^{-1}(1)\approx0{,}731\) — błąd 2,7 p.p.</li>
+<li>Mediana wypełnień: \(0{,}731=\operatorname{logit}^{-1}(\text{mediana }\eta)\) — zgodnie z twierdzeniem o ekwiwariancji.</li>
+</ol>
+<h3 id="przyklad-mcse">Błąd Monte Carlo</h3>
+<ol class="ml-steps">
+<li>Model MAF: 4 łańcuchy × 1000 próbek po rozgrzewaniu, \(S=4000\); dla IAF klubu bulk-ESS \(=1200\), odchylenie standardowe posterior \(\approx6{,}0\) (posterior zbliżony do normalnego).</li>
+<li><strong>MCSE średniej:</strong> \(6{,}0/\sqrt{1200}=6{,}0/34{,}64\approx0{,}17\).</li>
+<li><strong>MCSE mediany:</strong> \(f(q_{0,5})=\varphi(0)/6{,}0\approx0{,}0665\); \(\sqrt{0{,}25/1200}\approx0{,}0144\); MCSE \(\approx0{,}0144/0{,}0665\approx0{,}22\).</li>
+<li><strong>MCSE kwantyla 2,5%</strong> (tail-ESS przyjmijmy też 1200): \(f=\varphi(1{,}96)/6{,}0\approx0{,}00974\); \(\sqrt{0{,}025\cdot0{,}975/1200}\approx0{,}00451\); MCSE \(\approx0{,}46\) — ponad dwa razy więcej niż dla mediany.</li>
+<li><strong>MCSE prawdopodobieństwa</strong> \(\widehat P(\mathrm{IAF}\gt100)=0{,}95\): \(\sqrt{0{,}95\cdot0{,}05/1200}\approx0{,}0063\).</li>
+<li><strong>Wniosek dla raportu:</strong> medianę i granice przedziału raportujemy z dokładnością do 1 punktu IAF (np. 110 [98; 122]), prawdopodobieństwo z dokładnością do 0,01.</li>
+</ol>
+<div class="ml-plot" data-plot="beta" data-params='{"a": 2, "b": 8}'></div>
+<p>Dla skośnego rozkładu Beta(2, 8) dominanta (0,125), mediana (≈0,180) i średnia (0,200) są wyraźnie różne; zmieniaj parametry, by zobaczyć, że zbiegają się dopiero przy rozkładzie symetrycznym (\(a=b\)).</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>W przykładzie IAF średnia (112,1) i mediana (110) różnią się, bo posterior jest prawostronnie skośny. Obie liczby są „poprawne” — odpowiadają na różne pytania. Średnia minimalizuje błąd kwadratowy i jest naturalna, gdy wartości się sumuje (np. oczekiwana łączna liczba widzów w sezonie). Mediana minimalizuje błąd bezwzględny, jest odporna na ogony i — co kluczowe dla ilorazów i przekształceń nieliniowych — ekwiwariantna: mediana IAF to IAF obliczony w medianie, a mediana wypełnienia to \(\operatorname{logit}^{-1}\) mediany predyktora.</p>
+<p>MCSE mówi, ile cyfr podsumowania jest wiarygodnych numerycznie; nie ma nic wspólnego z niepewnością statystyczną parametru (tę opisuje odchylenie posterior i przedział wiarygodności). Zwiększenie liczby próbek zmniejsza MCSE jak \(1/\sqrt{\mathrm{ESS}}\), ale nie zmienia szerokości przedziału wiarygodności. Ogony są estymowane gorzej niż środek, dlatego progi diagnostyczne obejmują osobno bulk-ESS i tail-ESS.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> wszystkie raportowane wielkości są podsumowaniami posterioru liczonymi z próbek NUTS (4 łańcuchy):</p>
+<ul>
+<li><strong>Indeks IAF</strong> rywala \(j\) jest ilorazem średnich oczekiwanych wypełnień z efektem i bez efektu rywala w populacji referencyjnej \(X_{ref}\). Liczymy go dla każdej próbki \(s\) osobno (\(\mathrm{IAF}_j^{(s)}\)), a raportujemy <strong>medianę posterior</strong>, centralny <strong>95% przedział wiarygodności</strong> (kwantyle 2,5% i 97,5%) oraz \(P(\mathrm{IAF}_j\gt100\mid y)\) jako frakcję próbek powyżej 100. Mediana jest wybrana, bo iloraz ma prawostronnie skośny rozkład, a mediana jest ekwiwariantna względem przekształceń monotonicznych.</li>
+<li><strong>Prognozy frekwencji</strong> to kwantyle rozkładu predykcyjnego (przedziały 50/80/95%) i prawdopodobieństwa \(P(W\ge0{,}75)\), \(P(W\ge0{,}9)\), \(P(W\ge0{,}95)\), \(P(W=1)\) — każde estymowane jako frakcja symulacji (zob. <a data-concept="przedzialy-predykcyjne">przedziały predykcyjne</a>, <a data-concept="monte-carlo">symulacja Monte Carlo w prognozowaniu</a>).</li>
+<li><strong>Prognoza punktowa liczby widzów</strong>: przy ocenie MAE właściwym estymatorem punktowym jest mediana predykcyjna, przy RMSE — średnia predykcyjna (twierdzenia o stratach; zob. <a data-concept="mae">MAE</a>, <a data-concept="rmse">RMSE</a>).</li>
+<li><strong>Kontrola numeryczna:</strong> progi diagnostyczne MAF (R-hat \(\lt1{,}01\), bulk-ESS i tail-ESS \(\ge400\), zero dywergencji) gwarantują (dla posterioru zbliżonego do normalnego, ze wzoru <a class="ml-eqref" href="#eq-estymacja-posterior-mcse-kwantyl"></a> przy ESS \(=400\)), że MCSE mediany nie przekracza ok. \(0{,}06\) odchylenia posterior, a MCSE kwantyli 2,5% i 97,5% — ok. \(0{,}13\) odchylenia; przy IAF o odchyleniu ok. 5–10 punktów uzasadnia to zaokrąglanie do pełnych punktów.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Jedna liczba to za mało</strong> — podsumowanie punktowe bez przedziału i prawdopodobieństw ukrywa niepewność; dla rozkładów wielomodalnych może wskazywać wartość mało prawdopodobną.</li>
+<li><strong>MAP</strong> zależy od parametryzacji (jakobian) i w modelach hierarchicznych bywa zdegenerowany (\(\sigma\to0\)); nie należy go używać jako domyślnego podsumowania.</li>
+<li><strong>Średnia</strong> może nie istnieć (ciężkie ogony, iloraz zmiennych z mianownikiem bliskim zera) — estymator z próbek jest wtedy niestabilny bez względu na \(S\).</li>
+<li><strong>MCSE zakłada zbieżność</strong> — mały MCSE z łańcucha, który nie dotarł do całego posterioru, jest pozorny; najpierw R-hat i dywergencje, potem MCSE.</li>
+<li><strong>Kwantyle skrajne</strong> (np. 99,5%) wymagają dużego tail-ESS; przy kilku tysiącach próbek ich estymaty są mało dokładne.</li>
+<li><strong>Wielowymiarowość</strong> — brzegowe przedziały dla wielu parametrów nie tworzą łącznego obszaru wiarygodności; porównania (np. „czy klub A jest atrakcyjniejszy od B”) liczy się na próbkach różnicy.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="rozklad-posterior">Rozkład posterior</a>, <a data-concept="twierdzenie-bayesa-w-estymacji">twierdzenie Bayesa w estymacji</a>.</li>
+<li><a data-concept="przedzial-wiarygodnosci">Przedział wiarygodności</a>, <a data-concept="probabilistyczne-porownanie-parametrow">probabilistyczne porównanie parametrów</a>.</li>
+<li><a data-concept="metody-monte-carlo">Metody Monte Carlo</a>, <a data-concept="mcmc">MCMC i Hamiltonian Monte Carlo</a>.</li>
+<li><a data-concept="effective-sample-size">Effective Sample Size</a>, <a data-concept="r-hat">R-hat</a>, <a data-concept="autokorelacja">autokorelacja</a>.</li>
+<li><a data-concept="mediana">Mediana</a>, <a data-concept="srednia-arytmetyczna">średnia arytmetyczna</a>, <a data-concept="percentyle">percentyle</a>.</li>
+<li><a data-concept="atrakcyjnosc-frekwencyjna">MAF i indeks IAF</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelman2013bda"></li>
+<li data-bib="robert2004"></li>
+<li data-bib="geyer1992"></li>
+<li data-bib="vehtari2021rhat"></li>
+<li data-bib="hyndmanfan1996"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="doc-arviz"></li>
+</ul>
+</section>

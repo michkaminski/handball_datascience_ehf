@@ -1,0 +1,247 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p><a data-concept="metody-monte-carlo">Metody Monte Carlo</a> zamieniają całki na średnie z próbek, ale zakładają, że umiemy losować z rozkładu docelowego. Rozkład posterior modelu MAF ma setki wymiarów i znamy go tylko z dokładnością do stałej: \(p(\theta \mid y) \propto p(y\mid\theta)\,p(\theta)\). Bezpośrednie losowanie jest niemożliwe, a losowanie z ważeniem zawodzi w wysokim wymiarze.</p>
+<p>Metody Monte Carlo łańcuchów Markowa (<em>Markov chain Monte Carlo</em>, MCMC) omijają ten problem: zamiast losować niezależnie, konstruujemy błądzenie losowe po przestrzeni parametrów, którego każdy krok zależy tylko od bieżącego położenia, zaprojektowane tak, by długookresowo spędzało w każdym obszarze czas proporcjonalny do jego prawdopodobieństwa a posteriori. Po okresie „rozgrzewki” położenia łańcucha są (zależnymi) próbkami z posterioru.</p>
+<p>Najprostszy przepis — algorytm Metropolisa–Hastingsa — proponuje losowy krok i akceptuje go z prawdopodobieństwem zależnym od stosunku gęstości. W wielu wymiarach takie błądzenie jest bardzo powolne: duże kroki są odrzucane, małe prowadzą donikąd. Hamiltonian Monte Carlo (HMC) wykorzystuje gradient log-posterioru i fizyczną analogię — cząstkę toczącą się po powierzchni \(-\log p\) — by wykonywać długie, celowe ruchy z wysokim prawdopodobieństwem akceptacji. NUTS (<em>No-U-Turn Sampler</em>) automatycznie dobiera długość tych ruchów. To właśnie NUTS estymuje parametry MAF.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \(\Theta \subseteq \mathbb{R}^d\), a \(\pi\) — rozkład docelowy (posterior) z gęstością \(\pi(\theta) = \tilde\pi(\theta)/Z\), gdzie \(\tilde\pi\) umiemy obliczyć, a \(Z\) nie.</p>
+<div class="ml-box ml-def" id="def-lancuch-markowa"><p class="ml-box-title">Definicja (łańcuch Markowa, jądro przejścia)</p>
+<p>Ciąg zmiennych losowych \(\theta^{(0)}, \theta^{(1)}, \dots\) o wartościach w \(\Theta\) jest (jednorodnym) łańcuchem Markowa z jądrem przejścia \(K\), jeśli dla każdego zbioru mierzalnego \(A\)</p>
+\[ P\big(\theta^{(t+1)} \in A \mid \theta^{(0)},\dots,\theta^{(t)}\big) = P\big(\theta^{(t+1)} \in A \mid \theta^{(t)}\big) = K(\theta^{(t)}, A). \]
+<p>Piszemy \(K(\theta, \theta')\) dla gęstości przejścia (o ile istnieje; jądro może mieć też atom w \(\theta\) — „pozostanie w miejscu”).</p>
+</div>
+<div class="ml-box ml-def" id="def-rozklad-stacjonarny"><p class="ml-box-title">Definicja (rozkład stacjonarny, równowaga szczegółowa)</p>
+<p>Rozkład \(\pi\) jest <strong>stacjonarny</strong> (niezmienniczy) dla \(K\), jeśli \(\theta^{(t)} \sim \pi\) implikuje \(\theta^{(t+1)} \sim \pi\), tj. \(\int \pi(\theta) K(\theta, A)\, d\theta = \pi(A)\) dla każdego \(A\). Jądro spełnia <strong>warunek równowagi szczegółowej</strong> (<em>detailed balance</em>, odwracalność) względem \(\pi\), jeśli</p>
+\[ \pi(\theta)\, K(\theta, \theta') = \pi(\theta')\, K(\theta', \theta) \quad \text{dla wszystkich } \theta, \theta'. \]
+</div>
+<div class="ml-box ml-def" id="def-mcmc"><p class="ml-box-title">Definicja (algorytm MCMC)</p>
+<p>Algorytmem MCMC dla \(\pi\) nazywamy procedurę generującą łańcuch Markowa, dla którego \(\pi\) jest rozkładem stacjonarnym, a łańcuch jest ergodyczny, tak że średnie \(\frac1S\sum_{t} h(\theta^{(t)})\) zbiegają do \(E_\pi h\) dla dowolnego punktu startowego.</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(\pi\), \(\tilde\pi\), \(Z\)</td><td>rozkład docelowy (posterior), jego postać nienormalizowana i stała normalizująca</td></tr>
+<tr><td>\(K(\theta,\theta')\)</td><td>jądro (gęstość) przejścia łańcucha</td></tr>
+<tr><td>\(q(\theta' \mid \theta)\)</td><td>rozkład proponujący w Metropolisie–Hastingsie</td></tr>
+<tr><td>\(\alpha(\theta, \theta')\)</td><td>prawdopodobieństwo akceptacji</td></tr>
+<tr><td>\(U(\theta) = -\log\tilde\pi(\theta)\)</td><td>energia potencjalna</td></tr>
+<tr><td>\(p \in \mathbb{R}^d\)</td><td>pęd (zmienna pomocnicza HMC)</td></tr>
+<tr><td>\(M\)</td><td>macierz mas (dodatnio określona; w MAF diagonalna)</td></tr>
+<tr><td>\(H(\theta,p)\)</td><td>hamiltonian (energia całkowita)</td></tr>
+<tr><td>\(\varepsilon\), \(L\)</td><td>długość kroku i liczba kroków leapfrog</td></tr>
+<tr><td>\(\theta^\pm, p^\pm\)</td><td>skrajne stany trajektorii NUTS (w przód i wstecz)</td></tr>
+<tr><td>\(\delta\)</td><td>docelowa średnia akceptacja w adaptacji kroku</td></tr>
+<tr><td>\(\bar H_t\), \(\mu, \gamma, t_0, \kappa\)</td><td>uśredniona statystyka i parametry algorytmu dual averaging</td></tr>
+<tr><td>\(S\), \(t\)</td><td>liczba próbek i indeks iteracji</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li><strong>Gęstość nienormalizowana</strong> \(\tilde\pi\) jest obliczalna w każdym punkcie; dla HMC/NUTS dodatkowo \(U = -\log\tilde\pi\) jest różniczkowalna, a gradient \(\nabla U\) obliczalny (parametry ciągłe, bez ograniczeń — ograniczenia usuwa się transformacją, np. \(\log\sigma\), z poprawką jakobianu).</li>
+<li><strong>Ergodyczność</strong>: łańcuch jest \(\pi\)-nieprzywiedlny (może dotrzeć do każdego zbioru o dodatniej mierze), nieokresowy i rekurentny w sensie Harrisa.</li>
+<li><strong>Skończona wariancja</strong> funkcji \(h\) i dostatecznie szybkie mieszanie (np. ergodyczność geometryczna) — warunki CLT dla łańcuchów i sensowności ESS.</li>
+<li><strong>Stałe jądro po rozgrzewce</strong>: parametry samplera (\(\varepsilon\), \(M\)) adaptujemy tylko w fazie rozgrzewki; próbki z tej fazy odrzucamy.</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<h3 id="wzory-markow">Łańcuchy Markowa i Metropolis–Hastings</h3>
+<p>Warunek stacjonarności rozkładu docelowego:</p>
+<div class="ml-eq" id="eq-mcmc">\[ \pi(\theta') = \int_\Theta \pi(\theta)\, K(\theta, \theta')\, d\theta. \]</div>
+<p>Równowaga szczegółowa:</p>
+<div class="ml-eq" id="eq-mcmc-rownowaga">\[ \pi(\theta)\, K(\theta, \theta') = \pi(\theta')\, K(\theta', \theta). \]</div>
+<p>Prawdopodobieństwo akceptacji Metropolisa–Hastingsa <cite data-bib="metropolis1953"></cite> <cite data-bib="hastings1970"></cite>:</p>
+<div class="ml-eq" id="eq-mcmc-mh">\[ \alpha(\theta, \theta') = \min\!\left(1,\ \frac{\tilde\pi(\theta')\, q(\theta \mid \theta')}{\tilde\pi(\theta)\, q(\theta' \mid \theta)}\right). \]</div>
+<p>Stała \(Z\) się skraca, więc wystarczy znać \(\tilde\pi\). Dla symetrycznej propozycji (\(q(\theta'\mid\theta) = q(\theta\mid\theta')\), np. błądzenie losowe) iloraz upraszcza się do \(\tilde\pi(\theta')/\tilde\pi(\theta)\) — to oryginalny algorytm Metropolisa.</p>
+
+<h3 id="wzory-hmc">Hamiltonian Monte Carlo</h3>
+<p>Rozszerzamy przestrzeń o pęd \(p \sim N(0, M)\) i definiujemy hamiltonian oraz rozkład łączny:</p>
+<div class="ml-eq" id="eq-mcmc-hamiltonian">\[ H(\theta, p) = U(\theta) + \tfrac12 p^\top M^{-1} p, \qquad \pi(\theta, p) \propto e^{-H(\theta,p)} = \tilde\pi(\theta)\, e^{-\frac12 p^\top M^{-1}p}. \]</div>
+<p>Rozkład brzegowy \(\theta\) jest dokładnie \(\pi\). Równania Hamiltona:</p>
+<div class="ml-eq" id="eq-mcmc-rownania-hamiltona">\[ \frac{d\theta}{dt} = \frac{\partial H}{\partial p} = M^{-1}p, \qquad \frac{dp}{dt} = -\frac{\partial H}{\partial \theta} = -\nabla U(\theta). \]</div>
+<p>Krok całkowania leapfrog (metoda Störmera–Verleta) o długości \(\varepsilon\):</p>
+<div class="ml-eq" id="eq-mcmc-leapfrog">\[ \begin{aligned} p_{1/2} &amp;= p - \tfrac{\varepsilon}{2}\nabla U(\theta), \\ \theta' &amp;= \theta + \varepsilon\, M^{-1} p_{1/2}, \\ p' &amp;= p_{1/2} - \tfrac{\varepsilon}{2}\nabla U(\theta'). \end{aligned} \]</div>
+<p>Po \(L\) krokach z \((\theta, p)\) do \((\theta^*, p^*)\) propozycję \((\theta^*, -p^*)\) akceptujemy z prawdopodobieństwem</p>
+<div class="ml-eq" id="eq-mcmc-akceptacja">\[ \alpha = \min\!\big(1,\ \exp\{H(\theta,p) - H(\theta^*,p^*)\}\big) = \min\!\big(1,\ e^{-\Delta H}\big). \]</div>
+
+<h3 id="wzory-nuts">NUTS</h3>
+<p>Kryterium zawracania (U-turn) dla trajektorii o skrajnych stanach \((\theta^-,p^-)\) i \((\theta^+,p^+)\) — rozbudowę drzewa przerywa się, gdy</p>
+<div class="ml-eq" id="eq-mcmc-uturn">\[ (\theta^+ - \theta^-)^\top M^{-1} p^- \lt 0 \quad \text{lub} \quad (\theta^+ - \theta^-)^\top M^{-1} p^+ \lt 0. \]</div>
+<p>Wybór stanu z trajektorii \(\mathcal T\) (wariant wielomianowy, <em>multinomial sampling</em>):</p>
+<div class="ml-eq" id="eq-mcmc-multinomial">\[ P\big(\text{wybór } z \in \mathcal T\big) = \frac{e^{-H(z)}}{\sum_{z' \in \mathcal T} e^{-H(z')}}. \]</div>
+<p>Adaptacja długości kroku metodą uśredniania dualnego (<em>dual averaging</em>) w iteracji \(t\) rozgrzewki, gdzie \(a_t\) to średnia akceptacja w trajektorii <cite data-bib="hoffman2014nuts"></cite>:</p>
+<div class="ml-eq" id="eq-mcmc-dual-averaging">\[ \begin{aligned} \bar H_t &amp;= \Big(1 - \tfrac{1}{t + t_0}\Big)\bar H_{t-1} + \tfrac{1}{t+t_0}\,(\delta - a_t), \\ \log\varepsilon_t &amp;= \mu - \tfrac{\sqrt t}{\gamma}\,\bar H_t, \\ \log\bar\varepsilon_t &amp;= t^{-\kappa}\log\varepsilon_t + (1 - t^{-\kappa})\log\bar\varepsilon_{t-1}. \end{aligned} \]</div>
+<p>Typowe wartości: \(\mu = \log(10\,\varepsilon_0)\), \(\gamma = 0{,}05\), \(t_0 = 10\), \(\kappa = 0{,}75\); po rozgrzewce używa się \(\bar\varepsilon\). Estymacja diagonalnej macierzy mas z próbek okna adaptacji (z regularyzacją stosowaną w Stanie, \(n\) — liczba próbek w oknie) <cite data-bib="doc-stan-reference"></cite>:</p>
+<div class="ml-eq" id="eq-mcmc-macierz-mas">\[ M^{-1} = \operatorname{diag}\!\left(\frac{n}{n+5}\,\widehat{\operatorname{Var}}(\theta_k) + 10^{-3}\,\frac{5}{n+5}\right)_{k=1}^{d}. \]</div>
+<div class="ml-plot" data-plot="normal" data-params='{"mu": 0, "sigma": 1}'></div>
+<p>To rozkład docelowy \(N(0,1)\) z przykładu: energia potencjalna \(U(\theta) = \theta^2/2\) jest „misą”, a cząstka HMC oscyluje wokół zera. Zmieniając \(\sigma\), zobaczysz, jak zmienia się skala, do której trzeba dopasować długość kroku — to zadanie macierzy mas.</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-rownowaga-stacjonarnosc"><p class="ml-box-title">Twierdzenie (równowaga szczegółowa implikuje stacjonarność)</p>
+<p>Jeśli jądro \(K\) spełnia <a class="ml-eqref" href="#eq-mcmc-rownowaga"></a> względem \(\pi\), to \(\pi\) jest jego rozkładem stacjonarnym <a class="ml-eqref" href="#eq-mcmc"></a>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-mh"><p class="ml-box-title">Twierdzenie (poprawność Metropolisa–Hastingsa)</p>
+<p>Jądro Metropolisa–Hastingsa z akceptacją <a class="ml-eqref" href="#eq-mcmc-mh"></a> spełnia równowagę szczegółową względem \(\pi\); w szczególności \(\pi\) jest jego rozkładem stacjonarnym.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-ergodyczne"><p class="ml-box-title">Twierdzenie (ergodyczne i CLT dla łańcuchów Markowa)</p>
+<p>Jeśli łańcuch ma rozkład stacjonarny \(\pi\), jest \(\pi\)-nieprzywiedlny, nieokresowy i rekurentny w sensie Harrisa, to dla każdej \(h\) z \(E_\pi|h| \lt \infty\) i każdego punktu startowego \(\frac1S\sum_{t=1}^S h(\theta^{(t)}) \to E_\pi h\) prawie na pewno. Jeśli ponadto łańcuch jest geometrycznie ergodyczny i \(E_\pi|h|^{2+\eta} \lt \infty\) dla pewnego \(\eta\gt0\), to \(\sqrt S\,(\hat I_S - E_\pi h) \Rightarrow N\big(0,\ \sigma_h^2(1 + 2\sum_{k\ge1}\rho_k)\big)\) <cite data-bib="robert2004"></cite> <cite data-bib="geyer1992"></cite>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-leapfrog"><p class="ml-box-title">Twierdzenie (własności całkowania leapfrog)</p>
+<p>Odwzorowanie \(\Psi_\varepsilon: (\theta,p) \mapsto (\theta',p')\) zdefiniowane przez <a class="ml-eqref" href="#eq-mcmc-leapfrog"></a>: (a) zachowuje objętość (\(|\det D\Psi_\varepsilon| = 1\)); (b) jest odwracalne w czasie: \(F\circ\Psi_\varepsilon\circ F\circ\Psi_\varepsilon = \mathrm{id}\), gdzie \(F(\theta,p) = (\theta,-p)\); (c) błąd energii po ustalonym czasie \(L\varepsilon\) jest rzędu \(O(\varepsilon^2)\) (dla dostatecznie gładkiego \(U\) i stabilnego \(\varepsilon\)).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-hmc"><p class="ml-box-title">Twierdzenie (poprawność HMC)</p>
+<p>Iteracja HMC — (1) losowanie \(p \sim N(0,M)\), (2) \(L\) kroków leapfrog i odwrócenie pędu, (3) akceptacja <a class="ml-eqref" href="#eq-mcmc-akceptacja"></a> — pozostawia rozkład \(\pi(\theta,p)\) niezmienniczym, a zatem \(\pi(\theta)\) jest rozkładem stacjonarnym łańcucha na \(\theta\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-nuts"><p class="ml-box-title">Twierdzenie (poprawność NUTS, sformułowanie nieformalne)</p>
+<p>Jeśli trajektoria jest budowana przez losowe podwajanie w przód lub wstecz, tak że prawdopodobieństwo zbudowania danej trajektorii nie zależy od tego, z którego jej stanu wystartowano, a stan wyjściowy jest wybierany z prawdopodobieństwem proporcjonalnym do \(e^{-H}\) (lub zgodną z tym schematem progresywną), to \(\pi(\theta,p)\) jest rozkładem stacjonarnym <cite data-bib="hoffman2014nuts"></cite> <cite data-bib="betancourt2017"></cite>.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-stacjonarnosc">Równowaga szczegółowa ⇒ stacjonarność</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Całkując obie strony <a class="ml-eqref" href="#eq-mcmc-rownowaga"></a> po \(\theta\):</p>
+\[ \int \pi(\theta)K(\theta,\theta')\,d\theta = \int \pi(\theta')K(\theta',\theta)\,d\theta = \pi(\theta')\int K(\theta',\theta)\,d\theta = \pi(\theta'), \]
+<p>bo \(K(\theta', \cdot)\) jest rozkładem prawdopodobieństwa (całkuje się do 1). To dokładnie <a class="ml-eqref" href="#eq-mcmc"></a>. (Gdy jądro ma atom w \(\theta\), rachunek przeprowadza się na miarach: \(\int_A \pi(d\theta) K(\theta, B) = \int_B \pi(d\theta) K(\theta, A)\); dla \(A = \Theta\) daje to \(\pi K(B) = \pi(B)\).)</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-mh">Równowaga szczegółowa dla Metropolisa–Hastingsa</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Jądro MH ma postać \(K(\theta, d\theta') = q(\theta'\mid\theta)\alpha(\theta,\theta')\,d\theta' + r(\theta)\,\delta_\theta(d\theta')\), gdzie \(r(\theta) = 1 - \int q(\theta'\mid\theta)\alpha(\theta,\theta')d\theta'\) to prawdopodobieństwo odrzucenia (pozostania w miejscu).</p>
+<p><strong>Część ciągła</strong> (\(\theta' \ne \theta\)). Mnożąc przez \(\pi(\theta)\) i podstawiając \(\alpha\):</p>
+\[ \pi(\theta)\,q(\theta'\mid\theta)\,\alpha(\theta,\theta') = \pi(\theta)\,q(\theta'\mid\theta)\min\!\left(1, \frac{\pi(\theta')q(\theta\mid\theta')}{\pi(\theta)q(\theta'\mid\theta)}\right) = \min\!\big(\pi(\theta)q(\theta'\mid\theta),\ \pi(\theta')q(\theta\mid\theta')\big). \]
+<p>Prawa strona jest symetryczna względem zamiany \(\theta \leftrightarrow \theta'\), więc równa się \(\pi(\theta')\,q(\theta\mid\theta')\,\alpha(\theta',\theta)\). (Stała \(Z\) skraca się w ilorazie, więc to samo zachodzi dla \(\tilde\pi\).)</p>
+<p><strong>Część atomowa</strong> \(r(\theta)\delta_\theta\) jest niezerowa tylko dla \(\theta' = \theta\), gdzie równowaga \(\pi(\theta)r(\theta) = \pi(\theta)r(\theta)\) zachodzi trywialnie.</p>
+<p>Zatem \(\pi(d\theta)K(\theta,d\theta') = \pi(d\theta')K(\theta',d\theta)\) jako miary na \(\Theta\times\Theta\), co z <a href="#thm-rownowaga-stacjonarnosc">poprzedniego twierdzenia</a> daje stacjonarność.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-leapfrog">Zachowanie objętości i odwracalność leapfrog</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p><strong>(a) Objętość.</strong> \(\Psi_\varepsilon\) jest złożeniem trzech odwzorowań: \(A: (\theta,p)\mapsto(\theta, p - \tfrac\varepsilon2\nabla U(\theta))\), \(B: (\theta,p)\mapsto(\theta + \varepsilon M^{-1}p, p)\), znowu \(A\). Ich macierze Jacobiego są blokowo trójkątne:</p>
+\[ DA = \begin{pmatrix} I &amp; 0 \\ -\tfrac{\varepsilon}{2}\nabla^2 U(\theta) &amp; I\end{pmatrix}, \qquad DB = \begin{pmatrix} I &amp; \varepsilon M^{-1} \\ 0 &amp; I \end{pmatrix}, \]
+<p>więc \(\det DA = \det DB = 1\), a \(\det D\Psi_\varepsilon = \det DA \cdot \det DB \cdot \det DA = 1\). Każdy krok to „ścięcie” (<em>shear</em>), które przesuwa jedną grupę współrzędnych o wielkość zależną tylko od drugiej.</p>
+<p><strong>(b) Odwracalność.</strong> Niech \(\Psi_\varepsilon(\theta,p) = (\theta',p')\) i zastosujmy leapfrog do \((\theta', -p')\):</p>
+\[ \begin{aligned} \tilde p_{1/2} &amp;= -p' - \tfrac\varepsilon2\nabla U(\theta') = -\big(p_{1/2} - \tfrac\varepsilon2\nabla U(\theta')\big) - \tfrac\varepsilon2\nabla U(\theta') = -p_{1/2}, \\ \tilde\theta &amp;= \theta' + \varepsilon M^{-1}(-p_{1/2}) = \theta, \\ \tilde p &amp;= -p_{1/2} - \tfrac\varepsilon2\nabla U(\theta) = -p. \end{aligned} \]
+<p>Otrzymaliśmy \((\theta, -p)\), czyli \(\Psi_\varepsilon \circ F \circ \Psi_\varepsilon = F\), równoważnie \(F\circ\Psi_\varepsilon\circ F\circ\Psi_\varepsilon = \mathrm{id}\). Indukcyjnie to samo zachodzi dla \(L\) kroków: \(\Phi = F\circ\Psi_\varepsilon^L\) jest inwolucją, \(\Phi\circ\Phi = \mathrm{id}\).</p>
+<p><strong>(c) Błąd energii</strong>: leapfrog jest metodą symplektyczną rzędu drugiego — lokalny błąd jest \(O(\varepsilon^3)\), globalny po czasie \(L\varepsilon\) — \(O(\varepsilon^2)\); ponadto metody symplektyczne dokładnie zachowują pewien „zaburzony” hamiltonian, więc błąd energii oscyluje zamiast narastać <cite data-bib="neal2011"></cite>.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-hmc">Poprawność HMC</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p><strong>Krok (1)</strong> losuje \(p\) z jego dokładnego rozkładu warunkowego \(\pi(p\mid\theta) = N(0,M)\) — jest to krok Gibbsa, który zachowuje \(\pi(\theta,p)\).</p>
+<p><strong>Kroki (2)–(3)</strong> to Metropolis–Hastings z deterministyczną propozycją \(z^* = \Phi(z)\), gdzie \(z = (\theta,p)\), a \(\Phi\) jest inwolucją zachowującą objętość. Pokażemy równowagę szczegółową: dla zbiorów mierzalnych \(A, B\) przepływ z \(A\) do \(B\) to</p>
+\[ \int_A \pi(z)\,\alpha(z)\,\mathbf 1\{\Phi(z) \in B\}\,dz, \qquad \pi(z)\alpha(z) = \min\big(\pi(z), \pi(\Phi(z))\big). \]
+<p>Podstawiamy \(z = \Phi(w)\) (wtedy \(\Phi(z) = w\)); jakobian ma moduł 1 na mocy (a):</p>
+\[ \int \mathbf 1\{\Phi(w)\in A\}\,\min\big(\pi(\Phi(w)), \pi(w)\big)\,\mathbf 1\{w \in B\}\,dw = \int_B \pi(w)\,\alpha(w)\,\mathbf 1\{\Phi(w) \in A\}\,dw, \]
+<p>czyli przepływ z \(B\) do \(A\). Część „odrzucenie — pozostanie w \(z\)” jest symetryczna trywialnie. Stąd równowaga szczegółowa, a \(\pi(z) \propto e^{-H(z)}\) daje \(\pi(\Phi z)/\pi(z) = e^{-\Delta H}\), czyli <a class="ml-eqref" href="#eq-mcmc-akceptacja"></a>. Złożenie dwóch jąder zachowujących \(\pi\) zachowuje \(\pi\); brzeg na \(\theta\) jest szukanym posteriorem. Odwrócenie pędu nie ma znaczenia praktycznego, bo w kroku (1) pęd jest losowany na nowo.</p>
+<p class="ml-qed">∎</p></div>
+<p>Gdyby całkowanie było dokładne, \(H\) byłby stały i każda propozycja zostałaby zaakceptowana; akceptacja koryguje jedynie błąd numeryczny leapfrog. Dzięki temu HMC może wykonywać odległe ruchy (rzędu skali posterioru) przy akceptacji 0,6–0,9, podczas gdy błądzenie losowe w \(d\) wymiarach musi zmniejszać krok jak \(d^{-1/2}\), a HMC — jak \(d^{-1/4}\) <cite data-bib="neal2011"></cite>.</p>
+
+<h3 id="wyprowadzenie-nuts">NUTS: kryterium U-turn, wybór stanu, adaptacja</h3>
+<p><strong>Kryterium zawracania.</strong> Odległość między końcami trajektorii \(\tfrac12\lVert\theta^+ - \theta^-\rVert^2\) ma pochodną po czasie (przy ruchu końca „+” do przodu) równą \((\theta^+-\theta^-)^\top \dot\theta^+ = (\theta^+-\theta^-)^\top M^{-1}p^+\). Gdy staje się ujemna, dalsze całkowanie zaczyna zbliżać końce — trajektoria „zawraca”, a dalsze kroki marnują obliczenia. Analogicznie dla końca „−”, poruszającego się wstecz w czasie. W metryce wyznaczonej przez \(M\) daje to <a class="ml-eqref" href="#eq-mcmc-uturn"></a>. Kryterium sprawdza się nie tylko dla całej trajektorii, ale też dla wszystkich poddrzew binarnego drzewa podwojeń, co jest konieczne dla odwracalności <cite data-bib="hoffman2014nuts"></cite>.</p>
+<p><strong>Budowa drzewa.</strong> W każdej iteracji: losujemy pęd; ustawiamy trajektorię jednopunktową; w kolejnych krokach \(j = 0,1,2,\dots\) losujemy kierunek \(v \in \{-1, +1\}\) i dobudowujemy \(2^j\) kroków leapfrog w tym kierunku. Kończymy, gdy któreś poddrzewo lub cała trajektoria spełnia warunek U-turn, gdy wystąpi dywergencja, albo po osiągnięciu maksymalnej głębokości drzewa (typowo 10, tj. do 1023 kroków).</p>
+<p><strong>Wybór stanu.</strong> Oryginalny NUTS używał próbkowania „plastrowego” (<em>slice sampling</em>). Wariant wielomianowy (<a class="ml-eqref" href="#eq-mcmc-multinomial"></a>), opisany przez Betancourta <cite data-bib="betancourt2017"></cite> i stosowany w Stanie oraz w MAF, wybiera stan z całej trajektorii z wagami \(e^{-H}\). W implementacji progresywnej przy dołączaniu nowego poddrzewa o sumie wag \(w_{\text{new}}\) do dotychczasowego \(w_{\text{old}}\) kandydat z nowego poddrzewa zastępuje bieżący z prawdopodobieństwem \(\min(1, w_{\text{new}}/w_{\text{old}})\) (wariant „obciążony” faworyzujący stany dalekie od startu, co zmniejsza autokorelację), a wewnątrz poddrzewa — \(w_{\text{new}}/(w_{\text{old}}+w_{\text{new}})\). Ponieważ wagi są proporcjonalne do docelowej gęstości łącznej, a trajektoria jest symetryczna względem wyboru punktu startowego, zachowana jest niezmienniczość \(\pi\).</p>
+<p><strong>Adaptacja kroku.</strong> Dual averaging <a class="ml-eqref" href="#eq-mcmc-dual-averaging"></a> to stochastyczna optymalizacja szukająca \(\varepsilon\), przy którym średnia statystyka akceptacji \(a_t\) (średnia z \(\min(1, e^{-\Delta H})\) po stanach trajektorii) jest równa \(\delta\). Gdy akceptacja jest za niska (\(a_t \lt \delta\)), \(\bar H_t\) rośnie i \(\log\varepsilon_t\) maleje; gdy za wysoka — krok się wydłuża. Czynnik \(\sqrt t/\gamma\) i przesunięcie \(t_0\) stabilizują wczesne iteracje, a uśrednienie \(\bar\varepsilon_t\) z wagą \(t^{-\kappa}\) wygładza szum. Większe \(\delta\) (np. 0,9–0,95) daje mniejsze kroki i mniej dywergencji kosztem dłuższych trajektorii.</p>
+<p><strong>Macierz mas.</strong> HMC jest najskuteczniejszy, gdy posterior w zmiennych \(M^{-1/2}\)-przeskalowanych ma podobną skalę we wszystkich kierunkach; dlatego \(M^{-1}\) szacuje się kowariancją posterioru. Wersja diagonalna (<a class="ml-eqref" href="#eq-mcmc-macierz-mas"></a>) koryguje różnice skal parametrów (np. \(\beta_k\) rzędu 0,1 i \(\alpha\) rzędu 1), ale nie korelacje.</p>
+<p><strong>Adaptacja okienkowa (jak w Stanie).</strong> Rozgrzewka (domyślnie 1000 iteracji) dzieli się na: bufor początkowy (75 iteracji: tylko adaptacja \(\varepsilon\), łańcuch dochodzi do zbioru typowego), serię okien wolnych o podwajanej długości (25, 50, 100, 200, 500 — po każdym oknie estymuje się \(M^{-1}\) z próbek tego okna i restartuje dual averaging z \(\mu = \log(10\varepsilon)\)) oraz bufor końcowy (50 iteracji: ostateczne dostrojenie \(\varepsilon\) przy ustalonym \(M\)) <cite data-bib="doc-stan-reference"></cite>.</p>
+
+<h3 id="wyprowadzenie-dywergencje">Dywergencje</h3>
+<p>Gdy krzywizna posterioru zmienia się gwałtownie (np. w „lejku” modelu hierarchicznego, gdzie przy małym \(\tau\) efekty grup \(\theta_j\) muszą być skupione w wąskim pasie), krok \(\varepsilon\) dobrany do szerokiej części rozkładu jest za duży dla wąskiej. Całkowanie leapfrog staje się wtedy niestabilne i energia rośnie wykładniczo. Taką trajektorię nazywamy <strong>dywergentną</strong>; w Stanie oznacza się ją, gdy \(H - H_0\) przekracza 1000. Dywergencje oznaczają, że sampler nie eksploruje pewnego obszaru posterioru, co obciąża wszystkie oszacowania — dlatego ich obecność jest błędem diagnostycznym, a nie ostrzeżeniem kosmetycznym <cite data-bib="betancourt2017"></cite> <cite data-bib="betancourt2015hier"></cite>. Lekarstwem jest najpierw reparametryzacja (parametryzacja niecentrowana \(\theta_j = \mu + \tau z_j\)), a dopiero potem zwiększanie \(\delta\).</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<h3 id="przyklad-mh">Metropolis z błądzeniem losowym</h3>
+<p><em>Dane ilustracyjne.</em> Rozkład docelowy \(\pi = N(0,1)\), więc \(\log\tilde\pi(\theta) = -\theta^2/2\). Propozycja \(\theta' = \theta + \xi\), \(\xi\sim N(0,1)\) (symetryczna). Start \(\theta^{(0)} = 2{,}0\). Wylosowane przyrosty \(\xi\) i liczby jednostajne \(u\) podano w tabeli.</p>
+<table class="ml-table">
+<thead><tr><th>\(t\)</th><th>\(\theta^{(t-1)}\)</th><th>\(\xi\)</th><th>\(\theta'\)</th><th>\(\log\tilde\pi(\theta') - \log\tilde\pi(\theta)\)</th><th>\(\alpha\)</th><th>\(u\)</th><th>\(\theta^{(t)}\)</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>2,0</td><td>−0,8</td><td>1,2</td><td>\(-(1{,}44-4)/2 = 1{,}28\)</td><td>1</td><td>—</td><td>1,2</td></tr>
+<tr><td>2</td><td>1,2</td><td>−1,5</td><td>−0,3</td><td>\(-(0{,}09-1{,}44)/2 = 0{,}675\)</td><td>1</td><td>—</td><td>−0,3</td></tr>
+<tr><td>3</td><td>−0,3</td><td>1,9</td><td>1,6</td><td>\(-(2{,}56-0{,}09)/2 = -1{,}235\)</td><td>\(e^{-1{,}235} = 0{,}291\)</td><td>0,55</td><td>−0,3 (odrzucone)</td></tr>
+<tr><td>4</td><td>−0,3</td><td>0,7</td><td>0,4</td><td>\(-(0{,}16-0{,}09)/2 = -0{,}035\)</td><td>\(e^{-0{,}035} = 0{,}966\)</td><td>0,42</td><td>0,4</td></tr>
+</tbody>
+</table>
+<p>Ruchy w stronę wyższej gęstości są zawsze akceptowane (kroki 1–2), ruchy w dół — z prawdopodobieństwem równym ilorazowi gęstości (krok 3 odrzucony, bo \(u = 0{,}55 \gt 0{,}291\); krok 4 przyjęty, bo \(0{,}42 \lt 0{,}966\)). Odrzucenie powtarza bieżący stan — próbka \(-0{,}3\) występuje w łańcuchu dwukrotnie, co jest źródłem autokorelacji.</p>
+
+<h3 id="przyklad-leapfrog">Jeden krok leapfrog i akceptacja HMC</h3>
+<p><em>Dane ilustracyjne.</em> Ten sam cel: \(U(\theta) = \theta^2/2\), \(\nabla U(\theta) = \theta\), \(M = 1\), \(\varepsilon = 0{,}5\), stan \(\theta = 1\), wylosowany pęd \(p = 0{,}5\).</p>
+<ol class="ml-steps">
+<li>Energia początkowa: \(H_0 = 1^2/2 + 0{,}5^2/2 = 0{,}5 + 0{,}125 = 0{,}625\).</li>
+<li>Pół kroku pędu: \(p_{1/2} = 0{,}5 - 0{,}25\cdot 1 = 0{,}25\).</li>
+<li>Pełny krok położenia: \(\theta' = 1 + 0{,}5\cdot 0{,}25 = 1{,}125\).</li>
+<li>Pół kroku pędu: \(p' = 0{,}25 - 0{,}25\cdot 1{,}125 = 0{,}25 - 0{,}28125 = -0{,}03125\).</li>
+<li>Energia końcowa: \(H_1 = 1{,}125^2/2 + 0{,}03125^2/2 = 0{,}632\,81 + 0{,}000\,49 = 0{,}633\,30\); \(\Delta H = 0{,}0083\).</li>
+<li>Akceptacja: \(\alpha = \min(1, e^{-0{,}0083}) = 0{,}9917\).</li>
+<li>Porównanie z dokładnym rozwiązaniem równań Hamiltona (\(\theta(t) = \theta_0\cos t + p_0\sin t\), \(p(t) = -\theta_0\sin t + p_0\cos t\)) w \(t = 0{,}5\): \(\theta = 1{,}1173\), \(p = -0{,}0406\) — leapfrog pomylił się o 0,008 w położeniu.</li>
+<li>Odwracalność: z \((1{,}125;\ +0{,}03125)\) (pęd odwrócony): \(p_{1/2} = 0{,}03125 - 0{,}25\cdot1{,}125 = -0{,}25\); \(\theta = 1{,}125 - 0{,}125 = 1\); \(p = -0{,}25 - 0{,}25 = -0{,}5\). Po odwróceniu pędu wracamy dokładnie do \((1;\ 0{,}5)\).</li>
+</ol>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li><strong>Próbki MCMC są zależne.</strong> Precyzję oszacowań wyznacza nie liczba iteracji, lecz <a data-concept="effective-sample-size">efektywna liczebność próby</a>. NUTS daje zwykle ESS rzędu kilkudziesięciu procent liczby iteracji (czasem więcej niż 100% dla parametrów o ujemnej autokorelacji), błądzenie losowe w wielu wymiarach — ułamek procenta.</li>
+<li><strong>Akceptacja nie jest celem samym w sobie.</strong> W Metropolisie z błądzeniem losowym optymalna akceptacja w wysokim wymiarze wynosi ok. 0,23; w HMC 0,6–0,9. Akceptacja bliska 1 przy bardzo krótkich krokach oznacza marnowanie obliczeń.</li>
+<li><strong>Brak dywergencji, R-hat ≈ 1 i wystarczające ESS</strong> są warunkami koniecznymi, ale nie dostatecznymi poprawności — łańcuchy mogą wspólnie przeoczyć odległy tryb.</li>
+<li><strong>Wiele łańcuchów</strong> startujących z rozproszonych punktów pozwala wykryć brak zbieżności: jeśli łańcuchy zgadzają się co do rozkładu, <a data-concept="r-hat">R-hat</a> (porównanie wariancji między- i wewnątrzłańcuchowej) jest bliskie 1 <cite data-bib="gelmanrubin1992"></cite> <cite data-bib="vehtari2021rhat"></cite>.</li>
+<li><strong>Rozgrzewka</strong> służy dwóm celom: doprowadzeniu łańcucha z punktu startowego do zbioru typowego posterioru oraz adaptacji \(\varepsilon\) i \(M\). Ponieważ w trakcie adaptacji jądro się zmienia, próbki z rozgrzewki nie są próbkami z \(\pi\) i są odrzucane.</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>Posterior <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> ma kilkaset parametrów: wyraz wolny \(\alpha\), współczynniki \(\beta\) warunków meczu, efekty gospodarzy, rywali, ich interakcji z sezonem, sezonów i rozgrywek (w parametryzacji niecentrowanej \(R_j = \sigma_R z_j\)), odchylenia \(\sigma\) (po transformacji logarytmicznej) i parametr precyzji \(\phi\) lub dyspersji \(\kappa\). Estymujemy go <strong>własną implementacją NUTS w NumPy</strong>:</p>
+<ul>
+<li><strong>wybór stanu wielomianowy</strong> (<a class="ml-eqref" href="#eq-mcmc-multinomial"></a>) — stan wyjściowy losowany z całej trajektorii z wagami \(e^{-H}\);</li>
+<li><strong>diagonalna macierz mas</strong> szacowana z wariancji próbek w oknach adaptacji (wzór <a class="ml-eqref" href="#eq-mcmc-macierz-mas"></a> pokazuje wersję Stana);</li>
+<li><strong>adaptacja okienkowa jak w Stanie</strong>: bufor początkowy, okna wolne o podwajanej długości z restartem dual averaging, bufor końcowy;</li>
+<li><strong>4 łańcuchy</strong>; próbki z rozgrzewki są odrzucane, a próbki łańcuchów łączy się dopiero po pozytywnej diagnostyce.</li>
+</ul>
+<p>Kryteria akceptacji dopasowania: rank-normalized split R-hat &lt; 1,01, bulk-ESS i tail-ESS ≥ 400, brak dywergencji. Parametryzacja niecentrowana efektów losowych jest w MAF wyborem projektowym właśnie z powodu dywergencji: dla rywali z kilkoma meczami (np. kluby z pucharów EHF) dane słabo informują o \(R_j\), a posterior w parametryzacji centrowanej tworzy lejek w \((R_j, \log\sigma_R)\) <cite data-bib="betancourt2015hier"></cite>. Każda próbka posterior jest następnie używana do obliczenia IAF, przedziałów wiarygodności, \(P(\mathrm{IAF}\gt100)\) i prognoz metodą <a data-concept="metody-monte-carlo">Monte Carlo</a>.</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Tylko parametry ciągłe.</strong> HMC/NUTS wymaga gradientu; zmienne dyskretne trzeba wycałkować (marginalizować) analitycznie.</li>
+<li><strong>Koszt gradientu.</strong> Każdy krok leapfrog to jedno obliczenie \(\nabla U\) na wszystkich ~24 tys. meczów; trajektorie mogą liczyć setki kroków. Złe uwarunkowanie (korelacje nieuwzględnione przez diagonalną macierz mas) wydłuża trajektorie.</li>
+<li><strong>Zmienna krzywizna</strong> (lejki, ostre grzbiety) prowadzi do dywergencji, których nie usuwa żadne strojenie samplera — wymagana jest zmiana parametryzacji modelu.</li>
+<li><strong>Wielomodalność.</strong> Łańcuchy lokalne słabo przechodzą między odległymi trybami; zgodność 4 łańcuchów nie dowodzi, że innego trybu nie ma.</li>
+<li><strong>Brak gwarancji skończonej próby.</strong> Twierdzenia ergodyczne są asymptotyczne; diagnostyka (R-hat, ESS, dywergencje, energia E-BFMI) wykrywa wiele, ale nie wszystkie problemy. Pełną weryfikację implementacji samplera daje kalibracja oparta na symulacji <cite data-bib="talts2018"></cite>.</li>
+<li><strong>Własna implementacja</strong> wymaga testów zgodności z dojrzałymi narzędziami (np. Stan, PyMC) na modelach o znanym posteriorze.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="metody-monte-carlo">Metody Monte Carlo</a> — estymatory, które MCMC zasila próbkami.</li>
+<li><a data-concept="r-hat">R-hat</a> i <a data-concept="effective-sample-size">ESS</a> — diagnostyka zbieżności i precyzji.</li>
+<li><a data-concept="autokorelacja">Autokorelacja</a> — źródło utraty efektywności próbek.</li>
+<li><a data-concept="modele-hierarchiczne">Modele hierarchiczne</a> i <a data-concept="partial-pooling">partial pooling</a> — źródło geometrii typu lejek.</li>
+<li><a data-concept="rozklad-posterior">Rozkład posterior</a> i <a data-concept="estymacja-posterior">estymacja posterior</a>.</li>
+<li><a data-concept="posterior-predictive-checks">Posterior predictive checks</a> — sprawdzanie modelu na próbkach posterior.</li>
+<li><a data-concept="atrakcyjnosc-frekwencyjna">MAF i indeks IAF</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="metropolis1953"></li>
+<li data-bib="hastings1970"></li>
+<li data-bib="neal2011"></li>
+<li data-bib="hoffman2014nuts"></li>
+<li data-bib="betancourt2017"></li>
+<li data-bib="betancourt2015hier"></li>
+<li data-bib="robert2004"></li>
+<li data-bib="geyer1992"></li>
+<li data-bib="gelmanrubin1992"></li>
+<li data-bib="vehtari2021rhat"></li>
+<li data-bib="talts2018"></li>
+<li data-bib="doc-stan-reference"></li>
+<li data-bib="carpenter2017stan"></li>
+</ul>
+</section>

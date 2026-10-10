@@ -1,0 +1,153 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Prognoza „przyjdzie 1100 widzów” jest prawie na pewno błędna — przyjdzie 1037 albo 1215. Uczciwsza jest odpowiedź: „z prawdopodobieństwem 80% przyjdzie od 920 do 1350 widzów”. Taki zakres nazywamy <strong>przedziałem predykcyjnym</strong> (ang. <em>prediction interval</em>): przedziałem, który z zadanym prawdopodobieństwem zawiera <em>przyszłą obserwację</em>.</p>
+<p>Przedział predykcyjny łatwo pomylić z <a data-concept="przedzial-wiarygodnosci">przedziałem wiarygodności</a> (ang. <em>credible interval</em>). Ten drugi dotyczy <em>parametru</em> — np. oczekiwanej liczby widzów \( \mu_i \) na meczu o danych warunkach, czyli średniej z nieskończenie wielu „powtórek” tego meczu. Przedział predykcyjny dotyczy <em>jednej konkretnej realizacji</em>: oprócz niepewności co do \( \mu_i \) musi pomieścić losowość samego meczu. Dlatego jest zawsze szerszy, a gdy danych przybywa, przedział wiarygodności kurczy się do punktu, natomiast predykcyjny — tylko do szerokości wynikającej z losowości meczu (zob. <a data-concept="niepewnosc-predykcyjna">niepewność predykcyjna</a>).</p>
+<p>W podejściu bayesowskim przedział predykcyjny odczytujemy wprost z <a data-concept="rozklad-predykcyjny">rozkładu predykcyjnego</a>: dla przedziału 80% bierzemy kwantyle rzędu 0,1 i 0,9. W praktyce rozkład ten znamy tylko przez próbki z symulacji, więc kwantyle liczymy z próbek <cite data-bib="gelman2013bda"></cite>; perspektywę prognostyczną i zastrzeżenia praktyczne omawia <cite data-bib="hyndman2021fpp3"></cite>.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \( \tilde y \) będzie przyszłą obserwacją o rozkładzie predykcyjnym \( P(\cdot\mid D) \) z dystrybuantą \( F(y)=P(\tilde y\le y\mid D) \), a \( \alpha\in(0,1) \) — dopuszczalnym prawdopodobieństwem pomyłki.</p>
+<div class="ml-box ml-def" id="def-przedzial-predykcyjny"><p class="ml-box-title">Definicja (bayesowski przedział predykcyjny)</p>
+<p>Przedział \( [L,U] \), którego końce są funkcjami danych \( D \), nazywamy <strong>przedziałem predykcyjnym na poziomie \( 1-\alpha \)</strong>, jeżeli \( P(L\le\tilde y\le U\mid D)\ge1-\alpha \).</p>
+</div>
+<div class="ml-box ml-def" id="def-przedzial-kwantylowy"><p class="ml-box-title">Definicja (przedział kwantylowy, równych ogonów)</p>
+<p>Niech \( F^{-1}(p)=\inf\{y: F(y)\ge p\} \) będzie funkcją kwantylową. <strong>Kwantylowym przedziałem predykcyjnym</strong> na poziomie \( 1-\alpha \) nazywamy</p>
+<div class="ml-eq" id="eq-przedzialy-predykcyjne">\[ \mathrm{PI}_{1-\alpha} \;=\; \Bigl[\,F^{-1}\bigl(\tfrac{\alpha}{2}\bigr),\ F^{-1}\bigl(1-\tfrac{\alpha}{2}\bigr)\Bigr]. \]</div>
+<p>Pozostawia on po około \( \alpha/2 \) prawdopodobieństwa w każdym ogonie.</p>
+</div>
+<div class="ml-box ml-def" id="def-przedzial-z-probek"><p class="ml-box-title">Definicja (przedział z próbek)</p>
+<p>Dla próbek \( \tilde y^{(1)},\dots,\tilde y^{(S)} \) z rozkładu predykcyjnego i statystyk pozycyjnych \( \tilde y_{(1)}\le\dots\le\tilde y_{(S)} \) <strong>kwantyl próbkowy</strong> rzędu \( p \) (typ 7 według <cite data-bib="hyndmanfan1996"></cite>, domyślny w NumPy i R) to</p>
+<div class="ml-eq" id="eq-przedzialy-predykcyjne-kwantyl">\[ \hat Q(p) = \tilde y_{(j)} + g\,\bigl(\tilde y_{(j+1)}-\tilde y_{(j)}\bigr), \qquad h=(S-1)p+1,\quad j=\lfloor h\rfloor,\quad g=h-j, \]</div>
+<p>a przedziałem z próbek — \( \bigl[\hat Q(\alpha/2),\ \hat Q(1-\alpha/2)\bigr] \).</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( \tilde y \)</td><td>przyszła obserwacja (liczba widzów, wypełnienie)</td></tr>
+<tr><td>\( D \)</td><td>dane obserwowane</td></tr>
+<tr><td>\( F,\ F^{-1} \)</td><td>dystrybuanta i funkcja kwantylowa rozkładu predykcyjnego</td></tr>
+<tr><td>\( 1-\alpha \)</td><td>nominalny poziom przedziału (np. 0,5; 0,8; 0,95)</td></tr>
+<tr><td>\( [L,U] \)</td><td>końce przedziału</td></tr>
+<tr><td>\( \mathrm{PI}_{1-\alpha} \)</td><td>kwantylowy przedział predykcyjny</td></tr>
+<tr><td>\( \mathrm{CI}_{1-\alpha} \)</td><td>przedział wiarygodności parametru</td></tr>
+<tr><td>\( \tilde y^{(s)},\ S \)</td><td>próbki z rozkładu predykcyjnego i ich liczba</td></tr>
+<tr><td>\( \tilde y_{(j)} \)</td><td>\( j \)-ta statystyka pozycyjna (wartość po posortowaniu)</td></tr>
+<tr><td>\( \hat Q(p) \)</td><td>kwantyl próbkowy rzędu \( p \)</td></tr>
+<tr><td>\( f \)</td><td>gęstość (lub prawdopodobieństwo punktowe) rozkładu predykcyjnego</td></tr>
+<tr><td>\( \mu_i,\ \sigma^2,\ s^2 \)</td><td>średnia meczu, wariancja obserwacji, wariancja posterior średniej</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li><strong>Rozkład predykcyjny jest poprawny.</strong> Deklarowany poziom \( 1-\alpha \) jest prawdopodobieństwem w modelu. Czy przedziały pokrywają rzeczywiste wyniki z częstością \( 1-\alpha \), sprawdzamy w <a data-concept="pokrycie-przedzialow-predykcyjnych">pokryciu przedziałów</a>.</li>
+<li><strong>Przedział zawiera wszystkie źródła niepewności</strong>: parametry, nowe efekty losowe (np. przyszły sezon) i losowanie obserwacji. Pominięcie ostatniego daje przedział wiarygodności, nie predykcyjny.</li>
+<li><strong>Wystarczająca liczba próbek</strong>: kwantyle skrajne (np. 0,025) są estymowane z kilkudziesięciu próbek w ogonie; potrzeba co najmniej kilku tysięcy próbek (ESS ogona, tail-ESS ≥ 400).</li>
+<li><strong>Ciągłość dla dokładnego pokrycia.</strong> Dla rozkładów dyskretnych (liczba widzów) przedział kwantylowy ma pokrycie <em>co najmniej</em> \( 1-\alpha \), nie dokładnie; przy tysiącach możliwych wartości różnica jest pomijalna, przy masie w punkcie \( A=C \) — nie.</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p><strong>Przypadek normalny.</strong> Jeżeli \( \tilde y\mid\mu\sim N(\mu,\sigma^2) \) ze znanym \( \sigma \), a \( \mu\mid D\sim N(m,s^2) \), to</p>
+<div class="ml-eq" id="eq-przedzialy-predykcyjne-normalny">\[ \mathrm{CI}_{1-\alpha}(\mu) = m \pm z_{1-\alpha/2}\,s, \qquad \mathrm{PI}_{1-\alpha}(\tilde y) = m \pm z_{1-\alpha/2}\sqrt{\sigma^2+s^2}, \]</div>
+<p>gdzie \( z_{1-\alpha/2} \) jest kwantylem standardowego rozkładu normalnego (1,2816 dla 80%, 1,96 dla 95%).</p>
+<p><strong>Stosunek szerokości</strong> w przypadku normalnym:</p>
+<div class="ml-eq" id="eq-przedzialy-predykcyjne-stosunek">\[ \frac{|\mathrm{PI}|}{|\mathrm{CI}|} = \sqrt{1+\frac{\sigma^2}{s^2}} \;\ge\; 1 . \]</div>
+<p><strong>Błąd Monte Carlo kwantyla.</strong> Dla \( S \) niezależnych próbek i gęstości \( f \) dodatniej w kwantylu \( q_p \):</p>
+<div class="ml-eq" id="eq-przedzialy-predykcyjne-mcse">\[ \operatorname{SE}\bigl(\hat Q(p)\bigr) \approx \frac{1}{f(q_p)}\sqrt{\frac{p(1-p)}{S}} . \]</div>
+<p>Dla próbek MCMC w miejsce \( S \) wstawiamy efektywną liczebność próby dla tego kwantyla.</p>
+<p><strong>Przedział najwyższej gęstości</strong> (HPD) — najkrótszy zbiór o prawdopodobieństwie \( 1-\alpha \): \( \{y: f(y)\ge c_\alpha\} \). Dla rozkładów jednomodalnych i symetrycznych pokrywa się z kwantylowym; dla prawoskośnych jest przesunięty w lewo.</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-pokrycie"><p class="ml-box-title">Twierdzenie (prawdopodobieństwo pokrycia przedziału kwantylowego)</p>
+<p>Jeżeli \( F \) jest ciągła, to \( P\bigl(\tilde y\in\mathrm{PI}_{1-\alpha}\mid D\bigr)=1-\alpha \). Dla dowolnej \( F \) zachodzi \( P\bigl(\tilde y\in\mathrm{PI}_{1-\alpha}\mid D\bigr)\ge1-\alpha \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-szerszy"><p class="ml-box-title">Twierdzenie (przedział predykcyjny jest szerszy od wiarygodności)</p>
+<p>W modelu normalnym <a class="ml-eqref" href="#eq-przedzialy-predykcyjne-normalny"></a> przedział predykcyjny zawiera przedział wiarygodności tego samego poziomu, a przy \( s\to0 \) (rosnąca liczba danych) \( |\mathrm{CI}|\to0 \), podczas gdy \( |\mathrm{PI}|\to2z_{1-\alpha/2}\sigma\gt0 \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-zgodnosc"><p class="ml-box-title">Twierdzenie (zgodność kwantyli próbkowych)</p>
+<p>Jeżeli \( \tilde y^{(s)} \) są i.i.d. z \( F \), a \( F \) jest ściśle rosnąca w otoczeniu \( q_p=F^{-1}(p) \), to \( \hat Q(p)\to q_p \) prawie na pewno przy \( S\to\infty \). Jeżeli ponadto \( F \) ma w \( q_p \) dodatnią ciągłą gęstość \( f \), to \( \sqrt S(\hat Q(p)-q_p) \) ma asymptotycznie rozkład \( N\bigl(0,\ p(1-p)/f(q_p)^2\bigr) \).</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-pokrycia">Pokrycie przedziału kwantylowego</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Oznaczmy \( l=F^{-1}(\alpha/2) \), \( u=F^{-1}(1-\alpha/2) \). Z definicji funkcji kwantylowej i prawostronnej ciągłości \( F \): \( F(u)\ge1-\alpha/2 \) oraz \( P(\tilde y\lt l)=F(l^-)\le\alpha/2 \) (bo dla \( y\lt l \) mamy \( F(y)\lt\alpha/2 \)). Stąd</p>
+\[ P(l\le\tilde y\le u) = F(u) - F(l^-) \ge \Bigl(1-\frac\alpha2\Bigr)-\frac\alpha2 = 1-\alpha . \]
+<p>Gdy \( F \) jest ciągła, \( F(u)=1-\alpha/2 \) i \( F(l^-)=F(l)=\alpha/2 \), więc zachodzi równość.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-normalny">Przedział predykcyjny w modelu normalnym</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Zapiszmy \( \tilde y=\mu+\varepsilon \), gdzie \( \varepsilon\sim N(0,\sigma^2) \) jest niezależne od \( \mu \) (warunkowo względem \( D \)). Suma niezależnych zmiennych normalnych jest normalna, a średnie i wariancje się dodają: \( \tilde y\mid D\sim N(m,\ s^2+\sigma^2) \). Ten sam wynik daje <a data-concept="prawo-calkowitej-wariancji">prawo całkowitej wariancji</a>: \( \mathbb{E}\operatorname{Var}(\tilde y\mid\mu)+\operatorname{Var}\mathbb{E}(\tilde y\mid\mu)=\sigma^2+s^2 \). Kwantyle rozkładu \( N(m,v) \) to \( m\pm z_{1-\alpha/2}\sqrt v \), co daje <a class="ml-eqref" href="#eq-przedzialy-predykcyjne-normalny"></a>. Ponieważ \( \sqrt{\sigma^2+s^2}\ge s \), zachodzi zawieranie; stosunek długości to \( \sqrt{\sigma^2+s^2}/s \), czyli <a class="ml-eqref" href="#eq-przedzialy-predykcyjne-stosunek"></a>, a granice przy \( s\to0 \) są natychmiastowe.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-mcse">Skąd błąd Monte Carlo kwantyla</h3>
+<p>Szkic (metoda delta): liczba próbek \( \le q_p \) ma rozkład \( \mathrm{Bin}(S,p) \), więc empiryczna dystrybuanta w \( q_p \) ma wariancję \( p(1-p)/S \). Kwantyl jest odwrotnością dystrybuanty; lokalnie \( F(q_p+\delta)\approx p+f(q_p)\delta \), więc odchylenie \( \delta \) kwantyla odpowiada odchyleniu \( f(q_p)\delta \) dystrybuanty, skąd \( \operatorname{Var}\hat Q(p)\approx p(1-p)/(S f(q_p)^2) \). Ścisły dowód asymptotycznej normalności jest standardowym wynikiem teorii statystyk pozycyjnych. Wzór pokazuje, że kwantyle w ogonach (małe \( f \)) są estymowane najmniej dokładnie.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><em>Dane ilustracyjne.</em> 20 próbek z rozkładu predykcyjnego liczby widzów na meczu Superligi (w praktyce używa się tysięcy; mała liczba pozwala liczyć ręcznie). Po posortowaniu:</p>
+<p>812, 874, 925, 958, 968, 990, 1012, 1036, 1061, 1083, 1105, 1121, 1150, 1190, 1205, 1243, 1290, 1336, 1478, 1580.</p>
+<ol class="ml-steps">
+<li><strong>Kwantyl 0,25</strong>: \( h=19\cdot0{,}25+1=5{,}75 \), \( j=5 \), \( g=0{,}75 \). \( \hat Q(0{,}25)=968+0{,}75\cdot(990-968)=968+16{,}5=984{,}5 \).</li>
+<li><strong>Kwantyl 0,75</strong>: \( h=19\cdot0{,}75+1=15{,}25 \), \( j=15 \), \( g=0{,}25 \). \( \hat Q(0{,}75)=1205+0{,}25\cdot(1243-1205)=1205+9{,}5=1214{,}5 \).</li>
+<li><strong>Przedział 50%</strong>: \( [984{,}5;\ 1214{,}5] \). Kontrola: wartości od 990 do 1205 (pozycje 6–15) to 10 z 20 próbek — dokładnie 50%.</li>
+<li><strong>Kwantyle 0,1 i 0,9</strong>: \( h=2{,}9 \Rightarrow \hat Q(0{,}1)=874+0{,}9\cdot(925-874)=874+45{,}9=919{,}9 \); \( h=18{,}1 \Rightarrow \hat Q(0{,}9)=1336+0{,}1\cdot(1478-1336)=1336+14{,}2=1350{,}2 \).</li>
+<li><strong>Przedział 80%</strong>: \( [919{,}9;\ 1350{,}2] \), po zaokrągleniu na zewnątrz do pełnych widzów \( [919;\ 1351] \). Zawiera 16 z 20 próbek (pozycje 3–18) — 80%.</li>
+<li><strong>Asymetria</strong>: mediana \( \hat Q(0{,}5) \) (\( h=10{,}5 \)) wynosi \( (1083+1105)/2=1094 \). Górne ramię przedziału 80% (1350,2 − 1094 = 256,2) jest dłuższe od dolnego (1094 − 919,9 = 174,1) — rozkład frekwencji jest prawoskośny, dlatego przedział „średnia ± k·odchylenie” byłby tu nieodpowiedni.</li>
+<li><strong>Porównanie z przedziałem wiarygodności</strong>: przypuśćmy, że ten sam model daje 80% przedział wiarygodności średniej meczu \( \mu_i \) równy \( [1065;\ 1175] \) (szerokość 110). Przedział predykcyjny ma szerokość ok. 430 — prawie czterokrotnie więcej; w rozumieniu <a class="ml-eqref" href="#eq-przedzialy-predykcyjne-stosunek"></a> losowość meczu dominuje nad niepewnością parametru.</li>
+<li><strong>Dokładność przy realnym S</strong>: dla \( S=4000 \) próbek z \( \mathrm{NegBin}(\mu=1100,\kappa=20) \) kwantyl 0,9 wynosi 1428, a prawdopodobieństwo punktowe w nim \( f\approx0{,}000594 \). Z <a class="ml-eqref" href="#eq-przedzialy-predykcyjne-mcse"></a>: \( \sqrt{0{,}09/4000}/0{,}000594\approx0{,}00474/0{,}000594\approx8 \) widzów — błąd symulacji jest mały w porównaniu z szerokością przedziału.</li>
+</ol>
+<div class="ml-plot" data-plot="negbinomial" data-params='{"mu": 1100, "kappa": 20}'></div>
+<p>Rozkład \( \mathrm{NegBin}(1100;\ 20) \): przedział 95% to w przybliżeniu [668; 1637] — zwróć uwagę, że jest asymetryczny względem średniej 1100, a przy zmniejszaniu \( \kappa \) jego prawy koniec oddala się szybciej niż lewy.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Bayesowski przedział predykcyjny 80% \( [919;1351] \) czytamy wprost: <em>przy danych i założeniach modelu prawdopodobieństwo, że na mecz przyjdzie od 919 do 1351 widzów, wynosi 80%</em>. To zdanie o przyszłej obserwacji, a nie o parametrze — inaczej niż w przypadku przedziału wiarygodności \( [1065;1175] \), który mówi, gdzie leży <em>przeciętna</em> frekwencja meczów o takich warunkach.</p>
+<p>Z perspektywy częstościowej (i to sprawdzamy w walidacji): jeżeli model jest dobrze skalibrowany, to spośród wielu meczów z prognozą 80% około 80% powinno zakończyć się frekwencją wewnątrz przedziału, po ok. 10% — poniżej i powyżej. Systematycznie zbyt rzadkie trafienia oznaczają przedziały zbyt wąskie (model zbyt pewny siebie), zbyt częste — zbyt szerokie.</p>
+<p>Raportowanie kilku poziomów naraz (50/80/95%) przekazuje kształt rozkładu: przedział 50% pokazuje „typowy” zakres, 95% — scenariusze skrajne. Przy wypełnieniu hali górny koniec przedziału może być równy pojemności — oznacza to, że komplet widzów ma prawdopodobieństwo co najmniej \( \alpha/2 \).</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> każda prognoza meczu zawiera przedziały predykcyjne 50%, 80% i 95% liczby widzów (oraz wypełnienia, gdy pojemność hali jest znana). Powstają one z próbek symulacji <a data-concept="monte-carlo">Monte Carlo</a>: dla każdej próbki posterior losujemy (w razie potrzeby) nowe efekty sezonu oraz liczbę widzów z rozkładu beta-dwumianowego \( \mathrm{BetaBinomial}(C_i,\mu_i\phi,(1-\mu_i)\phi) \) lub ujemnego dwumianowego, a następnie liczymy kwantyle próbkowe <a class="ml-eqref" href="#eq-przedzialy-predykcyjne-kwantyl"></a>.</p>
+<p>W wariancie „wypełnienie” rozkład ma masę w punkcie \( A_i=C_i \) (komplet). Gdy \( P(A_i=C_i)\gt\alpha/2 \), górny koniec przedziału wynosi dokładnie \( C_i \), a dolny — kwantyl \( \alpha/2 \); taki przedział jest poprawny i informuje o realnej szansie wyprzedania hali. W wariancie „liczba widzów” (puchary EHF, mecze bez znanej pojemności) przedział może przekroczyć fizyczną pojemność hali — to ograniczenie tego wariantu, a nie błąd obliczeń.</p>
+<p>Natomiast dla indeksu IAF raportujemy 95% <em>przedział wiarygodności</em>, nie predykcyjny: IAF jest funkcją parametrów (efektu rywala), a nie przyszłą obserwacją. Mieszanie tych dwóch typów przedziałów jest częstym błędem w komunikacji wyników.</p>
+<p>W <a data-concept="backtesting">walidacji chronologicznej</a> sprawdzamy, jaki odsetek meczów z sezonu testowego mieścił się w przedziałach 50/80/95%; odchylenia wskazują na niedoszacowanie lub przeszacowanie niepewności.</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Zależność od modelu.</strong> Przedział jest tak dobry jak model; nieuwzględnione źródła zmienności (np. transmisja, mecz o mistrzostwo) dają przedziały zbyt wąskie.</li>
+<li><strong>Równe ogony vs najkrótszy przedział.</strong> Przy rozkładach skośnych przedział kwantylowy nie jest najkrótszy; HPD jest krótszy, ale trudniejszy do estymacji z próbek i niejednoznaczny dla rozkładów wielomodalnych.</li>
+<li><strong>Dyskretność i masa na granicy.</strong> Pokrycie bywa wyższe od nominalnego; przy masie w \( A=C \) przedział może mieć „sklejony” koniec.</li>
+<li><strong>Kwantyle skrajne.</strong> Przedział 95% (a tym bardziej 99%) wymaga dużej liczby próbek; błąd Monte Carlo w ogonach rośnie zgodnie z <a class="ml-eqref" href="#eq-przedzialy-predykcyjne-mcse"></a>.</li>
+<li><strong>Pokrycie łączne.</strong> Przedział 80% dla każdego z dziesięciu meczów kolejki nie oznacza, że wszystkie dziesięć frekwencji zmieści się w przedziałach z prawdopodobieństwem 80% — pokrycie łączne jest dużo niższe.</li>
+<li><strong>Interpretacja częstościowa.</strong> Bayesowski przedział predykcyjny nie gwarantuje częstościowego pokrycia; zgodność z obserwacjami trzeba wykazać empirycznie.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="rozklad-predykcyjny">Rozkład predykcyjny</a> — źródło kwantyli.</li>
+<li><a data-concept="przedzial-wiarygodnosci">Przedział wiarygodności</a> — odpowiednik dla parametrów.</li>
+<li><a data-concept="niepewnosc-predykcyjna">Niepewność predykcyjna</a> — dlaczego przedział predykcyjny jest szerszy.</li>
+<li><a data-concept="pokrycie-przedzialow-predykcyjnych">Pokrycie przedziałów predykcyjnych</a> — weryfikacja empiryczna.</li>
+<li><a data-concept="percentyle">Percentyle</a> i <a data-concept="kwartyle">kwartyle</a> — kwantyle próbkowe.</li>
+<li><a data-concept="monte-carlo">Symulacja Monte Carlo w prognozowaniu</a> — skąd biorą się próbki.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="hyndman2021fpp3"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="hyndmanfan1996"></li>
+<li data-bib="gneiting2007calibration"></li>
+</ul>
+</section>

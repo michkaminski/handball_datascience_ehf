@@ -1,0 +1,1460 @@
+{
+ "version": "1.0.0",
+ "base_path": "/matematyka",
+ "article_sections": [
+  {
+   "id": "intuicja",
+   "title": "Intuicyjne wprowadzenie"
+  },
+  {
+   "id": "definicja",
+   "title": "Definicja formalna"
+  },
+  {
+   "id": "symbole",
+   "title": "Wykaz symboli"
+  },
+  {
+   "id": "zalozenia",
+   "title": "Założenia"
+  },
+  {
+   "id": "wzory",
+   "title": "Wzory"
+  },
+  {
+   "id": "twierdzenia",
+   "title": "Twierdzenia"
+  },
+  {
+   "id": "wyprowadzenie",
+   "title": "Dowody i wyprowadzenia"
+  },
+  {
+   "id": "przyklad",
+   "title": "Przykład liczbowy krok po kroku"
+  },
+  {
+   "id": "interpretacja",
+   "title": "Interpretacja wyniku"
+  },
+  {
+   "id": "pilka-reczna",
+   "title": "Zastosowanie w piłce ręcznej"
+  },
+  {
+   "id": "ograniczenia",
+   "title": "Ograniczenia metody"
+  },
+  {
+   "id": "powiazane",
+   "title": "Powiązane zagadnienia"
+  },
+  {
+   "id": "bibliografia",
+   "title": "Bibliografia"
+  }
+ ],
+ "anchor_aliases": {
+  "definicja": "definicja",
+  "wzor": "eq-{article}",
+  "wyprowadzenie": "wyprowadzenie",
+  "przyklad": "przyklad",
+  "interpretacja": "interpretacja",
+  "ograniczenia": "ograniczenia"
+ },
+ "categories": [
+  {
+   "id": "podstawy-statystyki",
+   "name": "Podstawy statystyki",
+   "description": "Miary położenia, rozproszenia i standaryzacji — podstawowe narzędzia opisu danych.",
+   "order": 1
+  },
+  {
+   "id": "rachunek-prawdopodobienstwa",
+   "name": "Rachunek prawdopodobieństwa",
+   "description": "Aksjomatyka, zmienne losowe, warunkowanie i prawa całkowite.",
+   "order": 2
+  },
+  {
+   "id": "rozklady-prawdopodobienstwa",
+   "name": "Rozkłady prawdopodobieństwa",
+   "description": "Rozkłady ciągłe i dyskretne używane w modelach frekwencji oraz rozkłady wnioskowania bayesowskiego.",
+   "order": 3
+  },
+  {
+   "id": "wnioskowanie-statystyczne",
+   "name": "Wnioskowanie statystyczne",
+   "description": "Estymacja i ocena niepewności. Dział w budowie — pojęcia wnioskowania używane przez MAF są opisane w działach Statystyka bayesowska i Walidacja modeli.",
+   "order": 4
+  },
+  {
+   "id": "statystyka-bayesowska",
+   "name": "Statystyka bayesowska",
+   "description": "Priory, wiarygodność, posterior, modele hierarchiczne i obliczenia MCMC.",
+   "order": 5
+  },
+  {
+   "id": "modele-regresyjne",
+   "name": "Modele regresyjne",
+   "description": "Od regresji liniowej po hierarchiczną regresję beta.",
+   "order": 6
+  },
+  {
+   "id": "szeregi-czasowe",
+   "name": "Szeregi czasowe",
+   "description": "Analiza danych uporządkowanych w czasie: wygładzanie i zależność między kolejnymi obserwacjami.",
+   "order": 7
+  },
+  {
+   "id": "prognozowanie",
+   "name": "Prognozowanie",
+   "description": "Prognozy probabilistyczne, symulacja i ocena prognoz w czasie.",
+   "order": 8
+  },
+  {
+   "id": "walidacja-modeli",
+   "name": "Walidacja modeli",
+   "description": "Diagnostyka zbieżności MCMC, kontrola predykcyjna i miary błędu.",
+   "order": 9
+  },
+  {
+   "id": "modele-sportowe",
+   "name": "Modele sportowe",
+   "description": "Modele analityczne piłki ręcznej zbudowane na pojęciach z pozostałych działów.",
+   "order": 10
+  }
+ ],
+ "planned_models": [
+  {
+   "id": "skutecznosc-bramkarzy",
+   "name": "Skuteczność bramkarzy",
+   "category": "modele-sportowe"
+  },
+  {
+   "id": "efektywnosc-rzutowa",
+   "name": "Efektywność rzutowa",
+   "category": "modele-sportowe"
+  },
+  {
+   "id": "prawdopodobienstwo-zwyciestwa",
+   "name": "Prawdopodobieństwo zwycięstwa",
+   "category": "modele-sportowe"
+  },
+  {
+   "id": "rankingi-sily-druzyn",
+   "name": "Rankingi siły drużyn",
+   "category": "modele-sportowe"
+  },
+  {
+   "id": "modele-elo",
+   "name": "Modele Elo",
+   "category": "modele-sportowe"
+  },
+  {
+   "id": "analiza-formy",
+   "name": "Analiza formy drużyn",
+   "category": "modele-sportowe"
+  },
+  {
+   "id": "prognozowanie-wynikow",
+   "name": "Prognozowanie wyników",
+   "category": "modele-sportowe"
+  }
+ ],
+ "concepts": [
+  {
+   "id": "srednia-arytmetyczna",
+   "name": "Średnia arytmetyczna",
+   "category": "podstawy-statystyki",
+   "summary": "Suma obserwacji podzielona przez ich liczbę; estymator wartości oczekiwanej.",
+   "related": [
+    "srednia-wazona",
+    "mediana",
+    "wartosc-oczekiwana"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "openintro2019",
+    "casellaberger2002"
+   ],
+   "article": "srednia-arytmetyczna"
+  },
+  {
+   "id": "srednia-wazona",
+   "name": "Średnia ważona",
+   "category": "podstawy-statystyki",
+   "summary": "Średnia, w której każda obserwacja ma przypisaną nieujemną wagę określającą jej udział.",
+   "related": [
+    "srednia-arytmetyczna",
+    "prawo-calkowitej-wartosci-oczekiwanej"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "openintro2019",
+    "casellaberger2002"
+   ],
+   "article": "srednia-wazona"
+  },
+  {
+   "id": "mediana",
+   "name": "Mediana",
+   "category": "podstawy-statystyki",
+   "summary": "Wartość dzieląca uporządkowaną próbę na dwie równe części; odporna na wartości odstające.",
+   "related": [
+    "srednia-arytmetyczna",
+    "kwartyle",
+    "percentyle"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "openintro2019",
+    "hyndmanfan1996",
+    "tukey1977"
+   ],
+   "article": "mediana"
+  },
+  {
+   "id": "wariancja",
+   "name": "Wariancja",
+   "category": "podstawy-statystyki",
+   "summary": "Średni kwadrat odchylenia obserwacji od średniej; miara rozproszenia danych.",
+   "related": [
+    "odchylenie-standardowe",
+    "wariancja-zmiennej-losowej",
+    "srednia-arytmetyczna"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "openintro2019",
+    "casellaberger2002",
+    "welford1962"
+   ],
+   "article": "wariancja"
+  },
+  {
+   "id": "odchylenie-standardowe",
+   "name": "Odchylenie standardowe",
+   "category": "podstawy-statystyki",
+   "summary": "Pierwiastek z wariancji; rozproszenie wyrażone w jednostkach danych.",
+   "related": [
+    "wariancja",
+    "standaryzacja",
+    "wspolczynnik-zmiennosci"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "openintro2019",
+    "casellaberger2002"
+   ],
+   "article": "odchylenie-standardowe"
+  },
+  {
+   "id": "kwartyle",
+   "name": "Kwartyle",
+   "category": "podstawy-statystyki",
+   "summary": "Trzy wartości dzielące uporządkowaną próbę na cztery równe części; Q3−Q1 to rozstęp międzykwartylowy (IQR).",
+   "related": [
+    "percentyle",
+    "mediana"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "hyndmanfan1996",
+    "tukey1977",
+    "openintro2019"
+   ],
+   "article": "kwartyle"
+  },
+  {
+   "id": "percentyle",
+   "name": "Percentyle",
+   "category": "podstawy-statystyki",
+   "summary": "Wartość, poniżej której leży zadany odsetek obserwacji; empiryczny odpowiednik kwantyla rozkładu.",
+   "related": [
+    "kwartyle",
+    "mediana",
+    "przedzialy-predykcyjne"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "hyndmanfan1996",
+    "openintro2019"
+   ],
+   "article": "percentyle"
+  },
+  {
+   "id": "standaryzacja",
+   "name": "Standaryzacja",
+   "category": "podstawy-statystyki",
+   "summary": "Przekształcenie zmiennej do skali o średniej 0 i odchyleniu 1: z = (x − średnia)/odchylenie.",
+   "related": [
+    "z-score",
+    "odchylenie-standardowe",
+    "diagnostyka-reszt"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "openintro2019",
+    "casellaberger2002"
+   ],
+   "article": "standaryzacja"
+  },
+  {
+   "id": "z-score",
+   "name": "Z-score",
+   "category": "podstawy-statystyki",
+   "summary": "Liczba odchyleń standardowych, o jaką obserwacja odbiega od średniej.",
+   "related": [
+    "standaryzacja",
+    "rozklad-normalny"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "openintro2019"
+   ],
+   "article": "standaryzacja",
+   "anchor": "z-score"
+  },
+  {
+   "id": "wspolczynnik-zmiennosci",
+   "name": "Współczynnik zmienności",
+   "category": "podstawy-statystyki",
+   "summary": "Odchylenie standardowe podzielone przez średnią; względna miara rozproszenia.",
+   "related": [
+    "odchylenie-standardowe",
+    "srednia-arytmetyczna"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "openintro2019"
+   ],
+   "article": "wspolczynnik-zmiennosci"
+  },
+  {
+   "id": "przestrzen-probabilistyczna",
+   "name": "Przestrzeń probabilistyczna",
+   "category": "rachunek-prawdopodobienstwa",
+   "summary": "Trójka (Ω, F, P): zbiór wyników, σ-ciało zdarzeń i miara prawdopodobieństwa spełniająca aksjomaty Kołmogorowa.",
+   "related": [
+    "zmienna-losowa",
+    "prawdopodobienstwo-warunkowe"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "kolmogorov1933",
+    "billingsley1995",
+    "pishronik2014"
+   ],
+   "article": "przestrzen-probabilistyczna"
+  },
+  {
+   "id": "zmienna-losowa",
+   "name": "Zmienna losowa",
+   "category": "rachunek-prawdopodobienstwa",
+   "summary": "Mierzalna funkcja przypisująca liczbę każdemu wynikowi doświadczenia losowego.",
+   "related": [
+    "przestrzen-probabilistyczna",
+    "wartosc-oczekiwana"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "billingsley1995",
+    "pishronik2014",
+    "casellaberger2002"
+   ],
+   "article": "zmienna-losowa"
+  },
+  {
+   "id": "wartosc-oczekiwana",
+   "name": "Wartość oczekiwana",
+   "category": "rachunek-prawdopodobienstwa",
+   "summary": "Średnia wartość zmiennej losowej ważona prawdopodobieństwem; całka względem rozkładu.",
+   "related": [
+    "zmienna-losowa",
+    "srednia-arytmetyczna",
+    "prawo-calkowitej-wartosci-oczekiwanej"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "casellaberger2002",
+    "pishronik2014",
+    "wasserman2004"
+   ],
+   "article": "wartosc-oczekiwana"
+  },
+  {
+   "id": "wariancja-zmiennej-losowej",
+   "name": "Wariancja zmiennej losowej",
+   "category": "rachunek-prawdopodobienstwa",
+   "summary": "Wartość oczekiwana kwadratu odchylenia zmiennej losowej od jej wartości oczekiwanej.",
+   "related": [
+    "wartosc-oczekiwana",
+    "wariancja",
+    "prawo-calkowitej-wariancji"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "casellaberger2002",
+    "pishronik2014"
+   ],
+   "article": "wariancja-zmiennej-losowej"
+  },
+  {
+   "id": "prawdopodobienstwo-warunkowe",
+   "name": "Prawdopodobieństwo warunkowe",
+   "category": "rachunek-prawdopodobienstwa",
+   "summary": "Prawdopodobieństwo zdarzenia A przy wiedzy, że zaszło zdarzenie B: P(A|B)=P(A∩B)/P(B).",
+   "related": [
+    "twierdzenie-bayesa",
+    "prawo-calkowitego-prawdopodobienstwa"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "casellaberger2002",
+    "pishronik2014"
+   ],
+   "article": "prawdopodobienstwo-warunkowe"
+  },
+  {
+   "id": "twierdzenie-bayesa",
+   "name": "Twierdzenie Bayesa",
+   "category": "rachunek-prawdopodobienstwa",
+   "summary": "Reguła odwracania warunkowania: P(A|B) = P(B|A)·P(A)/P(B).",
+   "related": [
+    "prawdopodobienstwo-warunkowe",
+    "twierdzenie-bayesa-w-estymacji",
+    "rozklad-posterior"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "bayes1763",
+    "casellaberger2002",
+    "gelman2013bda"
+   ],
+   "article": "twierdzenie-bayesa"
+  },
+  {
+   "id": "prawo-calkowitego-prawdopodobienstwa",
+   "name": "Prawo całkowitego prawdopodobieństwa",
+   "category": "rachunek-prawdopodobienstwa",
+   "summary": "Prawdopodobieństwo zdarzenia jako średnia ważona prawdopodobieństw warunkowych względem podziału przestrzeni.",
+   "related": [
+    "prawdopodobienstwo-warunkowe",
+    "twierdzenie-bayesa",
+    "rozklad-predykcyjny"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "casellaberger2002",
+    "pishronik2014"
+   ],
+   "article": "prawo-calkowitego-prawdopodobienstwa"
+  },
+  {
+   "id": "prawo-calkowitej-wartosci-oczekiwanej",
+   "name": "Prawo całkowitej wartości oczekiwanej",
+   "category": "rachunek-prawdopodobienstwa",
+   "summary": "E[X] = E[E[X|Y]]: wartość oczekiwana jest średnią warunkowych wartości oczekiwanych.",
+   "related": [
+    "wartosc-oczekiwana",
+    "prawo-calkowitej-wariancji",
+    "wartosc-oczekiwana-prognozy"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "casellaberger2002",
+    "wasserman2004"
+   ],
+   "article": "prawo-calkowitej-wartosci-oczekiwanej"
+  },
+  {
+   "id": "prawo-calkowitej-wariancji",
+   "name": "Prawo całkowitej wariancji",
+   "category": "rachunek-prawdopodobienstwa",
+   "summary": "Var(X) = E[Var(X|Y)] + Var(E[X|Y]): rozkład zmienności na część wewnątrz- i międzygrupową.",
+   "related": [
+    "prawo-calkowitej-wartosci-oczekiwanej",
+    "niepewnosc-predykcyjna",
+    "wariancja-zmiennej-losowej"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "casellaberger2002",
+    "wasserman2004"
+   ],
+   "article": "prawo-calkowitej-wariancji"
+  },
+  {
+   "id": "rozklad-normalny",
+   "name": "Rozkład normalny",
+   "category": "rozklady-prawdopodobienstwa",
+   "summary": "Ciągły, symetryczny rozkład o gęstości dzwonowej, opisany średnią μ i odchyleniem σ.",
+   "related": [
+    "standaryzacja",
+    "rozklad-a-priori",
+    "efekty-stale-i-losowe"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "casellaberger2002",
+    "johnson1995continuous"
+   ],
+   "article": "rozklad-normalny"
+  },
+  {
+   "id": "rozklad-beta",
+   "name": "Rozkład beta",
+   "category": "rozklady-prawdopodobienstwa",
+   "summary": "Ciągły rozkład na przedziale (0, 1); naturalny model udziałów i proporcji, np. wypełnienia hali.",
+   "related": [
+    "regresja-beta",
+    "rozklad-beta-dwumianowy",
+    "funkcja-logit"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "johnson1995continuous",
+    "ferrari2004",
+    "doc-pymc-beta"
+   ],
+   "article": "rozklad-beta"
+  },
+  {
+   "id": "rozklad-dwumianowy",
+   "name": "Rozkład dwumianowy",
+   "category": "rozklady-prawdopodobienstwa",
+   "summary": "Liczba sukcesów w n niezależnych próbach o stałym prawdopodobieństwie sukcesu p.",
+   "related": [
+    "rozklad-beta-dwumianowy",
+    "zmienna-losowa"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "johnson2005discrete",
+    "casellaberger2002"
+   ],
+   "article": "rozklad-dwumianowy"
+  },
+  {
+   "id": "rozklad-beta-dwumianowy",
+   "name": "Rozkład beta-dwumianowy",
+   "category": "rozklady-prawdopodobienstwa",
+   "summary": "Mieszanina rozkładu dwumianowego, w której prawdopodobieństwo sukcesu ma rozkład beta; modeluje nadmierną zmienność liczb.",
+   "related": [
+    "rozklad-dwumianowy",
+    "rozklad-beta",
+    "rozklady-z-masa-na-granicach"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "johnson2005discrete",
+    "gelman2013bda"
+   ],
+   "article": "rozklad-beta-dwumianowy"
+  },
+  {
+   "id": "rozklad-ujemny-dwumianowy",
+   "name": "Rozkład ujemny dwumianowy",
+   "category": "rozklady-prawdopodobienstwa",
+   "summary": "Rozkład liczebności z wariancją większą niż średnia (mieszanina Poissona i gamma); model liczby widzów bez znanej pojemności.",
+   "related": [
+    "uogolnione-modele-liniowe",
+    "rozklad-dwumianowy"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "hilbe2011",
+    "johnson2005discrete"
+   ],
+   "article": "rozklad-ujemny-dwumianowy"
+  },
+  {
+   "id": "rozklady-z-masa-na-granicach",
+   "name": "Rozkłady z masą prawdopodobieństwa na granicach",
+   "category": "rozklady-prawdopodobienstwa",
+   "summary": "Rozkłady mieszane, które obok gęstości na (0, 1) przypisują dodatnie prawdopodobieństwo wartościom 0 i 1 (np. zero-one-inflated beta).",
+   "related": [
+    "rozklad-beta",
+    "rozklad-beta-dwumianowy",
+    "regresja-beta"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "ospina2012",
+    "ferrari2004"
+   ],
+   "article": "rozklady-z-masa-na-granicach"
+  },
+  {
+   "id": "rozklad-a-priori",
+   "name": "Rozkład a priori",
+   "category": "rozklady-prawdopodobienstwa",
+   "summary": "Rozkład prawdopodobieństwa parametru opisujący wiedzę przed obejrzeniem danych.",
+   "related": [
+    "priory",
+    "hiperpriory",
+    "rozklad-posterior"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelman2013bda",
+    "gelman2006prior"
+   ],
+   "article": "rozklad-a-priori"
+  },
+  {
+   "id": "rozklad-posterior",
+   "name": "Rozkład posterior",
+   "category": "rozklady-prawdopodobienstwa",
+   "summary": "Rozkład parametru po uwzględnieniu danych: proporcjonalny do wiarygodności razy prior.",
+   "related": [
+    "twierdzenie-bayesa-w-estymacji",
+    "estymacja-posterior",
+    "przedzial-wiarygodnosci"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelman2013bda",
+    "mcelreath2020"
+   ],
+   "article": "rozklad-posterior"
+  },
+  {
+   "id": "rozklad-predykcyjny",
+   "name": "Rozkład predykcyjny",
+   "category": "rozklady-prawdopodobienstwa",
+   "summary": "Rozkład przyszłej obserwacji uśredniony po niepewności parametrów (posterior predictive).",
+   "related": [
+    "rozklad-posterior",
+    "przedzialy-predykcyjne",
+    "niepewnosc-predykcyjna"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelman2013bda",
+    "gneiting2007calibration"
+   ],
+   "article": "rozklad-predykcyjny"
+  },
+  {
+   "id": "twierdzenie-bayesa-w-estymacji",
+   "name": "Twierdzenie Bayesa w estymacji",
+   "category": "statystyka-bayesowska",
+   "summary": "Zastosowanie twierdzenia Bayesa do parametrów: posterior ∝ wiarygodność × prior.",
+   "related": [
+    "twierdzenie-bayesa",
+    "funkcja-wiarygodnosci",
+    "rozklad-posterior"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelman2013bda",
+    "bayes1763",
+    "mcelreath2020"
+   ],
+   "article": "twierdzenie-bayesa-w-estymacji"
+  },
+  {
+   "id": "priory",
+   "name": "Priory — dobór rozkładów a priori",
+   "category": "statystyka-bayesowska",
+   "summary": "Zasady wyboru priorów: informacyjne, słabo informacyjne i regularyzujące; kontrola przez symulację z priora.",
+   "related": [
+    "rozklad-a-priori",
+    "hiperpriory",
+    "modele-hierarchiczne"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelman2006prior",
+    "gelman2013bda",
+    "gelman2020workflow"
+   ],
+   "article": "priory"
+  },
+  {
+   "id": "hiperpriory",
+   "name": "Hiperpriory",
+   "category": "statystyka-bayesowska",
+   "summary": "Rozkłady a priori dla parametrów rozkładów a priori, np. dla odchylenia efektów losowych.",
+   "related": [
+    "priory",
+    "modele-hierarchiczne",
+    "partial-pooling"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelman2006prior",
+    "gelman2013bda"
+   ],
+   "article": "hiperpriory"
+  },
+  {
+   "id": "funkcja-wiarygodnosci",
+   "name": "Funkcja wiarygodności",
+   "category": "statystyka-bayesowska",
+   "summary": "Prawdopodobieństwo (gęstość) zaobserwowanych danych traktowane jako funkcja parametrów.",
+   "related": [
+    "twierdzenie-bayesa-w-estymacji",
+    "estymacja-posterior"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "casellaberger2002",
+    "gelman2013bda"
+   ],
+   "article": "funkcja-wiarygodnosci"
+  },
+  {
+   "id": "estymacja-posterior",
+   "name": "Estymacja posterior",
+   "category": "statystyka-bayesowska",
+   "summary": "Wyznaczanie podsumowań rozkładu posterior (średnia, mediana, kwantyle) na podstawie próbek.",
+   "related": [
+    "rozklad-posterior",
+    "mcmc",
+    "przedzial-wiarygodnosci"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelman2013bda",
+    "robert2004"
+   ],
+   "article": "estymacja-posterior"
+  },
+  {
+   "id": "modele-hierarchiczne",
+   "name": "Modele hierarchiczne",
+   "category": "statystyka-bayesowska",
+   "summary": "Modele, w których parametry grup pochodzą ze wspólnego rozkładu o nieznanych hiperparametrach.",
+   "related": [
+    "partial-pooling",
+    "hiperpriory",
+    "regresja-hierarchiczna"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelman2013bda",
+    "gelmanhill2007",
+    "papaspiliopoulos2007"
+   ],
+   "article": "modele-hierarchiczne"
+  },
+  {
+   "id": "partial-pooling",
+   "name": "Partial pooling",
+   "category": "statystyka-bayesowska",
+   "summary": "Częściowe łączenie informacji: oszacowania małych grup są ściągane do średniej ogólnej proporcjonalnie do niepewności.",
+   "related": [
+    "modele-hierarchiczne",
+    "efekty-stale-i-losowe"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelmanhill2007",
+    "efron1975",
+    "gelman2013bda"
+   ],
+   "article": "partial-pooling"
+  },
+  {
+   "id": "przedzial-wiarygodnosci",
+   "name": "Przedział wiarygodności",
+   "category": "statystyka-bayesowska",
+   "summary": "Przedział zawierający parametr z zadanym prawdopodobieństwem a posteriori (np. 95% kwantylowy).",
+   "related": [
+    "rozklad-posterior",
+    "przedzialy-predykcyjne",
+    "estymacja-posterior"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelman2013bda",
+    "kruschke2015"
+   ],
+   "article": "przedzial-wiarygodnosci"
+  },
+  {
+   "id": "probabilistyczne-porownanie-parametrow",
+   "name": "Probabilistyczne porównanie parametrów",
+   "category": "statystyka-bayesowska",
+   "summary": "Ocena P(θ₁ > θ₂ | dane) jako odsetka próbek posterior spełniających nierówność.",
+   "related": [
+    "przedzial-wiarygodnosci",
+    "metody-monte-carlo"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelman2013bda",
+    "kruschke2015"
+   ],
+   "article": "probabilistyczne-porownanie-parametrow"
+  },
+  {
+   "id": "metody-monte-carlo",
+   "name": "Metody Monte Carlo",
+   "category": "statystyka-bayesowska",
+   "summary": "Przybliżanie całek i wartości oczekiwanych średnimi z losowych próbek.",
+   "related": [
+    "mcmc",
+    "monte-carlo",
+    "wartosc-oczekiwana"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "robert2004",
+    "gelman2013bda"
+   ],
+   "article": "metody-monte-carlo"
+  },
+  {
+   "id": "mcmc",
+   "name": "MCMC i Hamiltonian Monte Carlo",
+   "category": "statystyka-bayesowska",
+   "summary": "Łańcuchy Markowa, których rozkładem stacjonarnym jest posterior; w MAF sampler NUTS (HMC).",
+   "related": [
+    "metody-monte-carlo",
+    "r-hat",
+    "effective-sample-size"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "metropolis1953",
+    "hastings1970",
+    "neal2011",
+    "hoffman2014nuts",
+    "betancourt2017"
+   ],
+   "article": "mcmc"
+  },
+  {
+   "id": "regresja-liniowa",
+   "name": "Regresja liniowa",
+   "category": "modele-regresyjne",
+   "summary": "Model, w którym wartość oczekiwana zmiennej jest liniową funkcją predyktorów.",
+   "related": [
+    "uogolnione-modele-liniowe",
+    "interpretacja-wspolczynnikow"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelmanhill2007",
+    "casellaberger2002"
+   ],
+   "article": "regresja-liniowa"
+  },
+  {
+   "id": "uogolnione-modele-liniowe",
+   "name": "Uogólnione modele liniowe (GLM)",
+   "category": "modele-regresyjne",
+   "summary": "Rozszerzenie regresji: rozkład z rodziny wykładniczej i funkcja łącząca wartość oczekiwaną z predyktorem liniowym.",
+   "related": [
+    "regresja-liniowa",
+    "funkcja-logit",
+    "regresja-beta"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "nelder1972",
+    "mccullagh1989"
+   ],
+   "article": "uogolnione-modele-liniowe"
+  },
+  {
+   "id": "funkcja-logit",
+   "name": "Funkcja logit",
+   "category": "modele-regresyjne",
+   "summary": "logit(p) = ln(p/(1−p)); odwzorowuje (0,1) na całą oś liczbową, odwrotnością jest funkcja logistyczna.",
+   "related": [
+    "uogolnione-modele-liniowe",
+    "regresja-beta"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "mccullagh1989",
+    "gelmanhill2007"
+   ],
+   "article": "funkcja-logit"
+  },
+  {
+   "id": "regresja-beta",
+   "name": "Regresja beta",
+   "category": "modele-regresyjne",
+   "summary": "GLM dla udziałów z przedziału (0,1) o rozkładzie beta w parametryzacji średnia–precyzja.",
+   "related": [
+    "rozklad-beta",
+    "funkcja-logit",
+    "rozklady-z-masa-na-granicach"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "ferrari2004",
+    "smithson2006",
+    "ospina2012"
+   ],
+   "article": "regresja-beta"
+  },
+  {
+   "id": "efekty-stale-i-losowe",
+   "name": "Efekty stałe i losowe",
+   "category": "modele-regresyjne",
+   "summary": "Efekt stały to osobny nieograniczony parametr grupy; efekt losowy pochodzi ze wspólnego rozkładu grup.",
+   "related": [
+    "modele-hierarchiczne",
+    "partial-pooling",
+    "regresja-hierarchiczna"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelmanhill2007",
+    "gelman2013bda"
+   ],
+   "article": "efekty-stale-i-losowe"
+  },
+  {
+   "id": "regresja-hierarchiczna",
+   "name": "Regresja hierarchiczna",
+   "category": "modele-regresyjne",
+   "summary": "Regresja z efektami losowymi dla grup (gospodarz, rywal, sezon), estymowanymi wspólnie z hiperparametrami.",
+   "related": [
+    "modele-hierarchiczne",
+    "efekty-stale-i-losowe",
+    "identyfikowalnosc-parametrow"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelmanhill2007",
+    "gelman2013bda",
+    "baio2010"
+   ],
+   "article": "regresja-hierarchiczna"
+  },
+  {
+   "id": "identyfikowalnosc-parametrow",
+   "name": "Identyfikowalność parametrów",
+   "category": "modele-regresyjne",
+   "summary": "Własność modelu, w którym różne wartości parametrów dają różne rozkłady danych; wymaga ograniczeń.",
+   "related": [
+    "regresja-hierarchiczna",
+    "interpretacja-wspolczynnikow"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelman2013bda",
+    "casellaberger2002"
+   ],
+   "article": "identyfikowalnosc-parametrow"
+  },
+  {
+   "id": "interpretacja-wspolczynnikow",
+   "name": "Interpretacja współczynników",
+   "category": "modele-regresyjne",
+   "summary": "Znaczenie współczynnika na skali predyktora liniowego i na skali wyniku (efekty krańcowe, ilorazy szans).",
+   "related": [
+    "funkcja-logit",
+    "regresja-liniowa",
+    "identyfikowalnosc-parametrow"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelmanhill2007",
+    "mccullagh1989"
+   ],
+   "article": "interpretacja-wspolczynnikow"
+  },
+  {
+   "id": "srednia-ruchoma",
+   "name": "Średnia ruchoma",
+   "category": "szeregi-czasowe",
+   "summary": "Średnia z ostatnich k obserwacji szeregu czasowego, wygładzająca krótkookresowe wahania (np. forma drużyny).",
+   "related": [
+    "srednia-arytmetyczna",
+    "autokorelacja"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "hyndman2021fpp3",
+    "boxjenkins2015"
+   ],
+   "article": "srednia-ruchoma"
+  },
+  {
+   "id": "autokorelacja",
+   "name": "Autokorelacja",
+   "category": "szeregi-czasowe",
+   "summary": "Korelacja szeregu z jego opóźnioną kopią; kluczowa dla efektywnej liczby próbek MCMC.",
+   "related": [
+    "effective-sample-size",
+    "srednia-ruchoma"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "boxjenkins2015",
+    "geyer1992",
+    "hyndman2021fpp3"
+   ],
+   "article": "autokorelacja"
+  },
+  {
+   "id": "wartosc-oczekiwana-prognozy",
+   "name": "Wartość oczekiwana prognozy",
+   "category": "prognozowanie",
+   "summary": "Średnia rozkładu predykcyjnego: optymalna prognoza punktowa przy kwadratowej funkcji straty.",
+   "related": [
+    "rozklad-predykcyjny",
+    "prawo-calkowitej-wartosci-oczekiwanej",
+    "rmse"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gneiting2007scoring",
+    "hyndman2021fpp3"
+   ],
+   "article": "wartosc-oczekiwana-prognozy"
+  },
+  {
+   "id": "niepewnosc-predykcyjna",
+   "name": "Niepewność predykcyjna",
+   "category": "prognozowanie",
+   "summary": "Łączna niepewność prognozy: niepewność parametrów i losowa zmienność przyszłego meczu.",
+   "related": [
+    "prawo-calkowitej-wariancji",
+    "rozklad-predykcyjny",
+    "przedzialy-predykcyjne"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelman2013bda",
+    "gneiting2007calibration"
+   ],
+   "article": "niepewnosc-predykcyjna"
+  },
+  {
+   "id": "przedzialy-predykcyjne",
+   "name": "Przedziały predykcyjne",
+   "category": "prognozowanie",
+   "summary": "Przedziały zawierające przyszłą obserwację z zadanym prawdopodobieństwem; szersze niż przedziały wiarygodności parametrów.",
+   "related": [
+    "przedzial-wiarygodnosci",
+    "rozklad-predykcyjny",
+    "pokrycie-przedzialow-predykcyjnych"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "hyndman2021fpp3",
+    "gelman2013bda"
+   ],
+   "article": "przedzialy-predykcyjne"
+  },
+  {
+   "id": "monte-carlo",
+   "name": "Symulacja Monte Carlo w prognozowaniu",
+   "category": "prognozowanie",
+   "summary": "Generowanie wielu możliwych przebiegów przyszłego meczu z rozkładu predykcyjnego i odczyt prawdopodobieństw jako częstości.",
+   "related": [
+    "metody-monte-carlo",
+    "rozklad-predykcyjny",
+    "przedzialy-predykcyjne"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "robert2004",
+    "gelman2013bda"
+   ],
+   "article": "monte-carlo"
+  },
+  {
+   "id": "kalibracja-prawdopodobienstw",
+   "name": "Kalibracja prawdopodobieństw",
+   "category": "prognozowanie",
+   "summary": "Zgodność deklarowanych prawdopodobieństw z obserwowanymi częstościami (np. PIT, diagram niezawodności).",
+   "related": [
+    "pokrycie-przedzialow-predykcyjnych",
+    "backtesting"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gneiting2007calibration",
+    "dawid1984",
+    "niculescu2005",
+    "doc-sklearn-calibration",
+    "brier1950"
+   ],
+   "article": "kalibracja-prawdopodobienstw"
+  },
+  {
+   "id": "backtesting",
+   "name": "Backtesting (walidacja chronologiczna)",
+   "category": "prognozowanie",
+   "summary": "Ocena prognoz na danych późniejszych niż dane treningowe, bez użycia informacji z przyszłości.",
+   "related": [
+    "kalibracja-prawdopodobienstw",
+    "mae",
+    "rmse"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "tashman2000",
+    "bergmeir2012",
+    "doc-sklearn-tss",
+    "hyndman2021fpp3"
+   ],
+   "article": "backtesting"
+  },
+  {
+   "id": "r-hat",
+   "name": "R-hat (potencjalny czynnik redukcji skali)",
+   "category": "walidacja-modeli",
+   "summary": "Porównanie wariancji między- i wewnątrzłańcuchowej; wartości bliskie 1 (< 1,01) wskazują zbieżność.",
+   "related": [
+    "mcmc",
+    "effective-sample-size"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "vehtari2021rhat",
+    "gelmanrubin1992",
+    "doc-arviz-rhat"
+   ],
+   "article": "r-hat"
+  },
+  {
+   "id": "effective-sample-size",
+   "name": "Effective Sample Size (ESS)",
+   "category": "walidacja-modeli",
+   "summary": "Liczba niezależnych próbek o tej samej precyzji co skorelowany łańcuch MCMC.",
+   "related": [
+    "r-hat",
+    "autokorelacja",
+    "mcmc"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "vehtari2021rhat",
+    "geyer1992",
+    "doc-arviz-ess"
+   ],
+   "article": "effective-sample-size"
+  },
+  {
+   "id": "posterior-predictive-checks",
+   "name": "Posterior predictive checks",
+   "category": "walidacja-modeli",
+   "summary": "Porównanie danych obserwowanych z danymi symulowanymi z rozkładu predykcyjnego modelu.",
+   "related": [
+    "rozklad-predykcyjny",
+    "diagnostyka-reszt"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelman2013bda",
+    "gabry2019"
+   ],
+   "article": "posterior-predictive-checks"
+  },
+  {
+   "id": "mae",
+   "name": "MAE — średni błąd bezwzględny",
+   "category": "walidacja-modeli",
+   "summary": "Średnia wartości bezwzględnych błędów prognoz; mierzy typowy błąd w jednostkach danych.",
+   "related": [
+    "rmse",
+    "backtesting",
+    "mediana"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "hyndman2006",
+    "hyndman2021fpp3"
+   ],
+   "article": "mae"
+  },
+  {
+   "id": "rmse",
+   "name": "RMSE — pierwiastek błędu średniokwadratowego",
+   "category": "walidacja-modeli",
+   "summary": "Pierwiastek ze średniego kwadratu błędu; mocniej karze duże błędy niż MAE.",
+   "related": [
+    "mae",
+    "wartosc-oczekiwana-prognozy"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "hyndman2006",
+    "hyndman2021fpp3"
+   ],
+   "article": "rmse"
+  },
+  {
+   "id": "diagnostyka-reszt",
+   "name": "Diagnostyka reszt",
+   "category": "walidacja-modeli",
+   "summary": "Analiza różnic między obserwacjami a prognozą: reszty standaryzowane, kwantylowe i wartości p predykcyjne.",
+   "related": [
+    "standaryzacja",
+    "posterior-predictive-checks",
+    "kalibracja-prawdopodobienstw"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelman2013bda",
+    "gabry2019",
+    "rousseeuw1993"
+   ],
+   "article": "diagnostyka-reszt"
+  },
+  {
+   "id": "pokrycie-przedzialow-predykcyjnych",
+   "name": "Pokrycie przedziałów predykcyjnych",
+   "category": "walidacja-modeli",
+   "summary": "Odsetek obserwacji wpadających do przedziałów predykcyjnych; dla dobrze skalibrowanego modelu równy poziomowi nominalnemu.",
+   "related": [
+    "przedzialy-predykcyjne",
+    "kalibracja-prawdopodobienstw",
+    "backtesting"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gneiting2007calibration",
+    "hyndman2021fpp3"
+   ],
+   "article": "pokrycie-przedzialow-predykcyjnych"
+  },
+  {
+   "id": "atrakcyjnosc-frekwencyjna",
+   "name": "Model Atrakcyjności Frekwencyjnej (MAF) i indeks IAF",
+   "category": "modele-sportowe",
+   "summary": "Hierarchiczny model bayesowski frekwencji, który oddziela siłę gospodarza, atrakcyjność rywala i warunki meczu; IAF = 100 przy typowym rywalu.",
+   "related": [
+    "modele-hierarchiczne",
+    "regresja-beta",
+    "rozklad-beta-dwumianowy",
+    "rozklad-ujemny-dwumianowy",
+    "przedzial-wiarygodnosci",
+    "rozklad-predykcyjny"
+   ],
+   "models": [
+    "maf"
+   ],
+   "bibliography": [
+    "gelman2013bda",
+    "ferrari2004",
+    "borland2003",
+    "schreyer2022",
+    "forrest2002",
+    "garcia2002",
+    "hoffman2014nuts",
+    "vehtari2021rhat"
+   ],
+   "article": "atrakcyjnosc-frekwencyjna",
+   "layout": "model"
+  }
+ ],
+ "model_sections": [
+  {
+   "id": "cel",
+   "title": "Cel badawczy"
+  },
+  {
+   "id": "dane",
+   "title": "Opis danych"
+  },
+  {
+   "id": "definicja",
+   "title": "Definicje zmiennych"
+  },
+  {
+   "id": "zalozenia",
+   "title": "Założenia modelu"
+  },
+  {
+   "id": "wiarygodnosc",
+   "title": "Funkcja wiarygodności"
+  },
+  {
+   "id": "hierarchia",
+   "title": "Konstrukcja hierarchiczna"
+  },
+  {
+   "id": "priory",
+   "title": "Rozkłady a priori"
+  },
+  {
+   "id": "hiperpriory",
+   "title": "Hiperpriory"
+  },
+  {
+   "id": "identyfikowalnosc",
+   "title": "Identyfikowalność parametrów"
+  },
+  {
+   "id": "estymacja",
+   "title": "Estymacja posterior"
+  },
+  {
+   "id": "wyprowadzenie",
+   "title": "Wyprowadzenie IAF"
+  },
+  {
+   "id": "standaryzacja",
+   "title": "Standaryzacja"
+  },
+  {
+   "id": "przedzialy",
+   "title": "Przedziały wiarygodności"
+  },
+  {
+   "id": "prawdopodobienstwo",
+   "title": "Obliczanie P(IAF > 100)"
+  },
+  {
+   "id": "prognozowanie",
+   "title": "Prognozowanie"
+  },
+  {
+   "id": "diagnostyka",
+   "title": "Diagnostyka"
+  },
+  {
+   "id": "walidacja",
+   "title": "Walidacja historyczna"
+  },
+  {
+   "id": "ograniczenia",
+   "title": "Ograniczenia"
+  },
+  {
+   "id": "przyklad",
+   "title": "Przykład rzeczywistego meczu"
+  },
+  {
+   "id": "bibliografia",
+   "title": "Bibliografia"
+  }
+ ]
+}

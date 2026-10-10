@@ -1,0 +1,153 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Rozkład posterior (rozkład a posteriori, ang. <em>posterior distribution</em>) to pełny opis tego, co wiemy o nieznanym parametrze <em>po</em> zobaczeniu danych. Powstaje z połączenia dwóch źródeł informacji: <a data-concept="rozklad-a-priori">rozkładu a priori</a> (wiedza przed danymi) i <a data-concept="funkcja-wiarygodnosci">funkcji wiarygodności</a> (jak dobrze każda wartość parametru tłumaczy obserwacje). Mechanizmem łączenia jest <a data-concept="twierdzenie-bayesa">twierdzenie Bayesa</a>.</p>
+<p>Wynikiem nie jest jedna liczba, lecz rozkład: możemy z niego odczytać wartość typową (średnią, medianę), niepewność (<a data-concept="przedzial-wiarygodnosci">przedział wiarygodności</a>) i odpowiedzi na pytania wprost interesujące praktyka, np. „jakie jest prawdopodobieństwo, że ten rywal przyciąga więcej widzów niż przeciętny?”. W prostych modelach posterior ma postać analityczną (rodziny sprzężone); w złożonych, jak MAF, reprezentujemy go próbkami uzyskanymi metodami <a data-concept="mcmc">MCMC</a>.</p>
+<div class="ml-plot" data-plot="beta-update" data-params='{"a": 15, "b": 5, "k": 9, "n": 15}'></div>
+<p>Posterior leży między priorem a proporcją obserwowaną \(k/n\) i jest węższy od priora. Zwiększ \(n\) przy stałym \(k/n\), aby zobaczyć, jak dane coraz bardziej dominują nad priorem.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-rozklad-posterior"><p class="ml-box-title">Definicja</p>
+<p>Niech \(\theta\in\Theta\) ma rozkład a priori o gęstości \(\pi(\theta)\), a dane \(y\in\mathcal Y\) mają przy danym \(\theta\) rozkład o gęstości \(p(y\mid\theta)\). Jeśli wiarygodność brzegowa \(p(y)=\int_\Theta p(y\mid\theta)\pi(\theta)\,d\theta\) spełnia \(0\lt p(y)\lt\infty\), to rozkładem posterior nazywamy rozkład warunkowy \(\theta\) przy danym \(y\), o gęstości</p>
+<div class="ml-eq" id="eq-rozklad-posterior">\[ p(\theta\mid y)=\frac{p(y\mid\theta)\,\pi(\theta)}{p(y)}\ \propto\ p(y\mid\theta)\,\pi(\theta). \]</div>
+<p>Symbol \(\propto\) oznacza równość z dokładnością do czynnika niezależnego od \(\theta\); stała normująca \(p(y)\) jest wyznaczona jednoznacznie przez warunek \(\int p(\theta\mid y)\,d\theta=1\).</p>
+</div>
+<p>Podsumowania posterior (estymatory bayesowskie) to m.in.: średnia \(E(\theta\mid y)\) (minimalizuje oczekiwaną stratę kwadratową), mediana (strata bezwzględna), dominanta — MAP (ang. <em>maximum a posteriori</em>), kwantyle i prawdopodobieństwa zdarzeń \(P(\theta\in B\mid y)\).</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(\theta\)</td><td>parametr (wektor parametrów)</td></tr>
+<tr><td>\(y\)</td><td>obserwowane dane</td></tr>
+<tr><td>\(\pi(\theta)\)</td><td>gęstość rozkładu a priori</td></tr>
+<tr><td>\(p(y\mid\theta)\)</td><td>model danych / funkcja wiarygodności \(L(\theta)\)</td></tr>
+<tr><td>\(p(y)\)</td><td>wiarygodność brzegowa (stała normująca)</td></tr>
+<tr><td>\(p(\theta\mid y)\)</td><td>gęstość rozkładu posterior</td></tr>
+<tr><td>\(k,\ n\)</td><td>liczba sukcesów i liczba prób w modelu dwumianowym</td></tr>
+<tr><td>\(a,\ b\)</td><td>parametry priora beta; \(a'=a+k\), \(b'=b+n-k\) — parametry posterior</td></tr>
+<tr><td>\(\theta^{(s)}\)</td><td>\(s\)-ta próbka z posterior (\(s=1,\dots,S\))</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Model danych \(p(y\mid\theta)\) jest poprawnie wyspecyfikowany (lub przynajmniej użyteczny) — posterior opisuje niepewność <em>w ramach</em> modelu, nie niepewność co do samego modelu.</li>
+<li>Prior jest właściwy albo, jeśli niewłaściwy, prowadzi do właściwego posterior (\(p(y)\lt\infty\)).</li>
+<li>Dane są warunkowo niezależne przy danym \(\theta\) (lub ich zależność jest jawnie modelowana), co pozwala zapisać wiarygodność jako iloczyn.</li>
+<li>Przy reprezentacji próbkowej: łańcuchy MCMC zbiegły i dają wystarczająco wiele efektywnie niezależnych próbek (<a data-concept="r-hat">R-hat</a>, <a data-concept="effective-sample-size">ESS</a>).</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Sprzężoność beta–dwumian (\(k\) sukcesów w \(n\) próbach):</p>
+<div class="ml-eq" id="eq-rozklad-posterior-beta">\[ p\sim\text{Beta}(a,b),\quad k\mid p\sim\text{Bin}(n,p)\quad\Longrightarrow\quad p\mid k\sim\text{Beta}(a+k,\ b+n-k). \]</div>
+<p>Charakterystyki posterior beta:</p>
+<div class="ml-eq" id="eq-rozklad-posterior-momenty">\[ E(p\mid k)=\frac{a+k}{a+b+n},\qquad \operatorname{Var}(p\mid k)=\frac{(a+k)(b+n-k)}{(a+b+n)^2(a+b+n+1)},\qquad \operatorname{mode}=\frac{a+k-1}{a+b+n-2}. \]</div>
+<p>Średnia posterior jako kompromis:</p>
+<div class="ml-eq" id="eq-rozklad-posterior-kompromis">\[ E(p\mid k)=w\cdot\frac{a}{a+b}+(1-w)\cdot\frac kn,\qquad w=\frac{a+b}{a+b+n}. \]</div>
+<p>Aktualizacja sekwencyjna (dane \(y_1,y_2\) warunkowo niezależne przy \(\theta\)):</p>
+<div class="ml-eq" id="eq-rozklad-posterior-sekwencyjna">\[ p(\theta\mid y_1,y_2)\propto p(y_2\mid\theta)\,p(\theta\mid y_1). \]</div>
+<p>Przybliżenie Monte Carlo funkcjonałów posterior (\(\theta^{(1)},\dots,\theta^{(S)}\sim p(\theta\mid y)\)):</p>
+<div class="ml-eq" id="eq-rozklad-posterior-mc">\[ E\big[h(\theta)\mid y\big]\approx\frac1S\sum_{s=1}^Sh\big(\theta^{(s)}\big),\qquad P(\theta\in B\mid y)\approx\frac1S\sum_{s=1}^S\mathbf 1\{\theta^{(s)}\in B\}. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-sprzezonosc-beta"><p class="ml-box-title">Twierdzenie (sprzężoność beta–dwumian)</p>
+<p>Rodzina rozkładów beta jest sprzężona z modelem dwumianowym: zachodzi <a class="ml-eqref" href="#eq-rozklad-posterior-beta"></a>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-sekwencyjna"><p class="ml-box-title">Twierdzenie (spójność aktualizacji sekwencyjnej)</p>
+<p>Jeśli \(y_1\) i \(y_2\) są warunkowo niezależne przy danym \(\theta\), to posterior po danych \((y_1,y_2)\) jest taki sam, jak posterior otrzymany przez użycie \(p(\theta\mid y_1)\) jako priora dla \(y_2\). W modelu beta–dwumian kolejność i podział danych na partie nie mają znaczenia.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-redukcja-wariancji"><p class="ml-box-title">Twierdzenie (oczekiwana redukcja niepewności)</p>
+<p>Jeśli \(\operatorname{Var}\theta\lt\infty\), to \(E_y\big[\operatorname{Var}(\theta\mid y)\big]=\operatorname{Var}\theta-\operatorname{Var}_y\big(E(\theta\mid y)\big)\le\operatorname{Var}\theta\). Średnio dane zmniejszają wariancję parametru; dla konkretnego \(y\) posterior może być jednak szerszy od priora (gdy dane przeczą priorowi).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-bvm"><p class="ml-box-title">Twierdzenie (Bernsteina–von Misesa — sformułowanie nieformalne)</p>
+<p>Przy regularnym modelu, prawdziwej wartości \(\theta_0\) we wnętrzu \(\Theta\) i priorze ciągłym i dodatnim w \(\theta_0\), dla \(n\to\infty\) posterior jest w przybliżeniu normalny: \(\theta\mid y\approx N\big(\hat\theta_n,\ I_n(\hat\theta_n)^{-1}\big)\), gdzie \(\hat\theta_n\) jest estymatorem największej wiarygodności, a \(I_n\) — informacją Fishera. Dokładne założenia i dowód: <cite data-bib="gelman2013bda"></cite> (dodatek B).</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="sprzezonosc-wyprowadzenie">Sprzężoność beta–dwumian</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p><em>Krok 1 (wiarygodność).</em> \(p(k\mid p)=\binom nkp^k(1-p)^{n-k}\).</p>
+<p><em>Krok 2 (prior).</em> \(\pi(p)=\frac{1}{B(a,b)}p^{a-1}(1-p)^{b-1}\), \(0\lt p\lt1\).</p>
+<p><em>Krok 3 (iloczyn, z pominięciem czynników niezależnych od \(p\)).</em></p>
+\[ p(p\mid k)\propto p^k(1-p)^{n-k}\cdot p^{a-1}(1-p)^{b-1}=p^{(a+k)-1}(1-p)^{(b+n-k)-1}. \]
+<p><em>Krok 4 (normalizacja).</em> Prawa strona jest jądrem gęstości \(\text{Beta}(a+k,b+n-k)\), a parametry są dodatnie dla każdego \(k\in\{0,\dots,n\}\). Ponieważ gęstość jest wyznaczona przez jądro z dokładnością do stałej, a obie funkcje całkują się do 1, stała musi wynosić \(1/B(a+k,b+n-k)\). Dla kontroli: \(p(k)=\binom nk\frac{B(a+k,b+n-k)}{B(a,b)}\) — jest to rozkład <a data-concept="rozklad-beta-dwumianowy">beta-dwumianowy</a>, i rzeczywiście</p>
+\[ \frac{\binom nkp^{a+k-1}(1-p)^{b+n-k-1}/B(a,b)}{\binom nkB(a+k,b+n-k)/B(a,b)}=\frac{p^{a+k-1}(1-p)^{b+n-k-1}}{B(a+k,b+n-k)}. \]
+<p>Wzory <a class="ml-eqref" href="#eq-rozklad-posterior-momenty"></a> wynikają z <a data-concept="rozklad-beta" data-anchor="wzory">momentów rozkładu beta</a>, a <a class="ml-eqref" href="#eq-rozklad-posterior-kompromis"></a> — z rozpisania \(\frac{a+k}{a+b+n}\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="sekwencyjna-wyprowadzenie">Aktualizacja sekwencyjna</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z warunkowej niezależności \(p(y_1,y_2\mid\theta)=p(y_1\mid\theta)p(y_2\mid\theta)\). Zatem</p>
+\[ p(\theta\mid y_1,y_2)\propto p(y_2\mid\theta)\,\big[p(y_1\mid\theta)\,\pi(\theta)\big]\propto p(y_2\mid\theta)\,p(\theta\mid y_1), \]
+<p>bo \(p(\theta\mid y_1)\) różni się od \(p(y_1\mid\theta)\pi(\theta)\) tylko stałą \(1/p(y_1)\). W modelu beta–dwumian: \(\text{Beta}(a,b)\to\text{Beta}(a+k_1,b+n_1-k_1)\to\text{Beta}(a+k_1+k_2,\ b+n_1+n_2-k_1-k_2)\), co zależy tylko od sum \(k_1+k_2\), \(n_1+n_2\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="redukcja-wyprowadzenie">Oczekiwana redukcja niepewności</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z <a data-concept="prawo-calkowitej-wariancji">prawa całkowitej wariancji</a> zastosowanego do łącznego rozkładu \((\theta,y)\): \(\operatorname{Var}\theta=E_y[\operatorname{Var}(\theta\mid y)]+\operatorname{Var}_y(E(\theta\mid y))\). Drugi składnik jest nieujemny.</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong> Prior dla skuteczności rzutów karnych zawodnika: \(\text{Beta}(15,5)\) (średnia ligowa 0,75, siła 20 pseudorzutów). Zawodnik trafił \(k=9\) z \(n=15\) karnych.</p>
+<ol class="ml-steps">
+<li><strong>Parametry posterior.</strong> \(a'=15+9=24\), \(b'=5+15-9=11\): \(p\mid k\sim\text{Beta}(24,11)\).</li>
+<li><strong>Średnia.</strong> \(24/35=0{,}6857\). Kontrola wzorem kompromisu: \(w=20/35=0{,}5714\); \(0{,}5714\cdot0{,}75+0{,}4286\cdot0{,}6=0{,}4286+0{,}2571=0{,}6857\) ✓.</li>
+<li><strong>Wariancja.</strong> \(\frac{24\cdot11}{35^2\cdot36}=\frac{264}{44\,100}=0{,}005986\); odchylenie standardowe \(0{,}0774\) (prior: \(0{,}0945\)).</li>
+<li><strong>Dominanta (MAP).</strong> \(\frac{23}{33}=0{,}6970\). Estymator największej wiarygodności: \(9/15=0{,}6\).</li>
+<li><strong>Przedział wiarygodności 95% (równe ogony).</strong> Kwantyle \(\text{Beta}(24,11)\) (numerycznie; dla całkowitych parametrów dystrybuanta to suma dwumianowa): \([0{,}525;\ 0{,}826]\).</li>
+<li><strong>Prawdopodobieństwa a posteriori.</strong> \(P(p\gt0{,}75\mid k)=0{,}211\); \(P(p\gt0{,}6\mid k)=0{,}862\).</li>
+<li><strong>Porównanie z priorem jednostajnym.</strong> Dla \(\text{Beta}(1,1)\): posterior \(\text{Beta}(10,7)\), średnia \(10/17=0{,}588\), przedział 95% \([0{,}354;\ 0{,}802]\) — szerszy i bliższy surowej proporcji.</li>
+<li><strong>Aktualizacja sekwencyjna.</strong> Jeśli najpierw zawodnik trafił 3 z 5, a potem 6 z 10: \(\text{Beta}(15,5)\to\text{Beta}(18,7)\to\text{Beta}(24,11)\) — ten sam wynik co jednorazowo.</li>
+</ol>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Surowa skuteczność 60% z 15 rzutów jest mało wiarygodnym opisem umiejętności — próbka jest mała. Posterior „ściąga” oszacowanie w stronę średniej ligowej (do 68,6%), bo prior wnosi informację równoważną 20 rzutom, a dane — 15. Mimo to dane przesunęły rozkład w dół: prawdopodobieństwo, że zawodnik jest powyżej średniej ligowej (75%), wynosi już tylko ok. 21%, a prawdopodobieństwo, że jego skuteczność przekracza 60%, ok. 86%.</p>
+<p>Przedział \([0{,}525;\ 0{,}826]\) ma bezpośrednią interpretację probabilistyczną: przy przyjętym modelu i priorze z prawdopodobieństwem 95% prawdziwa skuteczność leży w tym przedziale. Jest to zdanie o parametrze, a nie o przyszłych rzutach — te opisuje <a data-concept="rozklad-predykcyjny">rozkład predykcyjny</a>.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<ul>
+<li><strong>MAF.</strong> W <a data-concept="atrakcyjnosc-frekwencyjna">Modelu Atrakcyjności Frekwencyjnej</a> posterior obejmuje wszystkie parametry: \(\alpha\), efekty \(H,HS,R,RS,S,L\), współczynniki \(\beta\), skale \(\sigma\) oraz \(\phi\) lub \(\kappa\). Nie ma postaci analitycznej; reprezentuje go zbiór próbek z próbnika NUTS (Hamiltonian Monte Carlo), 4 łańcuchy — zob. <a data-concept="estymacja-posterior">estymacja posterior</a>.</li>
+<li><strong>Warunki wiarygodności próbek.</strong> Rank-normalized split R-hat \(\lt1{,}01\), bulk-ESS i tail-ESS \(\ge400\), brak dywergencji <cite data-bib="vehtari2021rhat"></cite>.</li>
+<li><strong>Indeks IAF.</strong> Dla każdej próbki \(s\) liczymy \(\mathrm{IAF}_j^{(s)}\) — dostajemy posterior indeksu. Raportujemy medianę, 95% przedział wiarygodności i \(P(\mathrm{IAF}_j\gt100\mid y)\approx\frac1S\sum_s\mathbf 1\{\mathrm{IAF}_j^{(s)}\gt100\}\), zgodnie ze wzorem <a class="ml-eqref" href="#eq-rozklad-posterior-mc"></a>.</li>
+<li><strong>Porównania.</strong> Pytania typu „czy rywal A przyciąga więcej widzów niż B?” rozstrzyga się przez \(P(R_A\gt R_B\mid y)\) — zob. <a data-concept="probabilistyczne-porownanie-parametrow">probabilistyczne porównanie parametrów</a>.</li>
+<li><strong>Analizy sprzężone.</strong> Prosta analiza beta–dwumian jest używana do skuteczności rzutowej i udziału meczów wyprzedanych, gdzie wystarcza jeden parametr na zawodnika lub klub.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li>Posterior jest tak dobry jak model i prior: błędna specyfikacja wiarygodności (np. brak nadmiernej dyspersji) daje posterior zbyt wąski.</li>
+<li>Przy małej ilości danych wynik zależy od priora — należy przeprowadzić analizę wrażliwości.</li>
+<li>Rodziny sprzężone istnieją tylko dla prostych modeli; złożone modele wymagają MCMC, z kosztami obliczeniowymi i ryzykiem braku zbieżności.</li>
+<li>Podsumowanie punktowe (średnia, MAP) gubi informację o kształcie; dla rozkładów skośnych lub wielomodalnych trzeba raportować kwantyle i prawdopodobieństwa.</li>
+<li>Posterior nie uwzględnia niepewności co do wyboru modelu; do tego służą porównania predykcyjne i <a data-concept="posterior-predictive-checks">posterior predictive checks</a>.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="twierdzenie-bayesa-w-estymacji">Twierdzenie Bayesa w estymacji</a>.</li>
+<li><a data-concept="estymacja-posterior">Estymacja posterior</a>, <a data-concept="mcmc">MCMC i Hamiltonian Monte Carlo</a>.</li>
+<li><a data-concept="przedzial-wiarygodnosci">Przedział wiarygodności</a>.</li>
+<li><a data-concept="rozklad-a-priori">Rozkład a priori</a>, <a data-concept="rozklad-predykcyjny">rozkład predykcyjny</a>.</li>
+<li><a data-concept="rozklad-beta">Rozkład beta</a>, <a data-concept="rozklad-dwumianowy">rozkład dwumianowy</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelman2013bda"></li>
+<li data-bib="mcelreath2020"></li>
+<li data-bib="kruschke2015"></li>
+<li data-bib="vehtari2021rhat"></li>
+<li data-bib="bayes1763"></li>
+</ul>
+</section>

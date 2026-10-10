@@ -1,0 +1,170 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Mediana (ang. <em>median</em>) to wartość „środkowa”: po ustawieniu obserwacji od najmniejszej do największej połowa z nich leży nie wyżej, a połowa nie niżej niż mediana. Jeżeli klub rozegrał dziewięć meczów domowych, mediana frekwencji to liczba widzów w piątym meczu na liście uporządkowanej rosnąco.</p>
+<p>Najważniejszą zaletą mediany jest <em>odporność</em> (ang. <em>robustness</em>). Gdy do sezonu z typową frekwencją 1000–1400 widzów dołączymy derby z 2950 widzami, średnia arytmetyczna podskoczy o ponad 170 osób (z ok. 1189 do 1365), a mediana przesunie się zaledwie o 10 (z 1190 do 1200) — i to tylko dlatego, że zmieniła się liczba obserwacji. Wielkość rekordu w ogóle nie ma znaczenia: derby z 29 500 widzami dałyby tę samą medianę. Mediana „widzi” tylko, po której stronie środka leży obserwacja, a nie jak daleko.</p>
+<p>Mediana ma też eleganckie uzasadnienie optymalizacyjne. Średnia arytmetyczna to punkt minimalizujący sumę <em>kwadratów</em> odległości od danych; mediana to punkt minimalizujący sumę <em>wartości bezwzględnych</em> odległości. Gdy błąd prognozy mierzymy w widzach „jeden do jednego” (bez kwadratu), najlepszą prognozą punktową jest mediana rozkładu predykcyjnego. Dlatego mediana jest naturalną parą dla miary <a data-concept="mae">MAE</a>, podobnie jak średnia dla <a data-concept="rmse">RMSE</a>.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-mediana-proby"><p class="ml-box-title">Definicja (mediana z próby)</p>
+<p>Niech \(x_{(1)}\le x_{(2)}\le\dots\le x_{(n)}\) będą statystykami pozycyjnymi (uporządkowanymi obserwacjami) próby \(x_1,\dots,x_n\). <strong>Medianą z próby</strong> nazywamy</p>
+<div class="ml-eq" id="eq-mediana">\[ \operatorname{med}(x) = \begin{cases} x_{((n+1)/2)}, &amp; n \text{ nieparzyste},\\[4pt] \dfrac{x_{(n/2)} + x_{(n/2+1)}}{2}, &amp; n \text{ parzyste}. \end{cases} \]</div>
+</div>
+<p>Dla \(n\) parzystego każdy punkt odcinka \([x_{(n/2)},\,x_{(n/2+1)}]\) dzieli próbę na dwie równe części; konwencja wybiera jego środek. Ta sama wartość wynika z większości ciągłych definicji kwantyla empirycznego Hyndmana i Fana dla \(p=1/2\) (m.in. typy 5–9, w tym domyślny typ 7) <cite data-bib="hyndmanfan1996"></cite> — zob. <a data-concept="percentyle" data-anchor="definicja">percentyle</a>.</p>
+<div class="ml-box ml-def" id="def-mediana-rozkladu"><p class="ml-box-title">Definicja (mediana rozkładu)</p>
+<p>Niech \(X\) będzie <a data-concept="zmienna-losowa">zmienną losową</a> o dystrybuancie \(F\). Liczbę \(m\) nazywamy <strong>medianą</strong> rozkładu \(X\), jeżeli</p>
+<div class="ml-eq" id="eq-mediana-rozklad">\[ P(X\le m)\ge \tfrac12 \quad\text{oraz}\quad P(X\ge m)\ge\tfrac12 . \]</div>
+<p>Zbiór median jest niepustym odcinkiem domkniętym; jeżeli \(F\) jest ciągła i ściśle rosnąca w otoczeniu \(m\), mediana jest jedyna i równa \(F^{-1}(1/2)\).</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(x_{(k)}\)</td><td>\(k\)-ta statystyka pozycyjna (\(k\)-ta najmniejsza obserwacja)</td></tr>
+<tr><td>\(\operatorname{med}(x)\)</td><td>mediana z próby</td></tr>
+<tr><td>\(m\)</td><td>mediana rozkładu</td></tr>
+<tr><td>\(F\)</td><td>dystrybuanta, \(F(t)=P(X\le t)\)</td></tr>
+<tr><td>\(f\)</td><td>gęstość rozkładu (gdy istnieje)</td></tr>
+<tr><td>\(L(c)\)</td><td>suma wartości bezwzględnych odchyleń od punktu \(c\)</td></tr>
+<tr><td>\(g\)</td><td>przekształcenie monotoniczne (np. logit, logarytm)</td></tr>
+<tr><td>\(\varepsilon^*\)</td><td>punkt załamania estymatora (ang. <em>breakdown point</em>)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Dane muszą być co najmniej <strong>porządkowe</strong> — wystarczy umieć je uporządkować. Dla \(n\) nieparzystego mediana istnieje nawet dla zmiennych czysto porządkowych (np. miejsce w tabeli); konwencja uśredniania dla \(n\) parzystego wymaga skali przedziałowej.</li>
+<li>Własność minimalizacji \(E|X-c|\) wymaga skończonej wartości oczekiwanej \(E|X|\lt\infty\); sama mediana istnieje dla każdego rozkładu (nawet bez momentów, np. rozkładu Cauchy’ego).</li>
+<li>Asymptotyczna normalność mediany z próby wymaga obserwacji i.i.d. oraz dodatniej i ciągłej gęstości \(f\) w punkcie \(m\).</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Funkcja straty bezwzględnej i jej minimum:</p>
+<div class="ml-eq" id="eq-mediana-l1">\[ L(c)=\sum_{i=1}^n |x_i - c|, \qquad \operatorname{med}(x)\in\arg\min_{c\in\mathbb{R}} L(c) . \]</div>
+<p>Wersja populacyjna:</p>
+<div class="ml-eq" id="eq-mediana-l1-populacja">\[ m \in \arg\min_{c\in\mathbb{R}} E|X-c| \qquad (E|X|\lt\infty) . \]</div>
+<p>Pochodna \(L\) poza punktami danych (różnica liczby obserwacji poniżej i powyżej \(c\)):</p>
+<div class="ml-eq" id="eq-mediana-pochodna">\[ L'(c) = \#\{i: x_i\lt c\} - \#\{i: x_i\gt c\} . \]</div>
+<p>Ekwiwariancja względem przekształceń monotonicznych (dla \(n\) nieparzystego i dla mediany rozkładu przy \(g\) ściśle rosnącej i ciągłej):</p>
+<div class="ml-eq" id="eq-mediana-ekwiwariancja">\[ \operatorname{med}\big(g(x)\big) = g\big(\operatorname{med}(x)\big) . \]</div>
+<p>Asymptotyczny rozkład mediany z próby (i.i.d., \(f(m)\gt0\)):</p>
+<div class="ml-eq" id="eq-mediana-asymptotyka">\[ \sqrt{n}\,\big(\operatorname{med}(X_1,\dots,X_n) - m\big) \xrightarrow{d} N\!\Big(0,\ \frac{1}{4f(m)^2}\Big) . \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-mediana-l1"><p class="ml-box-title">Twierdzenie (mediana minimalizuje sumę wartości bezwzględnych)</p>
+<p>Dla dowolnych \(x_1,\dots,x_n\) zbiór minimów funkcji \(L(c)=\sum_i|x_i-c|\) jest równy: \(\{x_{(m+1)}\}\) dla \(n=2m+1\), oraz odcinkowi \([x_{(m)},x_{(m+1)}]\) dla \(n=2m\). W szczególności mediana z próby <a class="ml-eqref" href="#eq-mediana"></a> zawsze minimalizuje \(L\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-mediana-populacja"><p class="ml-box-title">Twierdzenie (wersja populacyjna)</p>
+<p>Jeżeli \(E|X|\lt\infty\), to \(c\mapsto E|X-c|\) jest skończona i wypukła, a każda mediana \(m\) rozkładu \(X\) jest jej punktem minimum.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-mediana-odpornosc"><p class="ml-box-title">Twierdzenie (punkt załamania)</p>
+<p>Mediana z próby ma skończeniepróbkowy punkt załamania \(\varepsilon^*=\lfloor (n+1)/2\rfloor/n\to 1/2\): aby przesunąć ją dowolnie daleko, trzeba zmienić co najmniej połowę obserwacji. Średnia arytmetyczna ma \(\varepsilon^*=1/n\).</p>
+</div>
+<div class="ml-box ml-note"><p>Z <a class="ml-eqref" href="#eq-mediana-asymptotyka"></a> dla rozkładu normalnego \(N(\mu,\sigma^2)\) mamy \(f(m)=1/(\sigma\sqrt{2\pi})\), więc wariancja asymptotyczna mediany wynosi \(\pi\sigma^2/(2n)\approx1{,}571\,\sigma^2/n\). Przy danych normalnych mediana potrzebuje ok. 57% więcej obserwacji niż średnia, by osiągnąć tę samą precyzję (efektywność względna \(2/\pi\approx0{,}64\)). Przy rozkładach o grubych ogonach relacja się odwraca.</p></div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-l1-pary">Minimalizacja sumy wartości bezwzględnych — dowód przez pary</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Ponieważ \(L\) nie zależy od kolejności sumowania, piszemy \(L(c)=\sum_k|x_{(k)}-c|\). Łączymy w pary skrajne statystyki pozycyjne: \(x_{(k)}\) z \(x_{(n+1-k)}\) dla \(k=1,\dots,\lfloor n/2\rfloor\). Z nierówności trójkąta, dla \(a\le b\):</p>
+\[ |a-c|+|b-c| \ \ge\ |(b-c)-(a-c)| = b-a , \]
+<p>z równością wtedy i tylko wtedy, gdy \(c\in[a,b]\). Stąd</p>
+\[ L(c) \ \ge\ \sum_{k=1}^{\lfloor n/2\rfloor}\big(x_{(n+1-k)}-x_{(k)}\big) + \underbrace{|x_{(m+1)}-c|}_{\text{tylko dla } n=2m+1} . \]
+<p>Prawa strona nie zależy od \(c\) (poza ostatnim składnikiem dla \(n\) nieparzystego). Równość zachodzi, gdy \(c\) należy do wszystkich odcinków \([x_{(k)},x_{(n+1-k)}]\) jednocześnie. Odcinki te są zstępujące (każdy następny zawiera się w poprzednim), więc ich część wspólna to najwęższy z nich:</p>
+<ul>
+<li>dla \(n=2m\): \([x_{(m)},x_{(m+1)}]\) — każdy jego punkt realizuje minimum;</li>
+<li>dla \(n=2m+1\): \([x_{(m)},x_{(m+2)}]\), a dodatkowo składnik \(|x_{(m+1)}-c|\) jest minimalny (równy 0) tylko dla \(c=x_{(m+1)}\), który do tego odcinka należy.</li>
+</ul>
+<p>W obu przypadkach minimum osiąga mediana <a class="ml-eqref" href="#eq-mediana"></a>.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-l1-pochodna">Ten sam wynik z rachunku różniczkowego</h3>
+<p>Funkcja \(L\) jest ciągła, wypukła i kawałkami liniowa, z załamaniami w punktach danych. Na przedziale bez punktów danych \(\frac{d}{dc}|x_i-c|\) równa się \(-1\) dla \(x_i\gt c\) i \(+1\) dla \(x_i\lt c\), co daje <a class="ml-eqref" href="#eq-mediana-pochodna"></a>. Pochodna jest niemalejąca: ujemna, dopóki poniżej \(c\) leży mniej niż połowa obserwacji, i dodatnia, gdy więcej niż połowa. Funkcja wypukła osiąga minimum tam, gdzie pochodna zmienia znak — czyli w medianie.</p>
+
+<h3 id="dowod-l1-populacja">Wersja populacyjna</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Skończoność: \(E|X-c|\le E|X|+|c|\lt\infty\). Wypukłość wynika z wypukłości \(c\mapsto|x-c|\) i liniowości wartości oczekiwanej. Niech \(m\) będzie medianą i \(c\gt m\). Dla każdego \(x\) zachodzi \(|x-c|-|x-m|=\int_m^c \operatorname{sgn}(t-x)\,dt\), bo \(\frac{d}{dt}|x-t|=\operatorname{sgn}(t-x)\) poza punktem \(t=x\). Funkcja podcałkowa jest ograniczona, więc z twierdzenia Fubiniego</p>
+\[ \begin{aligned}
+E|X-c|-E|X-m| &amp;= \int_m^c \big(P(X\lt t)-P(X\gt t)\big)\,dt \\
+&amp;= \int_m^c \big(2F(t)-1\big)\,dt \ \ge\ 0 ,
+\end{aligned} \]
+<p>gdzie wykorzystaliśmy, że \(P(X=t)\gt0\) najwyżej dla przeliczalnie wielu \(t\) (zbiór miary zero), oraz \(F(t)\ge F(m)\ge\frac12\) dla \(t\ge m\). Dla \(c\lt m\) analogicznie</p>
+\[ E|X-c|-E|X-m| = \int_c^m \big(P(X\gt t)-P(X\lt t)\big)\,dt \ \ge\ 0, \]
+<p>bo dla \(t\lt m\): \(P(X\lt t)\le P(X\lt m)=1-P(X\ge m)\le\frac12\) i \(P(X\gt t)\ge P(X\ge m)\ge\frac12\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-ekwiwariancja">Ekwiwariancja względem przekształceń monotonicznych</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla próby i niemalejącej \(g\): uporządkowanie \(g(x_{(1)})\le\dots\le g(x_{(n)})\) jest uporządkowaniem przekształconych danych, więc dla \(n=2m+1\) środkowa wartość to \(g(x_{(m+1)})\). Dla rozkładu i ściśle rosnącej \(g\): \(\{g(X)\le g(m)\}=\{X\le m\}\) oraz \(\{g(X)\ge g(m)\}=\{X\ge m\}\), więc \(g(m)\) spełnia <a class="ml-eqref" href="#eq-mediana-rozklad"></a> dla \(g(X)\). Dla \(n\) parzystego równość na ogół nie zachodzi, bo \(g\big(\frac{a+b}{2}\big)\ne\frac{g(a)+g(b)}{2}\) dla nieliniowej \(g\).</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p>Frekwencja w dziesięciu meczach domowych klubu Superligi, w tym jedne derby (dane ilustracyjne), po uporządkowaniu:</p>
+<table class="ml-table">
+<thead><tr><th>\(k\)</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th></tr></thead>
+<tbody><tr><td>\(x_{(k)}\)</td><td>980</td><td>1080</td><td>1120</td><td>1150</td><td>1190</td><td>1210</td><td>1250</td><td>1320</td><td>1400</td><td>2950</td></tr></tbody>
+</table>
+<ol class="ml-steps">
+<li>\(n=10\) jest parzyste, więc mediana to średnia piątej i szóstej wartości: \(\operatorname{med}=(1190+1210)/2=1200\).</li>
+<li>Średnia arytmetyczna: suma \(=13\,650\), \(\bar x=1365\). Derby podnoszą średnią o 165 widzów ponad medianę; bez derbów (9 meczów) średnia wynosi \(10\,700/9\approx1188{,}9\), a mediana \(1190\).</li>
+<li>Suma odchyleń bezwzględnych od mediany: \(L(1200)=220+120+80+50+10+10+50+120+200+1750=2610\).</li>
+<li>Od średniej: \(L(1365)=385+285+245+215+175+155+115+45+35+1585=3240\gt2610\).</li>
+<li>Niejednoznaczność dla \(n\) parzystego: \(L(1190)=L(1210)=2610\) — każdy punkt odcinka \([1190;\,1210]\) minimalizuje \(L\), zgodnie z twierdzeniem.</li>
+<li>Odporność: zastąpienie 2950 przez 29 500 nie zmienia mediany (1200), a średnia wzrosłaby do \((13\,650-2950+29\,500)/10=4020\).</li>
+</ol>
+<div class="ml-plot" data-plot="negbinomial" data-params='{"mu": 1200, "kappa": 3}'></div>
+<p>Rozkład ujemny dwumianowy o średniej 1200 i małym \(\kappa\) jest prawostronnie skośny: jego mediana leży wyraźnie poniżej średniej. Zwiększając \(\kappa\), zobaczysz, jak rozkład staje się bardziej symetryczny, a mediana zbliża się do średniej.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li>Mediana 1200 oznacza, że w połowie meczów było co najwyżej 1200 widzów, a w połowie co najmniej 1200. To dobra odpowiedź na pytanie o „typowy” mecz.</li>
+<li>Różnica średnia − mediana (\(1365-1200=165\)) sygnalizuje prawostronną skośność lub obecność wartości odstających. Przy symetrycznym rozkładzie obie miary są bliskie.</li>
+<li>Mediana nie przenosi się na sumy: \(10\times1200=12\,000\) nie jest łączną widownią sezonu (13 650). Do planowania przychodów z biletów potrzebna jest średnia.</li>
+<li>Mediana rozkładu predykcyjnego to prognoza, która z prawdopodobieństwem 50% zostanie przekroczona — intuicyjny „środek” prognozy.</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<ul>
+<li><strong>Raportowanie IAF.</strong> W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> indeks IAF jest liczony dla każdej próbki z rozkładu posterior, a jako wartość punktową raportujemy <em>medianę</em> tych próbek, obok 95% <a data-concept="przedzial-wiarygodnosci">przedziału wiarygodności</a> i \(P(\mathrm{IAF}\gt100)\). Mediana jest odporna na nieliczne skrajne próbki i — dzięki ekwiwariancji <a class="ml-eqref" href="#eq-mediana-ekwiwariancja"></a> — spójna między skalami: mediana posterior \(e^{R_j}\) równa się \(e^{\text{mediana } R_j}\), a mediana posterior oczekiwanego wypełnienia \(\operatorname{logit}^{-1}(\eta)\) to \(\operatorname{logit}^{-1}\) mediany \(\eta\). Średnia posterior nie ma tej własności.</li>
+<li><strong>Prognoza punktowa.</strong> Rozkład predykcyjny frekwencji (<a data-concept="rozklad-predykcyjny">rozkład predykcyjny</a>) jest skośny i ograniczony pojemnością hali. Jego mediana minimalizuje oczekiwany błąd bezwzględny, więc jest właściwą prognozą punktową przy ocenie modelu miarą MAE.</li>
+<li><strong>Opis danych.</strong> Mediana frekwencji klubu jest odporna na pojedyncze mecze rekordowe (derby, finały, mecze przeniesione do większej hali) i na błędy w danych — dlatego w raportach opisowych stoi obok średniej.</li>
+<li><strong>Odporna standaryzacja.</strong> Mediana jest środkiem w odpornym z-score opartym na MAD — zob. <a data-concept="standaryzacja" data-anchor="wzory">standaryzacja</a>.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Mniejsza efektywność</strong> przy danych zbliżonych do normalnych: wariancja asymptotyczna \(\pi/2\) razy większa niż średniej.</li>
+<li><strong>Brak addytywności:</strong> mediana sumy nie jest sumą median, a mediana połączonych grup nie wynika z median grup — potrzebne są pełne dane.</li>
+<li><strong>Dane dyskretne i powtórzenia:</strong> przy wielu identycznych wartościach (np. wypełnienie 100% w meczach z kompletem widzów) mediana może „przyklejać się” do jednej wartości i być niewrażliwa na istotne zmiany rozkładu.</li>
+<li><strong>Niejednoznaczność dla \(n\) parzystego</strong> i zależność od konwencji; dla małych prób różne programy mogą raportować różne kwantyle (choć dla mediany większość konwencji się zgadza).</li>
+<li><strong>Ignoruje wielkość odchyleń:</strong> dwa sezony o tej samej medianie mogą mieć zupełnie różne ogony — medianę zawsze uzupełniaj <a data-concept="kwartyle">kwartylami</a> lub <a data-concept="percentyle">percentylami</a>.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="srednia-arytmetyczna">Średnia arytmetyczna</a> — minimalizuje sumę kwadratów, a nie wartości bezwzględnych.</li>
+<li><a data-concept="kwartyle">Kwartyle</a> — mediana to drugi kwartyl \(Q_2\).</li>
+<li><a data-concept="percentyle">Percentyle</a> — mediana to 50. percentyl; definicje kwantyla empirycznego.</li>
+<li><a data-concept="mae">MAE</a> — miara błędu, dla której optymalną prognozą jest mediana.</li>
+<li><a data-concept="przedzial-wiarygodnosci">Przedział wiarygodności</a> — mediana posterior jako środek przedziału kwantylowego.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="openintro2019"></li>
+<li data-bib="hyndmanfan1996"></li>
+<li data-bib="tukey1977"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="rousseeuw1993"></li>
+</ul>
+</section>

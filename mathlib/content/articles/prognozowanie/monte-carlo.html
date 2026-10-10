@@ -1,0 +1,160 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Jakie jest prawdopodobieństwo, że na sobotni mecz hala na 2000 miejsc zapełni się co najmniej w 90%? Wzór na to prawdopodobieństwo istnieje tylko w teorii: trzeba by scałkować rozkład beta-dwumianowy po wielowymiarowym rozkładzie posterior kilkuset parametrów modelu. Zamiast całkować — <strong>symulujemy</strong>. Rozgrywamy ten mecz w komputerze kilka tysięcy razy, za każdym razem z nieco innym, wiarygodnym w świetle danych zestawem parametrów i z nowym losowaniem kibiców, a potem po prostu liczymy, w jakiej części symulacji wypełnienie przekroczyło 90%.</p>
+<p>To jest <strong>symulacja Monte Carlo w prognozowaniu</strong> (ang. <em>Monte Carlo simulation</em>): zastępujemy obliczenia analityczne losowaniem z rozkładu predykcyjnego, a prawdopodobieństwa, średnie i kwantyle odczytujemy jako częstości, średnie i kwantyle próbkowe. Prawo wielkich liczb gwarantuje, że przy rosnącej liczbie symulacji wyniki zbiegają do wartości dokładnych, a centralne twierdzenie graniczne mówi, jak szybko <cite data-bib="robert2004"></cite>.</p>
+<p>W modelu bayesowskim symulacja jest szczególnie naturalna, bo <a data-concept="mcmc">MCMC</a> i tak dostarcza próbki z posterior. Wystarczy do każdej z nich „dorobić” jeden przyszły mecz. Jeżeli mecz odbędzie się w sezonie, którego model jeszcze nie widział, trzeba wylosować także nowy efekt sezonu — inaczej prognoza byłaby zbyt pewna siebie <cite data-bib="gelman2013bda"></cite>. Ogólne podstawy metod Monte Carlo (całkowanie, losowanie z rozkładów) opisuje artykuł <a data-concept="metody-monte-carlo">Metody Monte Carlo</a>; tutaj skupiamy się na ich użyciu do prognozy.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \( \theta^{(1)},\dots,\theta^{(S)} \) będą próbkami z rozkładu posterior \( p(\theta\mid D) \), a \( p(\tilde y\mid\theta,x) \) — rozkładem przyszłej obserwacji przy warunkach meczu \( x \). Niech \( B\subset\mathbb{R} \) będzie zdarzeniem interesującym (np. \( \{W\ge0{,}9\} \)), a \( g \) — funkcją przyszłej obserwacji, której wartość oczekiwaną chcemy znać.</p>
+<div class="ml-box ml-def" id="def-symulacja-predykcyjna"><p class="ml-box-title">Definicja (symulacja predykcyjna)</p>
+<p><strong>Symulacją predykcyjną</strong> nazywamy procedurę, która dla każdego \( s=1,\dots,S \) losuje \( \tilde y^{(s)}\sim p(\tilde y\mid\theta^{(s)},x) \) niezależnie od pozostałych losowań (warunkowo względem \( \theta^{(s)} \)). Ciąg \( \tilde y^{(1)},\dots,\tilde y^{(S)} \) jest próbą z rozkładu predykcyjnego \( p(\tilde y\mid D,x) \).</p>
+</div>
+<div class="ml-box ml-def" id="def-estymator-mc"><p class="ml-box-title">Definicja (estymatory Monte Carlo)</p>
+<p>Prawdopodobieństwo \( p_B=P(\tilde y\in B\mid D) \) estymujemy częstością</p>
+<div class="ml-eq" id="eq-monte-carlo">\[ \hat p_B \;=\; \frac1S\sum_{s=1}^S \mathbf 1\bigl\{\tilde y^{(s)}\in B\bigr\}, \]</div>
+<p>a wartość oczekiwaną \( \mathbb{E}(g(\tilde y)\mid D) \) — średnią \( \frac1S\sum_s g(\tilde y^{(s)}) \). <strong>Błędem standardowym Monte Carlo</strong> (MCSE) nazywamy odchylenie standardowe estymatora wynikające wyłącznie ze skończonej liczby symulacji.</p>
+</div>
+<div class="ml-box ml-def" id="def-estymator-warunkowy"><p class="ml-box-title">Definicja (estymator warunkowy, Rao–Blackwella)</p>
+<p>Jeżeli \( P(\tilde y\in B\mid\theta) \) daje się obliczyć dokładnie, to <strong>estymatorem warunkowym</strong> nazywamy \( \hat p_B^{\mathrm{RB}}=\frac1S\sum_{s=1}^S P\bigl(\tilde y\in B\mid\theta^{(s)}\bigr) \).</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( \theta^{(s)} \)</td><td>\( s \)-ta próbka parametrów z posterior</td></tr>
+<tr><td>\( S \)</td><td>liczba symulacji (próbek)</td></tr>
+<tr><td>\( \tilde y^{(s)} \)</td><td>\( s \)-ta symulowana przyszła obserwacja</td></tr>
+<tr><td>\( B \)</td><td>zdarzenie, którego prawdopodobieństwo szacujemy</td></tr>
+<tr><td>\( p_B,\ \hat p_B \)</td><td>prawdopodobieństwo zdarzenia i jego estymator (częstość)</td></tr>
+<tr><td>\( \hat p_B^{\mathrm{RB}} \)</td><td>estymator warunkowy (Rao–Blackwella)</td></tr>
+<tr><td>\( \mathrm{MCSE} \)</td><td>błąd standardowy Monte Carlo</td></tr>
+<tr><td>\( A,\ C,\ W \)</td><td>liczba widzów, pojemność hali, wypełnienie \( A/C \)</td></tr>
+<tr><td>\( \eta,\ \mu,\ \phi \)</td><td>predyktor liniowy, średnie wypełnienie \( \operatorname{logit}^{-1}(\eta) \), precyzja</td></tr>
+<tr><td>\( \kappa \)</td><td>parametr rozproszenia rozkładu ujemnego dwumianowego</td></tr>
+<tr><td>\( S_{\mathrm{new}},\ \sigma_S,\ z \)</td><td>efekt nowego sezonu, jego odchylenie, zmienna \( N(0,1) \)</td></tr>
+<tr><td>\( \varepsilon,\ \gamma \)</td><td>żądana dokładność i poziom ufności przy doborze \( S \)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li><strong>Próbki z posterior.</strong> \( \theta^{(s)} \) pochodzą z rozkładu posterior: łańcuchy MCMC zbiegły (R-hat &lt; 1,01, brak dywergencji), a zależność próbek jest uwzględniona przez ESS.</li>
+<li><strong>Poprawny model obserwacji.</strong> Losujemy z tego samego rozkładu, który wystąpił w funkcji wiarygodności (beta-dwumianowy lub ujemny dwumianowy), z tymi samymi parametrami precyzji.</li>
+<li><strong>Kompletna hierarchia.</strong> Dla poziomów, których model nie widział (nowy sezon, nowa kombinacja gospodarz×sezon lub rywal×sezon), losujemy nowe efekty z rozkładu populacyjnego \( N(0,\sigma^2) \) przy \( \sigma \) z bieżącej próbki. Dla poziomów obserwowanych używamy oszacowanych efektów.</li>
+<li><strong>Znane warunki meczu</strong> \( x \) (data, godzina, forma i pozycje w tabeli przed meczem) i znana pojemność hali \( C \) w wariancie „wypełnienie”.</li>
+<li><strong>Niezależny generator liczb losowych</strong> o dobrej jakości; dla odtwarzalności ustalamy ziarno.</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p><strong>Algorytm dla jednego meczu \( i \) w wariancie „wypełnienie”</strong> (dla \( s=1,\dots,S \)):</p>
+<div class="ml-eq" id="eq-monte-carlo-algorytm">\[ \begin{aligned} &amp;S_{\mathrm{new}}^{(s)} = \sigma_S^{(s)}\, z^{(s)},\quad z^{(s)}\sim N(0,1) &amp;&amp;\text{(tylko dla przyszłego sezonu)}\\ &amp;\eta_i^{(s)} = \alpha^{(s)} + H^{(s)}_{h} + HS^{(s)}_{h,s} + R^{(s)}_{r} + RS^{(s)}_{r,s} + S^{(s)}_{\mathrm{new}} + L^{(s)}_{l} + x_i^\top\beta^{(s)} \\ &amp;\mu_i^{(s)} = \operatorname{logit}^{-1}\bigl(\eta_i^{(s)}\bigr) \\ &amp;A_i^{(s)} \sim \mathrm{BetaBinomial}\bigl(C_i,\ \mu_i^{(s)}\phi^{(s)},\ (1-\mu_i^{(s)})\phi^{(s)}\bigr),\qquad W_i^{(s)} = A_i^{(s)}/C_i . \end{aligned} \]</div>
+<p>Losowanie z rozkładu beta-dwumianowego realizujemy dwustopniowo: \( p^{(s)}\sim\mathrm{Beta}(\mu\phi,(1-\mu)\phi) \), następnie \( A^{(s)}\sim\mathrm{Bin}(C,p^{(s)}) \). W wariancie „liczba widzów” \( \mu_i^{(s)}=e^{\eta_i^{(s)}} \) i \( A_i^{(s)}\sim\mathrm{NegBin}(\mu_i^{(s)},\kappa^{(s)}) \), realizowane jako \( \lambda\sim\mathrm{Gamma}(\kappa,\kappa/\mu) \), \( A\sim\mathrm{Poisson}(\lambda) \).</p>
+<p><strong>Prawdopodobieństwo progowe</strong> (np. wypełnienie co najmniej 90%):</p>
+<div class="ml-eq" id="eq-monte-carlo-prog">\[ \hat P(W_i\ge0{,}9) = \frac1S\sum_{s=1}^S\mathbf 1\bigl\{A_i^{(s)}\ge\lceil0{,}9\,C_i\rceil\bigr\}. \]</div>
+<p><strong>Błąd standardowy częstości</strong> i <strong>wymagana liczba symulacji</strong> dla dokładności \( \pm\varepsilon \) z ufnością \( \gamma \):</p>
+<div class="ml-eq" id="eq-monte-carlo-mcse">\[ \mathrm{MCSE}(\hat p_B) = \sqrt{\frac{p_B(1-p_B)}{S}}, \qquad S \;\ge\; \frac{z_{(1+\gamma)/2}^2\,p_B(1-p_B)}{\varepsilon^2}\;\le\;\frac{z_{(1+\gamma)/2}^2}{4\varepsilon^2}. \]</div>
+<p>Dla próbek MCMC w miejsce \( S \) wstawiamy ESS estymatora.</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-kompozycja"><p class="ml-box-title">Twierdzenie (metoda kompozycji)</p>
+<p>Jeżeli \( \theta\sim p(\theta\mid D) \), a \( \tilde y\mid\theta\sim p(\tilde y\mid\theta) \), to brzegowo \( \tilde y\sim p(\tilde y\mid D)=\int p(\tilde y\mid\theta)p(\theta\mid D)\,d\theta \). Para \( (\theta^{(s)},\tilde y^{(s)}) \) ma rozkład łączny \( p(\theta,\tilde y\mid D) \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-zbieznosc"><p class="ml-box-title">Twierdzenie (nieobciążoność i zbieżność)</p>
+<p>Dla niezależnych symulacji \( \hat p_B \) jest nieobciążony, \( \operatorname{Var}\hat p_B=p_B(1-p_B)/S \), \( \hat p_B\to p_B \) prawie na pewno (mocne prawo wielkich liczb), a \( \sqrt S(\hat p_B-p_B)\to N(0,p_B(1-p_B)) \) według rozkładu (CTG). Dla ergodycznego łańcucha Markowa zachodzi zbieżność prawie na pewno, a w CTG wariancja asymptotyczna jest równa \( p_B(1-p_B)\tau \), gdzie \( \tau \) jest czasem autokorelacji.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-rb"><p class="ml-box-title">Twierdzenie (Rao–Blackwell dla symulacji)</p>
+<p>Przy niezależnych \( \theta^{(s)} \) estymator \( \hat p_B^{\mathrm{RB}} \) jest nieobciążony i \( \operatorname{Var}\hat p_B^{\mathrm{RB}}\le\operatorname{Var}\hat p_B \), z równością tylko wtedy, gdy \( P(\tilde y\in B\mid\theta)\in\{0,1\} \) prawie na pewno.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-kompozycji">Metoda kompozycji</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Gęstość łączna pary to iloczyn gęstości brzegowej i warunkowej: \( p(\theta,\tilde y)=p(\theta\mid D)\,p(\tilde y\mid\theta) \) — dokładnie tak para jest generowana. Brzegowa \( \tilde y \) powstaje przez wycałkowanie \( \theta \): \( \int p(\theta\mid D)p(\tilde y\mid\theta)\,d\theta=p(\tilde y\mid D) \), co jest definicją <a data-concept="rozklad-predykcyjny">rozkładu predykcyjnego</a> (przy założeniu warunkowej niezależności \( \tilde y \) od \( D \) danego \( \theta \)). Dla przyszłego sezonu w roli \( \theta \) występuje para \( (\theta, S_{\mathrm{new}}) \) z gęstością \( p(\theta\mid D)\,\varphi(S_{\mathrm{new}};0,\sigma_S^2) \) — losując \( S_{\mathrm{new}} \) przy \( \sigma_S=\sigma_S^{(s)} \), stosujemy tę samą zasadę o jeden poziom głębiej.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-zbieznosci">Nieobciążoność i wariancja częstości</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Zmienne \( I_s=\mathbf 1\{\tilde y^{(s)}\in B\} \) są (z twierdzenia o kompozycji) i.i.d. o rozkładzie Bernoulliego z parametrem \( p_B \): \( \mathbb{E}I_s=p_B \), \( \operatorname{Var}I_s=p_B(1-p_B) \). Stąd \( \mathbb{E}\hat p_B=p_B \) i \( \operatorname{Var}\hat p_B=\frac{1}{S^2}\cdot S\,p_B(1-p_B) \). Zbieżność prawie na pewno to mocne prawo wielkich liczb, rozkład graniczny — CTG dla zmiennych o skończonej wariancji. Wymaganą liczbę symulacji dostajemy z warunku \( z_{(1+\gamma)/2}\,\mathrm{MCSE}\le\varepsilon \); ograniczenie z prawej wynika z \( p(1-p)\le\tfrac14 \).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-rb">Mniejsza wariancja estymatora warunkowego</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Niech \( \pi(\theta)=P(\tilde y\in B\mid\theta)=\mathbb{E}(I\mid\theta) \). Z prawa całkowitej wartości oczekiwanej \( \mathbb{E}\pi(\theta)=p_B \), więc \( \hat p_B^{\mathrm{RB}} \) jest nieobciążony. Z prawa całkowitej wariancji: \( \operatorname{Var}I=\mathbb{E}\operatorname{Var}(I\mid\theta)+\operatorname{Var}\pi(\theta)=\mathbb{E}[\pi(\theta)(1-\pi(\theta))]+\operatorname{Var}\pi(\theta)\ge\operatorname{Var}\pi(\theta) \), z równością wtedy i tylko wtedy, gdy \( \pi(\theta)(1-\pi(\theta))=0 \) p.n. Dzieląc przez \( S \) otrzymujemy tezę.</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><em>Dane ilustracyjne.</em> Mecz Superligi w nowym sezonie (efekt sezonu nieznany), hala na \( C=2000 \) miejsc, próg \( W\ge0{,}9 \) oznacza \( A\ge1800 \). Pokazujemy 8 symulacji (w praktyce \( S=4000 \)). Kolumna \( \eta \) zawiera predyktor bez efektu sezonu (suma pozostałych składników dla danej próbki posterior).</p>
+<table class="ml-table">
+<thead><tr><th>\( s \)</th><th>\( \eta \) bez \( S \)</th><th>\( \sigma_S \)</th><th>\( z \)</th><th>\( S_{\mathrm{new}} \)</th><th>\( \eta \)</th><th>\( \mu \)</th><th>\( \phi \)</th><th>\( A \)</th><th>\( W \)</th><th>\( W\ge0{,}9 \)</th><th>\( P(W\ge0{,}9\mid\theta) \)</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>1,20</td><td>0,30</td><td>0,4</td><td>0,120</td><td>1,320</td><td>0,7892</td><td>35</td><td>1297</td><td>0,649</td><td>0</td><td>0,035</td></tr>
+<tr><td>2</td><td>1,45</td><td>0,25</td><td>−1,1</td><td>−0,275</td><td>1,175</td><td>0,7640</td><td>40</td><td>1659</td><td>0,830</td><td>0</td><td>0,009</td></tr>
+<tr><td>3</td><td>1,05</td><td>0,35</td><td>0,9</td><td>0,315</td><td>1,365</td><td>0,7966</td><td>28</td><td>1775</td><td>0,888</td><td>0</td><td>0,067</td></tr>
+<tr><td>4</td><td>1,60</td><td>0,28</td><td>0,6</td><td>0,168</td><td>1,768</td><td>0,8542</td><td>45</td><td>1792</td><td>0,896</td><td>0</td><td>0,200</td></tr>
+<tr><td>5</td><td>1,30</td><td>0,32</td><td>−0,3</td><td>−0,096</td><td>1,204</td><td>0,7692</td><td>32</td><td>1633</td><td>0,817</td><td>0</td><td>0,021</td></tr>
+<tr><td>6</td><td>1,15</td><td>0,27</td><td>1,5</td><td>0,405</td><td>1,555</td><td>0,8256</td><td>38</td><td>1813</td><td>0,907</td><td>1</td><td>0,102</td></tr>
+<tr><td>7</td><td>1,50</td><td>0,30</td><td>−0,7</td><td>−0,210</td><td>1,290</td><td>0,7841</td><td>30</td><td>1736</td><td>0,868</td><td>0</td><td>0,041</td></tr>
+<tr><td>8</td><td>1,35</td><td>0,26</td><td>0,2</td><td>0,052</td><td>1,402</td><td>0,8025</td><td>42</td><td>1645</td><td>0,823</td><td>0</td><td>0,039</td></tr>
+</tbody>
+</table>
+<ol class="ml-steps">
+<li><strong>Nowy efekt sezonu.</strong> Dla \( s=1 \): \( S_{\mathrm{new}}=0{,}30\cdot0{,}4=0{,}120 \), więc \( \eta=1{,}20+0{,}12=1{,}320 \). Analogicznie w pozostałych wierszach, np. \( s=2 \): \( 0{,}25\cdot(-1{,}1)=-0{,}275 \), \( \eta=1{,}175 \).</li>
+<li><strong>Średnie wypełnienie.</strong> \( \mu=\operatorname{logit}^{-1}(1{,}320)=1/(1+e^{-1{,}32})=1/(1+0{,}2671)=0{,}7892 \).</li>
+<li><strong>Losowanie widzów.</strong> Z \( \mathrm{BetaBinomial}(2000;\ 0{,}7892\cdot35;\ 0{,}2108\cdot35)=\mathrm{BetaBinomial}(2000;\ 27{,}62;\ 7{,}38) \) wylosowano \( A=1297 \), czyli \( W=0{,}6485 \). Wynik daleko poniżej średniej (1578) pokazuje skalę losowości pojedynczego meczu.</li>
+<li><strong>Częstość.</strong> Próg przekroczono tylko w symulacji 6 (\( A=1813 \)): \( \hat p=1/8=0{,}125 \). \( \mathrm{MCSE}\approx\sqrt{0{,}125\cdot0{,}875/8}=\sqrt{0{,}01367}\approx0{,}117 \) — przy 8 symulacjach wynik jest niemal bezwartościowy.</li>
+<li><strong>Estymator warunkowy.</strong> Ostatnia kolumna to dokładne \( P(A\ge1800\mid\theta^{(s)}) \) z rozkładu beta-dwumianowego. Średnia: \( (0{,}035+0{,}009+0{,}067+0{,}200+0{,}021+0{,}102+0{,}041+0{,}039)/8=0{,}514/8\approx0{,}064 \). Już przy 8 próbkach jest to rozsądne oszacowanie, bo usunęliśmy losowość ostatniego kroku.</li>
+<li><strong>Pełna symulacja.</strong> Dla \( S=4000 \) próbek z tego samego, ilustracyjnego posterior otrzymano \( \hat p\approx0{,}070 \) z \( \mathrm{MCSE}=\sqrt{0{,}07\cdot0{,}93/4000}\approx0{,}004 \); przedział predykcyjny 80% liczby widzów to ok. [1320; 1776], a mediana ok. 1584.</li>
+<li><strong>Ile symulacji?</strong> Aby oszacować \( p\approx0{,}065 \) z dokładnością \( \pm0{,}01 \) przy ufności 95%: \( S\ge1{,}96^2\cdot0{,}065\cdot0{,}935/0{,}01^2=3{,}8416\cdot0{,}060775/0{,}0001\approx2335 \). W najgorszym przypadku (\( p=0{,}5 \)): \( 3{,}8416/(4\cdot0{,}0001)\approx9604 \).</li>
+</ol>
+<div class="ml-plot" data-plot="betabinomial" data-params='{"n": 2000, "a": 31.4, "b": 6.6}'></div>
+<p>Rozkład liczby widzów dla próbki \( s=6 \) (\( \mu\approx0{,}826 \), \( \phi=38 \)): masa powyżej 1800 to ok. 10%. Przesuwaj \( a \) przy stałym \( a+b \), aby zobaczyć, jak szybko rośnie prawdopodobieństwo przekroczenia progu, gdy średnie wypełnienie zbliża się do 0,9.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Wynik \( P(W\ge0{,}9)\approx0{,}07 \) oznacza: w świetle danych i modelu mniej więcej jeden na czternaście „możliwych przebiegów” tego meczu kończy się wypełnieniem hali co najmniej w 90%. Ta liczba obejmuje trzy źródła niepewności naraz: niepewność parametrów (różne \( \theta^{(s)} \)), niepewność co do nowego sezonu (\( S_{\mathrm{new}} \)) i losowość samego meczu (losowanie \( A \)). Pominięcie \( S_{\mathrm{new}} \) zawęziłoby rozkład i — przy średniej poniżej progu — zaniżyłoby prawdopodobieństwo przekroczenia.</p>
+<p>Błąd Monte Carlo trzeba odróżniać od niepewności prognozy. MCSE 0,004 mówi, że gdybyśmy powtórzyli symulację z innym ziarnem, otrzymalibyśmy wynik w okolicach 0,066–0,074; nie mówi nic o tym, czy model jest trafny. Tę drugą kwestię rozstrzyga <a data-concept="kalibracja-prawdopodobienstw">kalibracja</a>: spośród meczów z prognozą ok. 7% powinno się wypełnić ok. 7%.</p>
+<p>Częstość 0 w skończonej symulacji nie oznacza zdarzenia niemożliwego, tylko \( p\lesssim 3/S \) (tzw. reguła trzech dla 95% ufności); w raportach podajemy wtedy „&lt; 0,1%”, a nie „0%”.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> symulacja Monte Carlo jest mechanizmem, który zamienia posterior w prognozę meczu. Dla każdego zaplanowanego meczu i każdej z 4000 próbek (4 łańcuchy NUTS) obliczamy predyktor według <a class="ml-eqref" href="#eq-monte-carlo-algorytm"></a>; jeżeli mecz należy do sezonu jeszcze nieobecnego w danych, losujemy nowy efekt sezonu \( S_{\mathrm{new}}=\sigma_Sz \), a dla nowych kombinacji gospodarz×sezon i rywal×sezon — nowe efekty \( HS \) i \( RS \) z ich rozkładów populacyjnych. Następnie losujemy liczbę widzów z rozkładu beta-dwumianowego (znana pojemność, ok. 55% meczów ZPRP) lub ujemnego dwumianowego (pojemność nieznana, m.in. puchary EHF).</p>
+<p>Z otrzymanych 4000 symulowanych frekwencji odczytujemy: średnią i medianę (<a data-concept="wartosc-oczekiwana-prognozy">wartość oczekiwana prognozy</a>), <a data-concept="przedzialy-predykcyjne">przedziały predykcyjne</a> 50/80/95% oraz prawdopodobieństwa \( P(W\ge0{,}75) \), \( P(W\ge0{,}9) \), \( P(W\ge0{,}95) \) i \( P(W=1) \) jako częstości <a class="ml-eqref" href="#eq-monte-carlo-prog"></a>. Próg \( W=1 \) (komplet) jest dobrze określony właśnie dzięki rozkładowi beta-dwumianowemu, który ma dodatnią masę w punkcie \( A=C \).</p>
+<p>Ten sam schemat służy do sprawdzania modelu: symulując frekwencje meczów <em>historycznych</em>, wykonujemy <a data-concept="posterior-predictive-checks">posterior predictive checks</a>, a symulując mecze sezonu testowego — liczymy PIT i pokrycie przedziałów w <a data-concept="backtesting">walidacji chronologicznej</a>.</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Jakość posterior.</strong> Symulacja dziedziczy wszystkie wady próbek: przy niezbieżnych łańcuchach wyniki są błędne niezależnie od \( S \).</li>
+<li><strong>Zdarzenia rzadkie.</strong> Dla \( p_B \) rzędu 0,001 względny błąd \( \mathrm{MCSE}/p_B\approx1/\sqrt{Sp_B} \) przy \( S=4000 \) wynosi ok. 50%. Pomaga estymator warunkowy lub większe \( S \) (wielokrotne losowanie \( A \) dla każdej próbki).</li>
+<li><strong>Liczba próbek posterior jest ograniczona.</strong> Wielokrotne losowanie obserwacji dla tej samej próbki zmniejsza tylko część błędu związaną z losowaniem \( A \); część związana z \( \theta \) zależy od ESS.</li>
+<li><strong>Warunki meczu jako stałe.</strong> Forma i pozycja w tabeli w dniu meczu odległego o kilka kolejek są nieznane; wstawienie bieżących wartości zaniża niepewność. Pełniejsze podejście symuluje także przebieg wcześniejszych kolejek.</li>
+<li><strong>Wspólne parametry.</strong> Symulacje różnych meczów z tą samą próbką \( \theta^{(s)} \) są skorelowane — to poprawne i konieczne przy agregacji (np. łączna frekwencja kolejki), ale wymaga, by do sumowania brać próbki o tym samym indeksie \( s \).</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="metody-monte-carlo">Metody Monte Carlo</a> — podstawy całkowania i losowania.</li>
+<li><a data-concept="rozklad-predykcyjny">Rozkład predykcyjny</a> — z czego losujemy.</li>
+<li><a data-concept="przedzialy-predykcyjne">Przedziały predykcyjne</a> — kwantyle z symulacji.</li>
+<li><a data-concept="rozklad-beta-dwumianowy">Rozkład beta-dwumianowy</a> — model liczby widzów przy znanej pojemności.</li>
+<li><a data-concept="mcmc">MCMC i Hamiltonian Monte Carlo</a> — skąd biorą się próbki posterior.</li>
+<li><a data-concept="effective-sample-size">ESS</a> — efektywna liczba symulacji.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="robert2004"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="geyer1992"></li>
+<li data-bib="gelmanhill2007"></li>
+</ul>
+</section>

@@ -1,0 +1,165 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Frekwencja na meczu piłki ręcznej zależy jednocześnie od wielu „tożsamości”: kto gra u siebie, kto przyjeżdża, w którym sezonie, w jakich rozgrywkach — oraz od warunków konkretnego dnia (weekend, godzina, forma drużyn). Każda tożsamość tworzy grupę meczów, a grupy się krzyżują: mecz gospodarza X z rywalem Y w sezonie 2024/25 należy jednocześnie do grupy gospodarza, rywala, sezonu i ligi.</p>
+<p>Regresja hierarchiczna (ang. <em>hierarchical / multilevel regression</em>) to <a data-concept="uogolnione-modele-liniowe">uogólniony model liniowy</a>, w którym współczynniki grup są <a data-concept="efekty-stale-i-losowe">efektami losowymi</a>: pochodzą z rozkładów populacji, których rozrzuty estymujemy razem z resztą modelu. Powstaje kilka poziomów: obserwacja (mecz) → predyktor liniowy → efekty grup → hiperparametry. Informacja przepływa w obie strony: dane każdego klubu informują o rozrzucie klubów, a ten rozrzut z kolei decyduje, jak bardzo ufać danym pojedynczego klubu (<a data-concept="partial-pooling">częściowe łączenie</a>).</p>
+<p>W tym artykule opisujemy pełny model frekwencji MAF jako konkretny przykład regresji hierarchicznej z efektami skrzyżowanymi (ang. <em>crossed random effects</em>) i zagnieżdżonymi interakcjami.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-regresja-hierarchiczna"><p class="ml-box-title">Definicja</p>
+<p>Niech obserwacje \( y_i \), \( i=1,\dots,n \), będą przypisane do grup w \( K \) czynnikach grupujących przez odwzorowania \( g_k:\{1,\dots,n\}\to\{1,\dots,J_k\} \). <strong>Hierarchicznym uogólnionym modelem liniowym</strong> nazywamy model</p>
+<div class="ml-eq" id="eq-regresja-hierarchiczna">\[ \begin{aligned} y_i \mid \eta_i,\psi &amp;\sim F\bigl(g^{-1}(\eta_i),\ \psi\bigr), \\ \eta_i &amp;= \alpha + \sum_{k=1}^K u^{(k)}_{g_k(i)} + x_i^\top\beta, \\ u^{(k)}_j \mid \sigma_k &amp;\overset{\text{iid}}{\sim} N(0,\sigma_k^2), \quad j=1,\dots,J_k, \\ (\alpha,\beta,\psi,\sigma_1,\dots,\sigma_K) &amp;\sim p(\cdot), \end{aligned} \]</div>
+<p>gdzie \( F \) jest rodziną rozkładów obserwacji o średniej \( g^{-1}(\eta_i) \) i parametrze dodatkowym \( \psi \) (dyspersja/precyzja), \( g \) — funkcją łączącą, \( u^{(k)} \) — efektami losowymi czynnika \( k \), a \( p(\cdot) \) — rozkładem a priori parametrów najwyższego poziomu (<a data-concept="hiperpriory">hiperpriory</a>). Obserwacje są warunkowo niezależne przy danych \( \eta \) i \( \psi \).</p>
+</div>
+<p>Czynniki są <em>zagnieżdżone</em>, gdy każdy poziom jednego należy do dokładnie jednego poziomu drugiego (np. gospodarz×sezon w gospodarzu), i <em>skrzyżowane</em>, gdy kombinacje są dowolne (gospodarz i rywal).</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( i \)</td><td>indeks meczu</td></tr>
+<tr><td>\( A_i,\ C_i,\ W_i \)</td><td>liczba widzów, pojemność hali, wypełnienie \( A_i/C_i \)</td></tr>
+<tr><td>\( h(i),\ r(i),\ s(i),\ l(i) \)</td><td>gospodarz, rywal (przyjezdny), sezon i rozgrywki meczu \( i \)</td></tr>
+<tr><td>\( \eta_i \)</td><td>predyktor liniowy</td></tr>
+<tr><td>\( \mu_i \)</td><td>oczekiwane wypełnienie (wariant logit) lub oczekiwana liczba widzów (wariant log)</td></tr>
+<tr><td>\( \alpha \)</td><td>wyraz wolny (poziom bazowy)</td></tr>
+<tr><td>\( H_h,\ HS_{h,s} \)</td><td>efekt gospodarza i interakcja gospodarz×sezon</td></tr>
+<tr><td>\( R_r,\ RS_{r,s} \)</td><td>efekt rywala i interakcja rywal×sezon</td></tr>
+<tr><td>\( S_s,\ L_l \)</td><td>efekt sezonu i efekt rozgrywek</td></tr>
+<tr><td>\( x_i,\ \beta \)</td><td>standaryzowane kowariaty warunków meczu i ich współczynniki</td></tr>
+<tr><td>\( \sigma_H,\sigma_{HS},\sigma_R,\sigma_{RS},\sigma_S,\sigma_L \)</td><td>odchylenia standardowe efektów losowych</td></tr>
+<tr><td>\( z \)</td><td>standaryzowane zmienne pomocnicze parametryzacji niecentrowanej</td></tr>
+<tr><td>\( \phi \)</td><td>precyzja rozkładu beta-dwumianowego</td></tr>
+<tr><td>\( \kappa \)</td><td>parametr kształtu rozkładu ujemnego dwumianowego</td></tr>
+<tr><td>\( \Theta \)</td><td>wektor wszystkich parametrów modelu</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li><strong>Warunkowa niezależność meczów</strong> przy danych efektach i kowariatach. Zależności czasowe ponad sezonowe (np. trend w trakcie sezonu) muszą być przechwycone przez kowariaty, inaczej trafią do reszt.</li>
+<li><strong>Wymienialność</strong> poziomów w każdym czynniku (klubów jako gospodarzy, klubów jako rywali, sezonów, rozgrywek) — uzasadnia wspólny rozkład normalny efektów.</li>
+<li><strong>Addytywność na skali łącza</strong> — efekty gospodarza i rywala sumują się na skali logit/log (bez interakcji gospodarz×rywal).</li>
+<li><strong>Niezależność bloków efektów</strong> — np. \( H_j \) i \( R_j \) tego samego klubu są a priori niezależne (model nie wymusza, by atrakcyjny gospodarz był atrakcyjnym gościem).</li>
+<li><strong>Brakujące dane losowe względem modelu:</strong> mecze z nieznaną frekwencją (NULL) pomijamy — brak wpisu nie oznacza 0 widzów; zakładamy, że braki nie zależą od samej frekwencji przy danych kowariatach.</li>
+<li><strong>Poprawna pojemność</strong> \( C_i \) w wariancie „wypełnienie” — błędna pojemność (np. hala zastępcza) przesuwa wypełnienie.</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<h3 id="wzory-maf">Pełny model MAF</h3>
+<p><strong>Poziom 1 — obserwacja.</strong> Wariant „wypełnienie” (znana pojemność):</p>
+<div class="ml-eq" id="eq-regresja-hierarchiczna-bb">\[ A_i \sim \text{BetaBinomial}\bigl(C_i,\ \mu_i\phi,\ (1-\mu_i)\phi\bigr), \qquad \operatorname{logit}\mu_i = \eta_i. \]</div>
+<p>Wariant „liczba widzów” (pojemność nieznana, m.in. puchary EHF):</p>
+<div class="ml-eq" id="eq-regresja-hierarchiczna-nb">\[ A_i \sim \mathrm{NegBin}(\mu_i,\kappa), \qquad \log\mu_i = \eta_i, \qquad \operatorname{Var}(A_i\mid\mu_i) = \mu_i + \mu_i^2/\kappa. \]</div>
+<p><strong>Poziom 2 — predyktor liniowy:</strong></p>
+<div class="ml-eq" id="eq-regresja-hierarchiczna-eta">\[ \eta_i = \alpha + H_{h(i)} + HS_{h(i),s(i)} + R_{r(i)} + RS_{r(i),s(i)} + S_{s(i)} + L_{l(i)} + x_i^\top\beta. \]</div>
+<p><strong>Poziom 3 — efekty losowe w parametryzacji niecentrowanej</strong> (dla każdego bloku \( B\in\{H,HS,R,RS,S,L\} \)):</p>
+<div class="ml-eq" id="eq-regresja-hierarchiczna-niecentrowana">\[ B_j = \sigma_B\, z^B_j, \qquad z^B_j \overset{\text{iid}}{\sim} N(0,1). \]</div>
+<p><strong>Poziom 4 — hiperpriory i priory:</strong></p>
+<div class="ml-eq" id="eq-regresja-hierarchiczna-priory">\[ \sigma_B \sim \mathrm{Half\text{-}Normal}(0,1), \qquad \beta_k \sim N(0,1), \]</div>
+<p>a \( \alpha \), \( \phi \) i \( \kappa \) mają słabo informacyjne priory na odpowiednich dziedzinach (\( \phi,\kappa\gt0 \)).</p>
+<p><strong>Rozkład a posteriori</strong> (z dokładnością do stałej):</p>
+<div class="ml-eq" id="eq-regresja-hierarchiczna-posterior">\[ p(\Theta\mid A) \propto \prod_{i=1}^n p(A_i\mid\eta_i,\phi)\ \prod_{B}\Bigl[\prod_{j} N(z^B_j\mid0,1)\Bigr]\,p(\sigma_B)\ \prod_k p(\beta_k)\ p(\alpha)\,p(\phi). \]</div>
+<p><strong>Dekompozycja wariancji</strong> predyktora dla nowego meczu (nowe poziomy wszystkich czynników, ustalone \( x \)):</p>
+<div class="ml-eq" id="eq-regresja-hierarchiczna-wariancja">\[ \operatorname{Var}(\eta\mid\sigma) = \sigma_H^2 + \sigma_{HS}^2 + \sigma_R^2 + \sigma_{RS}^2 + \sigma_S^2 + \sigma_L^2, \qquad \rho_B = \frac{\sigma_B^2}{\sum_{B'}\sigma_{B'}^2}. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-niecentrowana"><p class="ml-box-title">Twierdzenie (równoważność parametryzacji)</p>
+<p>Parametryzacja niecentrowana <a class="ml-eqref" href="#eq-regresja-hierarchiczna-niecentrowana"></a> i centrowana \( B_j\mid\sigma_B\sim N(0,\sigma_B^2) \) definiują ten sam łączny rozkład \( (B,\sigma_B,A) \), a więc ten sam rozkład a posteriori efektów i hiperparametrów. Różnią się jedynie geometrią przestrzeni, w której działa sampler <cite data-bib="papaspiliopoulos2007"></cite>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-dekompozycja"><p class="ml-box-title">Twierdzenie (addytywna dekompozycja wariancji)</p>
+<p>Przy a priori niezależnych blokach efektów wariancja predyktora liniowego dla nowego meczu jest sumą wariancji bloków <a class="ml-eqref" href="#eq-regresja-hierarchiczna-wariancja"></a>, a udział \( \rho_B \) mierzy, jaka część zmienności między meczami (na skali łącza) jest przypisana czynnikowi \( B \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-warunkowa-normalnosc"><p class="ml-box-title">Twierdzenie (częściowe łączenie w modelu hierarchicznym)</p>
+<p>W przypadku normalnym z jednym czynnikiem średnia warunkowa efektu grupy przy znanych hiperparametrach jest ważoną średnią informacji z grupy i średniej populacji, z wagą \( \tau^2/(\tau^2+\sigma^2/n_j) \) (dowód: <a data-concept="efekty-stale-i-losowe" data-anchor="wyprowadzenie">efekty stałe i losowe</a>). Przy łączu nieliniowym i wielu czynnikach analogiczne ściąganie zachodzi w przybliżeniu (np. w aproksymacji Laplace’a), z wagami zależnymi od lokalnej informacji Fishera.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="wyprowadzenie-niecentrowana">Równoważność parametryzacji</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Jeśli \( z\sim N(0,1) \) i \( \sigma\gt0 \), to \( B=\sigma z \) ma rozkład \( N(0,\sigma^2) \) (przekształcenie liniowe zmiennej normalnej). Formalnie, zmiana zmiennych \( z\mapsto B=\sigma z \) przy ustalonym \( \sigma \) ma jakobian \( 1/\sigma \): \( p_B(b\mid\sigma) = p_z(b/\sigma)\cdot\frac1\sigma = \frac{1}{\sigma\sqrt{2\pi}}e^{-b^2/(2\sigma^2)} \). Wiarygodność zależy od \( B \) tylko przez \( \eta \), więc łączny rozkład \( (B,\sigma,A) \) jest identyczny w obu zapisach.</p>
+<p class="ml-qed">∎</p></div>
+<p><strong>Dlaczego to ma znaczenie.</strong> W parametryzacji centrowanej, gdy dane o grupach są słabe, posterior ma kształt „lejka”: przy małym \( \sigma_B \) efekty \( B_j \) muszą być bardzo bliskie 0, przy dużym — mogą być rozrzucone. Krzywizna zmienia się o rzędy wielkości, a sampler HMC z jedną długością kroku zgłasza dywergencje. W parametryzacji niecentrowanej \( z_j \) i \( \sigma_B \) są a priori niezależne, a geometria — znacznie bardziej jednorodna <cite data-bib="betancourt2015hier"></cite>.</p>
+
+<h3 id="wyprowadzenie-dekompozycja">Dekompozycja wariancji</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla nowego meczu z nowymi poziomami czynników efekty \( H,HS,R,RS,S,L \) są niezależnymi zmiennymi \( N(0,\sigma_B^2) \) (warunkowo na \( \sigma \)), a \( \alpha \) i \( x^\top\beta \) są ustalone. Wariancja sumy niezależnych zmiennych jest sumą wariancji, a stałe jej nie zmieniają.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-faktoryzacja">Faktoryzacja posterioru</h3>
+<p>Wzór <a class="ml-eqref" href="#eq-regresja-hierarchiczna-posterior"></a> wynika z <a data-concept="twierdzenie-bayesa">twierdzenia Bayesa</a> i struktury grafu: (1) \( A_i \) zależą od parametrów tylko przez \( \eta_i \) i \( \phi \) — warunkowa niezależność daje iloczyn wiarygodności; (2) \( z^B_j \) są a priori niezależne i niezależne od \( \sigma_B \); (3) priory parametrów najwyższego poziomu są niezależne. Iloczyn gęstości warunkowych wzdłuż grafu daje gęstość łączną, proporcjonalną do posterioru.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne</strong> — jedna próbka z rozkładu a posteriori, wariant „wypełnienie”, hala \( C=2500 \).</p>
+<ol class="ml-steps">
+<li>Efekt rywala z parametryzacji niecentrowanej: \( \sigma_R = 0{,}3 \), \( z^R_r \approx 0{,}833 \Rightarrow R_r = 0{,}3\cdot0{,}833 \approx 0{,}25 \). (Rywal z \( z^R = 1{,}2 \) miałby \( R = 0{,}36 \) — „1,2 odchylenia standardowego” ponad przeciętnego rywala.)</li>
+<li>Składniki predyktora: \( \alpha = 0{,}20 \), \( H_h = 0{,}35 \), \( HS_{h,s} = -0{,}05 \), \( R_r = 0{,}25 \), \( RS_{r,s} = 0{,}05 \), \( S_s = 0{,}10 \), \( L_l = 0 \); kowariaty: weekend (\( x=1 \), \( \beta=0{,}15 \)), forma gospodarza (\( x=0{,}8 \) odch. std., \( \beta=0{,}10 \)).</li>
+<li>\( \eta = 0{,}20+0{,}35-0{,}05+0{,}25+0{,}05+0{,}10+0+0{,}15+0{,}08 = 1{,}13 \).</li>
+<li>Oczekiwane wypełnienie: \( \mu = \sigma(1{,}13) = 1/(1+e^{-1{,}13}) \approx 0{,}7558 \).</li>
+<li>Oczekiwana frekwencja: \( 2500\cdot0{,}7558 \approx 1890 \) widzów.</li>
+<li>Rozrzut przy \( \phi=15 \): \( \operatorname{Var}(A) = C\mu(1-\mu)\frac{C+\phi}{1+\phi} = 2500\cdot0{,}7558\cdot0{,}2442\cdot\frac{2515}{16} \approx 72\,521 \); odchylenie ≈ 269 widzów.</li>
+<li>Dekompozycja wariancji dla ilustracyjnych \( \sigma_H=0{,}6 \), \( \sigma_{HS}=0{,}2 \), \( \sigma_R=0{,}3 \), \( \sigma_{RS}=0{,}1 \), \( \sigma_S=0{,}15 \), \( \sigma_L=0{,}25 \): suma kwadratów \( 0{,}36+0{,}04+0{,}09+0{,}01+0{,}0225+0{,}0625 = 0{,}585 \); udziały: gospodarz 61,5%, rywal 15,4%, rozgrywki 10,7%, gospodarz×sezon 6,8%, sezon 3,8%, rywal×sezon 1,7%.</li>
+</ol>
+<div class="ml-plot" data-plot="betabinomial" data-params='{"n": 2500, "a": 11.34, "b": 3.66}'></div>
+<p>Rozkład liczby widzów \( \text{BetaBinomial}(2500,\ 0{,}7558\cdot15,\ 0{,}2442\cdot15) \) dla tej próbki parametrów. Zauważ, że jest wyraźnie lewoskośny i ma niezerowe prawdopodobieństwo kompletu widzów; pełny rozkład predykcyjny uzyskuje się, powtarzając to dla wszystkich próbek posterioru.</p>
+<div class="ml-plot" data-plot="shrinkage" data-params='{"tau": 0.6, "sigma": 0.5}'></div>
+<p>Ściąganie efektów gospodarzy przy \( \sigma_H = 0{,}6 \): przy dużym rozrzucie klubów już kilkanaście meczów daje wagę danych powyżej 0,9.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Każdy składnik \( \eta \) ma osobną interpretację na skali logit: \( H_h = 0{,}35 \) — gospodarz przyciąga więcej niż przeciętny klub (iloraz szans \( e^{0{,}35}\approx1{,}42 \)); \( HS_{h,s} = -0{,}05 \) — w tym sezonie nieco poniżej swojej normy; \( R_r = 0{,}25 \) — atrakcyjny rywal. Odchylenia \( \sigma_B \) mówią, który czynnik „waży” najwięcej: w ilustracji tożsamość gospodarza tłumaczy ponad 60% zmienności między meczami na skali logit, rywal — ok. 15%.</p>
+<p>Wynik raportujemy jako rozkład, nie liczbę: dla każdej próbki posterioru liczymy \( \eta \), \( \mu \), a potem pochodne miary (prognozę, IAF), uzyskując medianę i <a data-concept="przedzial-wiarygodnosci">przedziały wiarygodności</a>.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>Opisany model jest rdzeniem <a data-concept="atrakcyjnosc-frekwencyjna">Modelu Atrakcyjności Frekwencyjnej (MAF)</a>:</p>
+<ul>
+<li><strong>Dane:</strong> polskie ligi ZPRP 2011–2026 (ok. 24 tys. meczów ze znaną frekwencją, pojemność hali znana dla ok. 55%) oraz puchary EHF (ok. 2,8 tys. meczów, bez pojemności). Mecze ze znaną pojemnością trafiają do wariantu beta-dwumianowego, pozostałe — do ujemnego dwumianowego.</li>
+<li><strong>Estymacja:</strong> <a data-concept="mcmc">MCMC</a> algorytmem NUTS <cite data-bib="hoffman2014nuts"></cite>, 4 łańcuchy; diagnostyka: <a data-concept="r-hat">rank-normalized split \( \hat R \)</a> &lt; 1,01, <a data-concept="effective-sample-size">bulk-ESS i tail-ESS</a> ≥ 400, brak dywergencji <cite data-bib="vehtari2021rhat"></cite>. Parametryzacja niecentrowana jest kluczowa dla bloków \( HS \) i \( RS \), w których dane na komórkę są skąpe.</li>
+<li><strong>Indeks IAF:</strong> z efektów \( R_j \) liczony jest indeks atrakcyjności rywala jako iloraz średnich oczekiwanych wypełnień z efektem rywala i bez niego, na populacji referencyjnej meczów — osobno dla każdej próbki posterioru (zob. <a data-concept="identyfikowalnosc-parametrow" data-anchor="twierdzenia">identyfikowalność</a>, gdzie pokazano, dlaczego iloraz jest odporny na przesunięcia stałej).</li>
+<li><strong>Prognoza:</strong> <a data-concept="rozklad-predykcyjny">rozkład predykcyjny</a> — próbki parametrów i losowanie liczby widzów; przedziały 50/80/95% i prawdopodobieństwa wypełnienia ≥ 75/90/95/100%.</li>
+<li><strong>Walidacja:</strong> chronologiczna (trening na wcześniejszych sezonach, test na ostatnim), <a data-concept="mae">MAE</a>, <a data-concept="rmse">RMSE</a>, <a data-concept="pokrycie-przedzialow-predykcyjnych">pokrycie przedziałów</a>, PIT, <a data-concept="diagnostyka-reszt">reszty standaryzowane</a>.</li>
+</ul>
+<p>Podobną strukturę skrzyżowanych efektów „ataku” i „obrony” drużyn stosuje się w modelach wyników sportowych <cite data-bib="baio2010"></cite>.</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Identyfikowalność:</strong> \( \alpha \) i średnie bloków efektów są nierozróżnialne; rozwiązują to priory o średniej 0 i raportowanie wielkości niezmienniczych (<a data-concept="identyfikowalnosc-parametrow">identyfikowalność parametrów</a>).</li>
+<li><strong>Brak interakcji gospodarz×rywal</strong> — derby lokalne mogą mieć efekt niewytłumaczalny sumą \( H+R \); trafia on do reszt.</li>
+<li><strong>Normalność efektów</strong> — kluby o wyjątkowej frekwencji (np. Liga Mistrzów w dużej hali) są ściągane.</li>
+<li><strong>Selekcja danych:</strong> pojemność znana tylko dla części meczów; jeśli braki zależą od klubu, warianty modelu widzą różne populacje.</li>
+<li><strong>Koszt obliczeniowy</strong> — tysiące parametrów; NUTS wymaga starannej parametryzacji i diagnostyki.</li>
+<li><strong>Interpretacja nieprzyczynowa</strong> — efekty opisują wzorce, nie skutki interwencji (np. przeniesienia meczu na weekend).</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="modele-hierarchiczne">Modele hierarchiczne</a> — ujęcie ogólne.</li>
+<li><a data-concept="efekty-stale-i-losowe">Efekty stałe i losowe</a> — kompromis obciążenie–wariancja.</li>
+<li><a data-concept="identyfikowalnosc-parametrow">Identyfikowalność parametrów</a>.</li>
+<li><a data-concept="partial-pooling">Partial pooling</a>, <a data-concept="hiperpriory">hiperpriory</a>.</li>
+<li><a data-concept="rozklad-beta-dwumianowy">Rozkład beta-dwumianowy</a>, <a data-concept="rozklad-ujemny-dwumianowy">rozkład ujemny dwumianowy</a>.</li>
+<li><a data-concept="mcmc">MCMC</a>, <a data-concept="r-hat">R-hat</a>, <a data-concept="effective-sample-size">ESS</a>.</li>
+<li><a data-concept="rozklad-predykcyjny">Rozkład predykcyjny</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelmanhill2007"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="baio2010"></li>
+<li data-bib="papaspiliopoulos2007"></li>
+<li data-bib="betancourt2015hier"></li>
+<li data-bib="hoffman2014nuts"></li>
+<li data-bib="vehtari2021rhat"></li>
+<li data-bib="gelman2006prior"></li>
+</ul>
+</section>

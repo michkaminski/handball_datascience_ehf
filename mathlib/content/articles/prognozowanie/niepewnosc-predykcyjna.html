@@ -1,0 +1,151 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Dlaczego nawet najlepszy model nie przewidzi dokładnie, ilu widzów przyjdzie na mecz? Z dwóch zasadniczo różnych powodów.</p>
+<p>Po pierwsze, <strong>nie znamy dokładnie parametrów</strong>: efekt gospodarza, siła przyciągania rywala czy wpływ meczu w weekend są oszacowane z ograniczonej liczby meczów, więc mamy co do nich niepewność opisaną <a data-concept="rozklad-posterior">rozkładem posterior</a>. Tę niepewność nazywamy <em>epistemiczną</em> (ang. <em>epistemic uncertainty</em>) — wynika z braku wiedzy i maleje, gdy przybywa danych.</p>
+<p>Po drugie, <strong>nawet przy znanych parametrach mecz jest losowy</strong>: pogoda, korki, konkurencyjne wydarzenie w mieście, decyzje tysięcy pojedynczych kibiców. Ta niepewność to <em>aleatoryczna</em> (ang. <em>aleatoric uncertainty</em>) — tkwi w samym zjawisku i nie zniknie, choćbyśmy mieli dane z tysiąca sezonów.</p>
+<p><strong>Niepewność predykcyjna</strong> (ang. <em>predictive uncertainty</em>) to łączny rozrzut przyszłej obserwacji, uwzględniający oba źródła. Matematycznie rozkłada się ona dokładnie na sumę dwóch składników dzięki <a data-concept="prawo-calkowitej-wariancji">prawu całkowitej wariancji</a>: wariancja predykcyjna = średnia wariancja przy ustalonych parametrach + wariancja średnich między próbkami parametrów. Ta dekompozycja mówi, co można poprawić (więcej danych, lepsze zmienne) i czego poprawić się nie da <cite data-bib="gelman2013bda"></cite>. Rzetelna prognoza probabilistyczna musi przy tym być <em>skalibrowana</em> — deklarowana niepewność ma odpowiadać rzeczywistemu rozrzutowi wyników <cite data-bib="gneiting2007calibration"></cite>.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \( \tilde y \) będzie przyszłą obserwacją o rozkładzie warunkowym \( p(\tilde y\mid\theta, x) \), gdzie \( \theta\in\Theta \) są parametrami z rozkładem posterior \( p(\theta\mid D) \), a \( \mathbb{E}(\tilde y^2\mid D)\lt\infty \). Wszystkie momenty poniżej są warunkowe względem danych \( D \) i warunków meczu \( x \), co dla czytelności pomijamy w zapisie.</p>
+<div class="ml-box ml-def" id="def-niepewnosc-predykcyjna"><p class="ml-box-title">Definicja</p>
+<p><strong>Niepewnością predykcyjną</strong> nazywamy rozkład predykcyjny \( p(\tilde y\mid D) \), a jej podstawową miarą liczbową — <strong>wariancję predykcyjną</strong> \( \operatorname{Var}(\tilde y\mid D) \). Rozkłada się ona na składnik <strong>aleatoryczny</strong> \( U_{\mathrm{al}} \) i <strong>epistemiczny</strong> \( U_{\mathrm{ep}} \):</p>
+<div class="ml-eq" id="eq-niepewnosc-predykcyjna">\[ \underbrace{\operatorname{Var}(\tilde y\mid D)}_{\text{predykcyjna}} \;=\; \underbrace{\mathbb{E}_{\theta\mid D}\bigl[\operatorname{Var}(\tilde y\mid\theta)\bigr]}_{U_{\mathrm{al}}\ \text{(aleatoryczna)}} \;+\; \underbrace{\operatorname{Var}_{\theta\mid D}\bigl[\mathbb{E}(\tilde y\mid\theta)\bigr]}_{U_{\mathrm{ep}}\ \text{(epistemiczna)}} . \]</div>
+</div>
+<p>Udział epistemiczny definiujemy jako \( \pi_{\mathrm{ep}} = U_{\mathrm{ep}}/\operatorname{Var}(\tilde y\mid D)\in[0,1] \). Podział zależy od tego, co zaliczymy do \( \theta \): w modelu hierarchicznym nowy, nieobserwowany jeszcze efekt (np. efekt przyszłego sezonu) można traktować jako część losowości zjawiska albo jako dodatkowy parametr — wariancja całkowita jest w obu ujęciach ta sama, zmienia się tylko przypisanie do składników.</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( \tilde y \)</td><td>przyszła obserwacja (liczba widzów lub wypełnienie)</td></tr>
+<tr><td>\( \theta \)</td><td>parametry modelu</td></tr>
+<tr><td>\( D \)</td><td>dane obserwowane</td></tr>
+<tr><td>\( U_{\mathrm{al}} \)</td><td>składnik aleatoryczny: oczekiwana wariancja warunkowa</td></tr>
+<tr><td>\( U_{\mathrm{ep}} \)</td><td>składnik epistemiczny: wariancja średniej warunkowej</td></tr>
+<tr><td>\( \pi_{\mathrm{ep}} \)</td><td>udział składnika epistemicznego w wariancji predykcyjnej</td></tr>
+<tr><td>\( A,\ C,\ W \)</td><td>liczba widzów, pojemność hali, wypełnienie \( A/C \)</td></tr>
+<tr><td>\( \mu \)</td><td>średnia warunkowa: \( \mathbb{E}(A\mid\theta) \) (NegBin) lub \( \mathbb{E}(W\mid\theta) \) (BetaBin)</td></tr>
+<tr><td>\( \kappa \)</td><td>parametr rozproszenia rozkładu ujemnego dwumianowego</td></tr>
+<tr><td>\( \phi \)</td><td>precyzja rozkładu beta-dwumianowego</td></tr>
+<tr><td>\( S_{\mathrm{new}},\ \sigma_S \)</td><td>efekt przyszłego sezonu i jego odchylenie w populacji sezonów</td></tr>
+<tr><td>\( \theta^{(s)},\ S \)</td><td>próbki z posterior i ich liczba</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li><strong>Skończona wariancja</strong> \( \tilde y \) warunkowo względem \( D \) (spełnione dla rozkładów beta-dwumianowego i ujemnego dwumianowego przy dodatnich parametrach).</li>
+<li><strong>Warunkowa niezależność.</strong> Przy ustalonych \( \theta \) przyszła obserwacja jest niezależna od danych historycznych: \( p(\tilde y\mid\theta, D)=p(\tilde y\mid\theta) \). To założenie modelu, nie twierdzenie — zależność czasowa nieobjęta modelem (zob. <a data-concept="autokorelacja">autokorelacja</a>) je narusza.</li>
+<li><strong>Poprawna specyfikacja.</strong> Dekompozycja opisuje niepewność <em>wewnątrz</em> modelu. Niepewność strukturalna (zły wybór rozkładu, brak ważnej zmiennej) nie pojawia się w żadnym składniku i ujawnia się dopiero w walidacji — np. jako zbyt niskie <a data-concept="pokrycie-przedzialow-predykcyjnych">pokrycie przedziałów</a>.</li>
+<li><strong>Dokładność próbek.</strong> Składniki estymujemy z próbek MCMC; błąd Monte Carlo jest pomijalny, gdy ESS jest duże (MAF: ≥ 400).</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p><strong>Wariancja warunkowa w wariancie „liczba widzów”</strong> (rozkład ujemny dwumianowy, \( A\mid\theta\sim\mathrm{NegBin}(\mu,\kappa) \)):</p>
+<div class="ml-eq" id="eq-niepewnosc-predykcyjna-negbin">\[ \mathbb{E}(A\mid\theta)=\mu, \qquad \operatorname{Var}(A\mid\theta) = \mu + \frac{\mu^2}{\kappa}. \]</div>
+<p><strong>Wariancja warunkowa w wariancie „wypełnienie”</strong> (\( A\mid\theta\sim\mathrm{BetaBinomial}(C,\mu\phi,(1-\mu)\phi) \)):</p>
+<div class="ml-eq" id="eq-niepewnosc-predykcyjna-betabin">\[ \mathbb{E}(A\mid\theta)=C\mu, \qquad \operatorname{Var}(A\mid\theta) = C\mu(1-\mu)\,\frac{\phi+C}{\phi+1}. \]</div>
+<p>Czynnik \( (\phi+C)/(\phi+1) \ge 1 \) mierzy nadrozproszenie względem rozkładu dwumianowego \( \mathrm{Bin}(C,\mu) \).</p>
+<p><strong>Estymatory z próbek</strong> \( \theta^{(1)},\dots,\theta^{(S)} \):</p>
+<div class="ml-eq" id="eq-niepewnosc-predykcyjna-estymator">\[ \hat U_{\mathrm{al}} = \frac1S\sum_{s=1}^S v\bigl(\theta^{(s)}\bigr), \qquad \hat U_{\mathrm{ep}} = \frac1S\sum_{s=1}^S\bigl(m(\theta^{(s)})-\bar m\bigr)^2, \qquad \bar m=\frac1S\sum_s m(\theta^{(s)}), \]</div>
+<p>gdzie \( m(\theta)=\mathbb{E}(\tilde y\mid\theta) \), \( v(\theta)=\operatorname{Var}(\tilde y\mid\theta) \).</p>
+<p><strong>Dekompozycja trójpoziomowa</strong> dla meczu w przyszłym sezonie, z efektem \( S_{\mathrm{new}}\mid\theta\sim N(0,\sigma_S^2) \):</p>
+<div class="ml-eq" id="eq-niepewnosc-predykcyjna-trzy">\[ \operatorname{Var}(\tilde y) = \mathbb{E}\bigl[\operatorname{Var}(\tilde y\mid\theta,S_{\mathrm{new}})\bigr] + \mathbb{E}\bigl[\operatorname{Var}\bigl(\mathbb{E}(\tilde y\mid\theta,S_{\mathrm{new}})\bigm|\theta\bigr)\bigr] + \operatorname{Var}\bigl[\mathbb{E}(\tilde y\mid\theta)\bigr]. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-dekompozycja"><p class="ml-box-title">Twierdzenie (dekompozycja wariancji predykcyjnej)</p>
+<p>Przy założeniu \( \mathbb{E}\tilde y^2\lt\infty \) zachodzi równość <a class="ml-eqref" href="#eq-niepewnosc-predykcyjna"></a>, a oba składniki są nieujemne.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-dolne-ograniczenie"><p class="ml-box-title">Twierdzenie (nieusuwalny błąd prognozy)</p>
+<p>Dla dowolnej prognozy punktowej \( a \) zależnej tylko od \( D \): \( \mathbb{E}\bigl[(\tilde y-a)^2\mid D\bigr]\ge\operatorname{Var}(\tilde y\mid D)\ge U_{\mathrm{al}} \). Nawet przy znanych parametrach (\( U_{\mathrm{ep}}=0 \)) oczekiwany błąd kwadratowy najlepszej prognozy wynosi \( \mathbb{E}\operatorname{Var}(\tilde y\mid\theta) \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-mieszanki"><p class="ml-box-title">Twierdzenie (wariancja mieszanek)</p>
+<p>Wzory <a class="ml-eqref" href="#eq-niepewnosc-predykcyjna-negbin"></a> i <a class="ml-eqref" href="#eq-niepewnosc-predykcyjna-betabin"></a> są same przypadkami dekompozycji: rozkład ujemny dwumianowy jest mieszanką Poissona z intensywnością \( \lambda\sim\mathrm{Gamma}(\kappa,\ \kappa/\mu) \) (kształt, tempo), a beta-dwumianowy — mieszanką \( \mathrm{Bin}(C,p) \) z \( p\sim\mathrm{Beta}(\mu\phi,(1-\mu)\phi) \).</p>
+</div>
+<p>Ostatnie twierdzenie pokazuje, że granica między niepewnością „aleatoryczną” a „epistemiczną” jest umowna: nadrozproszenie rozkładu beta-dwumianowego to zmienność <em>nieobserwowanej</em> skłonności kibiców do przyjścia na konkretny mecz, którą model traktuje jako losowość zjawiska.</p>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-dekompozycji">Dekompozycja wariancji</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Oznaczmy \( m(\theta)=\mathbb{E}(\tilde y\mid\theta) \) i \( \bar m=\mathbb{E}\,m(\theta)=\mathbb{E}\tilde y \) (prawo całkowitej wartości oczekiwanej). Wtedy</p>
+\[ \begin{aligned} \operatorname{Var}\tilde y &amp;= \mathbb{E}(\tilde y-\bar m)^2 = \mathbb{E}\bigl[(\tilde y-m(\theta)) + (m(\theta)-\bar m)\bigr]^2 \\ &amp;= \mathbb{E}(\tilde y-m(\theta))^2 + 2\,\mathbb{E}\bigl[(\tilde y-m(\theta))(m(\theta)-\bar m)\bigr] + \mathbb{E}(m(\theta)-\bar m)^2 . \end{aligned} \]
+<p>Pierwszy składnik: \( \mathbb{E}\bigl[\mathbb{E}((\tilde y-m(\theta))^2\mid\theta)\bigr]=\mathbb{E}\operatorname{Var}(\tilde y\mid\theta) \). Trzeci: \( \operatorname{Var}m(\theta) \). Składnik mieszany znika, bo warunkując względem \( \theta \):</p>
+\[ \mathbb{E}\bigl[(\tilde y-m(\theta))(m(\theta)-\bar m)\bigr] = \mathbb{E}\bigl[(m(\theta)-\bar m)\,\mathbb{E}(\tilde y-m(\theta)\mid\theta)\bigr] = \mathbb{E}\bigl[(m(\theta)-\bar m)\cdot 0\bigr]=0 . \]
+<p>Nieujemność: wariancja warunkowa i wariancja są nieujemne.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-dolne-ograniczenie">Nieusuwalny błąd</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Pierwsza nierówność to rozkład ryzyka kwadratowego \( \mathbb{E}(\tilde y-a)^2=\operatorname{Var}\tilde y+(\mathbb{E}\tilde y-a)^2 \) (zob. <a data-concept="wartosc-oczekiwana-prognozy" data-anchor="wyprowadzenie">wartość oczekiwana prognozy</a>). Druga wynika z dekompozycji i \( U_{\mathrm{ep}}\ge0 \).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-betabin">Wariancja rozkładu beta-dwumianowego</h3>
+<p>Niech \( A\mid p\sim\mathrm{Bin}(C,p) \), \( p\sim\mathrm{Beta}(\mu\phi,(1-\mu)\phi) \). Dla rozkładu beta \( \mathbb{E}p=\mu \), \( \operatorname{Var}p=\frac{\mu(1-\mu)}{\phi+1} \). Stosujemy dekompozycję z \( p \) w roli \( \theta \):</p>
+\[ \begin{aligned} \mathbb{E}\operatorname{Var}(A\mid p) &amp;= C\,\mathbb{E}[p(1-p)] = C\bigl(\mu - \operatorname{Var}p - \mu^2\bigr) = C\mu(1-\mu)\Bigl(1-\frac{1}{\phi+1}\Bigr) = C\mu(1-\mu)\frac{\phi}{\phi+1}, \\ \operatorname{Var}\mathbb{E}(A\mid p) &amp;= C^2\operatorname{Var}p = C\mu(1-\mu)\frac{C}{\phi+1}. \end{aligned} \]
+<p>Suma daje \( C\mu(1-\mu)\frac{\phi+C}{\phi+1} \), czyli <a class="ml-eqref" href="#eq-niepewnosc-predykcyjna-betabin"></a>. Analogicznie dla Poissona–Gamma: \( \mathbb{E}\operatorname{Var}(A\mid\lambda)=\mathbb{E}\lambda=\mu \), \( \operatorname{Var}\mathbb{E}(A\mid\lambda)=\operatorname{Var}\lambda=\mu^2/\kappa \), skąd <a class="ml-eqref" href="#eq-niepewnosc-predykcyjna-negbin"></a>.</p>
+
+<h3 id="wyprowadzenie-trzy">Dekompozycja trójpoziomowa</h3>
+<p>Wzór <a class="ml-eqref" href="#eq-niepewnosc-predykcyjna-trzy"></a> otrzymujemy, stosując dekompozycję dwukrotnie: najpierw względem \( \theta \), a następnie do wariancji warunkowej \( \operatorname{Var}(\tilde y\mid\theta) \) względem \( S_{\mathrm{new}} \) przy ustalonym \( \theta \): \( \operatorname{Var}(\tilde y\mid\theta)=\mathbb{E}[\operatorname{Var}(\tilde y\mid\theta,S_{\mathrm{new}})\mid\theta]+\operatorname{Var}[\mathbb{E}(\tilde y\mid\theta,S_{\mathrm{new}})\mid\theta] \), po czym uśredniamy po \( \theta \). Środkowy składnik to niepewność „jaki będzie przyszły sezon”, której nie zmniejszą dane z przeszłych sezonów — zmniejszą jedynie niepewność co do \( \sigma_S \).</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><em>Dane ilustracyjne.</em> Wariant „liczba widzów” (ujemny dwumianowy), \( \kappa=20 \) traktujemy jako znane. Cztery równoważne próbki posterior średniej meczu: \( \mu^{(s)} = 900,\ 1000,\ 1100,\ 1200 \).</p>
+<ol class="ml-steps">
+<li><strong>Wariancje warunkowe</strong> \( v=\mu+\mu^2/20 \): \( 900+40\,500=41\,400 \); \( 1000+50\,000=51\,000 \); \( 1100+60\,500=61\,600 \); \( 1200+72\,000=73\,200 \). Odpowiadające odchylenia standardowe: 203,5; 225,8; 248,2; 270,6.</li>
+<li><strong>Składnik aleatoryczny</strong>: \( \hat U_{\mathrm{al}} = (41\,400+51\,000+61\,600+73\,200)/4 = 227\,200/4 = 56\,800 \).</li>
+<li><strong>Średnia predykcyjna</strong>: \( \bar m=(900+1000+1100+1200)/4=1050 \).</li>
+<li><strong>Składnik epistemiczny</strong>: odchylenia od 1050 to −150, −50, 50, 150; \( \hat U_{\mathrm{ep}} = (22\,500+2500+2500+22\,500)/4 = 12\,500 \).</li>
+<li><strong>Wariancja predykcyjna</strong>: \( 56\,800+12\,500 = 69\,300 \); odchylenie standardowe \( \sqrt{69\,300}\approx263{,}2 \) widza.</li>
+<li><strong>Udział epistemiczny</strong>: \( \pi_{\mathrm{ep}} = 12\,500/69\,300\approx0{,}180 \), czyli 18%. Gdybyśmy znali parametry dokładnie, odchylenie spadłoby do \( \sqrt{56\,800}\approx238{,}3 \) — tylko o ok. 9%. Dominuje losowość samego meczu.</li>
+<li><strong>Wariant „wypełnienie”</strong>: hala na \( C=2000 \) miejsc, \( \mu=0{,}8 \), \( \phi=30 \). Z <a class="ml-eqref" href="#eq-niepewnosc-predykcyjna-betabin"></a>: \( 2000\cdot0{,}8\cdot0{,}2\cdot\frac{2030}{31} = 320\cdot65{,}48\approx20\,955 \), odchylenie ≈ 144,8 widza. Rozkład dwumianowy \( \mathrm{Bin}(2000;0{,}8) \) dałby wariancję 320 (odchylenie ≈ 17,9) — nadrozproszenie jest 65-krotne. Model „każdy z 2000 potencjalnych kibiców przychodzi niezależnie” jest więc zupełnie nierealistyczny.</li>
+</ol>
+<div class="ml-plot" data-plot="betabinomial" data-params='{"n": 2000, "a": 24, "b": 6}'></div>
+<p>Rozkład \( \mathrm{BetaBin}(2000;\ 24;\ 6) \), czyli \( \mu=0{,}8 \), \( \phi=30 \): zwiększaj jednocześnie \( a \) i \( b \) w proporcji 4:1 — średnia stoi w miejscu (1600), a rozkład zwęża się w stronę dwumianowego. Przy małych \( a+b \) masa rozlewa się aż po granicę \( A=C \).</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Udział epistemiczny 18% oznacza, że lepsze oszacowanie parametrów (więcej sezonów danych, silniejsze priory) może zawęzić przedziały predykcyjne tylko nieznacznie. Większe zyski dałyby nowe zmienne objaśniające, które przeniosą część „losowości” do części systematycznej — np. informacja o transmisji telewizyjnej lub o promocji biletowej. To bezpośrednia wskazówka, gdzie inwestować wysiłek modelarski.</p>
+<p>Udział epistemiczny jest wysoki dla klubów i rywali z krótką historią (beniaminek, pierwszy mecz z zespołem z innej ligi) oraz dla meczów w przyszłym sezonie, gdzie dochodzi niepewność nowego efektu sezonu. Dla stałego bywalca ligi z dziesięcioma sezonami danych dominuje składnik aleatoryczny.</p>
+<p>Wariancja predykcyjna nie jest jedynym opisem niepewności: przy rozkładach skośnych i z masą w punkcie \( A=C \) lepiej komunikować <a data-concept="przedzialy-predykcyjne">przedziały predykcyjne</a> i prawdopodobieństwa progowe niż odchylenie standardowe.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> niepewność predykcyjną uzyskujemy symulacyjnie (<a data-concept="monte-carlo">Monte Carlo</a>): dla każdej próbki posterior liczymy \( \eta_i^{(s)} \), dla meczu w przyszłym sezonie losujemy efekt \( S_{\mathrm{new}}^{(s)}\sim N(0,(\sigma_S^{(s)})^2) \) (a dla nowej kombinacji gospodarz×sezon i rywal×sezon — odpowiednio \( HS \) i \( RS \)), a następnie losujemy liczbę widzów z rozkładu beta-dwumianowego lub ujemnego dwumianowego. Zbiór wylosowanych wartości jest próbą z rozkładu predykcyjnego, który obejmuje automatycznie wszystkie trzy poziomy z <a class="ml-eqref" href="#eq-niepewnosc-predykcyjna-trzy"></a>.</p>
+<p>Dekompozycję wykorzystujemy diagnostycznie: estymatory <a class="ml-eqref" href="#eq-niepewnosc-predykcyjna-estymator"></a> liczone z \( m(\theta^{(s)})=C_i\mu_i^{(s)} \) i \( v(\theta^{(s)}) \) ze wzoru <a class="ml-eqref" href="#eq-niepewnosc-predykcyjna-betabin"></a> pokazują, czy szeroki przedział dla danego meczu wynika z braku danych o klubie (duże \( U_{\mathrm{ep}} \)), czy z natury rozgrywek (duże \( U_{\mathrm{al}} \), np. w meczach pucharowych EHF o bardzo zmiennej frekwencji). Dla indeksu IAF — który jest funkcją parametrów, a nie przyszłej obserwacji — liczy się wyłącznie niepewność epistemiczna; dlatego przedział wiarygodności IAF jest dużo węższy od przedziałów predykcyjnych frekwencji.</p>
+<p>Poprawność całkowitej niepewności sprawdzamy w walidacji chronologicznej: przedziały 80% powinny pokrywać ok. 80% faktycznych frekwencji, a histogram PIT powinien być płaski (<a data-concept="kalibracja-prawdopodobienstw">kalibracja</a>) <cite data-bib="gneiting2007calibration"></cite>.</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Niepewność modelu jest niewidoczna.</strong> Dekompozycja dotyczy jednego modelu. Rozbieżność między wariantami (beta-dwumianowy vs regresja beta vs ZOIB) to dodatkowa, nieujęta niepewność strukturalna.</li>
+<li><strong>Umowność podziału.</strong> Przypisanie zmienności do „aleatorycznej” lub „epistemicznej” zależy od struktury hierarchii (por. twierdzenie o mieszankach); liczby \( U_{\mathrm{al}} \), \( U_{\mathrm{ep}} \) porównujemy tylko w obrębie tej samej specyfikacji.</li>
+<li><strong>Wariancja przy skośności.</strong> Przy masie prawdopodobieństwa w punkcie \( A=C \) (komplet widzów) wariancja słabo opisuje kształt rozkładu.</li>
+<li><strong>Nieznane warunki meczu.</strong> Prognoza z wyprzedzeniem kilku tygodni nie zna formy drużyn w dniu meczu; jeżeli wstawiamy bieżącą formę jako stałą, zaniżamy niepewność. Poprawnie byłoby losować także przyszłe \( x_i \).</li>
+<li><strong>Zależność między meczami.</strong> Dla sumy frekwencji wielu meczów trzeba uwzględnić kowariancje wynikające ze wspólnych parametrów — wariancja sumy nie jest sumą wariancji.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="prawo-calkowitej-wariancji">Prawo całkowitej wariancji</a> — podstawa dekompozycji.</li>
+<li><a data-concept="rozklad-predykcyjny">Rozkład predykcyjny</a> — pełny opis niepewności predykcyjnej.</li>
+<li><a data-concept="przedzialy-predykcyjne">Przedziały predykcyjne</a> — komunikowanie niepewności.</li>
+<li><a data-concept="rozklad-beta-dwumianowy">Rozkład beta-dwumianowy</a> i <a data-concept="rozklad-ujemny-dwumianowy">rozkład ujemny dwumianowy</a> — wariancje warunkowe MAF.</li>
+<li><a data-concept="przedzial-wiarygodnosci">Przedział wiarygodności</a> — niepewność samych parametrów.</li>
+<li><a data-concept="kalibracja-prawdopodobienstw">Kalibracja prawdopodobieństw</a> — weryfikacja, czy deklarowana niepewność jest trafna.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelman2013bda"></li>
+<li data-bib="gneiting2007calibration"></li>
+<li data-bib="johnson2005discrete"></li>
+<li data-bib="hilbe2011"></li>
+</ul>
+</section>

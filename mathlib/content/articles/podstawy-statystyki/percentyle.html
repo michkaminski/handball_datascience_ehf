@@ -1,0 +1,183 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Percentyl (ang. <em>percentile</em>) rzędu \(k\) to wartość, poniżej której leży \(k\%\) obserwacji. Jeżeli 90. percentyl frekwencji klubu I ligi wynosi 313 widzów, to w 90% meczów było nie więcej niż ok. 313 osób, a tylko w co dziesiątym meczu więcej. Mediana to 50. percentyl, kwartyle to 25. i 75. percentyl.</p>
+<p>Percentyle są empirycznym odpowiednikiem <em>kwantyli</em> (ang. <em>quantiles</em>) rozkładu prawdopodobieństwa: kwantyl rzędu \(p\in(0,1)\) to wartość, której dystrybuanta „sięga” poziomu \(p\). W ten sposób opisuje się dowolną część rozkładu — nie tylko środek, ale też ogony, które są kluczowe przy planowaniu (ilu widzów przyjdzie w dobrym, a ilu w słabym scenariuszu?).</p>
+<p>We współczesnej statystyce bayesowskiej percentyle są wszechobecne: przedział wiarygodności 95% to przedział od 2,5. do 97,5. percentyla próbek posterior, przedziały predykcyjne 50/80/95% są wyznaczane z percentyli symulowanych wyników, a kalibrację prognoz sprawdza się, pytając, którym percentylem prognozy okazała się obserwacja. Ten artykuł podaje ścisłe definicje kwantyla teoretycznego i empirycznego (rodzina Hyndmana–Fana), ich własności oraz dowody najważniejszych faktów.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-kwantyl"><p class="ml-box-title">Definicja (funkcja kwantylowa)</p>
+<p>Niech \(F\) będzie dystrybuantą zmiennej losowej \(X\). <strong>Funkcją kwantylową</strong> (uogólnioną odwrotnością dystrybuanty) nazywamy</p>
+<div class="ml-eq" id="eq-percentyle-kwantyl">\[ Q(p)=F^{-1}(p)=\inf\{x\in\mathbb{R}:\ F(x)\ge p\}, \qquad p\in(0,1) . \]</div>
+<p><strong>Percentylem</strong> rzędu \(k\in(0,100)\) nazywamy \(Q(k/100)\). Gdy \(F\) jest ciągła i ściśle rosnąca, \(Q\) jest zwykłą funkcją odwrotną.</p>
+</div>
+<div class="ml-box ml-def" id="def-kwantyl-empiryczny"><p class="ml-box-title">Definicja (kwantyle empiryczne — rodzina Hyndmana–Fana)</p>
+<p>Niech \(x_{(1)}\le\dots\le x_{(n)}\) będą statystykami pozycyjnymi. Ciągłe definicje kwantyla empirycznego (typy 4–9) mają wspólną postać</p>
+<div class="ml-eq" id="eq-percentyle">\[ \hat Q(p)=(1-\gamma)\,x_{(j)}+\gamma\,x_{(j+1)}, \qquad j=\lfloor np+m\rfloor,\quad \gamma=np+m-j , \]</div>
+<p>gdzie stała \(m\) zależy od typu, a dla indeksów spoza zakresu przyjmuje się \(x_{(0)}=x_{(1)}\), \(x_{(n+1)}=x_{(n)}\) <cite data-bib="hyndmanfan1996"></cite>. Typ 1 jest odwrotnością dystrybuanty empirycznej: \(\hat Q_1(p)=x_{(\lceil np\rceil)}\).</p>
+</div>
+<p>Każdy typ ciągły to liniowa interpolacja punktów \((p_k,x_{(k)})\) dla pewnej „pozycji wykresowej” \(p_k\):</p>
+<table class="ml-table">
+<thead><tr><th>Typ</th><th>\(m\)</th><th>\(p_k\)</th><th>Uwagi</th></tr></thead>
+<tbody>
+<tr><td>4</td><td>\(0\)</td><td>\(k/n\)</td><td>interpolacja dystrybuanty empirycznej</td></tr>
+<tr><td>5</td><td>\(1/2\)</td><td>\((k-1/2)/n\)</td><td>środki skoków dystrybuanty</td></tr>
+<tr><td>6</td><td>\(p\)</td><td>\(k/(n+1)\)</td><td>\(p_k=E\,F(X_{(k)})\); SPSS, Minitab</td></tr>
+<tr><td>7</td><td>\(1-p\)</td><td>\((k-1)/(n-1)\)</td><td>domyślny w R i NumPy; \(h=(n-1)p+1\)</td></tr>
+<tr><td>8</td><td>\((p+1)/3\)</td><td>\((k-1/3)/(n+1/3)\)</td><td>w przybliżeniu medianowo nieobciążony; zalecany przez Hyndmana i Fana</td></tr>
+<tr><td>9</td><td>\(p/4+3/8\)</td><td>\((k-3/8)/(n+1/4)\)</td><td>w przybliżeniu nieobciążony przy rozkładzie normalnym</td></tr>
+</tbody>
+</table>
+<div class="ml-box ml-def" id="def-ranga-percentylowa"><p class="ml-box-title">Definicja (ranga percentylowa)</p>
+<p>Rangą percentylową wartości \(x\) w próbie nazywamy \(\mathrm{PR}(x)=100\cdot\frac{\#\{i:x_i\lt x\}+\frac12\#\{i:x_i=x\}}{n}\) — odsetek obserwacji poniżej \(x\), z połową remisów.</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(F\)</td><td>dystrybuanta, \(F(x)=P(X\le x)\)</td></tr>
+<tr><td>\(Q(p)\)</td><td>funkcja kwantylowa (kwantyl rzędu \(p\))</td></tr>
+<tr><td>\(\hat Q(p)\)</td><td>kwantyl empiryczny</td></tr>
+<tr><td>\(\hat F_n\)</td><td>dystrybuanta empiryczna, \(\hat F_n(x)=\frac1n\#\{i:x_i\le x\}\)</td></tr>
+<tr><td>\(m,\ j,\ \gamma\)</td><td>stała typu, indeks i waga interpolacji</td></tr>
+<tr><td>\(p_k\)</td><td>pozycja wykresowa \(k\)-tej statystyki pozycyjnej</td></tr>
+<tr><td>\(\rho_p(u)\)</td><td>funkcja straty kwantylowej (ang. <em>pinball/check loss</em>)</td></tr>
+<tr><td>\(\mathrm{PR}(x)\)</td><td>ranga percentylowa</td></tr>
+<tr><td>\(U\)</td><td>zmienna o rozkładzie jednostajnym na \((0,1)\)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Funkcja kwantylowa istnieje dla każdej dystrybuanty — bez założeń o momentach.</li>
+<li>Kwantyle empiryczne wymagają danych porządkowych; typy ciągłe (interpolacja) — skali przedziałowej.</li>
+<li>Zgodność \(\hat Q(p)\to Q(p)\) wymaga obserwacji i.i.d. oraz jednoznaczności kwantyla (\(F\) ściśle rosnąca w otoczeniu \(Q(p)\)); asymptotyczna normalność — dodatkowo dodatniej, ciągłej gęstości \(f\) w \(Q(p)\).</li>
+<li>Przy próbkach MCMC (skorelowanych) precyzja percentyli ogonowych zależy od efektywnej liczby próbek w ogonach (tail-ESS), a nie od surowej liczby próbek.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Funkcja straty kwantylowej i charakteryzacja kwantyla jako minimum:</p>
+<div class="ml-eq" id="eq-percentyle-pinball">\[ \rho_p(u)=u\,\big(p-\mathbf 1\{u\lt0\}\big), \qquad Q(p)\in\arg\min_{c\in\mathbb R}E\,\rho_p(X-c) . \]</div>
+<p>Nierówność Galois (podstawowa własność uogólnionej odwrotności):</p>
+<div class="ml-eq" id="eq-percentyle-galois">\[ Q(p)\le x \iff p\le F(x), \qquad p\in(0,1),\ x\in\mathbb{R} . \]</div>
+<p>Metoda odwrotnej dystrybuanty i transformacja całkowa (PIT):</p>
+<div class="ml-eq" id="eq-percentyle-pit">\[ U\sim\mathcal U(0,1)\ \Rightarrow\ Q(U)\sim F; \qquad F \text{ ciągła}\ \Rightarrow\ F(X)\sim\mathcal U(0,1) . \]</div>
+<p>Asymptotyczny rozkład kwantyla empirycznego:</p>
+<div class="ml-eq" id="eq-percentyle-asymptotyka">\[ \sqrt n\,\big(\hat Q(p)-Q(p)\big)\xrightarrow{d}N\!\Big(0,\ \frac{p(1-p)}{f(Q(p))^2}\Big) . \]</div>
+<p>Przedział centralny o pokryciu \(1-\alpha\) wyznaczony z kwantyli (np. przedział wiarygodności lub predykcyjny):</p>
+<div class="ml-eq" id="eq-percentyle-przedzial">\[ \big[\,Q(\alpha/2);\ Q(1-\alpha/2)\,\big], \qquad P\big(Q(\alpha/2)\lt X\le Q(1-\alpha/2)\big)=1-\alpha \ \ (F \text{ ciągła}) . \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-galois"><p class="ml-box-title">Twierdzenie (nierówność Galois)</p>
+<p>Dla każdej dystrybuanty \(F\), \(p\in(0,1)\) i \(x\in\mathbb R\) zachodzi <a class="ml-eqref" href="#eq-percentyle-galois"></a>. W szczególności \(F(Q(p))\ge p\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-pit"><p class="ml-box-title">Twierdzenie (odwrotna dystrybuanta i PIT)</p>
+<p>(a) Jeżeli \(U\sim\mathcal U(0,1)\), to \(Q(U)\) ma dystrybuantę \(F\). (b) Jeżeli \(F\) jest ciągła, to \(F(X)\sim\mathcal U(0,1)\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-ekwiwariancja"><p class="ml-box-title">Twierdzenie (ekwiwariancja kwantyli)</p>
+<p>Jeżeli \(g\) jest ściśle rosnąca i ciągła, to \(Q_{g(X)}(p)=g\big(Q_X(p)\big)\) dla każdego \(p\in(0,1)\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-pinball"><p class="ml-box-title">Twierdzenie (kwantyl minimalizuje stratę kwantylową)</p>
+<p>Jeżeli \(E|X|\lt\infty\), to \(c\mapsto E\rho_p(X-c)\) jest wypukła, a \(Q(p)\) jest jej punktem minimum. Dla \(p=1/2\) \(\rho_{1/2}(u)=|u|/2\) i dostajemy własność <a data-concept="mediana" data-anchor="twierdzenia">mediany</a>.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-galois">Nierówność Galois</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Zbiór \(A_p=\{x:F(x)\ge p\}\) jest niepusty (bo \(F(x)\to1\gt p\)), ograniczony z dołu (bo \(F(x)\to0\lt p\) przy \(x\to-\infty\)) i — z monotoniczności \(F\) — jest półprostą. Z prawostronnej ciągłości \(F\) półprosta jest domknięta: \(A_p=[Q(p),\infty)\). Zatem \(x\ge Q(p)\iff x\in A_p\iff F(x)\ge p\). Biorąc \(x=Q(p)\), dostajemy \(F(Q(p))\ge p\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-pit">Odwrotna dystrybuanta i PIT</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>(a) Z nierówności Galois \(P(Q(U)\le x)=P(U\le F(x))=F(x)\). (b) Niech \(F\) będzie ciągła i \(u\in(0,1)\). Z nierówności Galois zastosowanej punktowo do \(x=X(\omega)\): \(\{F(X)\ge u\}=\{X\ge Q(u)\}\). Z ciągłości \(F\) zdarzenie \(\{X=Q(u)\}\) ma prawdopodobieństwo zero, a \(F(Q(u))=u\) (z własności Darboux istnieje \(x\) z \(F(x)=u\), a z prawostronnej ciągłości najmniejszy taki punkt to \(Q(u)\)). Zatem \(P(F(X)\ge u)=1-P(X\lt Q(u))=1-F(Q(u))=1-u\), czyli \(P(F(X)\lt u)=u\) dla każdego \(u\in(0,1)\) — to dystrybuanta rozkładu jednostajnego (zbiór \(\{F(X)=u\}\) ma miarę zero, bo powyższa funkcja jest ciągła w \(u\)).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-ekwiwariancja">Ekwiwariancja</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla ściśle rosnącej i ciągłej \(g\) mamy \(\{g(X)\le g(x)\}=\{X\le x\}\), więc \(F_{g(X)}(g(x))=F_X(x)\). Dla \(y\) z obrazu \(g\): \(Q_{g(X)}(p)\le y\iff p\le F_{g(X)}(y)=F_X(g^{-1}(y))\iff Q_X(p)\le g^{-1}(y)\iff g(Q_X(p))\le y\). Ponieważ obie strony równania są elementami obrazu \(g\), a nierówności zachodzą dla wszystkich \(y\) z obrazu, \(Q_{g(X)}(p)=g(Q_X(p))\).</p>
+<p class="ml-qed">∎</p></div>
+<p>Kwantyl empiryczny typu 1 jest dokładnie ekwiwariantny (zwraca obserwację), typy interpolujące — tylko w węzłach \(p_k\). Kwantyle próbek posterior przy tysiącach próbek są w praktyce ekwiwariantne.</p>
+
+<h3 id="dowod-pinball">Minimalizacja straty kwantylowej</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Funkcja \(u\mapsto\rho_p(u)\) jest wypukła (kawałkami liniowa o nachyleniach \(p-1\lt0\) i \(p\gt0\)), więc \(R(c)=E\rho_p(X-c)\) jest wypukła i skończona przy \(E|X|\lt\infty\). Analogicznie jak dla mediany, dla \(c\lt c'\) z twierdzenia Fubiniego</p>
+\[ R(c')-R(c)=\int_c^{c'}\big(F(t)-p\big)\,dt , \]
+<p>bo \(\frac{d}{dt}\rho_p(x-t)=-p\) dla \(t\lt x\) oraz \(1-p\) dla \(t\gt x\), a więc \(E\big[\tfrac{d}{dt}\rho_p(X-t)\big]=-p\,P(X\gt t)+(1-p)P(X\lt t)=F(t)-p\) dla prawie wszystkich \(t\). Dla \(c'\gt c=Q(p)\): \(F(t)\ge p\) na \([Q(p),c']\), więc \(R(c')\ge R(Q(p))\). Dla \(c\lt Q(p)=c'\): z Galois \(F(t)\lt p\) dla \(t\lt Q(p)\), więc \(R(c)-R(Q(p))=\int_c^{Q(p)}(p-F(t))\,dt\ge0\).</p>
+<p class="ml-qed">∎</p></div>
+<p>Ten wynik uzasadnia ocenę prognoz kwantylowych stratą \(\rho_p\): prognoza równa prawdziwemu kwantylowi rozkładu predykcyjnego minimalizuje oczekiwaną stratę (strata kwantylowa jest regułą ściśle właściwą dla kwantyli, por. <cite data-bib="gneiting2007scoring"></cite>).</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p>Frekwencja w 20 meczach klubu I ligi, uporządkowana (dane ilustracyjne):</p>
+<table class="ml-table">
+<thead><tr><th>\(k\)</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th></tr></thead>
+<tbody><tr><td>\(x_{(k)}\)</td><td>140</td><td>155</td><td>170</td><td>180</td><td>185</td><td>190</td><td>200</td><td>205</td><td>210</td><td>215</td></tr>
+<tr><th>\(k\)</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th><th>20</th></tr>
+<tr><td>\(x_{(k)}\)</td><td>220</td><td>230</td><td>240</td><td>250</td><td>260</td><td>275</td><td>290</td><td>310</td><td>340</td><td>420</td></tr></tbody>
+</table>
+<ol class="ml-steps">
+<li><strong>P10, typ 7:</strong> \(h=(20-1)\cdot0{,}10+1=2{,}9\); \(\hat Q=x_{(2)}+0{,}9\,(x_{(3)}-x_{(2)})=155+0{,}9\cdot15=168{,}5\).</li>
+<li><strong>P50:</strong> \(h=19\cdot0{,}5+1=10{,}5\); \(\hat Q=215+0{,}5\cdot5=217{,}5\).</li>
+<li><strong>P90:</strong> \(h=19\cdot0{,}9+1=18{,}1\); \(\hat Q=310+0{,}1\cdot30=313\).</li>
+<li><strong>P95:</strong> \(h=19\cdot0{,}95+1=19{,}05\); \(\hat Q=340+0{,}05\cdot80=344\).</li>
+<li><strong>Porównanie z typem 6</strong> (\(h=(n+1)p\)): P10: \(h=2{,}1\Rightarrow155+0{,}1\cdot15=156{,}5\); P90: \(h=18{,}9\Rightarrow310+0{,}9\cdot30=337\); P95: \(h=19{,}95\Rightarrow340+0{,}95\cdot80=416\). <strong>Typ 1</strong>: P90 \(=x_{(\lceil18\rceil)}=310\), P95 \(=x_{(19)}=340\). W ogonie różnice sięgają 70 widzów — przy 20 obserwacjach P95 jest bardzo niepewny.</li>
+<li><strong>Przedział 80%:</strong> \([P10;\,P90]=[168{,}5;\ 313]\) (typ 7) — zawiera 16 z 20 meczów (od 170 do 310), czyli dokładnie 80%.</li>
+<li><strong>Ranga percentylowa</strong> meczu z 250 widzami: poniżej 13 obserwacji, równa 1, więc \(\mathrm{PR}(250)=100\cdot(13+0{,}5)/20=67{,}5\).</li>
+</ol>
+<div class="ml-plot" data-plot="betabinomial" data-params='{"n": 2000, "a": 12, "b": 8}'></div>
+<p>Rozkład beta-dwumianowy liczby widzów w hali na 2000 miejsc (średnie wypełnienie 60%) — taki kształt ma w MAF rozkład predykcyjny meczu. Zwiększając jednocześnie \(a\) i \(b\) (większa precyzja), zobaczysz, jak zwężają się odległości między percentylami, np. przedział P10–P90.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li>P10 ≈ 169 i P90 = 313 oznaczają, że w 8 na 10 meczów frekwencja mieściła się mniej więcej między 170 a 310 widzami; w co dziesiątym meczu była niższa, w co dziesiątym wyższa.</li>
+<li>Asymetria percentyli wokół mediany (217,5 − 168,5 = 49 w dół vs 313 − 217,5 = 95,5 w górę) pokazuje prawostronną skośność frekwencji, której nie widać w samym odchyleniu standardowym.</li>
+<li>Ranga percentylowa 67,5 mówi, że mecz z 250 widzami był lepszy od ok. dwóch trzecich meczów klubu — to naturalna, bezjednostkowa skala porównań.</li>
+<li>Percentyle ogonowe z małych prób są niestabilne i zależne od definicji; P95 z 20 obserwacji to w praktyce „druga największa obserwacja plus interpolacja”.</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<ul>
+<li><strong>Przedziały wiarygodności IAF.</strong> W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> indeks IAF jest liczony dla każdej próbki posterior; 95% <a data-concept="przedzial-wiarygodnosci">przedział wiarygodności</a> to \([P2{,}5;\ P97{,}5]\) tych próbek, a wartość centralna to ich mediana. Wiarygodność percentyli ogonowych gwarantuje wymóg tail-ESS ≥ 400 (<a data-concept="effective-sample-size">ESS</a>).</li>
+<li><strong>Przedziały predykcyjne.</strong> Prognoza meczu to rozkład predykcyjny (próbki parametrów + losowanie liczby widzów); przedziały 50/80/95% to przedziały \([P25;P75]\), \([P10;P90]\), \([P2{,}5;P97{,}5]\) symulowanych frekwencji — zob. <a data-concept="przedzialy-predykcyjne">przedziały predykcyjne</a>.</li>
+<li><strong>Prawdopodobieństwa progów.</strong> \(P(W\ge0{,}9)\) to odsetek próbek predykcyjnych z wypełnieniem co najmniej 90%, czyli \(1-\) ranga percentylowa progu (z dokładnością do remisów; przy dyskretnej liczbie widzów remisy są realne, szczególnie przy komplecie \(A=C\)).</li>
+<li><strong>Kalibracja (PIT).</strong> W walidacji chronologicznej dla każdego meczu testowego liczymy rangę percentylową zaobserwowanej frekwencji wśród próbek predykcyjnych. Jeżeli model jest dobrze skalibrowany, wartości te mają w przybliżeniu rozkład jednostajny <a class="ml-eqref" href="#eq-percentyle-pit"></a>; nadmiar wartości skrajnych oznacza zbyt wąskie przedziały. Zob. <a data-concept="kalibracja-prawdopodobienstw">kalibracja prawdopodobieństw</a> i <a data-concept="pokrycie-przedzialow-predykcyjnych">pokrycie przedziałów predykcyjnych</a>.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Zależność od definicji</strong> dla małych \(n\), zwłaszcza w ogonach; raportuj typ (domyślnie 7).</li>
+<li><strong>Duża wariancja percentyli ogonowych</strong>: z <a class="ml-eqref" href="#eq-percentyle-asymptotyka"></a> wariancja rośnie, gdy gęstość \(f(Q(p))\) jest mała — a w ogonach jest mała. P99 wymaga tysięcy obserwacji.</li>
+<li><strong>Brak ekstrapolacji</strong>: kwantyl empiryczny nigdy nie wychodzi poza \([x_{(1)};x_{(n)}]\); rekordowej frekwencji nie przewidzi się z percentyli przeszłych meczów.</li>
+<li><strong>Dane dyskretne i z masą w punkcie</strong> (komplety widzów): percentyle mogą być niejednoznaczne, a PIT wymaga wersji losowanej (randomizowanej) dla rozkładów dyskretnych.</li>
+<li><strong>Brak addytywności</strong>: percentyl sumy (np. łącznej widowni sezonu) nie jest sumą percentyli meczów — trzeba go liczyć z symulacji sumy.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="kwartyle">Kwartyle</a> — percentyle 25, 50, 75 i reguła Tukeya.</li>
+<li><a data-concept="mediana">Mediana</a> — 50. percentyl.</li>
+<li><a data-concept="przedzialy-predykcyjne">Przedziały predykcyjne</a> i <a data-concept="przedzial-wiarygodnosci">przedział wiarygodności</a> — przedziały kwantylowe.</li>
+<li><a data-concept="kalibracja-prawdopodobienstw">Kalibracja prawdopodobieństw</a> — PIT jako ranga percentylowa.</li>
+<li><a data-concept="monte-carlo">Symulacja Monte Carlo w prognozowaniu</a> — percentyle z próbek.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="hyndmanfan1996"></li>
+<li data-bib="openintro2019"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="gneiting2007scoring"></li>
+<li data-bib="gneiting2007calibration"></li>
+<li data-bib="vehtari2021rhat"></li>
+</ul>
+</section>

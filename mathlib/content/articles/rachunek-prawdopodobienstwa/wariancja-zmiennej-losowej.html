@@ -1,0 +1,156 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p><a data-concept="wartosc-oczekiwana">Wartość oczekiwana</a> mówi, wokół jakiej liczby skupia się rozkład; <strong>wariancja</strong> (ang. <em>variance</em>) mówi, <em>jak bardzo</em> wartości od niej odbiegają. Dwa mecze mogą mieć tę samą oczekiwaną frekwencję 1160 widzów, ale w jednym wynik prawie zawsze mieści się między 1100 a 1200, a w drugim waha się od 500 do pełnej hali. Dla organizatora (catering, ochrona, liczba otwartych kas) to zupełnie inne sytuacje.</p>
+<p>Wariancja to średni kwadrat odchylenia od wartości oczekiwanej. Kwadrat sprawia, że duże odchylenia ważą nieproporcjonalnie dużo, a jednostką jest kwadrat jednostki zmiennej („widzowie²”); dlatego w raportach podaje się zwykle pierwiastek — <a data-concept="odchylenie-standardowe">odchylenie standardowe</a>. Artykuł dotyczy wariancji <em>zmiennej losowej</em> (parametru rozkładu); jej empiryczny odpowiednik z próby opisuje artykuł <a data-concept="wariancja">wariancja</a>.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-wariancja"><p class="ml-box-title">Definicja (wariancja)</p>
+<p>Niech \(X\) będzie zmienną losową z \(\mathbb E[X^2]\lt\infty\) i niech \(\mu=\mathbb E[X]\). <strong>Wariancją</strong> \(X\) nazywamy</p>
+<div class="ml-eq" id="eq-wariancja-zmiennej-losowej">\[ \operatorname{Var}(X)=\mathbb E\big[(X-\mu)^2\big]. \]</div>
+<p><strong>Odchyleniem standardowym</strong> nazywamy \(\operatorname{SD}(X)=\sqrt{\operatorname{Var}(X)}\).</p>
+</div>
+<p>Dla zmiennej dyskretnej i ciągłej (LOTUS):</p>
+<div class="ml-eq" id="eq-wariancja-zmiennej-losowej-postacie">\[ \operatorname{Var}(X)=\sum_k(x_k-\mu)^2p_X(x_k), \qquad \operatorname{Var}(X)=\int_{-\infty}^{\infty}(x-\mu)^2f_X(x)\,dx. \]</div>
+<div class="ml-box ml-def" id="def-kowariancja"><p class="ml-box-title">Definicja (kowariancja i korelacja)</p>
+<p>Dla \(X,Y\) z skończonymi drugimi momentami: \(\operatorname{Cov}(X,Y)=\mathbb E\big[(X-\mathbb EX)(Y-\mathbb EY)\big]\), a współczynnik korelacji \(\rho_{XY}=\operatorname{Cov}(X,Y)/(\operatorname{SD}(X)\operatorname{SD}(Y))\in[-1,1]\). Zmienne z \(\operatorname{Cov}(X,Y)=0\) nazywamy nieskorelowanymi.</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(\operatorname{Var}(X)\)</td><td>wariancja zmiennej \(X\) (oznaczana też \(\sigma_X^2\))</td></tr>
+<tr><td>\(\operatorname{SD}(X)\)</td><td>odchylenie standardowe, \(\sigma_X\)</td></tr>
+<tr><td>\(\mu=\mathbb E[X]\)</td><td>wartość oczekiwana</td></tr>
+<tr><td>\(\mathbb E[X^2]\)</td><td>drugi moment zwykły</td></tr>
+<tr><td>\(\operatorname{Cov}(X,Y)\)</td><td>kowariancja</td></tr>
+<tr><td>\(\rho_{XY}\)</td><td>współczynnik korelacji</td></tr>
+<tr><td>\(a,b\)</td><td>stałe rzeczywiste</td></tr>
+<tr><td>\(C\)</td><td>pojemność hali</td></tr>
+<tr><td>\(\mu, \phi\)</td><td>średnie wypełnienie i precyzja w rozkładzie beta-dwumianowym</td></tr>
+<tr><td>\(\kappa\)</td><td>parametr dyspersji rozkładu ujemnego dwumianowego</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Skończony drugi moment \(\mathbb E[X^2]\lt\infty\) (z nierówności Jensena wynika wtedy także \(\mathbb E|X|\lt\infty\)). Liczba widzów w hali o pojemności \(C\) jest ograniczona, więc warunek jest spełniony automatycznie.</li>
+<li>Wzór na wariancję sumy bez składnika kowariancyjnego wymaga nieskorelowania (w szczególności wystarcza niezależność).</li>
+<li>Wariancja jest miarą rozrzutu adekwatną dla rozkładów w przybliżeniu symetrycznych; dla silnie skośnych warto uzupełnić ją kwantylami.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<div class="ml-eq" id="eq-wariancja-zmiennej-losowej-momenty">\[ \operatorname{Var}(X)=\mathbb E[X^2]-\big(\mathbb E[X]\big)^2 \]</div>
+<div class="ml-eq" id="eq-wariancja-zmiennej-losowej-liniowa">\[ \operatorname{Var}(aX+b)=a^2\operatorname{Var}(X), \qquad \operatorname{SD}(aX+b)=|a|\operatorname{SD}(X) \]</div>
+<div class="ml-eq" id="eq-wariancja-zmiennej-losowej-suma">\[ \operatorname{Var}(X+Y)=\operatorname{Var}(X)+\operatorname{Var}(Y)+2\operatorname{Cov}(X,Y) \]</div>
+<div class="ml-eq" id="eq-wariancja-zmiennej-losowej-kowariancja">\[ \operatorname{Cov}(X,Y)=\mathbb E[XY]-\mathbb E[X]\,\mathbb E[Y] \]</div>
+<div class="ml-eq" id="eq-wariancja-zmiennej-losowej-czebyszew">\[ P\big(|X-\mu|\ge t\big)\le\frac{\operatorname{Var}(X)}{t^2}, \qquad t\gt0 \]</div>
+<p>Wariancje rozkładów używanych w MAF (wyprowadzenia w artykułach o rozkładach oraz w <a data-concept="prawo-calkowitej-wariancji">prawie całkowitej wariancji</a>):</p>
+<div class="ml-eq" id="eq-wariancja-zmiennej-losowej-rozklady">\[ \begin{aligned} &amp;\text{Bernoulli}(p): &amp;&amp; p(1-p)\\ &amp;\text{Bin}(n,p): &amp;&amp; np(1-p)\\ &amp;\text{BetaBin}(n,\mu\phi,(1-\mu)\phi): &amp;&amp; n\mu(1-\mu)\,\frac{\phi+n}{\phi+1}\\ &amp;\text{NegBin}(\mu,\kappa): &amp;&amp; \mu+\frac{\mu^2}{\kappa}\\ &amp;\text{Beta}(\mu\phi,(1-\mu)\phi): &amp;&amp; \frac{\mu(1-\mu)}{\phi+1} \end{aligned} \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-wlasnosci-wariancji"><p class="ml-box-title">Twierdzenie (własności wariancji)</p>
+<p>Dla zmiennych o skończonych drugich momentach: (i) \(\operatorname{Var}(X)\ge0\), przy czym \(\operatorname{Var}(X)=0\) wtedy i tylko wtedy, gdy \(X=\mathbb E[X]\) prawie na pewno; (ii) zachodzi <a class="ml-eqref" href="#eq-wariancja-zmiennej-losowej-momenty"></a>; (iii) zachodzi <a class="ml-eqref" href="#eq-wariancja-zmiennej-losowej-liniowa"></a>; (iv) zachodzi <a class="ml-eqref" href="#eq-wariancja-zmiennej-losowej-suma"></a>, a dla zmiennych niezależnych \(\operatorname{Var}(X+Y)=\operatorname{Var}(X)+\operatorname{Var}(Y)\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-czebyszew"><p class="ml-box-title">Twierdzenie (nierówność Czebyszewa)</p>
+<p>Dla dowolnej zmiennej o skończonej wariancji i \(t\gt0\) zachodzi <a class="ml-eqref" href="#eq-wariancja-zmiennej-losowej-czebyszew"></a>. Równoważnie: \(P(|X-\mu|\ge k\sigma)\le1/k^2\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-srednia-kwadratowa"><p class="ml-box-title">Twierdzenie (wartość oczekiwana minimalizuje błąd kwadratowy)</p>
+<p>Dla każdej stałej \(c\): \(\mathbb E[(X-c)^2]=\operatorname{Var}(X)+(\mathbb E[X]-c)^2\). Minimum po \(c\) osiąga się w \(c=\mathbb E[X]\) i wynosi \(\operatorname{Var}(X)\).</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<div class="ml-proof"><p class="ml-box-title">Dowód wzoru \(\operatorname{Var}(X)=\mathbb E[X^2]-(\mathbb E[X])^2\)</p>
+<p>Rozwijamy kwadrat i korzystamy z <a data-concept="wartosc-oczekiwana" data-anchor="twierdzenia">liniowości wartości oczekiwanej</a> (\(\mu\) jest stałą):</p>
+<div class="ml-eq" id="eq-wariancja-zmiennej-losowej-dowod-momenty">\[ \begin{aligned} \operatorname{Var}(X) &amp;= \mathbb E\big[X^2-2\mu X+\mu^2\big]\\ &amp;= \mathbb E[X^2]-2\mu\,\mathbb E[X]+\mu^2\\ &amp;= \mathbb E[X^2]-2\mu^2+\mu^2=\mathbb E[X^2]-\mu^2. \end{aligned} \]</div>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód \(\operatorname{Var}(aX+b)=a^2\operatorname{Var}(X)\)</p>
+<p>Z liniowości \(\mathbb E[aX+b]=a\mu+b\). Stąd \(aX+b-\mathbb E[aX+b]=a(X-\mu)\) — przesunięcie \(b\) znika. Zatem \(\operatorname{Var}(aX+b)=\mathbb E[a^2(X-\mu)^2]=a^2\operatorname{Var}(X)\). Pierwiastkując: \(\operatorname{SD}(aX+b)=|a|\operatorname{SD}(X)\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód wzoru na wariancję sumy</p>
+<p>Niech \(\tilde X=X-\mathbb EX\), \(\tilde Y=Y-\mathbb EY\). Wtedy \(X+Y-\mathbb E[X+Y]=\tilde X+\tilde Y\) i</p>
+<div class="ml-eq" id="eq-wariancja-zmiennej-losowej-dowod-suma">\[ \operatorname{Var}(X+Y)=\mathbb E\big[(\tilde X+\tilde Y)^2\big]=\mathbb E[\tilde X^2]+\mathbb E[\tilde Y^2]+2\,\mathbb E[\tilde X\tilde Y]=\operatorname{Var}X+\operatorname{Var}Y+2\operatorname{Cov}(X,Y). \]</div>
+<p>Rozwijając \(\mathbb E[\tilde X\tilde Y]\) jak w poprzednim dowodzie, dostajemy <a class="ml-eqref" href="#eq-wariancja-zmiennej-losowej-kowariancja"></a>. Dla niezależnych \(X,Y\) mamy \(\mathbb E[XY]=\mathbb EX\,\mathbb EY\), więc \(\operatorname{Cov}=0\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (i): wariancja zerowa</p>
+<p>\((X-\mu)^2\ge0\), więc \(\operatorname{Var}(X)\ge0\). Jeśli \(\operatorname{Var}(X)=0\), to z nierówności Markowa dla każdego \(n\): \(P\big((X-\mu)^2\ge\tfrac1n\big)\le n\cdot0=0\). Zdarzenie \(\{X\neq\mu\}=\bigcup_n\{(X-\mu)^2\ge\tfrac1n\}\) jest przeliczalną sumą zdarzeń miary zero, więc \(P(X\neq\mu)=0\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód nierówności Czebyszewa</p>
+<p>Zastosujmy <a data-concept="wartosc-oczekiwana" data-anchor="eq-wartosc-oczekiwana-markow">nierówność Markowa</a> do nieujemnej zmiennej \((X-\mu)^2\) i progu \(t^2\): \(P(|X-\mu|\ge t)=P\big((X-\mu)^2\ge t^2\big)\le\mathbb E[(X-\mu)^2]/t^2=\operatorname{Var}(X)/t^2\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód rozkładu błędu kwadratowego</p>
+<p>\(X-c=(X-\mu)+(\mu-c)\). Podnosząc do kwadratu i biorąc wartość oczekiwaną: \(\mathbb E[(X-c)^2]=\operatorname{Var}(X)+2(\mu-c)\mathbb E[X-\mu]+(\mu-c)^2\), a środkowy składnik znika, bo \(\mathbb E[X-\mu]=0\).</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong> Frekwencja \(A\) meczu w hali na \(C=2000\) miejsc przyjmuje wartości 800, 1100, 1500 z prawdopodobieństwami 0,2; 0,5; 0,3.</p>
+<ol class="ml-steps">
+<li><strong>Wartość oczekiwana.</strong> \(\mathbb E[A]=0{,}2\cdot800+0{,}5\cdot1100+0{,}3\cdot1500=160+550+450=1160\).</li>
+<li><strong>Drugi moment.</strong> \(\mathbb E[A^2]=0{,}2\cdot640\,000+0{,}5\cdot1\,210\,000+0{,}3\cdot2\,250\,000=128\,000+605\,000+675\,000=1\,408\,000\).</li>
+<li><strong>Wariancja ze wzoru <a class="ml-eqref" href="#eq-wariancja-zmiennej-losowej-momenty"></a>.</strong> \(\operatorname{Var}(A)=1\,408\,000-1160^2=1\,408\,000-1\,345\,600=62\,400\).</li>
+<li><strong>Kontrola z definicji.</strong> Odchylenia: \(-360\), \(-60\), \(+340\); kwadraty: \(129\,600\), \(3600\), \(115\,600\). Średnia ważona: \(0{,}2\cdot129\,600+0{,}5\cdot3600+0{,}3\cdot115\,600=25\,920+1800+34\,680=62\,400\). ✓</li>
+<li><strong>Odchylenie standardowe.</strong> \(\operatorname{SD}(A)=\sqrt{62\,400}\approx249{,}8\) widza.</li>
+<li><strong>Wypełnienie.</strong> \(W=A/2000\), więc z <a class="ml-eqref" href="#eq-wariancja-zmiennej-losowej-liniowa"></a>: \(\operatorname{Var}(W)=62\,400/2000^2=0{,}0156\), \(\operatorname{SD}(W)\approx0{,}1249\) (ok. 12,5 p.p.).</li>
+<li><strong>Przychód.</strong> \(Z=25A-10\,000\) zł: \(\operatorname{Var}(Z)=625\cdot62\,400=39\,000\,000\), \(\operatorname{SD}(Z)\approx6245\) zł; koszt stały nie zmienia rozrzutu.</li>
+<li><strong>Suma dwóch meczów.</strong> Drugi mecz: \(\operatorname{Var}(A_2)=40\,000\). Jeśli frekwencje są dodatnio skorelowane z \(\operatorname{Cov}(A,A_2)=15\,000\): \(\operatorname{Var}(A+A_2)=62\,400+40\,000+30\,000=132\,400\), SD \(\approx363{,}9\). Przy niezależności: \(102\,400\), SD \(=320\). Pominięcie korelacji zaniża niepewność.</li>
+<li><strong>Czebyszew.</strong> \(P(|A-1160|\ge300)\le62\,400/90\,000\approx0{,}693\). Faktycznie \(P(|A-1160|\ge300)=P(A=800)+P(A=1500)=0{,}5\) — ograniczenie jest prawdziwe, ale luźne.</li>
+<li><strong>Nadmierna dyspersja.</strong> Gdyby w hali na 2000 miejsc każdy z potencjalnych widzów przychodził niezależnie z \(p=0{,}58\) (model dwumianowy), \(\operatorname{SD}=\sqrt{2000\cdot0{,}58\cdot0{,}42}=\sqrt{487{,}2}\approx22{,}1\) — absurdalnie mało w porównaniu z obserwowaną zmiennością rzędu 250. Rozkład beta-dwumianowy z \(\phi=30\) mnoży wariancję przez \((30+2000)/(30+1)\approx65{,}48\): \(\operatorname{Var}\approx31\,904\), \(\operatorname{SD}\approx178{,}6\).</li>
+</ol>
+<div class="ml-plot" data-plot="betabinomial" data-params='{"n": 50, "a": 6, "b": 4}'></div>
+<p>Rozkład beta-dwumianowy przy tej samej średniej wypełnienia jest tym szerszy, im mniejsze \(a+b=\phi\). Zwiększaj jednocześnie \(a\) i \(b\) w stałej proporcji: wariancja maleje do wariancji dwumianowej \(n\mu(1-\mu)\).</p>
+<div class="ml-plot" data-plot="negbinomial" data-params='{"mu": 1160, "kappa": 8}'></div>
+<p>W rozkładzie ujemnym dwumianowym wariancja \(\mu+\mu^2/\kappa\) rośnie kwadratowo ze średnią; dla \(\mu=1160\), \(\kappa=8\): \(1160+168\,200=169\,360\), SD \(\approx411{,}5\). Zmniejszanie \(\kappa\) poszerza rozkład.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Odchylenie standardowe 250 widzów przy średniej 1160 oznacza, że typowe odchylenie pojedynczego meczu od oczekiwania to ok. 20% średniej (współczynnik zmienności, zob. <a data-concept="wspolczynnik-zmiennosci">współczynnik zmienności</a>). Nierówność Czebyszewa gwarantuje, że <em>dla każdego</em> rozkładu o tej wariancji odchylenia o co najmniej 2 SD (500 widzów) zdarzają się z prawdopodobieństwem nie większym niż 25%; dla konkretnych rozkładów rzeczywiste prawdopodobieństwo jest zwykle znacznie mniejsze.</p>
+<p>Krok 10 pokazuje sens <em>porównywania</em> wariancji z wariancją modelu bazowego: jeśli obserwowana zmienność wielokrotnie przekracza dwumianową, frekwencja nie jest sumą niezależnych decyzji pojedynczych kibiców — działa wspólny czynnik (pogoda, ranga meczu, promocja), który przesuwa decyzje wszystkich naraz.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> wariancja steruje wyborem i parametryzacją rozkładu obserwacji:</p>
+<ul>
+<li><strong>Wariant „wypełnienie”.</strong> \(A_i\sim\mathrm{BetaBinomial}(C_i,\mu_i\phi,(1-\mu_i)\phi)\), więc \(\operatorname{Var}(A_i\mid\mu_i,\phi)=C_i\mu_i(1-\mu_i)(\phi+C_i)/(\phi+1)\). Parametr precyzji \(\phi\) jest estymowany z danych i mierzy, jak bardzo frekwencja odbiega od modelu „niezależnych kibiców”. Wariancja jest największa przy \(\mu_i=0{,}5\) i maleje przy pełnych lub pustych halach — zgodnie z obserwacją, że przy kompletach rozrzut jest ograniczony pojemnością.</li>
+<li><strong>Wariant „liczba widzów”.</strong> \(\operatorname{Var}(A_i)=\mu_i+\mu_i^2/\kappa\): dla dużych frekwencji (np. mecze Ligi Mistrzów EHF ze średnią ok. 4500) odchylenie standardowe rośnie w przybliżeniu proporcjonalnie do średniej, \(\operatorname{SD}\approx\mu_i/\sqrt\kappa\), czyli współczynnik zmienności jest w przybliżeniu stały.</li>
+<li><strong>Efekty losowe.</strong> Wariancje \(\sigma_R^2\), \(\sigma_H^2\) itd. opisują, jak bardzo kluby różnią się atrakcyjnością na skali logitowej; z nich wynika siła ściągania (zob. <a data-concept="partial-pooling">partial pooling</a>).</li>
+<li><strong>Reszty standaryzowane</strong> w walidacji dzielą błąd przez \(\sqrt{\operatorname{Var}(A_i)}\) z modelu; wartości systematycznie większe od 1 co do modułu wskazują niedoszacowaną wariancję (zob. <a data-concept="diagnostyka-reszt">diagnostyka reszt</a>).</li>
+<li><strong>Niepewność predykcyjna</strong> dzieli się na część wewnątrzmeczową i parametryczną zgodnie z <a data-concept="prawo-calkowitej-wariancji">prawem całkowitej wariancji</a>.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Wrażliwość na wartości odstające.</strong> Kwadrat odchylenia sprawia, że pojedyncze rekordowe mecze dominują wariancję; odporne alternatywy to rozstęp międzykwartylowy i MAD (zob. <a data-concept="kwartyle">kwartyle</a>).</li>
+<li><strong>Nie opisuje asymetrii.</strong> Rozkład frekwencji jest zwykle prawostronnie skośny; ta sama wariancja może odpowiadać bardzo różnym ryzykom pustej hali i kompletu.</li>
+<li><strong>Jednostka kwadratowa.</strong> Wariancję trudno interpretować bezpośrednio; raportuje się SD lub przedziały.</li>
+<li><strong>Kowariancje.</strong> Sumowanie wariancji bez kowariancji (np. między meczami tej samej kolejki) zaniża niepewność sum sezonowych.</li>
+<li><strong>Istnienie.</strong> Dla rozkładów o ciężkich ogonach wariancja może być nieskończona.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="wartosc-oczekiwana">Wartość oczekiwana</a>.</li>
+<li><a data-concept="wariancja">Wariancja (empiryczna)</a> i <a data-concept="odchylenie-standardowe">odchylenie standardowe</a>.</li>
+<li><a data-concept="prawo-calkowitej-wariancji">Prawo całkowitej wariancji</a>.</li>
+<li><a data-concept="rozklad-beta-dwumianowy">Rozkład beta-dwumianowy</a>, <a data-concept="rozklad-ujemny-dwumianowy">rozkład ujemny dwumianowy</a>.</li>
+<li><a data-concept="niepewnosc-predykcyjna">Niepewność predykcyjna</a>.</li>
+<li><a data-concept="diagnostyka-reszt">Diagnostyka reszt</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="casellaberger2002"></li>
+<li data-bib="pishronik2014"></li>
+<li data-bib="wasserman2004"></li>
+<li data-bib="johnson2005discrete"></li>
+<li data-bib="hilbe2011"></li>
+</ul>
+</section>

@@ -1,0 +1,216 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Synoptyk, który zapowiada „70% szans na deszcz”, jest wiarygodny, jeśli spośród wszystkich dni z taką zapowiedzią deszcz rzeczywiście padał w około 70%. Tę własność nazywamy <strong>kalibracją</strong> (ang. <em>calibration</em>, także <em>reliability</em>): deklarowane prawdopodobieństwa zgadzają się z obserwowanymi częstościami. Pojęcie pochodzi z meteorologii <cite data-bib="brier1950"></cite>, a jego formalną, „prekwencyjną” postać — oceniamy prognozy tylko przez to, jak pasują do tego, co się zdarzyło — sformułował <cite data-bib="dawid1984"></cite>.</p>
+<p>Kalibracja nie wystarcza. Prognoza „na każdy mecz 22% szans na wypełnienie hali w 90%”, gdzie 22% to średnia ligowa, jest doskonale skalibrowana i zupełnie bezużyteczna — nie odróżnia derbów od meczu w środę wieczorem. Drugą pożądaną cechą jest <strong>ostrość</strong> (ang. <em>sharpness</em>): prognozy powinny być możliwie skupione (bliskie 0 lub 1, wąskie przedziały). Paradygmat Gneitinga, Balabdaoui i Raftery’ego brzmi: <em>maksymalizuj ostrość przy zachowaniu kalibracji</em> <cite data-bib="gneiting2007calibration"></cite>.</p>
+<p>Dla prognoz całych rozkładów (np. rozkładu liczby widzów) podstawowym narzędziem jest <strong>PIT</strong> (ang. <em>probability integral transform</em>): wartość dystrybuanty prognozy w punkcie, który się zrealizował. Jeśli model jest poprawny, wartości PIT z wielu meczów rozkładają się jednostajnie na \( [0,1] \). Histogram w kształcie litery U zdradza prognozy zbyt pewne siebie, garb pośrodku — zbyt ostrożne, a nachylenie — systematyczne przeszacowanie lub niedoszacowanie. Łączną jakość (kalibrację i ostrość naraz) mierzą reguły oceny: wynik Briera dla zdarzeń i CRPS dla rozkładów <cite data-bib="gneiting2007scoring"></cite>.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \( (\Omega,\mathcal F,P) \) będzie przestrzenią probabilistyczną, na której określone są obserwacje i prognozy. Rozważamy dwa typy prognoz.</p>
+<div class="ml-box ml-def" id="def-kalibracja-binarna"><p class="ml-box-title">Definicja (kalibracja prognoz zdarzeń)</p>
+<p>Niech \( Y\in\{0,1\} \) będzie wskaźnikiem zdarzenia (np. \( Y=\mathbf 1\{W\ge0{,}9\} \)), a \( \hat p\in[0,1] \) — prognozowanym prawdopodobieństwem (zmienną losową, bo zależy od meczu). Prognoza jest <strong>skalibrowana</strong>, jeżeli</p>
+<div class="ml-eq" id="eq-kalibracja-prawdopodobienstw">\[ P\bigl(Y=1 \bigm| \hat p = p\bigr) \;=\; p \qquad \text{dla prawie wszystkich } p \text{ (względem rozkładu } \hat p). \]</div>
+</div>
+<div class="ml-box ml-def" id="def-pit"><p class="ml-box-title">Definicja (PIT i kalibracja probabilistyczna)</p>
+<p>Niech \( F \) będzie prognozowaną dystrybuantą zmiennej rzeczywistej \( Y \). <strong>Transformacją całkową prawdopodobieństwa</strong> nazywamy</p>
+<div class="ml-eq" id="eq-kalibracja-prawdopodobienstw-pit">\[ U = F(Y). \]</div>
+<p>Ciąg prognoz \( F_i \) dla obserwacji \( y_i \) jest <strong>probabilistycznie skalibrowany</strong>, jeżeli wartości \( u_i=F_i(y_i) \) mają rozkład jednostajny \( \mathcal U(0,1) \) <cite data-bib="gneiting2007calibration"></cite>.</p>
+</div>
+<div class="ml-box ml-def" id="def-rpit"><p class="ml-box-title">Definicja (randomizowany PIT)</p>
+<p>Gdy \( Y \) przyjmuje wartości całkowite (liczba widzów), a \( f(y)=F(y)-F(y-1) \), <strong>randomizowanym PIT</strong> nazywamy</p>
+<div class="ml-eq" id="eq-kalibracja-prawdopodobienstw-rpit">\[ V = F(Y-1) + U'\, f(Y), \qquad U'\sim\mathcal U(0,1)\ \text{niezależne od } Y. \]</div>
+</div>
+<div class="ml-box ml-def" id="def-reguly"><p class="ml-box-title">Definicja (reguły oceny)</p>
+<p><strong>Wynik Briera</strong> \( N \) prognoz zdarzeń: \( \mathrm{BS}=\frac1N\sum_{i=1}^N(\hat p_i-y_i)^2 \) <cite data-bib="brier1950"></cite>. <strong>Ciągły ranking prawdopodobieństwa</strong> (ang. <em>continuous ranked probability score</em>, CRPS) prognozy \( F \) przy obserwacji \( y \) <cite data-bib="matheson1976"></cite>:</p>
+<div class="ml-eq" id="eq-kalibracja-prawdopodobienstw-crps">\[ \mathrm{CRPS}(F,y) = \int_{-\infty}^{\infty}\bigl(F(z)-\mathbf 1\{y\le z\}\bigr)^2\,dz = \mathbb{E}|X-y| - \tfrac12\,\mathbb{E}|X-X'|, \]</div>
+<p>gdzie \( X, X' \) są niezależnymi zmiennymi o rozkładzie \( F \). Reguła oceny \( S(F,y) \) (mniejsza = lepsza) jest <strong>właściwa</strong> (ang. <em>proper</em>), jeżeli \( \mathbb{E}_{Y\sim G}S(G,Y)\le\mathbb{E}_{Y\sim G}S(F,Y) \) dla wszystkich \( F,G \), i <strong>ściśle właściwa</strong>, gdy równość zachodzi tylko dla \( F=G \) <cite data-bib="gneiting2007scoring"></cite>.</p>
+</div>
+<div class="ml-box ml-def" id="def-histogram-rang"><p class="ml-box-title">Definicja (histogram rang i diagram niezawodności)</p>
+<p>Dla prognozy w postaci \( m \) próbek \( x_1,\dots,x_m \) <strong>rangą</strong> obserwacji jest \( r=1+\#\{j: x_j\lt y\}\in\{1,\dots,m+1\} \); histogram rang z wielu prognoz jest dyskretnym odpowiednikiem histogramu PIT <cite data-bib="hamill2001"></cite>. <strong>Diagram niezawodności</strong> (ang. <em>reliability diagram</em>) to wykres obserwowanej częstości zdarzenia \( \bar o_k \) względem średniej prognozy \( \bar p_k \) w przedziałach (koszykach) \( k=1,\dots,K \) wartości prognozy; prognozy skalibrowane leżą na przekątnej <cite data-bib="niculescu2005"></cite>.</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( Y,\ y_i \)</td><td>obserwacja (zmienna losowa i jej realizacja w meczu \( i \))</td></tr>
+<tr><td>\( \hat p,\ \hat p_i \)</td><td>prognozowane prawdopodobieństwo zdarzenia</td></tr>
+<tr><td>\( F,\ F_i \)</td><td>prognozowana dystrybuanta</td></tr>
+<tr><td>\( f(y) \)</td><td>prawdopodobieństwo punktowe \( F(y)-F(y-1) \)</td></tr>
+<tr><td>\( U,\ u_i \)</td><td>wartość PIT</td></tr>
+<tr><td>\( V,\ U' \)</td><td>randomizowany PIT, pomocnicza zmienna jednostajna</td></tr>
+<tr><td>\( r \)</td><td>ranga obserwacji wśród próbek prognozy</td></tr>
+<tr><td>\( m \)</td><td>liczba próbek (członków zespołu) prognozy</td></tr>
+<tr><td>\( \mathrm{BS},\ \mathrm{BSS} \)</td><td>wynik Briera i jego wskaźnik umiejętności</td></tr>
+<tr><td>\( \mathrm{CRPS} \)</td><td>ciągły ranking prawdopodobieństwa</td></tr>
+<tr><td>\( X,\ X' \)</td><td>niezależne zmienne o rozkładzie prognozy</td></tr>
+<tr><td>\( K,\ n_k,\ \bar p_k,\ \bar o_k \)</td><td>liczba koszyków, liczność, średnia prognoza i częstość w koszyku \( k \)</td></tr>
+<tr><td>\( \bar o \)</td><td>ogólna częstość zdarzenia (klimatologia)</td></tr>
+<tr><td>\( \mathrm{REL},\ \mathrm{RES},\ \mathrm{UNC} \)</td><td>niezawodność, rozdzielczość, niepewność w dekompozycji Briera</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li><strong>Prognozy ex ante.</strong> Każda prognoza powstała wyłącznie z informacji dostępnej przed meczem (zob. <a data-concept="backtesting">backtesting</a>). PIT liczony na danych treningowych ocenia dopasowanie, nie kalibrację prognoz.</li>
+<li><strong>Wymienność obserwacji w ocenie.</strong> Jednostajność PIT sprawdzamy na zbiorze wielu prognoz; zakładamy, że odpowiadają one porównywalnym sytuacjom, a zależności między meczami (wspólne parametry, autokorelacja) nie są tak silne, by uniemożliwić wnioskowanie o rozkładzie \( u_i \).</li>
+<li><strong>Ciągłość lub randomizacja.</strong> Twierdzenie o jednostajności PIT wymaga ciągłej \( F \); dla danych dyskretnych stosujemy randomizowany PIT.</li>
+<li><strong>Dostatecznie wiele obserwacji w koszykach</strong> diagramu niezawodności — w przeciwnym razie odchylenia od przekątnej są szumem.</li>
+<li><strong>Kalibracja jest warunkiem koniecznym, nie dostatecznym.</strong> Jednostajny PIT nie dowodzi poprawności modelu (np. prognoza klimatologiczna też ma jednostajny PIT).</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p><strong>CRPS z próbek.</strong> Dla prognozy danej próbkami \( x_1,\dots,x_m \):</p>
+<div class="ml-eq" id="eq-kalibracja-prawdopodobienstw-crps-probki">\[ \widehat{\mathrm{CRPS}} = \frac1m\sum_{j=1}^m|x_j-y| - \frac{1}{2m^2}\sum_{j=1}^m\sum_{l=1}^m|x_j-x_l| . \]</div>
+<p>Wariant „sprawiedliwy” (ang. <em>fair</em>) dzieli drugą sumę przez \( 2m(m-1) \); przy tysiącach próbek różnica jest pomijalna. Dla prognozy punktowej (rozkład skupiony w \( x \)) \( \mathrm{CRPS}=|x-y| \), więc średni CRPS uogólnia <a data-concept="mae">MAE</a> na prognozy probabilistyczne i ma jednostki obserwacji (widzowie).</p>
+<p><strong>Wskaźnik umiejętności Briera</strong> względem prognozy klimatologicznej \( \bar o \):</p>
+<div class="ml-eq" id="eq-kalibracja-prawdopodobienstw-bss">\[ \mathrm{BSS} = 1-\frac{\mathrm{BS}}{\mathrm{BS}_{\mathrm{klim}}}, \qquad \mathrm{BS}_{\mathrm{klim}}=\bar o(1-\bar o). \]</div>
+<p><strong>Dekompozycja wyniku Briera</strong> (Murphy’ego) przy prognozach stałych w koszykach:</p>
+<div class="ml-eq" id="eq-kalibracja-prawdopodobienstw-murphy">\[ \mathrm{BS} = \underbrace{\frac1N\sum_{k=1}^K n_k(\bar p_k-\bar o_k)^2}_{\mathrm{REL}} \;-\; \underbrace{\frac1N\sum_{k=1}^K n_k(\bar o_k-\bar o)^2}_{\mathrm{RES}} \;+\; \underbrace{\bar o(1-\bar o)}_{\mathrm{UNC}} . \]</div>
+<p>REL (im mniej, tym lepiej) mierzy brak kalibracji, RES (im więcej, tym lepiej) — zdolność odróżniania sytuacji, UNC — trudność samego zadania, niezależną od prognoz.</p>
+<p><strong>Histogram PIT</strong>: dzielimy \( [0,1] \) na \( B \) równych przedziałów; przy kalibracji oczekiwana liczność każdego to \( N/B \).</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-pit"><p class="ml-box-title">Twierdzenie (jednostajność PIT)</p>
+<p>Jeżeli \( Y \) ma ciągłą dystrybuantę \( F \), to \( U=F(Y)\sim\mathcal U(0,1) \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-rpit"><p class="ml-box-title">Twierdzenie (jednostajność randomizowanego PIT)</p>
+<p>Jeżeli \( Y \) ma dowolny rozkład na liczbach całkowitych z dystrybuantą \( F \), a \( U'\sim\mathcal U(0,1) \) jest niezależne od \( Y \), to \( V \) z <a class="ml-eqref" href="#eq-kalibracja-prawdopodobienstw-rpit"></a> ma rozkład \( \mathcal U(0,1) \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-rangi"><p class="ml-box-title">Twierdzenie (jednostajność rang)</p>
+<p>Jeżeli \( y,x_1,\dots,x_m \) są i.i.d. o ciągłym rozkładzie, to ranga \( r \) ma rozkład jednostajny na \( \{1,\dots,m+1\} \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-brier"><p class="ml-box-title">Twierdzenie (wynik Briera jest ściśle właściwy)</p>
+<p>Jeżeli \( Y\sim\mathrm{Bernoulli}(q) \), to \( \mathbb{E}(p-Y)^2=(p-q)^2+q(1-q) \), więc oczekiwany wynik jest minimalizowany wyłącznie przez \( p=q \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-crps"><p class="ml-box-title">Twierdzenie (postać kernelowa CRPS)</p>
+<p>Jeżeli \( F \) ma skończoną wartość oczekiwaną, to obie postacie w <a class="ml-eqref" href="#eq-kalibracja-prawdopodobienstw-crps"></a> są równe, a CRPS jest regułą ściśle właściwą w klasie takich rozkładów <cite data-bib="gneiting2007scoring"></cite>.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-pit">Jednostajność PIT</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Niech \( u\in(0,1) \) i \( F^{-1}(u)=\inf\{y: F(y)\ge u\} \). Ponieważ \( F \) jest ciągła, \( F(F^{-1}(u))=u \), a dla niemalejącej \( F \) zachodzi \( F(y)\le u \iff y\le y_u \), gdzie \( y_u=\sup\{y:F(y)\le u\} \) i \( F(y_u)=u \). Zatem</p>
+\[ P(U\le u)=P(F(Y)\le u)=P(Y\le y_u)=F(y_u)=u . \]
+<p>Dla \( u\le0 \) i \( u\ge1 \) wynik jest trywialny (0 i 1). Dystrybuanta \( U \) jest więc dystrybuantą \( \mathcal U(0,1) \).</p>
+<p class="ml-qed">∎</p></div>
+<p>W walidacji modelu rozumowanie odwracamy: jeżeli prognozowana \( F_i \) jest <em>prawdziwym</em> rozkładem warunkowym \( Y_i \), to \( u_i \) są jednostajne. Odchylenia od jednostajności dowodzą, że \( F_i \) nie jest prawdziwym rozkładem.</p>
+
+<h3 id="dowod-rpit">Jednostajność randomizowanego PIT</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Ustalmy \( v\in(0,1) \) i niech \( y^\ast \) będzie liczbą całkowitą, dla której \( F(y^\ast-1)\le v\lt F(y^\ast) \) (istnieje, bo \( F \) rośnie od 0 do 1 skokami w punktach całkowitych); wtedy \( f(y^\ast)\gt0 \). Dla \( Y=y \) zmienna \( V \) ma rozkład jednostajny na \( [F(y-1),F(y)] \). Rozważmy trzy przypadki:</p>
+<ul>
+<li>\( y\lt y^\ast \): \( V\le F(y)\le F(y^\ast-1)\le v \), więc \( P(V\le v\mid Y=y)=1 \);</li>
+<li>\( y\gt y^\ast \): \( V\ge F(y-1)\ge F(y^\ast)\gt v \), więc \( P(V\le v\mid Y=y)=0 \);</li>
+<li>\( y=y^\ast \): \( P(V\le v\mid Y=y^\ast)=P\bigl(U'\le\frac{v-F(y^\ast-1)}{f(y^\ast)}\bigr)=\frac{v-F(y^\ast-1)}{f(y^\ast)} \).</li>
+</ul>
+<p>Z prawa całkowitego prawdopodobieństwa:</p>
+\[ P(V\le v)=\sum_{y\lt y^\ast}f(y) + f(y^\ast)\cdot\frac{v-F(y^\ast-1)}{f(y^\ast)} = F(y^\ast-1)+v-F(y^\ast-1)=v . \]
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-rangi">Jednostajność rang</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Przy ciągłym rozkładzie remisy mają prawdopodobieństwo 0. Wektor \( (y,x_1,\dots,x_m) \) jest wymienny (i.i.d.), więc każda z \( m+1 \) zmiennych ma jednakowe prawdopodobieństwo bycia \( k \)-tą najmniejszą, dla każdego \( k \). Zatem \( P(r=k)=1/(m+1) \).</p>
+<p class="ml-qed">∎</p></div>
+<p>W modelu bayesowskim próbki \( x_j \) pochodzą z rozkładu predykcyjnego, a \( y \) — z prawdziwego procesu; rangi są jednostajne, gdy te dwa rozkłady się pokrywają. Zależność próbek MCMC nie psuje jednostajności brzegowej, ale zwiększa rozrzut histogramu; często stosuje się przerzedzenie do kilkuset próbek.</p>
+
+<h3 id="dowod-brier">Właściwość wyniku Briera</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>\( \mathbb{E}(p-Y)^2=q(p-1)^2+(1-q)p^2=p^2-2pq+q=(p-q)^2+q-q^2=(p-q)^2+q(1-q) \). Drugi składnik nie zależy od \( p \), pierwszy jest nieujemny i zeruje się tylko w \( p=q \).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-crps">Postać kernelowa CRPS</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla liczb \( a,b \): \( |a-b|=\int_{\mathbb R}\bigl(\mathbf 1\{a\le z\}-\mathbf 1\{b\le z\}\bigr)^2dz \), bo różnica wskaźników jest równa \( \pm1 \) dokładnie między \( a \) i \( b \). Oznaczmy \( I(z)=\mathbf 1\{y\le z\} \). Biorąc wartości oczekiwane i zamieniając kolejność całkowania (Tonelli):</p>
+\[ \begin{aligned} \mathbb{E}|X-y| &amp;= \int\bigl[F(z)(1-I(z)) + (1-F(z))I(z)\bigr]dz, \\ \mathbb{E}|X-X'| &amp;= \int\bigl[F(z)(1-F(z))+(1-F(z))F(z)\bigr]dz=\int 2F(z)(1-F(z))\,dz . \end{aligned} \]
+<p>Odejmując połowę drugiego wyrażenia od pierwszego, pod całką otrzymujemy</p>
+\[ F - FI + I - FI - F + F^2 = F^2 - 2FI + I = (F-I)^2 , \]
+<p>bo \( I^2=I \). To jest całka w definicji CRPS. Skończoność obu wartości oczekiwanych wynika z \( \mathbb{E}|X|\lt\infty \).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-murphy">Dekompozycja Briera</h3>
+<p>Gdy wszystkie prognozy w koszyku \( k \) są równe \( \bar p_k \), w koszyku jest \( n_k\bar o_k \) zdarzeń, a suma kwadratów błędów to \( n_k[\bar o_k(1-\bar p_k)^2+(1-\bar o_k)\bar p_k^2]=n_k[(\bar p_k-\bar o_k)^2+\bar o_k(1-\bar o_k)] \) (to samo przekształcenie co w dowodzie właściwości). Następnie \( \frac1N\sum_k n_k\bar o_k(1-\bar o_k)=\bar o(1-\bar o)-\frac1N\sum_kn_k(\bar o_k-\bar o)^2 \) (rozkład wariancji wskaźnika zdarzenia na część wewnątrz- i międzykoszykową), co daje <a class="ml-eqref" href="#eq-kalibracja-prawdopodobienstw-murphy"></a>.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><em>Dane ilustracyjne.</em></p>
+<ol class="ml-steps">
+<li><strong>PIT dla liczby widzów.</strong> Prognoza \( \mathrm{NegBin}(\mu=1000,\ \kappa=20) \), zaobserwowano \( y=1250 \). \( F(1249)=0{,}86395 \), \( f(1250)=0{,}00083 \). Randomizowany PIT z \( U'=0{,}4 \): \( V=0{,}86395+0{,}4\cdot0{,}00083=0{,}86428\approx0{,}864 \). Przy tak małym \( f \) randomizacja praktycznie nic nie zmienia; frekwencja trafiła w górne 14% rozkładu prognozy.</li>
+<li><strong>Randomizowany PIT przy komplecie widzów.</strong> Mała hala w niższej lidze, \( C=300 \), prognoza \( \mathrm{BetaBinomial}(300;\ 0{,}85\cdot4;\ 0{,}15\cdot4) \). Prawdopodobieństwo kompletu \( f(300)=0{,}0653 \), \( F(299)=0{,}9347 \). Przyszło 300 widzów. Zwykły PIT dałby zawsze \( F(300)=1 \) — wszystkie mecze z kompletem trafiłyby do skrajnego słupka histogramu. Randomizowany z \( U'=0{,}62 \): \( V=0{,}9347+0{,}62\cdot0{,}0653=0{,}9347+0{,}0405=0{,}9752 \); przy poprawnym modelu takie wartości rozkładają się równomiernie na \( [0{,}9347;\ 1] \).</li>
+<li><strong>Wynik Briera.</strong> Dziesięć prognoz zdarzenia „wypełnienie ≥ 90%”: \( \hat p \) = 0,10; 0,20; 0,70; 0,90; 0,30; 0,05; 0,60; 0,80; 0,15; 0,40; wyniki \( y \) = 0; 0; 1; 1; 1; 0; 0; 1; 0; 0. Kwadraty błędów: 0,01; 0,04; 0,09; 0,01; 0,49; 0,0025; 0,36; 0,04; 0,0225; 0,16; suma 1,225, więc \( \mathrm{BS}=0{,}1225 \).</li>
+<li><strong>Odniesienie.</strong> Częstość zdarzenia \( \bar o=4/10=0{,}4 \), \( \mathrm{BS}_{\mathrm{klim}}=0{,}4\cdot0{,}6=0{,}24 \). \( \mathrm{BSS}=1-0{,}1225/0{,}24=1-0{,}5104=0{,}4896 \) — prognozy redukują błąd Briera o ok. 49% względem stałej częstości.</li>
+<li><strong>Diagram niezawodności i dekompozycja.</strong> 1000 prognoz z backtestu, w pięciu koszykach:
+<table class="ml-table">
+<thead><tr><th>Koszyk</th><th>\( n_k \)</th><th>\( \bar p_k \)</th><th>zdarzenia</th><th>\( \bar o_k \)</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>500</td><td>0,05</td><td>20</td><td>0,04</td></tr>
+<tr><td>2</td><td>200</td><td>0,20</td><td>50</td><td>0,25</td></tr>
+<tr><td>3</td><td>150</td><td>0,40</td><td>54</td><td>0,36</td></tr>
+<tr><td>4</td><td>100</td><td>0,60</td><td>55</td><td>0,55</td></tr>
+<tr><td>5</td><td>50</td><td>0,85</td><td>39</td><td>0,78</td></tr>
+</tbody>
+</table>
+\( \bar o=218/1000=0{,}218 \). REL \( =\frac{1}{1000}[500\cdot0{,}01^2+200\cdot0{,}05^2+150\cdot0{,}04^2+100\cdot0{,}05^2+50\cdot0{,}07^2]=\frac{0{,}05+0{,}5+0{,}24+0{,}25+0{,}245}{1000}=0{,}001285 \). RES \( =\frac{1}{1000}[500\cdot0{,}178^2+200\cdot0{,}032^2+150\cdot0{,}142^2+100\cdot0{,}332^2+50\cdot0{,}562^2]=\frac{15{,}842+0{,}2048+3{,}0246+11{,}0224+15{,}7922}{1000}=0{,}045886 \). UNC \( =0{,}218\cdot0{,}782=0{,}170476 \). \( \mathrm{BS}=0{,}001285-0{,}045886+0{,}170476=0{,}125875 \). Punkty leżą blisko przekątnej (REL bardzo małe), w górnych koszykach prognozy są nieco zbyt wysokie.</li>
+<li><strong>CRPS z próbek.</strong> Prognoza: cztery próbki 1000, 1100, 1300, 1500; obserwacja \( y=1200 \). \( \frac14(200+100+100+300)=175 \). Macierz \( |x_j-x_l| \) ma sumy wierszy 900, 700, 700, 1100, razem 3400; \( \frac{3400}{2\cdot16}=106{,}25 \). \( \widehat{\mathrm{CRPS}}=175-106{,}25=68{,}75 \) widza. Wariant sprawiedliwy: \( 175-3400/(2\cdot12)=175-141{,}67=33{,}33 \) — przy czterech próbkach różnica jest duża, przy 4000 znikoma.</li>
+</ol>
+<div class="ml-plot" data-plot="beta" data-params='{"a": 0.6, "b": 0.6}'></div>
+<p>Gęstość \( \mathrm{Beta}(a,b) \) jako model kształtu histogramu PIT: \( a=b\lt1 \) (kształt U) — obserwacje zbyt często wpadają w ogony, prognozy są zbyt wąskie; \( a=b\gt1 \) (garb) — prognozy zbyt szerokie; \( a\ne b \) — systematyczne obciążenie. Jednostajność odpowiada \( a=b=1 \).</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>PIT równy 0,864 dla pojedynczego meczu nie świadczy ani o dobrym, ani o złym modelu — informację niesie dopiero rozkład wielu wartości. Histogram PIT z sezonu testowego czytamy według kształtu: płaski — dobra kalibracja; U — model zbyt pewny siebie (przedziały predykcyjne za wąskie, pokrycie poniżej nominalnego); garb — zbyt ostrożny; nachylony w prawo (nadmiar wartości bliskich 1) — model systematycznie zaniża frekwencję.</p>
+<p>Wynik Briera 0,1225 i BSS 0,49 mówią, że prognozy niosą istotną informację ponad średnią częstość. Dekompozycja rozdziela dwie zalety: niskie REL (0,0013) oznacza, że deklarowanym prawdopodobieństwom można wierzyć; wysokie RES (0,046) — że model rozróżnia mecze o różnych szansach. Model z RES = 0 byłby prognozą klimatologiczną.</p>
+<p>CRPS ma jednostki obserwacji, dzięki czemu porównujemy go z MAE: dla prognozy punktowej CRPS = MAE, a prognoza probabilistyczna o tym samym centrum ma mniejszy CRPS, jeśli dobrze opisuje rozrzut. Niższy średni CRPS wariantu modelu na sezonie testowym oznacza lepszą łącznie kalibrację i ostrość.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>Walidacja <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> jest chronologiczna: model uczymy na sezonach wcześniejszych i prognozujemy ostatni sezon (zob. <a data-concept="backtesting">backtesting</a>). Dla każdego meczu testowego z próbek predykcyjnych (<a data-concept="monte-carlo">symulacja Monte Carlo</a>) liczymy:</p>
+<ul>
+<li><strong>randomizowany PIT</strong> liczby widzów — liczba widzów jest dyskretna, a w wariancie beta-dwumianowym rozkład ma masę w \( A=C \) (komplet) i często w małych wartościach; bez randomizacji histogram miałby sztuczne słupki na krańcach. Z próbek: \( V=\hat F(y-1)+U'\hat f(y) \), gdzie \( \hat F \) i \( \hat f \) to częstości empiryczne;</li>
+<li><strong>histogram rang</strong> obserwacji wśród (przerzedzonych) próbek predykcyjnych — równoważna, prosta w implementacji wersja PIT;</li>
+<li><strong>diagram niezawodności i wynik Briera</strong> dla prognoz progowych \( P(W\ge0{,}75) \), \( P(W\ge0{,}9) \), \( P(W\ge0{,}95) \), \( P(W=1) \);</li>
+<li><strong>CRPS</strong> do porównania wariantów modelu (beta-dwumianowy vs ujemny dwumianowy, różne zestawy zmiennych) obok <a data-concept="mae">MAE</a> i <a data-concept="rmse">RMSE</a>;</li>
+<li><strong>pokrycie</strong> przedziałów 50/80/95% (<a data-concept="pokrycie-przedzialow-predykcyjnych">pokrycie przedziałów predykcyjnych</a>) — kalibracja w kilku wybranych punktach rozkładu.</li>
+</ul>
+<p>Kalibrację warto badać także w podgrupach: osobno dla Superligi i niższych lig (inne skale: ok. 1100–1300 vs 100–300 widzów), osobno dla meczów pucharowych EHF. Model skalibrowany globalnie może być zbyt pewny siebie w jednej grupie i zbyt ostrożny w innej. Metody rekalibracji post hoc (Platt, regresja izotoniczna <cite data-bib="niculescu2005"></cite>, <cite data-bib="doc-sklearn-calibration"></cite>) są w modelu bayesowskim ostatecznością — lepiej poprawić strukturę modelu (np. precyzję \( \phi \) zależną od rozgrywek).</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Kalibracja ≠ trafność.</strong> Prognoza klimatologiczna jest skalibrowana; ocenę trzeba uzupełnić miarą ostrości lub regułą ściśle właściwą (Brier, CRPS).</li>
+<li><strong>Kalibracja brzegowa.</strong> Jednostajny PIT na całym zbiorze nie wyklucza złej kalibracji warunkowej (w podgrupach), która może się znosić.</li>
+<li><strong>Wielkość próby.</strong> Przy kilkuset meczach testowych histogram PIT z 10 słupkami ma w każdym ok. kilkudziesięciu obserwacji; odchylenia rzędu \( \pm\sqrt{N/B} \) są normalnym szumem.</li>
+<li><strong>Zależność prognoz.</strong> Mecze jednego sezonu dzielą efekt sezonu; błąd tego efektu przesuwa cały histogram. Testy jednostajności zakładające niezależność są wtedy zbyt liberalne.</li>
+<li><strong>Koszykowanie.</strong> Diagram niezawodności zależy od wyboru koszyków; przy rzadkich zdarzeniach (komplet widzów) górne koszyki są prawie puste.</li>
+<li><strong>Randomizacja.</strong> Randomizowany PIT zależy od losowania \( U' \); dla powtarzalności ustalamy ziarno lub stosujemy wersję niezrandomizowaną (średnia dystrybuanta PIT).</li>
+<li><strong>Estymacja z próbek.</strong> CRPS i PIT z próbek mają błąd Monte Carlo; przy kilku tysiącach próbek jest on mały w porównaniu ze zmiennością między meczami.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="pokrycie-przedzialow-predykcyjnych">Pokrycie przedziałów predykcyjnych</a> — kalibracja w wybranych kwantylach.</li>
+<li><a data-concept="backtesting">Backtesting</a> — skąd biorą się prognozy ex ante do oceny.</li>
+<li><a data-concept="rozklad-predykcyjny">Rozkład predykcyjny</a> — oceniany obiekt.</li>
+<li><a data-concept="przedzialy-predykcyjne">Przedziały predykcyjne</a> — ich szerokość to ostrość.</li>
+<li><a data-concept="posterior-predictive-checks">Posterior predictive checks</a> — kontrola dopasowania na danych treningowych.</li>
+<li><a data-concept="mae">MAE</a> — szczególny przypadek CRPS dla prognoz punktowych.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gneiting2007calibration"></li>
+<li data-bib="gneiting2007scoring"></li>
+<li data-bib="dawid1984"></li>
+<li data-bib="brier1950"></li>
+<li data-bib="matheson1976"></li>
+<li data-bib="hamill2001"></li>
+<li data-bib="niculescu2005"></li>
+<li data-bib="doc-sklearn-calibration"></li>
+</ul>
+</section>

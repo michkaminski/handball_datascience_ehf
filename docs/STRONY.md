@@ -41,7 +41,14 @@ Szkic tekstowy każdej listy: `docs/strony/`. Zmianę strony zacznij od szkicu, 
 | Team report | `/raport-druzyny` | A4 print (live) | [raport_druzyny.md](strony/raport_druzyny.md) |
 | Season sheets | `/zestawienie-sezonu` | A4 landscape print (live) | [zestawienie_sezonu.md](strony/zestawienie_sezonu.md) |
 | Attendance | `/raporty/frekwencja` | dashboard (live) | [attendance_analytics.md](strony/attendance_analytics.md) |
+| Opponent appeal (MAF) — tab of Attendance | `/raporty/frekwencja?tab=maf` | Bayesian model dashboard (live) | [attendance_appeal.md](strony/attendance_appeal.md) |
 | Match summary | `/mecze/<id>/podsumowanie` (button on the match card) | A4 print (live) | [podsumowanie_meczu.md](strony/podsumowanie_meczu.md) |
+
+## Mathematics
+
+| Menu | URL | Wzor | Szkic |
+|---|---|---|---|
+| Mathematics | `/matematyka/` (+ `/matematyka/<category>/`, `/matematyka/<category>/<slug>/`) | library (live) | [matematyka.md](strony/matematyka.md) |
 
 ## Karty (bez pozycji w menu)
 

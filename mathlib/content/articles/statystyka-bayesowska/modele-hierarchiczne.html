@@ -1,0 +1,195 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Dane o frekwencji mają naturalną strukturę grupową: mecze są rozgrywane przez gospodarzy, przeciw rywalom, w sezonach i w rozgrywkach. Niektóre kluby mają w bazie setki meczów, inne — kilka. Chcąc ocenić atrakcyjność każdego klubu, mamy trzy wyjścia.</p>
+<ul>
+<li><strong>Pełne łączenie</strong> (ang. <em>complete pooling</em>): ignorujemy podział na kluby i szacujemy jedną wspólną wartość. Estymata jest stabilna, ale z założenia nie widzi różnic między klubami.</li>
+<li><strong>Brak łączenia</strong> (ang. <em>no pooling</em>): każdy klub szacujemy wyłącznie z jego meczów. Różnice są widoczne, ale klub z trzema meczami dostaje estymatę skrajną i niestabilną — przypadkowo dobry mecz robi z niego „najatrakcyjniejszego rywala ligi”.</li>
+<li><strong>Częściowe łączenie</strong> (ang. <em>partial pooling</em>): kluby są różne, ale podobne — efekty klubów pochodzą ze wspólnego rozkładu, którego rozrzut estymujemy z danych. Estymata klubu jest kompromisem między jego własną średnią a średnią ogólną, z wagą zależną od liczby jego meczów.</li>
+</ul>
+<p>Model hierarchiczny (wielopoziomowy; ang. <em>hierarchical, multilevel model</em>) realizuje trzecią drogę w sposób systematyczny: parametry niższego poziomu (efekty klubów) są traktowane jako losowania z rozkładu populacyjnego, którego parametry (hiperparametry) mają własne priory. Siła łączenia nie jest arbitralna — wynika z danych: jeśli kluby naprawdę bardzo się różnią, rozrzut populacyjny wyjdzie duży i łączenie będzie słabe <cite data-bib="gelmanhill2007"></cite>.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<h3 id="wymienialnosc">Wymienialność</h3>
+<div class="ml-box ml-def" id="def-wymienialnosc"><p class="ml-box-title">Definicja</p>
+<p>Ciąg zmiennych losowych \(\theta_1,\dots,\theta_J\) jest <strong>wymienialny</strong> (ang. <em>exchangeable</em>), jeżeli dla każdej permutacji \(\pi\) zbioru \(\{1,\dots,J\}\) wektory \((\theta_1,\dots,\theta_J)\) i \((\theta_{\pi(1)},\dots,\theta_{\pi(J)})\) mają ten sam rozkład łączny. Ciąg nieskończony jest wymienialny, jeśli każdy jego skończony odcinek jest wymienialny. Ciąg jest <strong>warunkowo wymienialny przy zmiennych \(x_j\)</strong>, jeżeli wymienialność zachodzi dla par \((\theta_j,x_j)\), czyli po uwzględnieniu znanych charakterystyk grup.</p>
+</div>
+<p>Wymienialność formalizuje stan wiedzy „przed obejrzeniem danych nie umiem odróżnić klubów” — nie oznacza, że kluby są jednakowe, lecz że etykiety nie niosą informacji. Jeżeli wiemy, że kluby różnią się systematycznie (np. pojemnością hali, poziomem rozgrywek), wymienialność zakładamy warunkowo, wprowadzając te cechy jako predyktory.</p>
+<h3 id="model-hierarchiczny">Model hierarchiczny</h3>
+<div class="ml-box ml-def" id="def-model-hierarchiczny"><p class="ml-box-title">Definicja</p>
+<p>Niech obserwacje \(y_{ij}\), \(i=1,\dots,n_j\), należą do grup \(j=1,\dots,J\). <strong>Dwupoziomowym modelem hierarchicznym</strong> nazywamy model bayesowski o rozkładzie łącznym</p>
+<div class="ml-eq" id="eq-modele-hierarchiczne">\[ p(y,\theta,\varphi)=p(\varphi)\prod_{j=1}^J\Big[p(\theta_j\mid\varphi)\prod_{i=1}^{n_j}p(y_{ij}\mid\theta_j)\Big], \]</div>
+<p>w którym: (i) obserwacje są warunkowo niezależne przy parametrach grup, (ii) parametry grup \(\theta_j\) są warunkowo niezależne i jednakowo rozłożone przy hiperparametrach \(\varphi\), (iii) \(\varphi\) ma rozkład a priori \(p(\varphi)\) (<a data-concept="hiperpriory">hiperprior</a>). Model wielopoziomowy powstaje przez iterowanie tej konstrukcji lub przez łączenie kilku krzyżujących się struktur grupowych (np. gospodarz i rywal) w jednym predyktorze.</p>
+</div>
+<p>Posterior łączny \(p(\theta,\varphi\mid y)\propto p(y,\theta,\varphi)\) estymuje się jednocześnie dla wszystkich poziomów — niepewność hiperparametrów przenosi się na efekty grup (w odróżnieniu od podejścia empirycznego Bayesa, które \(\varphi\) zastępuje estymatą punktową).</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(j=1,\dots,J\)</td><td>indeks grupy (klubu, sezonu, rozgrywek)</td></tr>
+<tr><td>\(y_{ij}\), \(n_j\)</td><td>\(i\)-ta obserwacja w grupie \(j\), liczba obserwacji w grupie</td></tr>
+<tr><td>\(\theta_j\)</td><td>parametr (efekt) grupy \(j\)</td></tr>
+<tr><td>\(\varphi=(\mu,\tau)\)</td><td>hiperparametry: średnia i odchylenie rozkładu populacyjnego efektów</td></tr>
+<tr><td>\(\sigma\)</td><td>odchylenie obserwacji wewnątrz grupy</td></tr>
+<tr><td>\(\bar y_j\)</td><td>średnia obserwacji w grupie \(j\)</td></tr>
+<tr><td>\(B_j\)</td><td>współczynnik ściągania grupy \(j\) do średniej ogólnej</td></tr>
+<tr><td>\(\rho_{\mathrm{ICC}}\)</td><td>współczynnik korelacji wewnątrzklasowej</td></tr>
+<tr><td>\(A_i,\ C_i,\ W_i\)</td><td>liczba widzów, pojemność hali i wypełnienie w meczu \(i\)</td></tr>
+<tr><td>\(h(i),\ r(i),\ s(i),\ l(i)\)</td><td>gospodarz, rywal, sezon i rozgrywki meczu \(i\)</td></tr>
+<tr><td>\(H,\ HS,\ R,\ RS,\ S,\ L\)</td><td>efekty losowe MAF: gospodarz, gospodarz×sezon, rywal, rywal×sezon, sezon, rozgrywki</td></tr>
+<tr><td>\(x_i,\ \beta\)</td><td>standaryzowane warunki meczu i ich współczynniki</td></tr>
+<tr><td>\(\eta_i,\ \mu_i\)</td><td>predyktor liniowy i oczekiwane wypełnienie (lub liczba widzów)</td></tr>
+<tr><td>\(\phi,\ \kappa\)</td><td>precyzja beta-dwumianu, dyspersja ujemnego dwumianu</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li><strong>Warunkowa wymienialność grup</strong> po uwzględnieniu predyktorów — brak systematycznej różnicy między grupami, której model nie zna (np. kluby z bardzo dużą halą powinny mieć tę cechę w predyktorze).</li>
+<li><strong>Warunkowa niezależność obserwacji</strong> przy efektach grup; korelacja między meczami tej samej grupy jest w całości przenoszona przez wspólny efekt.</li>
+<li><strong>Forma rozkładu populacyjnego</strong> (zwykle normalny na skali predyktora); efekty skrajne są ściągane silniej, niż przy rozkładzie o cięższych ogonach.</li>
+<li><strong>Niezależność efektów od predyktorów</strong> — efekt losowy grupy nie jest skorelowany z \(x_i\); naruszenie prowadzi do obciążenia współczynników (zob. <a data-concept="efekty-stale-i-losowe">efekty stałe i losowe</a>).</li>
+<li><strong>Identyfikowalność</strong> — efekty krzyżujące się (gospodarz, rywal, sezon) i wyraz wolny są identyfikowalne dzięki centrowaniu na zerze rozkładów populacyjnych i priorom (zob. <a data-concept="identyfikowalnosc-parametrow">identyfikowalność parametrów</a>).</li>
+<li>Liczba grup na każdym poziomie pozwala oszacować rozrzut populacyjny; przy kilku grupach hiperprior ma znaczący wpływ.</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Model normalny jednokierunkowy (ilustracja mechaniki):</p>
+<div class="ml-eq" id="eq-modele-hierarchiczne-normalny">\[ y_{ij}\mid\theta_j\sim N(\theta_j,\sigma^2),\qquad \theta_j\mid\mu,\tau\sim N(\mu,\tau^2),\qquad (\mu,\tau)\sim p(\mu,\tau). \]</div>
+<p>Warunkowy posterior efektu grupy (ściąganie):</p>
+<div class="ml-eq" id="eq-modele-hierarchiczne-sciaganie">\[ \theta_j\mid\mu,\tau,\sigma,y\sim N\!\Big((1-B_j)\,\bar y_j+B_j\,\mu,\ (1-B_j)\frac{\sigma^2}{n_j}\Big),\qquad B_j=\frac{\sigma^2/n_j}{\sigma^2/n_j+\tau^2}. \]</div>
+<p>Korelacja wewnątrzklasowa obserwacji z tej samej grupy (po scałkowaniu \(\theta_j\)):</p>
+<div class="ml-eq" id="eq-modele-hierarchiczne-icc">\[ \operatorname{Cov}(y_{ij},y_{i'j}\mid\mu,\tau,\sigma)=\tau^2\quad(i\ne i'),\qquad \rho_{\mathrm{ICC}}=\frac{\tau^2}{\tau^2+\sigma^2}. \]</div>
+<p>Pełny Model Atrakcyjności Frekwencyjnej zapisany warstwowo:</p>
+<div class="ml-eq" id="eq-modele-hierarchiczne-maf">\[ \begin{aligned}
+&amp;\text{Warstwa 1 (dane):}&amp;&amp;A_i\sim\operatorname{BetaBin}\big(C_i,\ \mu_i\phi,\ (1-\mu_i)\phi\big)\quad\text{lub}\quad A_i\sim\operatorname{NegBin}(\mu_i,\kappa)\\
+&amp;\text{Warstwa 2 (predyktor):}&amp;&amp;g(\mu_i)=\eta_i=\alpha+H_{h(i)}+HS_{h(i),s(i)}+R_{r(i)}+RS_{r(i),s(i)}+S_{s(i)}+L_{l(i)}+x_i^\top\beta\\
+&amp;\text{Warstwa 3 (efekty):}&amp;&amp;H_h=\sigma_Hz^H_h,\ \ HS_{h,s}=\sigma_{HS}z^{HS}_{h,s},\ \ R_r=\sigma_Rz^R_r,\ \ RS_{r,s}=\sigma_{RS}z^{RS}_{r,s},\ \ S_s=\sigma_Sz^S_s,\ \ L_l=\sigma_Lz^L_l\\
+&amp;\text{Warstwa 4 (priory):}&amp;&amp;z^{\bullet}\overset{\text{iid}}{\sim}N(0,1),\quad \beta_k\sim N(0,1),\quad \sigma_\bullet\sim\text{Half-Normal}(0,1),\quad \alpha\sim p(\alpha),\quad \phi\sim p(\phi)\ \text{lub}\ \kappa\sim p(\kappa)\\
+&amp;\text{Warstwa 5 (pochodne):}&amp;&amp;\mathrm{IAF}_j=100\cdot\frac{\frac{1}{|X_{ref}|}\sum_{i\in X_{ref}}\mathbb{E}\big(W\mid\eta_i^{(0)}+R_j\big)}{\frac{1}{|X_{ref}|}\sum_{i\in X_{ref}}\mathbb{E}\big(W\mid\eta_i^{(0)}\big)}
+\end{aligned} \]</div>
+<p>gdzie \(g=\operatorname{logit}\) w wariancie „wypełnienie” i \(g=\log\) w wariancie „liczba widzów”, a \(\eta_i^{(0)}\) to predyktor bez efektu rywala.</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-iid-wymienialne"><p class="ml-box-title">Twierdzenie (mieszaniny i.i.d. są wymienialne)</p>
+<p>Jeżeli \(\theta_1,\dots,\theta_J\) są warunkowo niezależne i jednakowo rozłożone przy \(\varphi\), a \(\varphi\sim p(\varphi)\), to \((\theta_1,\dots,\theta_J)\) jest wymienialny. Na ogół nie jest niezależny: \(\operatorname{Cov}(\theta_j,\theta_k)=\operatorname{Var}\big(\mathbb{E}(\theta_j\mid\varphi)\big)\ge0\) dla \(j\ne k\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-de-finetti"><p class="ml-box-title">Twierdzenie (de Finetti)</p>
+<p>Jeżeli nieskończony ciąg zmiennych \(\theta_1,\theta_2,\dots\) o wartościach w \(\{0,1\}\) (w wersji ogólnej — w przestrzeni polskiej) jest wymienialny, to istnieje miara probabilistyczna \(Q\) taka, że dla każdego \(J\): \(p(\theta_1,\dots,\theta_J)=\int\prod_{j=1}^J p(\theta_j\mid\varphi)\,Q(d\varphi)\). Wymienialność jest więc równoważna (dla ciągów nieskończonych) strukturze hierarchicznej z <a class="ml-eqref" href="#eq-modele-hierarchiczne"></a>. Dyskusja i źródła: <cite data-bib="gelman2013bda"></cite> (rozdz. 5).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-sciaganie"><p class="ml-box-title">Twierdzenie (ściąganie i graniczne przypadki łączenia)</p>
+<p>W modelu <a class="ml-eqref" href="#eq-modele-hierarchiczne-normalny"></a> przy ustalonych \((\mu,\tau,\sigma)\) zachodzi <a class="ml-eqref" href="#eq-modele-hierarchiczne-sciaganie"></a>. Ponadto: przy \(\tau\to0\) \(\mathbb{E}(\theta_j\mid\cdot)\to\mu\) (pełne łączenie); przy \(\tau\to\infty\) lub \(n_j\to\infty\) \(\mathbb{E}(\theta_j\mid\cdot)\to\bar y_j\) (brak łączenia).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-mniejszy-blad"><p class="ml-box-title">Twierdzenie (łączenie zmniejsza błąd)</p>
+<p>W modelu <a class="ml-eqref" href="#eq-modele-hierarchiczne-normalny"></a> ze znanymi \((\mu,\tau,\sigma)\), uśredniając po rozkładzie populacyjnym i danych, estymator ściągający ma błąd średniokwadratowy \(\mathbb{E}(\theta_j-\hat\theta_j^{\,\mathrm{PP}})^2=(1-B_j)\sigma^2/n_j\), mniejszy niż \(\mathbb{E}(\theta_j-\bar y_j)^2=\sigma^2/n_j\) estymatora bez łączenia. Przy nieznanych hiperparametrach analogiczną dominację (dla \(J\ge3\)) wykazuje estymator Jamesa–Steina; zastosowania omawiają <cite data-bib="efron1975"></cite>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-icc"><p class="ml-box-title">Twierdzenie (korelacja wewnątrzklasowa)</p>
+<p>W modelu <a class="ml-eqref" href="#eq-modele-hierarchiczne-normalny"></a>, warunkowo na \((\mu,\tau,\sigma)\), obserwacje z tej samej grupy są skorelowane ze współczynnikiem \(\rho_{\mathrm{ICC}}=\tau^2/(\tau^2+\sigma^2)\), a z różnych grup — nieskorelowane.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-wymienialnosc">Mieszaniny i.i.d. są wymienialne</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Krok 1. Gęstość łączna: \(p(\theta_1,\dots,\theta_J)=\int\prod_{j=1}^Jp(\theta_j\mid\varphi)\,p(\varphi)\,d\varphi\).</p>
+<p>Krok 2. Iloczyn \(\prod_jp(\theta_j\mid\varphi)\) nie zmienia się przy permutacji czynników (przemienność mnożenia), więc całka też nie — gęstość jest symetryczna, co oznacza wymienialność.</p>
+<p>Krok 3. Z <a data-concept="prawo-calkowitej-wariancji">prawa całkowitej kowariancji</a>: \(\operatorname{Cov}(\theta_j,\theta_k)=\mathbb{E}[\operatorname{Cov}(\theta_j,\theta_k\mid\varphi)]+\operatorname{Cov}(\mathbb{E}[\theta_j\mid\varphi],\mathbb{E}[\theta_k\mid\varphi])\). Pierwszy składnik jest zerem (warunkowa niezależność), a w drugim obie funkcje są identyczne (jednakowy rozkład), więc to \(\operatorname{Var}(\mathbb{E}[\theta_j\mid\varphi])\ge0\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-sciaganie">Ściąganie</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Krok 1. Przy ustalonych \((\mu,\tau,\sigma)\) jedynymi czynnikami posterioru zależnymi od \(\theta_j\) są \(N(\theta_j\mid\mu,\tau^2)\prod_iN(y_{ij}\mid\theta_j,\sigma^2)\).</p>
+<p>Krok 2. Jak w modelu normalno-normalnym (zob. <a data-concept="priory" data-anchor="wyprowadzenie">dowód w artykule o priorach</a>), \(\sum_i(y_{ij}-\theta_j)^2=n_j(\theta_j-\bar y_j)^2+\text{const}\), więc dane wchodzą przez \(\bar y_j\) z wariancją \(\sigma^2/n_j\).</p>
+<p>Krok 3. Precyzja posterior: \(n_j/\sigma^2+1/\tau^2\); średnia: \(\dfrac{\bar y_j\,n_j/\sigma^2+\mu/\tau^2}{n_j/\sigma^2+1/\tau^2}\). Mnożąc licznik i mianownik przez \(\tau^2\sigma^2/n_j\): \(\dfrac{\tau^2\bar y_j+(\sigma^2/n_j)\mu}{\tau^2+\sigma^2/n_j}=(1-B_j)\bar y_j+B_j\mu\). Wariancja: \(\dfrac{1}{n_j/\sigma^2+1/\tau^2}=\dfrac{\tau^2\,\sigma^2/n_j}{\tau^2+\sigma^2/n_j}=(1-B_j)\dfrac{\sigma^2}{n_j}\).</p>
+<p>Krok 4 (granice). \(B_j\to1\) przy \(\tau\to0\), \(B_j\to0\) przy \(\tau\to\infty\) lub \(n_j\to\infty\); podstawiamy do średniej.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-blad">Łączenie zmniejsza błąd</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Krok 1. Dla estymatora bez łączenia: \(\bar y_j-\theta_j\sim N(0,\sigma^2/n_j)\) warunkowo na \(\theta_j\), więc \(\mathbb{E}(\theta_j-\bar y_j)^2=\sigma^2/n_j\).</p>
+<p>Krok 2. Estymator \(\hat\theta_j^{\,\mathrm{PP}}=\mathbb{E}(\theta_j\mid\bar y_j,\mu,\tau,\sigma)\) to średnia posterior. Z prawa całkowitej wartości oczekiwanej \(\mathbb{E}(\theta_j-\hat\theta_j^{\,\mathrm{PP}})^2=\mathbb{E}\big[\operatorname{Var}(\theta_j\mid\bar y_j)\big]=(1-B_j)\sigma^2/n_j\), bo wariancja posterior z kroku 3 poprzedniego dowodu nie zależy od danych.</p>
+<p>Krok 3. Ponieważ \(B_j\in(0,1)\) dla \(0\lt\tau\lt\infty\), \((1-B_j)\sigma^2/n_j\lt\sigma^2/n_j\). Zysk jest największy dla grup z małym \(n_j\) (duże \(B_j\)).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-icc">Korelacja wewnątrzklasowa</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Zapiszmy \(y_{ij}=\theta_j+\epsilon_{ij}\), \(\epsilon_{ij}\sim N(0,\sigma^2)\) niezależne od siebie i od \(\theta_j\sim N(\mu,\tau^2)\). Wtedy \(\operatorname{Var}y_{ij}=\tau^2+\sigma^2\), a dla \(i\ne i'\): \(\operatorname{Cov}(y_{ij},y_{i'j})=\operatorname{Cov}(\theta_j+\epsilon_{ij},\theta_j+\epsilon_{i'j})=\operatorname{Var}\theta_j=\tau^2\). Dla różnych grup \(\theta_j\) i \(\theta_k\) są warunkowo niezależne, więc kowariancja jest zerem. Dzieląc przez \(\tau^2+\sigma^2\), otrzymujemy \(\rho_{\mathrm{ICC}}\).</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><em>Dane ilustracyjne.</em> Efekty trzech klubów-rywali na skali logitu wypełnienia. Przyjmujemy (jako wartości hiperparametrów, np. z posterioru całego modelu): średnia populacyjna \(\mu=0\), rozrzut klubów \(\tau=0{,}3\), odchylenie pojedynczego meczu wokół efektu klubu \(\sigma=0{,}5\).</p>
+<table class="ml-table">
+<thead><tr><th>Klub</th><th>Mecze \(n_j\)</th><th>Średnia \(\bar y_j\)</th><th>\(\sigma^2/n_j\)</th><th>\(B_j\)</th><th>\(\mathbb{E}(\theta_j\mid\cdot)\)</th><th>sd posterior</th></tr></thead>
+<tbody>
+<tr><td>A</td><td>4</td><td>0,60</td><td>0,0625</td><td>0,410</td><td>0,354</td><td>0,192</td></tr>
+<tr><td>B</td><td>30</td><td>0,60</td><td>0,0083</td><td>0,085</td><td>0,549</td><td>0,087</td></tr>
+<tr><td>C</td><td>12</td><td>−0,40</td><td>0,0208</td><td>0,188</td><td>−0,325</td><td>0,130</td></tr>
+</tbody>
+</table>
+<ol class="ml-steps">
+<li><strong>Klub A.</strong> \(\sigma^2/n_A=0{,}25/4=0{,}0625\); \(B_A=0{,}0625/(0{,}0625+0{,}09)=0{,}0625/0{,}1525\approx0{,}410\). Średnia posterior: \((1-0{,}410)\cdot0{,}60+0{,}410\cdot0=0{,}354\). Wariancja: \(0{,}590\cdot0{,}0625\approx0{,}0369\), sd \(\approx0{,}192\).</li>
+<li><strong>Klub B.</strong> \(0{,}25/30\approx0{,}00833\); \(B_B=0{,}00833/0{,}09833\approx0{,}085\); średnia \(0{,}915\cdot0{,}60\approx0{,}549\); sd \(=\sqrt{0{,}915\cdot0{,}00833}\approx0{,}087\).</li>
+<li><strong>Klub C.</strong> \(0{,}25/12\approx0{,}0208\); \(B_C=0{,}0208/0{,}1108\approx0{,}188\); średnia \(0{,}812\cdot(-0{,}40)\approx-0{,}325\); sd \(\approx\sqrt{0{,}812\cdot0{,}0208}\approx0{,}130\).</li>
+<li><strong>Na skali wypełnienia</strong> (przy pozostałych składnikach predyktora równych 0): klub A — surowo \(\operatorname{logit}^{-1}(0{,}60)\approx64{,}6\%\), po ściągnięciu \(\operatorname{logit}^{-1}(0{,}354)\approx58{,}8\%\); klub B — \(64{,}6\%\) i \(63{,}4\%\).</li>
+<li><strong>Korelacja wewnątrzklasowa:</strong> \(\rho_{\mathrm{ICC}}=0{,}09/(0{,}09+0{,}25)\approx0{,}265\) — ok. 26% zmienności logitu wypełnienia między meczami przypada na różnice między klubami.</li>
+<li><strong>Zysk z łączenia</strong> (twierdzenie o błędzie): dla klubu A błąd średniokwadratowy spada z \(0{,}0625\) do \(0{,}0369\) (o 41%), dla klubu B — tylko o 8,5%.</li>
+</ol>
+<div class="ml-plot" data-plot="shrinkage" data-params='{"tau": 0.3, "sigma": 0.5}'></div>
+<p>Obserwuj, jak estymaty grup z małą liczbą meczów są silnie przyciągane do średniej, a grupy z dużą liczbą meczów prawie nie zmieniają położenia; zwiększenie \(\tau\) osłabia ściąganie.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Kluby A i B mają tę samą surową średnią 0,60, ale model wyciąga z niej różne wnioski. Cztery mecze klubu A to za mało, by odróżnić rzeczywiście atrakcyjnego rywala od serii szczęśliwych terminów; model „wierzy” jego danym w 59%, a w 41% opiera się na tym, jak zwykle wyglądają kluby. Trzydzieści meczów klubu B mówi wystarczająco dużo, by ściąganie było niewielkie. To nie jest kara za mało meczów, lecz optymalne (w sensie błędu średniokwadratowego) wykorzystanie informacji — dowód w sekcji wyprowadzeń.</p>
+<p>Posterior klubu A jest też szerszy (sd 0,19 wobec 0,09): ranking oparty na samych estymatach punktowych byłby mylący — porównania między klubami należy formułować probabilistycznie (zob. <a data-concept="probabilistyczne-porownanie-parametrow">probabilistyczne porównanie parametrów</a>). W pełnym modelu \(\mu\) i \(\tau\) nie są znane, lecz mają posterior; efekty klubów są wtedy mieszaniną rozkładów z przykładu po niepewności hiperparametrów, co dodatkowo poszerza przedziały.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p><a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> jest modelem hierarchicznym o krzyżujących się strukturach grupowych (wzór <a class="ml-eqref" href="#eq-modele-hierarchiczne-maf"></a>):</p>
+<ul>
+<li><strong>Warstwa danych</strong> — beta-dwumian dla meczów ze znaną pojemnością hali (ok. 55% meczów lig ZPRP) lub ujemny dwumian dla pozostałych meczów i pucharów EHF (zob. <a data-concept="funkcja-wiarygodnosci">funkcja wiarygodności</a>).</li>
+<li><strong>Warstwa predyktora</strong> — sześć grup efektów losowych i standaryzowane warunki meczu. Efekty gospodarza \(H\) i rywala \(R\) opisują trwałą atrakcyjność; interakcje z sezonem \(HS\), \(RS\) — jej zmienność w czasie (awans, kryzys kadrowy, nowa hala), ściąganą do trwałego efektu klubu.</li>
+<li><strong>Warstwa efektów</strong> — parametryzacja niecentrowana \(R_j=\sigma_Rz_j\), konieczna, bo komórki rywal×sezon mają często po kilka meczów (zob. <a data-concept="hiperpriory" data-anchor="parametryzacja-niecentrowana">parametryzacja niecentrowana</a>).</li>
+<li><strong>Warstwa priorów</strong> — \(\sigma\sim\text{Half-Normal}(0,1)\), \(\beta_k\sim N(0,1)\) (zob. <a data-concept="priory">priory</a>).</li>
+<li><strong>Warstwa wielkości pochodnych</strong> — indeks IAF i prognozy, liczone na każdej próbce posterior (zob. <a data-concept="estymacja-posterior">estymacja posterior</a>).</li>
+</ul>
+<p>Wymienialność ma tu konkretny sens: zakładamy, że po uwzględnieniu warunków meczu (weekend, godzina, faza, forma i pozycja w tabeli) nie wiemy a priori, który rywal przyciąga więcej widzów. Rywale z różnych poziomów rozgrywkowych nie są w pełni wymienialni — tę różnicę przejmuje efekt rozgrywek \(L\) (wymienialność warunkowa). Kluby pucharowe EHF, występujące w danych jedno- lub dwukrotnie, korzystają z łączenia najbardziej: bez modelu hierarchicznego ich IAF opierałby się na pojedynczym meczu. Model estymowany jest algorytmem NUTS (4 łańcuchy) z diagnostyką R-hat \(\lt1{,}01\), ESS \(\ge400\) i bez dywergencji; walidacja jest chronologiczna (zob. <a data-concept="backtesting">backtesting</a>).</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Nadmierne ściąganie grup wyjątkowych</strong> — klub naprawdę odstający (np. jedyny grający w hali na 10 000 miejsc) jest przyciągany do średniej, jeśli jego wyjątkowości nie opisuje predyktor; rozwiązaniem są predyktory grupowe lub rozkład t dla efektów.</li>
+<li><strong>Naruszenie wymienialności</strong> — systematyczne różnice między grupami, których model nie zna, obciążają efekty i ich porównania.</li>
+<li><strong>Korelacja efektów z predyktorami</strong> — gdy np. kluby z dużą frekwencją częściej grają w weekendy, część efektu może „przepłynąć” między \(H\) a \(\beta\).</li>
+<li><strong>Mała liczba grup</strong> na danym poziomie (sezony, rozgrywki) — rozrzut \(\sigma\) jest słabo zidentyfikowany, wynik zależy od hiperpriora.</li>
+<li><strong>Obliczenia</strong> — tysiące parametrów, geometria lejka, potrzeba parametryzacji niecentrowanej i starannej diagnostyki MCMC.</li>
+<li><strong>Interpretacja</strong> — efekty losowe są opisowe, nie przyczynowe: IAF mierzy, z jaką frekwencją wiążą się mecze z danym rywalem, a nie ile widzów rywal „sprowadza”.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="partial-pooling">Partial pooling</a>, <a data-concept="hiperpriory">hiperpriory</a>, <a data-concept="priory">priory</a>.</li>
+<li><a data-concept="regresja-hierarchiczna">Regresja hierarchiczna</a>, <a data-concept="efekty-stale-i-losowe">efekty stałe i losowe</a>, <a data-concept="identyfikowalnosc-parametrow">identyfikowalność parametrów</a>.</li>
+<li><a data-concept="twierdzenie-bayesa-w-estymacji">Twierdzenie Bayesa w estymacji</a>, <a data-concept="funkcja-wiarygodnosci">funkcja wiarygodności</a>, <a data-concept="estymacja-posterior">estymacja posterior</a>.</li>
+<li><a data-concept="prawo-calkowitej-wariancji">Prawo całkowitej wariancji</a>.</li>
+<li><a data-concept="mcmc">MCMC i Hamiltonian Monte Carlo</a>.</li>
+<li><a data-concept="atrakcyjnosc-frekwencyjna">MAF i indeks IAF</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelman2013bda"></li>
+<li data-bib="gelmanhill2007"></li>
+<li data-bib="papaspiliopoulos2007"></li>
+<li data-bib="efron1975"></li>
+<li data-bib="mcelreath2020"></li>
+<li data-bib="betancourt2015hier"></li>
+<li data-bib="baio2010"></li>
+</ul>
+</section>

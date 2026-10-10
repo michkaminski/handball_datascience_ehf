@@ -1,0 +1,33 @@
+{% extends "mathematics/_layout.html" %}
+{% set active_category = result.category.id %}
+{% set active_article = None %}
+{% block tytul %}{{ result.category.name }} — Mathematics — {{ nazwa_projektu }}{% endblock %}
+{% block mathematics %}
+<div class="pagehead">
+<div class="crumb"><a href="{{ url_for('panel.math_index') }}">Mathematics</a> › {{ result.category.name }}</div>
+<h1>{{ result.category.name }}</h1>
+<p class="ml-lead">{{ result.category.description }}</p>
+</div>
+{% if result.articles %}
+<div class="ml-grid ml-grid-tight">
+{% for article in result.articles %}
+<a class="panel ml-card ml-card-link" href="{{ registry.url(article.id) }}">
+<div class="panel-body">
+<h2>{{ article.name }}</h2>
+<p>{{ article.summary }}</p>
+{% if article.models %}<p class="ml-tags">{% for model in article.models %}<span class="ml-tag">{{ model|upper }}</span>{% endfor %}</p>{% endif %}
+</div>
+</a>
+{% endfor %}
+</div>
+{% else %}
+<div class="panel"><div class="panel-body"><p class="ml-empty">Section in preparation. The inference concepts used by MAF are described in the sections <a href="{{ url_for('panel.math_category', category='statystyka-bayesowska') }}">Bayesian statistics</a> and <a href="{{ url_for('panel.math_category', category='walidacja-modeli') }}">Model validation</a>.</p></div></div>
+{% endif %}
+{% if planned %}
+<div class="panel"><div class="panel-body">
+<h2>Planned models</h2>
+<p class="note">A place in the architecture is reserved; the models are not implemented yet.</p>
+<ul class="ml-planned">{% for model in planned %}<li>{{ model.name }}</li>{% endfor %}</ul>
+</div></div>
+{% endif %}
+{% endblock %}

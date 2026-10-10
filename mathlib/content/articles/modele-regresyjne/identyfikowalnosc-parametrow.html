@@ -1,0 +1,162 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Wyobraźmy sobie, że oczekiwana frekwencja zależy od sumy „poziomu ligi” \( \alpha \) i „siły przyciągania gospodarza” \( H_h \). Jeśli podniesiemy poziom ligi o 0,4 i jednocześnie obniżymy efekt <em>każdego</em> gospodarza o 0,4, każda prognoza pozostanie identyczna. Dane nie są w stanie rozstrzygnąć, która wersja jest „prawdziwa” — obie generują dokładnie ten sam rozkład obserwacji. Mówimy, że parametry \( \alpha \) i \( H \) są <strong>nieidentyfikowalne</strong> (ang. <em>non-identifiable</em>).</p>
+<p>Nie jest to wada danych, którą usunie większa próba — to własność samego modelu. Nawet nieskończenie wiele meczów nie wskaże, ile wynosi \( \alpha \) osobno; da się wyznaczyć tylko sumy \( \alpha + H_h \) i różnice \( H_h - H_k \). Rozsądna praktyka polega więc na tym, by (1) zdawać sobie sprawę, które wielkości są identyfikowalne, (2) nałożyć umowne ograniczenia lub priory, które wybierają jedną reprezentację, i (3) raportować wyłącznie wielkości, które nie zależą od tego wyboru.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-identyfikowalnosc"><p class="ml-box-title">Definicja</p>
+<p>Niech \( \mathcal{P} = \{P_\theta : \theta\in\Theta\} \) będzie modelem statystycznym, tj. rodziną rozkładów obserwacji indeksowaną parametrem \( \theta \) z przestrzeni \( \Theta \). Parametr \( \theta \) jest <strong>identyfikowalny</strong>, jeśli odwzorowanie \( \theta\mapsto P_\theta \) jest różnowartościowe:</p>
+<div class="ml-eq" id="eq-identyfikowalnosc-parametrow">\[ \forall\,\theta_1,\theta_2\in\Theta:\quad P_{\theta_1} = P_{\theta_2} \ \Longrightarrow\ \theta_1 = \theta_2. \]</div>
+<p>Funkcja parametru \( \psi:\Theta\to\mathbb{R}^m \) jest <strong>identyfikowalna</strong>, jeśli \( P_{\theta_1} = P_{\theta_2} \Rightarrow \psi(\theta_1) = \psi(\theta_2) \), tj. \( \psi \) jest stała na klasach równoważności \( \theta_1\sim\theta_2 \iff P_{\theta_1}=P_{\theta_2} \) <cite data-bib="casellaberger2002"></cite>.</p>
+</div>
+<p>W modelach regresyjnych rozkład obserwacji zależy od parametrów regresji tylko przez wektor predyktorów liniowych \( \eta = X\theta \) (oraz parametry dyspersji). Jeśli odwzorowanie \( \eta\mapsto P \) jest różnowartościowe (tak jest dla rodzin z <a data-concept="uogolnione-modele-liniowe">GLM</a> przy ściśle monotonicznym łączu), identyfikowalność \( \theta \) sprowadza się do różnowartościowości \( \theta\mapsto X\theta \).</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( \Theta,\ \theta \)</td><td>przestrzeń parametrów i jej element</td></tr>
+<tr><td>\( P_\theta \)</td><td>rozkład obserwacji przy parametrze \( \theta \)</td></tr>
+<tr><td>\( \psi(\theta) \)</td><td>funkcja parametru (np. kontrast, prognoza, indeks)</td></tr>
+<tr><td>\( X \)</td><td>macierz planu</td></tr>
+<tr><td>\( \ker X \)</td><td>jądro macierzy: \( \{v : Xv = 0\} \)</td></tr>
+<tr><td>\( \alpha \)</td><td>wyraz wolny</td></tr>
+<tr><td>\( H_h,\ R_r,\ S_s,\ L_l \)</td><td>efekty gospodarza, rywala, sezonu, rozgrywek</td></tr>
+<tr><td>\( HS,\ RS \)</td><td>interakcje gospodarz×sezon, rywal×sezon</td></tr>
+<tr><td>\( c \)</td><td>stała przesunięcia (kierunek nieidentyfikowalności)</td></tr>
+<tr><td>\( \bar H,\ \bar R \)</td><td>średnie efektów w bloku (w danej próbce posterioru)</td></tr>
+<tr><td>\( \tilde H,\ \tilde R,\ \tilde\alpha \)</td><td>efekty wycentrowane i skorygowany wyraz wolny</td></tr>
+<tr><td>\( \eta_i^{(0)} \)</td><td>predyktor meczu \( i \) bez efektu rywala</td></tr>
+<tr><td>\( X_{\mathrm{ref}} \)</td><td>populacja referencyjna meczów do obliczania IAF</td></tr>
+<tr><td>\( \mathrm{IAF}_j \)</td><td>indeks atrakcyjności frekwencyjnej rywala \( j \)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Rozważamy identyfikowalność <em>globalną</em> (różnowartościowość na całym \( \Theta \)); istnieje też słabsza identyfikowalność <em>lokalna</em> (w otoczeniu punktu), związana z nieosobliwością informacji Fishera.</li>
+<li>Rozkład obserwacji zależy od parametrów regresji tylko przez \( \eta \), a \( \eta\mapsto P \) jest różnowartościowe — spełnione dla modeli beta-dwumianowego i ujemnego dwumianowego z łączem logit/log.</li>
+<li>W ujęciu bayesowskim priory są <em>właściwe</em> (całkowalne); w przeciwnym razie posterior w kierunku nieidentyfikowalnym może być niewłaściwy.</li>
+<li>Każdy mecz ma dokładnie jednego gospodarza, rywala, sezon i rozgrywki — z tego wynikają opisane niżej zależności liniowe kolumn \( X \).</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p><strong>Kryterium dla modelu liniowego:</strong></p>
+<div class="ml-eq" id="eq-identyfikowalnosc-parametrow-rzad">\[ \theta \text{ identyfikowalny} \iff \ker X = \{0\} \iff \operatorname{rank}X = p. \]</div>
+<p><strong>Przesunięcie stałej</strong> — kierunek nieidentyfikowalności w predyktorze MAF: dla każdego \( c\in\mathbb{R} \)</p>
+<div class="ml-eq" id="eq-identyfikowalnosc-parametrow-przesuniecie">\[ (\alpha,\ H_h,\ R_r) \ \mapsto\ (\alpha - c,\ H_h + c,\ R_r) \quad\text{lub}\quad (\alpha - c,\ H_h,\ R_r + c) \]</div>
+<p>nie zmienia żadnego \( \eta_i \). Analogicznie dla \( S \), \( L \), \( HS \), \( RS \), a także w obrębie zagnieżdżenia: \( (H_h + d_h,\ HS_{h,s} - d_h \ \forall s) \).</p>
+<p><strong>Centrowanie po próbce posterioru</strong> (post-hoc sum-to-zero), dla każdej próbki \( m \):</p>
+<div class="ml-eq" id="eq-identyfikowalnosc-parametrow-centrowanie">\[ \tilde H^{(m)}_h = H^{(m)}_h - \bar H^{(m)},\quad \tilde R^{(m)}_r = R^{(m)}_r - \bar R^{(m)},\quad \tilde\alpha^{(m)} = \alpha^{(m)} + \bar H^{(m)} + \bar R^{(m)} + \dots \]</div>
+<p><strong>Poziom referencyjny</strong> (ograniczenie narożnikowe): \( H_1 = 0 \) — pozostałe \( H_h \) mierzą różnicę względem klubu 1.</p>
+<p><strong>Indeks IAF</strong> rywala \( j \) (dla każdej próbki posterioru):</p>
+<div class="ml-eq" id="eq-identyfikowalnosc-parametrow-iaf">\[ \mathrm{IAF}_j = 100\cdot\frac{\frac{1}{|X_{\mathrm{ref}}|}\sum_{i\in X_{\mathrm{ref}}} \mathbb{E}\bigl(W\mid\eta_i^{(0)} + R_j\bigr)}{\frac{1}{|X_{\mathrm{ref}}|}\sum_{i\in X_{\mathrm{ref}}} \mathbb{E}\bigl(W\mid\eta_i^{(0)}\bigr)}, \qquad \mathbb{E}(W\mid\eta) = \sigma(\eta). \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-rzad"><p class="ml-box-title">Twierdzenie (identyfikowalność w modelu z predyktorem liniowym)</p>
+<p>Jeśli \( P_\theta \) zależy od \( \theta \) tylko przez \( \eta = X\theta \) różnowartościowo, to \( \theta \) jest identyfikowalny wtedy i tylko wtedy, gdy \( \operatorname{rank}X = p \). Funkcja liniowa \( a^\top\theta \) jest identyfikowalna wtedy i tylko wtedy, gdy \( a \) leży w przestrzeni wierszy \( X \) (równoważnie: \( a\perp\ker X \)).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-alfa-h"><p class="ml-box-title">Twierdzenie (nieidentyfikowalność \( \alpha + H \))</p>
+<p>W modelu z wyrazem wolnym i pełnym zestawem wskaźników gospodarzy wektor \( v = (1, -1, \dots, -1, 0,\dots,0) \) (\( +1 \) na \( \alpha \), \( -1 \) na każdym \( H_h \)) należy do \( \ker X \). Zatem \( \alpha \) i \( H_h \) z osobna nie są identyfikowalne, natomiast identyfikowalne są \( \alpha + H_h \), kontrasty \( H_h - H_k \) i \( \alpha + \bar H \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-posterior-kierunek"><p class="ml-box-title">Twierdzenie (posterior w kierunku nieidentyfikowalnym)</p>
+<p>Jeśli \( v\in\ker X \), to wiarygodność jest stała wzdłuż prostej \( \theta + tv \), \( t\in\mathbb{R} \). W konsekwencji rozkład a posteriori warunkowy na tej prostej jest proporcjonalny do rozkładu a priori: \( p(\theta + tv\mid y) \propto p(\theta + tv) \). Dane nie dostarczają informacji o \( t \) — całą „identyfikację” zapewnia prior.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-iaf-niezmienniczosc"><p class="ml-box-title">Twierdzenie (niezmienniczość IAF)</p>
+<p>(a) \( \mathrm{IAF}_j \) jest niezmienniczy względem każdego przesunięcia nieidentyfikowalnego, które nie dotyczy efektów rywala — między \( \alpha \), \( H \), \( HS \), \( S \), \( L \) — bo zależy od nich wyłącznie przez \( \eta_i^{(0)} \), które takie przesunięcia zachowują.<br>
+(b) Względem przesunięcia \( (\alpha-c,\ R+c) \) surowy indeks nie jest niezmienniczy. Staje się niezmienniczy, jeśli w <a class="ml-eqref" href="#eq-identyfikowalnosc-parametrow-iaf"></a> użyjemy efektów wycentrowanych \( \tilde R \) i wyrazu wolnego \( \tilde\alpha \) z <a class="ml-eqref" href="#eq-identyfikowalnosc-parametrow-centrowanie"></a> (mianownik opisuje wtedy „przeciętnego rywala”). To samo dotyczy przesunięć między \( R_j \) a \( RS_{j,s} \), jeśli \( RS \) centrujemy w obrębie rywala.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="wyprowadzenie-rzad">Kryterium rzędu</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z różnowartościowości \( \eta\mapsto P \): \( P_{\theta_1}=P_{\theta_2} \iff X\theta_1 = X\theta_2 \iff X(\theta_1-\theta_2) = 0 \iff \theta_1-\theta_2\in\ker X \). Identyfikowalność oznacza, że jedynym takim wektorem jest 0, czyli \( \ker X=\{0\} \), co (z twierdzenia o rzędzie i defekcie) jest równoważne \( \operatorname{rank}X = p \). Dla \( a^\top\theta \): wymagamy \( a^\top v = 0 \) dla wszystkich \( v\in\ker X \), czyli \( a\in(\ker X)^\perp = \operatorname{row}(X) \).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-alfa-h">Nieidentyfikowalność \( \alpha + H \)</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Wiersz \( i \) macierzy \( X \) ma jedynkę w kolumnie \( \alpha \) i dokładnie jedną jedynkę wśród kolumn gospodarzy (w kolumnie \( h(i) \)). Iloczyn wiersza z \( v \): \( 1\cdot1 + 1\cdot(-1) = 0 \). Zatem \( Xv=0 \) — kolumna jedynek jest sumą kolumn wskaźników gospodarzy. Przesunięcie \( \theta\mapsto\theta + cv \) to dokładnie <a class="ml-eqref" href="#eq-identyfikowalnosc-parametrow-przesuniecie"></a>. Wektory \( a \) odpowiadające \( \alpha+H_h \), \( H_h-H_k \) i \( \alpha+\bar H \) spełniają \( a^\top v = 0 \): odpowiednio \( 1-1 = 0 \), \( -1+1=0 \), \( 1 - J\cdot\frac1J = 0 \). Z poprzedniego twierdzenia (przy założeniu, że innych zależności nie ma) są identyfikowalne.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-posterior">Posterior wzdłuż kierunku nieidentyfikowalnego</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>\( X(\theta+tv) = X\theta \), więc \( p(y\mid\theta+tv) = p(y\mid\theta) \) dla wszystkich \( t \). Z twierdzenia Bayesa \( p(\theta+tv\mid y) = p(y\mid\theta)\,p(\theta+tv)/p(y) \propto p(\theta+tv) \) jako funkcja \( t \).</p>
+<p class="ml-qed">∎</p></div>
+<p><strong>Rola priorów o średniej 0.</strong> W MAF \( H_h = \sigma_H z_h \), \( z_h\sim N(0,1) \). Wtedy a priori \( \bar H \sim N(0,\sigma_H^2/J) \): przy \( J = 30 \) klubach i \( \sigma_H=0{,}6 \) odchylenie \( \bar H \) to ok. 0,11. Prior „przywiązuje” średnią efektów do zera, czyniąc posterior właściwym, ale tylko miękko — \( \alpha \) i \( \bar H \) pozostają ujemnie skorelowane w posteriorze. Dlatego samych \( \alpha \) i \( H_h \) nie interpretujemy osobno.</p>
+
+<h3 id="wyprowadzenie-iaf">Niezmienniczość IAF</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<ol>
+<li>(a) Rozważmy przesunięcie między dwoma blokami nienależącymi do rywala, np. \( (\alpha - c, H + c) \). Dla każdego meczu \( i \) suma \( \alpha + H_{h(i)} \) się nie zmienia, więc \( \eta_i^{(0)} \) (który zawiera oba składniki) jest zachowany. Licznik i mianownik <a class="ml-eqref" href="#eq-identyfikowalnosc-parametrow-iaf"></a> są funkcjami \( (\eta_i^{(0)})_{i\in X_{\mathrm{ref}}} \) i \( R_j \) — oba niezmienione, więc IAF się nie zmienia. To samo dla \( (H_h+d_h, HS_{h,s}-d_h) \), \( (\alpha-c, S+c) \) itd.</li>
+<li>(b) Przesunięcie \( (\alpha-c, R+c) \): \( \eta_i^{(0)}\to\eta_i^{(0)}-c \), \( R_j\to R_j+c \). Licznik: \( \sigma(\eta_i^{(0)} - c + R_j + c) = \sigma(\eta_i^{(0)}+R_j) \) — bez zmian. Mianownik: \( \sigma(\eta_i^{(0)} - c) \ne \sigma(\eta_i^{(0)}) \) dla \( c\ne0 \) (ścisła monotoniczność \( \sigma \)). Iloraz się zmienia.</li>
+<li>Po centrowaniu: \( \tilde R_r = R_r - \bar R \) i \( \tilde\alpha = \alpha + \bar R \) (plus składniki pozostałych bloków). Przy przesunięciu \( R\to R+c \), \( \alpha\to\alpha-c \): \( \bar R\to\bar R + c \), więc \( \tilde R_r\to R_r + c - \bar R - c = \tilde R_r \) i \( \tilde\alpha\to\alpha - c + \bar R + c = \tilde\alpha \). Obie wielkości są niezmiennicze, a \( \eta_i \) bez zmian, bo \( \tilde\alpha + \tilde R_r = \alpha + R_r \). IAF obliczony na \( (\tilde\alpha,\tilde R) \) jest więc niezmienniczy.</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+<div class="ml-box ml-note"><p>W wariancie „liczba widzów” z łączem log \( \mathbb{E}(A\mid\eta) = e^\eta \), więc iloraz <a class="ml-eqref" href="#eq-identyfikowalnosc-parametrow-iaf"></a> (z \( e^\eta \) w miejsce \( \sigma(\eta) \)) upraszcza się do \( 100\,e^{R_j} \) i nie zależy od \( \eta^{(0)} \) w ogóle. Przy łączu logit iloraz zależy od poziomu bazowego (nasycenie hal), dlatego wybór \( X_{\mathrm{ref}} \) i centrowanie mają znaczenie.</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong> Populacja referencyjna to trzy mecze o predyktorach bez efektu rywala \( \eta^{(0)} = (0{,}2;\ 0{,}6;\ 1{,}0) \), w tym \( \alpha = 0{,}2 \). Trzech rywali w próbce posterioru A ma efekty \( R = (0{,}3;\ -0{,}1;\ -0{,}2) \), \( \bar R = 0 \).</p>
+<ol class="ml-steps">
+<li>Mianownik: \( \sigma(0{,}2)\approx0{,}5498 \), \( \sigma(0{,}6)\approx0{,}6457 \), \( \sigma(1{,}0)\approx0{,}7311 \); średnia \( \approx 0{,}6422 \).</li>
+<li>Licznik dla rywala 1 (\( R_1=0{,}3 \)): \( \sigma(0{,}5)\approx0{,}6225 \), \( \sigma(0{,}9)\approx0{,}7109 \), \( \sigma(1{,}3)\approx0{,}7858 \); średnia \( \approx 0{,}7064 \).</li>
+<li>\( \mathrm{IAF}_1 = 100\cdot0{,}7064/0{,}6422 \approx 110{,}0 \).</li>
+<li>Przesunięcie \( \alpha\leftrightarrow H \) o \( c=0{,}4 \): \( \alpha = -0{,}2 \), wszystkie \( H \) o 0,4 wyżej — \( \eta^{(0)} \) bez zmian, \( \mathrm{IAF}_1 = 110{,}0 \).</li>
+<li>Próbka B, równoważna A z przesunięciem \( \alpha\leftrightarrow R \) o \( c=0{,}2 \): \( \alpha = 0{,}0 \), \( R = (0{,}5;\ 0{,}1;\ 0{,}0) \), \( \eta^{(0)} = (0{,}0;\ 0{,}4;\ 0{,}8) \). Wszystkie \( \eta_i \) są identyczne jak w A.</li>
+<li>Surowy IAF z próbki B: licznik bez zmian \( \approx 0{,}7064 \); mianownik \( (\sigma(0)+\sigma(0{,}4)+\sigma(0{,}8))/3 \approx (0{,}5+0{,}5987+0{,}6900)/3 \approx 0{,}5962 \); \( \mathrm{IAF}_1\approx118{,}5 \) — inny wynik dla tego samego rozkładu danych!</li>
+<li>Centrowanie próbki B: \( \bar R = 0{,}2 \), \( \tilde R = (0{,}3;\ -0{,}1;\ -0{,}2) \), \( \tilde\alpha = 0{,}0 + 0{,}2 = 0{,}2 \) — wracamy do A, \( \mathrm{IAF}_1 = 110{,}0 \).</li>
+</ol>
+<div class="ml-plot" data-plot="logistic" data-params='{"alpha": 0.2, "beta": 1}'></div>
+<p>Krzywa \( \sigma(\alpha + x) \): przesunięcie \( \alpha \) o \( c \) da się dokładnie skompensować przesunięciem argumentu o \( -c \). Zauważ, że punkt na krzywej (prognoza) pozostaje ten sam — zmienia się tylko „podział” sumy między składniki.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Przykład pokazuje, że dwie próbki opisujące <em>ten sam</em> świat (identyczne prognozy dla każdego meczu) mogą dać różne surowe wartości indeksu, jeśli indeks zależy od nieidentyfikowalnego podziału stałej. W MCMC łańcuch swobodnie dryfuje wzdłuż takiego kierunku (ograniczony jedynie priorem), więc surowy IAF miałby sztucznie zawyżoną niepewność. Po centrowaniu każda próbka jest sprowadzona do tej samej, umownej reprezentacji — \( \mathrm{IAF}_j \) mierzy wtedy wypełnienie z rywalem \( j \) względem <em>przeciętnego</em> rywala.</p>
+<p>Ogólna reguła: raportuj tylko identyfikowalne funkcje parametrów — prognozy \( \mu_i \), kontrasty efektów, ilorazy wobec przeciętnego poziomu. Same \( \alpha \), \( H_h \) czy \( R_r \) mają sens wyłącznie w przyjętej konwencji (średnia zero).</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W predyktorze <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> \( \eta_i = \alpha + H + HS + R + RS + S + L + x_i^\top\beta \) każdy z sześciu bloków efektów tworzy z \( \alpha \) kierunek nieidentyfikowalności (każdy mecz ma dokładnie jednego gospodarza, rywala, sezon i rozgrywki), a bloki zagnieżdżone \( HS \subset H \), \( RS\subset R \) — kolejne. Właściwe postępowanie ma trzy warstwy:</p>
+<ol>
+<li><strong>Priory o średniej 0</strong> dla wszystkich efektów losowych (parametryzacja niecentrowana \( B_j=\sigma_Bz_j \)) — zapewniają właściwy posterior i ograniczają dryf.</li>
+<li><strong>Centrowanie po próbce posterioru</strong> (post-hoc sum-to-zero) przed obliczeniem raportowanych efektów i indeksu IAF — każda próbka trafia do jednej reprezentacji, a dryf nie przenosi się na raport.</li>
+<li><strong>Raportowanie wielkości niezmienniczych</strong>: prognozy frekwencji, prawdopodobieństwa wypełnienia, \( \mathrm{IAF}_j \) i \( P(\mathrm{IAF}_j\gt100) \).</li>
+</ol>
+<p>Poziom referencyjny (np. „klub X = 0”) nie pasuje do tej konstrukcji: zrywa wymienialność efektów (klub referencyjny nie ma niepewności) i uzależnia wszystkie wyniki od wyboru klubu. Kowariaty \( x_i \) są standaryzowane, co dodatkowo oddziela \( \beta \) od \( \alpha \) (kolumna o średniej zero jest ortogonalna do kolumny jedynek).</p>
+<p>Uwaga praktyczna: centrowanie wpływa na wynik tylko wtedy, gdy łańcuchy faktycznie dryfują; wysoka korelacja posterioru \( \alpha \) i \( \bar H \) jest normalna i nie świadczy o błędzie, o ile <a data-concept="r-hat">\( \hat R \)</a> i <a data-concept="effective-sample-size">ESS</a> wielkości raportowanych są poprawne.</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Identyfikacja przez prior</strong> jest miękka: przy słabych priorach i długich łańcuchach parametry nieidentyfikowalne mają duży rozrzut i niski ESS, co bywa mylone z problemem zbieżności.</li>
+<li><strong>Centrowanie zmienia sens efektu</strong> — po nim „0” oznacza średnią z klubów w danych, a nie np. średnią ważoną liczbą meczów; zmiana składu ligi zmienia punkt odniesienia.</li>
+<li><strong>Nieidentyfikowalność częściowa (słaba)</strong> — przy prawie współliniowych kowariatach (np. pozycja w tabeli i forma) parametry są formalnie identyfikowalne, ale dane prawie nic o nich nie mówią; kryterium rzędu tego nie wykrywa.</li>
+<li><strong>Nieliniowość łącza</strong> — przy łączu logit wielkości „względne” (jak IAF) zależą od wyboru populacji referencyjnej \( X_{\mathrm{ref}} \).</li>
+<li>Identyfikowalność w sensie <a class="ml-eqref" href="#eq-identyfikowalnosc-parametrow"></a> nie gwarantuje identyfikacji <em>przyczynowej</em> — zob. <a data-concept="interpretacja-wspolczynnikow">interpretacja współczynników</a>.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="regresja-hierarchiczna">Regresja hierarchiczna</a> — pełny model MAF.</li>
+<li><a data-concept="interpretacja-wspolczynnikow">Interpretacja współczynników</a>.</li>
+<li><a data-concept="regresja-liniowa">Regresja liniowa</a> — warunek pełnego rzędu.</li>
+<li><a data-concept="efekty-stale-i-losowe">Efekty stałe i losowe</a>.</li>
+<li><a data-concept="priory">Priory</a> i <a data-concept="rozklad-posterior">rozkład posterior</a>.</li>
+<li><a data-concept="atrakcyjnosc-frekwencyjna">Atrakcyjność frekwencyjna (IAF)</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelman2013bda"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="gelmanhill2007"></li>
+<li data-bib="mcelreath2020"></li>
+</ul>
+</section>

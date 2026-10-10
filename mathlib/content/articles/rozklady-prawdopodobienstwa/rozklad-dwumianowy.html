@@ -1,0 +1,158 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Rozkład dwumianowy (ang. <em>binomial distribution</em>) odpowiada na pytanie: ile sukcesów zobaczymy w \(n\) niezależnych próbach, jeśli w każdej sukces ma to samo prawdopodobieństwo \(p\)? Przykłady z piłki ręcznej: liczba trafionych rzutów karnych (7 m) spośród \(n\) wykonanych, liczba wygranych meczów u siebie w sezonie przy stałej szansie wygranej, liczba zajętych miejsc w hali, gdyby każde z \(C\) miejsc było zajmowane niezależnie z prawdopodobieństwem \(p\).</p>
+<p>Ostatni przykład jest szczególnie pouczający: rozkład dwumianowy daje dla frekwencji zaskakująco mały rozrzut, znacznie mniejszy niż obserwowany w danych. Właśnie ta nadmierna dyspersja (ang. <em>overdispersion</em>) prowadzi do <a data-concept="rozklad-beta-dwumianowy">rozkładu beta-dwumianowego</a>, w którym samo \(p\) jest losowe.</p>
+<div class="ml-plot" data-plot="binomial" data-params='{"n": 8, "p": 0.75}'></div>
+<p>Dla \(p=0{,}5\) rozkład jest symetryczny; im bliżej 0 lub 1 leży \(p\), tym silniej jest skośny i tym mniejsza jest jego wariancja \(np(1-p)\).</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-rozklad-dwumianowy"><p class="ml-box-title">Definicja</p>
+<p>Niech \(n\in\mathbb N\) i \(p\in[0,1]\). <a data-concept="zmienna-losowa">Zmienna losowa</a> \(Y\) o wartościach w \(\{0,1,\dots,n\}\) ma rozkład dwumianowy, \(Y\sim\text{Bin}(n,p)\), jeśli</p>
+<div class="ml-eq" id="eq-rozklad-dwumianowy">\[ P(Y=k)=\binom{n}{k}p^k(1-p)^{n-k},\qquad k=0,1,\dots,n, \]</div>
+<p>gdzie \(\binom nk=\frac{n!}{k!\,(n-k)!}\) oraz przyjmujemy \(0^0=1\).</p>
+</div>
+<div class="ml-box ml-def" id="def-bernoulli"><p class="ml-box-title">Definicja (schemat Bernoulliego)</p>
+<p>Ciąg \(X_1,\dots,X_n\) niezależnych zmiennych o rozkładzie \(P(X_k=1)=p\), \(P(X_k=0)=1-p\) nazywamy schematem Bernoulliego. Liczba sukcesów \(Y=\sum_{k=1}^nX_k\) ma rozkład \(\text{Bin}(n,p)\) (twierdzenie poniżej). Przypadek \(n=1\) to rozkład Bernoulliego.</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(n\)</td><td>liczba prób (znana, nielosowa)</td></tr>
+<tr><td>\(p\)</td><td>prawdopodobieństwo sukcesu w pojedynczej próbie</td></tr>
+<tr><td>\(X_k\)</td><td>wskaźnik sukcesu w \(k\)-tej próbie, \(X_k\in\{0,1\}\)</td></tr>
+<tr><td>\(Y\)</td><td>liczba sukcesów, \(Y=\sum_kX_k\)</td></tr>
+<tr><td>\(\binom nk\)</td><td>współczynnik dwumianowy — liczba \(k\)-elementowych podzbiorów zbioru \(n\)-elementowego</td></tr>
+<tr><td>\(M_Y(t)\)</td><td>funkcja tworząca momenty</td></tr>
+<tr><td>\(\hat p\)</td><td>estymator największej wiarygodności, \(\hat p=Y/n\)</td></tr>
+<tr><td>\(C,\ A\)</td><td>w MAF: pojemność hali i liczba widzów</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li><strong>Stała liczba prób</strong> \(n\), znana z góry (np. pojemność hali \(C\), liczba wykonanych rzutów).</li>
+<li><strong>Dwa wyniki</strong> każdej próby: sukces albo porażka.</li>
+<li><strong>Jednakowe prawdopodobieństwo</strong> \(p\) we wszystkich próbach.</li>
+<li><strong>Niezależność</strong> prób. W przypadku widzów założenie to jest wyraźnie fałszywe: decyzje kibiców są skorelowane przez wspólne czynniki (rywal, pogoda, stawka meczu), co objawia się nadmierną dyspersją.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<div class="ml-eq" id="eq-rozklad-dwumianowy-momenty">\[ EY=np,\qquad \operatorname{Var}Y=np(1-p). \]</div>
+<div class="ml-eq" id="eq-rozklad-dwumianowy-mgf">\[ M_Y(t)=\big(1-p+p\,e^t\big)^n. \]</div>
+<p>Iloraz kolejnych prawdopodobieństw (wygodny do obliczeń rekurencyjnych):</p>
+<div class="ml-eq" id="eq-rozklad-dwumianowy-rekurencja">\[ \frac{P(Y=k+1)}{P(Y=k)}=\frac{n-k}{k+1}\cdot\frac{p}{1-p}. \]</div>
+<p>Dominanta: \(\lfloor(n+1)p\rfloor\) (gdy \((n+1)p\) jest całkowite, dominantami są \((n+1)p\) i \((n+1)p-1\)).</p>
+<p>Funkcja wiarygodności i estymator największej wiarygodności przy obserwacji \(Y=k\):</p>
+<div class="ml-eq" id="eq-rozklad-dwumianowy-mle">\[ L(p)\propto p^k(1-p)^{n-k},\qquad \hat p=\frac{k}{n},\qquad \operatorname{Var}\hat p=\frac{p(1-p)}{n}. \]</div>
+<p>Przybliżenia graniczne:</p>
+<div class="ml-eq" id="eq-rozklad-dwumianowy-normalne">\[ \frac{Y-np}{\sqrt{np(1-p)}}\xrightarrow{d}N(0,1)\quad(n\to\infty,\ p\ \text{stałe}),\qquad \text{Bin}(n,\lambda/n)\xrightarrow{d}\text{Poisson}(\lambda). \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-suma-bernoulli"><p class="ml-box-title">Twierdzenie (suma zmiennych Bernoulliego)</p>
+<p>Jeśli \(X_1,\dots,X_n\) są niezależne i \(X_k\sim\text{Bernoulli}(p)\), to \(Y=\sum_kX_k\sim\text{Bin}(n,p)\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-momenty-bin"><p class="ml-box-title">Twierdzenie (momenty)</p>
+<p>Dla \(Y\sim\text{Bin}(n,p)\) zachodzą wzory <a class="ml-eqref" href="#eq-rozklad-dwumianowy-momenty"></a> i <a class="ml-eqref" href="#eq-rozklad-dwumianowy-mgf"></a>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-addytywnosc"><p class="ml-box-title">Twierdzenie (addytywność)</p>
+<p>Jeśli \(Y_1\sim\text{Bin}(n_1,p)\) i \(Y_2\sim\text{Bin}(n_2,p)\) są niezależne, to \(Y_1+Y_2\sim\text{Bin}(n_1+n_2,p)\). Przy różnych \(p\) suma nie jest dwumianowa.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-poisson"><p class="ml-box-title">Twierdzenie (graniczne Poissona)</p>
+<p>Jeśli \(n\to\infty\) i \(p_n=\lambda/n\) dla ustalonego \(\lambda\gt0\), to dla każdego \(k\ge0\): \(\binom nk p_n^k(1-p_n)^{n-k}\to e^{-\lambda}\lambda^k/k!\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-moivre"><p class="ml-box-title">Twierdzenie (de Moivre’a–Laplace’a)</p>
+<p>Dla stałego \(p\in(0,1)\) standaryzowana zmienna \((Y-np)/\sqrt{np(1-p)}\) zbiega według rozkładu do \(N(0,1)\). Jest to szczególny przypadek centralnego twierdzenia granicznego dla sumy \(\sum X_k\) — zob. <a data-concept="rozklad-normalny" data-anchor="twierdzenia">rozkład normalny</a>.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="pmf-wyprowadzenie">Funkcja prawdopodobieństwa</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Zdarzenie \(\{Y=k\}\) jest sumą rozłącznych zdarzeń „sukcesy dokładnie w próbach ze zbioru \(S\)” po wszystkich \(S\subset\{1,\dots,n\}\), \(|S|=k\). Z niezależności każde takie zdarzenie ma prawdopodobieństwo \(\prod_{j\in S}p\prod_{j\notin S}(1-p)=p^k(1-p)^{n-k}\), a zbiorów \(S\) jest \(\binom nk\). Sumując, dostajemy <a class="ml-eqref" href="#eq-rozklad-dwumianowy"></a>. Z dwumianu Newtona \(\sum_k\binom nkp^k(1-p)^{n-k}=(p+1-p)^n=1\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="momenty-wyprowadzenie">Wartość oczekiwana i wariancja</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla wskaźnika \(X_k\): \(EX_k=1\cdot p+0\cdot(1-p)=p\), \(EX_k^2=p\) (bo \(X_k^2=X_k\)), więc \(\operatorname{Var}X_k=p-p^2=p(1-p)\). Z liniowości \(EY=\sum_kEX_k=np\). Ponieważ zmienne są niezależne, kowariancje znikają i</p>
+\[ \operatorname{Var}Y=\sum_{k=1}^n\operatorname{Var}X_k+2\sum_{j\lt k}\operatorname{Cov}(X_j,X_k)=np(1-p)+0. \]
+<p>Funkcja tworząca: \(M_Y(t)=\prod_kE e^{tX_k}=\prod_k(1-p+pe^t)=(1-p+pe^t)^n\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-box ml-note"><p>Ten dowód pokazuje dokładnie, gdzie pojawia się nadmierna dyspersja: jeśli próby są dodatnio skorelowane, \(\operatorname{Cov}(X_j,X_k)=\rho\,p(1-p)\gt0\), to \(\operatorname{Var}Y=np(1-p)\big[1+(n-1)\rho\big]\), czyli dla dużego \(n\) nawet mała korelacja \(\rho\) wielokrotnie zwiększa wariancję. Tak właśnie wygląda wariancja <a data-concept="rozklad-beta-dwumianowy" data-anchor="wzory">rozkładu beta-dwumianowego</a> z \(\rho=1/(1+\phi)\).</p></div>
+
+<h3 id="addytywnosc-wyprowadzenie">Addytywność</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>\(M_{Y_1+Y_2}(t)=(1-p+pe^t)^{n_1}(1-p+pe^t)^{n_2}=(1-p+pe^t)^{n_1+n_2}\), a funkcja tworząca wyznacza rozkład jednoznacznie.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="poisson-wyprowadzenie">Granica Poissona</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla ustalonego \(k\) zapisujemy</p>
+\[ \binom nk\Big(\frac\lambda n\Big)^k\Big(1-\frac\lambda n\Big)^{n-k}=\frac{\lambda^k}{k!}\cdot\underbrace{\frac{n(n-1)\cdots(n-k+1)}{n^k}}_{\to1}\cdot\underbrace{\Big(1-\frac\lambda n\Big)^{n}}_{\to e^{-\lambda}}\cdot\underbrace{\Big(1-\frac\lambda n\Big)^{-k}}_{\to1}\ \longrightarrow\ \frac{\lambda^ke^{-\lambda}}{k!}. \]
+<p class="ml-qed">∎</p></div>
+
+<h3 id="mle-wyprowadzenie">Estymator największej wiarygodności</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Logarytm <a data-concept="funkcja-wiarygodnosci">funkcji wiarygodności</a> to \(\ell(p)=k\log p+(n-k)\log(1-p)+\text{const}\). Dla \(0\lt k\lt n\): \(\ell'(p)=\frac kp-\frac{n-k}{1-p}=0\iff p=k/n\), a \(\ell''(p)\lt0\). Dla \(k=0\) (\(k=n\)) funkcja \(\ell\) jest malejąca (rosnąca), więc maksimum leży w \(p=0\) (\(p=1\)), co również daje \(\hat p=k/n\). Wariancja: \(\operatorname{Var}(Y/n)=np(1-p)/n^2\).</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong> Zawodnik wykonuje w meczu \(n=8\) rzutów karnych, każdy trafia niezależnie z prawdopodobieństwem \(p=0{,}75\).</p>
+<ol class="ml-steps">
+<li><strong>Dokładnie 6 trafień.</strong> \(\binom86=28\), \(0{,}75^6=0{,}177979\), \(0{,}25^2=0{,}0625\). Zatem \(P(Y=6)=28\cdot0{,}177979\cdot0{,}0625=0{,}3115\).</li>
+<li><strong>Cały rozkład</strong> (rekurencją <a class="ml-eqref" href="#eq-rozklad-dwumianowy-rekurencja"></a>, iloraz \(p/(1-p)=3\)), zaokrąglenia do 4 miejsc:
+<table class="ml-table"><thead><tr><th>\(k\)</th><th>0–3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr></thead>
+<tbody><tr><td>\(P(Y=k)\)</td><td>0,0273</td><td>0,0865</td><td>0,2076</td><td>0,3115</td><td>0,2670</td><td>0,1001</td></tr></tbody></table>
+Np. \(P(Y=7)=P(Y=6)\cdot\frac{8-6}{7}\cdot3=0{,}3115\cdot0{,}8571=0{,}2670\).</li>
+<li><strong>Co najmniej 7 trafień.</strong> \(P(Y\ge7)=0{,}2670+0{,}1001=0{,}3671\).</li>
+<li><strong>Momenty.</strong> \(EY=8\cdot0{,}75=6\), \(\operatorname{Var}Y=8\cdot0{,}75\cdot0{,}25=1{,}5\), odchylenie \(1{,}225\). Dominanta \(\lfloor9\cdot0{,}75\rfloor=\lfloor6{,}75\rfloor=6\).</li>
+<li><strong>Rozkład dwumianowy jako model frekwencji (kontrprzykład).</strong> Hala ma \(C=2000\) miejsc, każde zajęte niezależnie z \(p=0{,}6\). Wtedy \(EA=1200\), \(\operatorname{Var}A=2000\cdot0{,}6\cdot0{,}4=480\), odchylenie standardowe \(\sqrt{480}=21{,}9\). Model przewiduje więc, że 95% meczów będzie miało frekwencję w przedziale ok. \(1200\pm43\).</li>
+</ol>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Dla rzutów karnych model dwumianowy jest rozsądny: najbardziej prawdopodobne jest 6 trafień na 8, ale z prawdopodobieństwem ok. 37% zawodnik trafi co najmniej 7 razy, a z prawdopodobieństwem ok. 3% — najwyżej 3 razy. Zróżnicowanie skuteczności między zawodnikami i bramkarzami rywala modeluje się dopiero na wyższym poziomie (losowe \(p\)).</p>
+<p>Krok 5 pokazuje granice modelu: w rzeczywistych danych frekwencja tego samego klubu waha się z meczu na mecz o setki widzów, a nie o kilkadziesiąt. Odchylenie 21,9 widza jest o rząd wielkości za małe. Przyczyną jest nieprawdziwe założenie niezależności — wszyscy potencjalni widzowie reagują na te same okoliczności meczu. Poprawny model pozwala, by \(p\) zmieniało się między meczami, co prowadzi do rozkładu beta-dwumianowego (odchylenie ok. 215 przy \(\phi=20\)).</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<ul>
+<li><strong>Warstwa warunkowa MAF.</strong> W wariancie „wypełnienie” <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> rozkład dwumianowy jest rozkładem warunkowym: \(A_i\mid p_i\sim\text{Bin}(C_i,p_i)\), gdzie \(p_i\sim\text{Beta}(\mu_i\phi,(1-\mu_i)\phi)\). Po wycałkowaniu \(p_i\) dostajemy model beta-dwumianowy. Znana pojemność \(C_i\) pełni rolę liczby prób, co gwarantuje \(0\le A_i\le C_i\).</li>
+<li><strong>Skuteczność rzutowa.</strong> Liczba bramek z \(n\) rzutów (karnych, ze skrzydła, z 9 m) jest naturalnie modelowana rozkładem dwumianowym, z priorem beta dla skuteczności — zob. <a data-concept="rozklad-posterior">rozkład posterior</a>.</li>
+<li><strong>Bilans meczów.</strong> Liczba zwycięstw w \(n\) meczach przy stałym \(p\) jest punktem odniesienia przy ocenie, czy seria wyników jest „zaskakująca”.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li>Założenie niezależności i stałego \(p\) jest często naruszone; skutkiem jest nadmierna dyspersja i zbyt wąskie przedziały predykcyjne.</li>
+<li>Wymaga znanego \(n\). Gdy pojemność hali jest nieznana (np. w pucharach EHF), nie da się zastosować modelu dwumianowego ani beta-dwumianowego — stosuje się <a data-concept="rozklad-ujemny-dwumianowy">rozkład ujemny dwumianowy</a>.</li>
+<li>Przybliżenie normalne jest słabe, gdy \(np\) lub \(n(1-p)\) jest małe (praktyczna reguła: oba co najmniej ok. 10).</li>
+<li>Estymator \(\hat p=k/n\) dla małych \(n\) bywa skrajny (np. 0 lub 1); pomaga prior beta i <a data-concept="partial-pooling">partial pooling</a>.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="rozklad-beta-dwumianowy">Rozkład beta-dwumianowy</a> — dwumianowy z losowym \(p\).</li>
+<li><a data-concept="rozklad-beta">Rozkład beta</a> — rozkład sprzężony dla \(p\).</li>
+<li><a data-concept="rozklad-ujemny-dwumianowy">Rozkład ujemny dwumianowy</a>.</li>
+<li><a data-concept="zmienna-losowa">Zmienna losowa</a>, <a data-concept="wariancja-zmiennej-losowej">wariancja zmiennej losowej</a>.</li>
+<li><a data-concept="funkcja-wiarygodnosci">Funkcja wiarygodności</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="johnson2005discrete"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="pishronik2014"></li>
+<li data-bib="gelman2013bda"></li>
+</ul>
+</section>

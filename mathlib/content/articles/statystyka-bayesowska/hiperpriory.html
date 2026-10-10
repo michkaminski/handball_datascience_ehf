@@ -1,0 +1,209 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>W <a data-concept="modele-hierarchiczne">modelu hierarchicznym</a> efekty grup — np. efekty klubów-rywali \(R_j\) w modelu frekwencji — nie dostają osobnych, ustalonych priorów. Zakładamy, że pochodzą ze wspólnego rozkładu populacyjnego, np. \(R_j\sim N(0,\sigma_R^2)\), którego parametr \(\sigma_R\) też jest nieznany i estymowany z danych. Rozkład a priori takiego parametru „wyższego piętra” nazywamy <strong>hiperpriorem</strong> (ang. <em>hyperprior</em>), a sam parametr — <strong>hiperparametrem</strong>.</p>
+<p>Hiperparametr \(\sigma_R\) steruje siłą „ściągania” (ang. <em>shrinkage</em>) efektów grup do średniej: małe \(\sigma_R\) oznacza, że kluby są do siebie podobne i estymaty pojedynczych klubów należy mocno przyciągać do średniej; duże \(\sigma_R\) — że kluby są różne i każdy jest szacowany głównie z własnych danych (zob. <a data-concept="partial-pooling">partial pooling</a>). Ponieważ o \(\sigma_R\) informują nie pojedyncze mecze, lecz <em>rozrzut między grupami</em>, efektywna liczba obserwacji dla hiperparametru to liczba grup — często kilkanaście, nie tysiące. Dlatego wybór hiperpriora ma znaczenie, a złe wybory (np. odwrotny rozkład gamma z bardzo małymi parametrami lub prior \(1/\sigma\)) potrafią zdominować wynik albo uczynić posterior niewłaściwym <cite data-bib="gelman2006prior"></cite>.</p>
+<p>Hiperparametry stwarzają też problem obliczeniowy: gdy \(\sigma\) jest małe, efekty grup muszą być bliskie zera, a gdy duże — mogą być dowolne. Rozkład a posteriori przyjmuje kształt lejka (lejek Neala), w którego wąskiej szyjce algorytmy MCMC grzęzną. Rozwiązaniem jest parametryzacja niecentrowana \(R_j=\sigma_Rz_j\).</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-hiperprior"><p class="ml-box-title">Definicja</p>
+<p>Niech dane \(y=(y_1,\dots,y_J)\) (każde \(y_j\) może być wektorem obserwacji grupy \(j\)) mają model \(p(y_j\mid\theta_j)\), parametry grup \(\theta_1,\dots,\theta_J\) — wspólny rozkład populacyjny \(p(\theta_j\mid\varphi)\), warunkowo niezależnie przy \(\varphi\), a \(\varphi\in\Phi\) — rozkład \(p(\varphi)\). Wtedy \(\varphi\) nazywamy <strong>hiperparametrem</strong>, \(p(\varphi)\) — <strong>hiperpriorem</strong>, a łączny posterior ma postać</p>
+<div class="ml-eq" id="eq-hiperpriory">\[ p(\theta,\varphi\mid y)\ \propto\ p(\varphi)\prod_{j=1}^J p(\theta_j\mid\varphi)\,p(y_j\mid\theta_j). \]</div>
+</div>
+<p>Typowe hiperpriory dla odchylenia standardowego \(\sigma\gt0\) rozkładu populacyjnego \(N(\mu,\sigma^2)\), ze skalą \(A\gt0\):</p>
+<ul>
+<li><strong>Half-Normal</strong> \((0,A)\): \(p(\sigma)=\dfrac{2}{A\sqrt{2\pi}}\exp\!\left(-\dfrac{\sigma^2}{2A^2}\right)\);</li>
+<li><strong>Half-Cauchy</strong> \((0,A)\): \(p(\sigma)=\dfrac{2}{\pi A\,(1+\sigma^2/A^2)}\);</li>
+<li><strong>Half-t</strong> \((\nu,0,A)\): \(p(\sigma)=\dfrac{2\,\Gamma(\frac{\nu+1}{2})}{\Gamma(\frac{\nu}{2})\sqrt{\nu\pi}\,A}\left(1+\dfrac{\sigma^2}{\nu A^2}\right)^{-\frac{\nu+1}{2}}\);</li>
+<li>jednostajny \(U(0,B)\) na \(\sigma\), odwrotny gamma \(\operatorname{IG}(\varepsilon,\varepsilon)\) na \(\sigma^2\) oraz niewłaściwy \(p(\sigma)\propto1/\sigma\) — omawiane jako przestroga.</li>
+</ul>
+<p>Wszystkie trzy pierwsze rozkłady są rozkładami \(|X|\) dla \(X\) odpowiednio normalnego, Cauchy’ego i t-Studenta o środku 0 („połówki” rozkładów symetrycznych).</p>
+<h3 id="parametryzacja-niecentrowana">Parametryzacje centrowana i niecentrowana</h3>
+<p><strong>Parametryzacja centrowana</strong> (ang. <em>centered</em>, CP): \(\theta_j\sim N(\mu,\sigma^2)\) i to \(\theta_j\) są parametrami próbkowanymi. <strong>Parametryzacja niecentrowana</strong> (ang. <em>non-centered</em>, NCP): próbkujemy \(z_j\sim N(0,1)\) niezależne od \((\mu,\sigma)\) a priori i definiujemy deterministycznie \(\theta_j=\mu+\sigma z_j\) <cite data-bib="papaspiliopoulos2007"></cite>.</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(\theta_j\)</td><td>parametr (efekt) grupy \(j=1,\dots,J\)</td></tr>
+<tr><td>\(\varphi=(\mu,\sigma)\)</td><td>hiperparametry: średnia i odchylenie standardowe rozkładu populacyjnego</td></tr>
+<tr><td>\(p(\varphi)\)</td><td>hiperprior</td></tr>
+<tr><td>\(A\), \(\nu\)</td><td>skala hiperpriora i liczba stopni swobody rozkładu Half-t</td></tr>
+<tr><td>\(z_j\)</td><td>standaryzowany efekt grupy w parametryzacji niecentrowanej</td></tr>
+<tr><td>\(\hat y_j=y_j,\ s_j\)</td><td>w przykładzie: estymata efektu grupy i jej błąd standardowy</td></tr>
+<tr><td>\(\tau\)</td><td>odchylenie efektów grup w przykładzie normalnym (odpowiednik \(\sigma_R\))</td></tr>
+<tr><td>\(v_j=s_j^2+\tau^2\)</td><td>wariancja brzegowa \(y_j\) po scałkowaniu \(\theta_j\)</td></tr>
+<tr><td>\(\hat\mu(\tau),\ V_\mu(\tau)\)</td><td>średnia ważona \(y_j\) z wagami \(1/v_j\) i jej wariancja</td></tr>
+<tr><td>\(L(\tau)\)</td><td>wiarygodność brzegowa \(\tau\) (po scałkowaniu \(\theta\) i \(\mu\)), z dokładnością do stałej</td></tr>
+<tr><td>\(\sigma_H,\sigma_R,\sigma_{HS},\sigma_{RS},\sigma_S,\sigma_L\)</td><td>odchylenia efektów losowych w MAF</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li>Efekty grup są <strong>wymienialne</strong> (ang. <em>exchangeable</em>) a priori — brak informacji, która pozwalałaby je odróżnić przed obejrzeniem danych (zob. <a data-concept="modele-hierarchiczne" data-anchor="definicja">modele hierarchiczne</a>).</li>
+<li>Hiperprior jest właściwy albo wykazano właściwość posterioru; w modelach hierarchicznych prior \(p(\sigma)\propto1/\sigma\) tego warunku nie spełnia.</li>
+<li>Hiperprior jest określony na skali, na której efekty wchodzą do predyktora (logit, log). Skala \(A\) powinna odpowiadać realnej zmienności efektów na tej skali.</li>
+<li>Rozkład populacyjny (zwykle normalny) jest adekwatnym przybliżeniem rozrzutu efektów; przy grupach odstających warto rozważyć ogony cięższe (rozkład t).</li>
+<li>Dla parametryzacji niecentrowanej: \(z_j\) są a priori niezależne od \((\mu,\sigma)\) i od siebie.</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Model normalny z błędem pomiaru (efekty grup obserwowane z niepewnością \(s_j\)):</p>
+<div class="ml-eq" id="eq-hiperpriory-model">\[ y_j\mid\theta_j\sim N(\theta_j,s_j^2),\qquad \theta_j\mid\mu,\tau\sim N(\mu,\tau^2),\qquad p(\mu)\propto1,\quad \tau\sim p(\tau). \]</div>
+<p>Brzegowy posterior hiperparametru \(\tau\) (po scałkowaniu \(\theta\) i \(\mu\)) <cite data-bib="gelman2013bda"></cite>:</p>
+<div class="ml-eq" id="eq-hiperpriory-tau">\[ p(\tau\mid y)\ \propto\ p(\tau)\,\underbrace{V_\mu^{1/2}\prod_{j=1}^J v_j^{-1/2}\exp\!\left(-\frac{(y_j-\hat\mu)^2}{2v_j}\right)}_{L(\tau)},\qquad v_j=s_j^2+\tau^2,\quad \hat\mu=\frac{\sum_j y_j/v_j}{\sum_j 1/v_j},\quad V_\mu=\frac{1}{\sum_j1/v_j}. \]</div>
+<p>Warunkowy posterior efektu grupy przy danych \(\mu,\tau\) (ściąganie):</p>
+<div class="ml-eq" id="eq-hiperpriory-sciaganie">\[ \theta_j\mid\mu,\tau,y\sim N\!\big((1-B_j)\,y_j+B_j\,\mu,\ (1-B_j)\,s_j^2\big),\qquad B_j=\frac{s_j^2}{s_j^2+\tau^2}. \]</div>
+<p>Parametryzacja niecentrowana i jej gęstość a priori (jakobian przejścia \(\theta\mapsto z\) równy \(\sigma^{J}\)):</p>
+<div class="ml-eq" id="eq-hiperpriory-ncp">\[ \theta_j=\mu+\sigma z_j,\qquad p(z_1,\dots,z_J,\mu,\sigma)=p(\mu,\sigma)\prod_{j=1}^J\varphi(z_j). \]</div>
+<p>Lejek Neala (ang. <em>Neal’s funnel</em>) — modelowy przykład geometrii parametryzacji centrowanej:</p>
+<div class="ml-eq" id="eq-hiperpriory-lejek">\[ v\sim N(0,3^2),\qquad x_k\mid v\sim N\!\big(0,\ e^{v}\big),\quad k=1,\dots,K;\qquad \log p(v,x)=-\frac{v^2}{18}-\frac{Kv}{2}-\frac{e^{-v}}{2}\sum_k x_k^2+\text{const}. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-rodzina-half-t"><p class="ml-box-title">Twierdzenie (rodzina Half-t)</p>
+<p>Half-t\((1,0,A)\) jest rozkładem Half-Cauchy\((0,A)\), a Half-t\((\nu,0,A)\) zbiega punktowo (w gęstości) do Half-Normal\((0,A)\) przy \(\nu\to\infty\). Kwantyl rzędu \(q\) rozkładu Half-X równa się kwantylowi rzędu \(\frac{1+q}{2}\) odpowiedniego rozkładu symetrycznego.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-niewlasciwy-1-tau"><p class="ml-box-title">Twierdzenie (niewłaściwość priora \(1/\tau\) w modelu hierarchicznym)</p>
+<p>W modelu <a class="ml-eqref" href="#eq-hiperpriory-model"></a> z \(s_j\gt0\) i \(J\ge1\) prior \(p(\tau)\propto1/\tau\) na \((0,\infty)\) daje niewłaściwy posterior \(p(\tau\mid y)\), niezależnie od danych.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-rownowaznosc-ncp"><p class="ml-box-title">Twierdzenie (równoważność parametryzacji)</p>
+<p>Jeżeli \(z_j\sim N(0,1)\) niezależnie od \((\mu,\sigma)\) i \(\theta_j=\mu+\sigma z_j\), to łączny rozkład \((\theta,\mu,\sigma,y)\) jest identyczny jak w parametryzacji centrowanej. Obie parametryzacje definiują ten sam model statystyczny i ten sam posterior dla \((\theta,\mu,\sigma)\); różnią się wyłącznie geometrią przestrzeni, którą eksploruje algorytm próbkujący.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-geometria-lejka"><p class="ml-box-title">Twierdzenie (geometria lejka)</p>
+<p>W rozkładzie <a class="ml-eqref" href="#eq-hiperpriory-lejek"></a> warunkowe odchylenie standardowe \(x_k\) przy danym \(v\) wynosi \(e^{v/2}\), a krzywizna \(-\partial^2\log p/\partial x_k^2=e^{-v}\). Dla \(v\) w przedziale \(\pm2\) odchyleń priora (\(v\in[-6,6]\)) skala zmienia się o czynnik \(e^{6}\approx403\). W parametryzacji \(x_k=e^{v/2}u_k\), \(u_k\sim N(0,1)\), rozkład łączny \((v,u)\) jest iloczynem niezależnych rozkładów normalnych o stałej krzywiźnie.</p>
+</div>
+<p>Teoretyczną analizę, kiedy która parametryzacja daje szybszą zbieżność próbników Gibbsa, przedstawili <cite data-bib="papaspiliopoulos2007"></cite>: CP jest efektywna, gdy dane silnie identyfikują efekty grup (dużo obserwacji na grupę, \(s_j\ll\tau\)), NCP — gdy dane są słabe (\(s_j\gg\tau\)). Dla Hamiltonian Monte Carlo te same zjawiska — i przewagę NCP w słabo informowanych hierarchiach — opisali <cite data-bib="betancourt2015hier"></cite>.</p>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-half-t">Rodzina Half-t</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla \(\nu=1\): \(\Gamma(1)=1\), \(\Gamma(\tfrac12)=\sqrt\pi\), więc stała to \(\frac{2}{\sqrt\pi\cdot\sqrt\pi\,A}=\frac{2}{\pi A}\), a czynnik \((1+\sigma^2/A^2)^{-1}\) — to gęstość Half-Cauchy. Dla \(\nu\to\infty\): \((1+\frac{x}{\nu})^{-\frac{\nu+1}{2}}\to e^{-x/2}\) z \(x=\sigma^2/A^2\), a \(\Gamma(\frac{\nu+1}{2})/(\Gamma(\frac\nu2)\sqrt{\nu/2})\to1\) (asymptotyka Stirlinga), więc stała dąży do \(\frac{2}{A\sqrt{2\pi}}\). Kwantyle: dla \(X\) symetrycznego wokół zera \(P(|X|\le c)=2F(c)-1\); równanie \(2F(c)-1=q\) daje \(c=F^{-1}(\frac{1+q}{2})\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-brzegowy-tau">Brzegowy posterior \(\tau\)</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Krok 1 (całkowanie \(\theta_j\)). \(y_j=\theta_j+\epsilon_j\), gdzie \(\theta_j\sim N(\mu,\tau^2)\) i \(\epsilon_j\sim N(0,s_j^2)\) są niezależne; suma niezależnych zmiennych normalnych jest normalna, więc \(y_j\mid\mu,\tau\sim N(\mu,v_j)\), \(v_j=s_j^2+\tau^2\).</p>
+<p>Krok 2 (rozkład sumy kwadratów). Z \(w_j=1/v_j\) i \(\hat\mu=\sum w_jy_j/\sum w_j\):
+\[ \sum_j w_j(y_j-\mu)^2=\sum_j w_j(y_j-\hat\mu)^2+(\mu-\hat\mu)^2\sum_jw_j, \]
+bo wyraz mieszany \(2(\hat\mu-\mu)\sum_jw_j(y_j-\hat\mu)\) znika z definicji \(\hat\mu\).</p>
+<p>Krok 3 (całkowanie \(\mu\) przy \(p(\mu)\propto1\)).
+\[ \int_{\mathbb{R}}\prod_j\frac{1}{\sqrt{2\pi v_j}}e^{-\frac{w_j(y_j-\mu)^2}{2}}d\mu=\prod_j\frac{1}{\sqrt{2\pi v_j}}\,e^{-\frac12\sum_jw_j(y_j-\hat\mu)^2}\int e^{-\frac{(\mu-\hat\mu)^2}{2V_\mu}}d\mu, \]
+a ostatnia całka równa się \(\sqrt{2\pi V_\mu}\).</p>
+<p>Krok 4. Pomijając stałe \((2\pi)^{\cdot}\) i mnożąc przez \(p(\tau)\), otrzymujemy <a class="ml-eqref" href="#eq-hiperpriory-tau"></a>.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-sciaganie">Ściąganie warunkowe</h3>
+<p>Przy ustalonych \(\mu,\tau\) mamy dla \(\theta_j\) model normalno-normalny z jedną „obserwacją” \(y_j\) o wariancji \(s_j^2\) i priorem \(N(\mu,\tau^2)\). Ze wzoru na posterior w tym modelu (zob. <a data-concept="priory" data-anchor="wzory">priory</a>) precyzja to \(1/s_j^2+1/\tau^2\), średnia \(\frac{y_j/s_j^2+\mu/\tau^2}{1/s_j^2+1/\tau^2}=(1-B_j)y_j+B_j\mu\), a wariancja \(\frac{s_j^2\tau^2}{s_j^2+\tau^2}=(1-B_j)s_j^2\). To wzór <a class="ml-eqref" href="#eq-hiperpriory-sciaganie"></a>.</p>
+
+<h3 id="dowod-1-tau">Niewłaściwość priora \(1/\tau\)</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Krok 1. Funkcja \(L(\tau)\) z <a class="ml-eqref" href="#eq-hiperpriory-tau"></a> jest ciągła na \([0,\infty)\), bo \(v_j\ge s_j^2\gt0\), a \(\hat\mu\), \(V_\mu\) są ciągłymi funkcjami \(v_j\). Ponadto \(L(0)\gt0\) (iloczyn dodatnich czynników).</p>
+<p>Krok 2. Z ciągłości istnieje \(\delta\gt0\) takie, że \(L(\tau)\ge L(0)/2\) dla \(\tau\in[0,\delta]\).</p>
+<p>Krok 3. \(\int_0^\infty\frac{L(\tau)}{\tau}d\tau\ge\frac{L(0)}{2}\int_0^\delta\frac{d\tau}{\tau}=\infty\). Posterior nie daje się unormować. Intuicja: dane nigdy nie wykluczają \(\tau=0\) (wszystkie grupy równe, różnice wyjaśnione szumem \(s_j\)), a prior \(1/\tau\) ma nieskończoną masę w pobliżu zera.</p>
+<p class="ml-qed">∎</p></div>
+<p>Ten sam argument pokazuje, dlaczego \(\operatorname{IG}(\varepsilon,\varepsilon)\) na \(\tau^2\) przy małym \(\varepsilon\) jest problematyczny: jest właściwą aproksymacją niewłaściwego priora \(p(\tau^2)\propto1/\tau^2\), czyli na skali \(\tau\) właśnie \(p(\tau)\propto1/\tau\); dlatego wynik zależy od arbitralnego \(\varepsilon\) właśnie w obszarze małych \(\tau\), gdzie dane są najmniej informacyjne <cite data-bib="gelman2006prior"></cite>.</p>
+
+<h3 id="dowod-ncp">Równoważność parametryzacji i geometria lejka</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Krok 1. Przy ustalonych \((\mu,\sigma)\), \(\sigma\gt0\), odwzorowanie \(z_j\mapsto\theta_j=\mu+\sigma z_j\) jest afiniczne. Jeśli \(z_j\sim N(0,1)\), to \(\theta_j\sim N(\mu,\sigma^2)\). Ponieważ \(z_j\) są niezależne od siebie i od \((\mu,\sigma)\), warunkowy rozkład \(\theta\mid\mu,\sigma\) jest iloczynem \(N(\mu,\sigma^2)\) — jak w CP. Model danych \(p(y\mid\theta)\) jest ten sam, więc rozkłady łączne są identyczne.</p>
+<p>Krok 2. Gęstość w nowych zmiennych: \(p(z\mid\mu,\sigma)=p_\theta(\mu+\sigma z\mid\mu,\sigma)\cdot\sigma^J=\prod_j\frac{1}{\sigma}\varphi(z_j)\cdot\sigma^J=\prod_j\varphi(z_j)\) — nie zależy od \(\sigma\); to wzór <a class="ml-eqref" href="#eq-hiperpriory-ncp"></a>.</p>
+<p>Krok 3 (lejek). Z <a class="ml-eqref" href="#eq-hiperpriory-lejek"></a>: \(\partial^2\log p/\partial x_k^2=-e^{-v}\), więc lokalna skala \(x_k\) to \(e^{v/2}\). Dla \(v=-6\): \(e^{-3}\approx0{,}050\); dla \(v=6\): \(e^{3}\approx20{,}1\); iloraz \(e^6\approx403\). Algorytm HMC o jednym kroku całkowania musi wybrać krok mały (dla szyjki) — wtedy w szerokiej części porusza się bardzo wolno — albo duży, co w szyjce daje rozbieżne trajektorie (dywergencje).</p>
+<p>Krok 4. Podstawiając \(x_k=e^{v/2}u_k\) (jakobian \(e^{Kv/2}\)): \(\log p(v,u)=-\frac{v^2}{18}-\frac{Kv}{2}-\frac{1}{2}\sum_ku_k^2+\frac{Kv}{2}+\text{const}=-\frac{v^2}{18}-\frac12\sum_ku_k^2+\text{const}\) — niezależne rozkłady normalne o stałej krzywiźnie.</p>
+<p class="ml-qed">∎</p></div>
+<p>W modelu z danymi parametryzacja niecentrowana nie usuwa całkowicie zależności (wiarygodność łączy \(z_j\) i \(\sigma\)), ale gdy dane o grupach są słabe, posterior jest bliski priorowi, a ten w NCP jest „okrągły”. Gdy dane są silne, sytuacja się odwraca: w NCP wiarygodność narzuca \(\sigma z_j\approx y_j\), co tworzy wąską hiperbolę w przestrzeni \((\sigma,z_j)\), i lepsza bywa CP <cite data-bib="papaspiliopoulos2007"></cite>.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><em>Dane ilustracyjne.</em> Sześć klubów-rywali ma wstępnie oszacowane efekty atrakcyjności \(y_j\) na skali logitu wypełnienia, z błędami standardowymi \(s_j\) (im mniej meczów na wyjeździe, tym większe \(s_j\)):</p>
+<table class="ml-table">
+<thead><tr><th>Klub \(j\)</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr></thead>
+<tbody>
+<tr><td>\(y_j\)</td><td>0,45</td><td>0,20</td><td>0,05</td><td>−0,10</td><td>−0,25</td><td>−0,40</td></tr>
+<tr><td>\(s_j\)</td><td>0,15</td><td>0,20</td><td>0,25</td><td>0,20</td><td>0,30</td><td>0,35</td></tr>
+</tbody>
+</table>
+<ol class="ml-steps">
+<li><strong>Diagnoza wstępna.</strong> Odchylenie standardowe \(y_j\) to \(0{,}309\), a średni kwadrat błędu \(\overline{s^2}=0{,}0629\) (\(\sqrt{\cdot}\approx0{,}25\)). Rozrzut obserwowany jest tylko trochę większy niż szum — \(\tau\) będzie małe i niepewne.</li>
+<li><strong>Wiarygodność \(L(\tau)\)</strong> ze wzoru <a class="ml-eqref" href="#eq-hiperpriory-tau"></a> w kilku punktach (np. dla \(\tau=0{,}2\): \(v_j=s_j^2+0{,}04\), \(\hat\mu=0{,}070\), \(V_\mu=0{,}0155\)):
+<table class="ml-table">
+<thead><tr><th>\(\tau\)</th><th>\(\hat\mu(\tau)\)</th><th>\(L(\tau)\)</th><th>HN(0,1): \(p(\tau)\)</th><th>\(p(\tau)L(\tau)\)</th><th>HC(0,1): \(p(\tau)\)</th><th>\(p(\tau)L(\tau)\)</th><th>HN(0; 0,1): \(p(\tau)\)</th><th>\(p(\tau)L(\tau)\)</th></tr></thead>
+<tbody>
+<tr><td>0,0</td><td>0,133</td><td>3,766</td><td>0,798</td><td>3,005</td><td>0,637</td><td>2,397</td><td>7,979</td><td>30,05</td></tr>
+<tr><td>0,1</td><td>0,108</td><td>6,789</td><td>0,794</td><td>5,390</td><td>0,630</td><td>4,279</td><td>4,839</td><td>32,86</td></tr>
+<tr><td>0,2</td><td>0,070</td><td>10,789</td><td>0,782</td><td>8,438</td><td>0,612</td><td>6,605</td><td>1,080</td><td>11,65</td></tr>
+<tr><td>0,3</td><td>0,044</td><td>9,363</td><td>0,763</td><td>7,142</td><td>0,584</td><td>5,469</td><td>0,089</td><td>0,83</td></tr>
+<tr><td>0,5</td><td>0,018</td><td>3,508</td><td>0,704</td><td>2,470</td><td>0,509</td><td>1,786</td><td>\(\approx0\)</td><td>0,0001</td></tr>
+<tr><td>1,0</td><td>0,000</td><td>0,280</td><td>0,484</td><td>0,136</td><td>0,318</td><td>0,089</td><td>\(\approx0\)</td><td>\(\approx0\)</td></tr>
+</tbody>
+</table></li>
+<li><strong>Obserwacja.</strong> Na odcinku \([0;0{,}5]\), gdzie \(L(\tau)\) jest duże, gęstości Half-Normal(0, 1) i Half-Cauchy(0, 1) są niemal stałe (spadek o 12% i 20%) — posterior jest kształtowany przez dane. Half-Normal(0; 0,1) maleje w tym samym zakresie ponad tysiąckrotnie i przesuwa maksimum iloczynu do \(\tau\approx0{,}1\).</li>
+<li><strong>Normowanie numeryczne</strong> (siatka 400 tys. punktów na \([0,20]\)) daje mediany i 95% przedziały posterior \(\tau\):
+<table class="ml-table">
+<thead><tr><th>Hiperprior</th><th>mediana \(\tau\)</th><th>95% przedział</th><th>\(P(\tau\lt0{,}1\mid y)\)</th></tr></thead>
+<tbody>
+<tr><td>Half-Normal(0, 1)</td><td>0,262</td><td>[0,026; 0,789]</td><td>0,118</td></tr>
+<tr><td>Half-t(3; 0, 1)</td><td>0,260</td><td>[0,026; 0,780]</td><td>0,120</td></tr>
+<tr><td>Half-Cauchy(0, 1)</td><td>0,256</td><td>[0,025; 0,766]</td><td>0,123</td></tr>
+<tr><td>U(0, 20)</td><td>0,273</td><td>[0,028; 0,913]</td><td>0,110</td></tr>
+<tr><td>Half-Normal(0; 0,1)</td><td>0,095</td><td>[0,005; 0,243]</td><td>0,530</td></tr>
+</tbody>
+</table></li>
+<li><strong>Ściąganie przy \(\tau=0{,}26\).</strong> \(\hat\mu(0{,}26)\approx0{,}053\); współczynniki \(B_j=s_j^2/(s_j^2+0{,}0676)\): \(0{,}250;\ 0{,}372;\ 0{,}480;\ 0{,}372;\ 0{,}571;\ 0{,}644\). Średnie warunkowe \((1-B_j)y_j+B_j\hat\mu\): \(0{,}351;\ 0{,}146;\ 0{,}052;\ -0{,}043;\ -0{,}077;\ -0{,}108\). Np. klub 1: \(0{,}75\cdot0{,}45+0{,}25\cdot0{,}053=0{,}351\). Klub 6 (najmniej danych) przesunął się od \(-0{,}40\) aż do \(-0{,}11\).</li>
+</ol>
+<div class="ml-plot" data-plot="shrinkage" data-params='{"tau": 0.26, "sigma": 0.5}'></div>
+<p>Zwróć uwagę, jak siła ściągania maleje wraz z liczbą meczów grupy i jak zmniejszenie \(\tau\) (silniejszy hiperprior) przyciąga wszystkie grupy do średniej.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Przykład pokazuje trzy rzeczy. Po pierwsze, słabo informacyjne hiperpriory z rodziny Half-t (Half-Normal, Half-t(3), Half-Cauchy) o skali dopasowanej do problemu dają praktycznie ten sam posterior — mediany 0,256–0,262 — bo w zakresie wspieranym przez dane są prawie płaskie. To rekomendacja Gelmana <cite data-bib="gelman2006prior"></cite>: hiperprior ma wykluczać absurdalnie duże \(\tau\), a nie rozstrzygać o małych. Po drugie, jednostajny prior na szerokim przedziale daje cięższy prawy ogon posterioru (97,5% kwantyl 0,91 zamiast 0,79) — przy sześciu grupach dane nie potrafią wykluczyć dużych \(\tau\). Po trzecie, informacyjny hiperprior Half-Normal(0; 0,1) wymusza silne ściąganie: przy takim priorze różnice między klubami zostałyby uznane za szum. To słuszne tylko wtedy, gdy mamy niezależną wiedzę, że efekty są tak małe.</p>
+<p>Na skali logitu \(\tau\approx0{,}26\) oznacza, że klub o efekcie \(+1\) odchylenie standardowe podnosi wypełnienie z 50% do \(\operatorname{logit}^{-1}(0{,}26)\approx56{,}5\%\). Hiperprior Half-Normal(0, 1) dopuszcza a priori efekty do \(\tau\approx1{,}96\) (kwantyl 95%), czyli przesunięcia od 50% do 88% — szeroko, ale realnie.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> każda z sześciu grup efektów losowych ma własne odchylenie z hiperpriorem Half-Normal\((0,1)\):</p>
+<div class="ml-eq" id="eq-hiperpriory-maf">\[ \sigma_H,\ \sigma_{HS},\ \sigma_R,\ \sigma_{RS},\ \sigma_S,\ \sigma_L\ \overset{\text{iid}}{\sim}\ \text{Half-Normal}(0,1),\qquad R_j=\sigma_Rz_j,\ z_j\sim N(0,1)\ \text{(analogicznie dla pozostałych)}. \]</div>
+<ul>
+<li><strong>Dlaczego Half-Normal(0, 1).</strong> Na skali logitu (wariant „wypełnienie”) i logarytmu (wariant „liczba widzów”) odchylenia efektów rzędu 1 są górną granicą realności (mnożnik \(e^{1{,}96}\approx7\) na liczbie widzów dla efektu 1,96σ). Half-Normal ma lżejszy ogon niż Half-Cauchy, co pomaga w grupach o małej liczbie poziomów: \(\sigma_S\) (ok. 15 sezonów) i \(\sigma_L\) (kilka rozgrywek). Dla \(J=4\)–5 poziomów (rozgrywki) Half-Cauchy pozwalałby na zbyt duże \(\sigma_L\), co rozmywa efekty i spowalnia próbkowanie.</li>
+<li><strong>Dlaczego parametryzacja niecentrowana.</strong> Interakcje gospodarz×sezon i rywal×sezon mają po kilka meczów na komórkę — dane o pojedynczym \(RS_{j,s}\) są słabe, czyli dokładnie reżim, w którym CP generuje lejek i dywergencje NUTS. Diagnostyka MAF (zero dywergencji, R-hat \(\lt1{,}01\), ESS \(\ge400\)) jest osiągalna właśnie dzięki NCP. Dla efektów gospodarzy w ekstraklasie (kilkadziesiąt–kilkaset meczów na klub) CP mogłaby być równie dobra; NCP stosujemy jednolicie dla prostoty i odporności.</li>
+<li><strong>Indeks IAF</strong> zależy od \(R_j=\sigma_Rz_j\): niepewność \(\sigma_R\) przenosi się bezpośrednio na szerokość przedziałów IAF, a hiperprior decyduje o tym, jak mocno nowy rywal z kilkoma meczami jest ściągany do 100.</li>
+<li><strong>Europejskie puchary</strong> (EHF): wiele klubów pojawia się w danych raz lub dwa razy — hiperprior i ściąganie mają tu znacznie większą wagę niż w ligach krajowych.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Mała liczba grup.</strong> Przy \(J\lt5\) posterior \(\sigma\) jest prawie w całości priorem; należy to komunikować i rozważyć mocniej informacyjny hiperprior uzasadniony wiedzą dziedzinową.</li>
+<li><strong>Zależność od skali \(A\).</strong> Half-Normal\((0,1)\) jest słabo informacyjny tylko na skali logitu/logarytmu; po zmianie skali predyktora należy przeskalować \(A\).</li>
+<li><strong>Brak uniwersalnie najlepszej parametryzacji.</strong> NCP pomaga przy słabych danych, ale przy bardzo silnych danych w grupach może pogorszyć mieszanie; możliwe są parametryzacje mieszane <cite data-bib="papaspiliopoulos2007"></cite>.</li>
+<li><strong>Normalność rozkładu populacyjnego</strong> jest założeniem; klub o skrajnie odmiennej frekwencji (np. jedyny z halą powyżej 10 000 miejsc) zostanie nadmiernie ściągnięty. Alternatywa: rozkład t dla efektów lub predyktor na poziomie grupy.</li>
+<li><strong>Interpretacja \(\sigma\) bliskiego zera.</strong> Posterior skupiony przy zerze nie dowodzi braku różnic — może oznaczać brak informacji.</li>
+<li>Niewłaściwe hiperpriory (\(1/\sigma\)) oraz \(\operatorname{IG}(\varepsilon,\varepsilon)\) z małym \(\varepsilon\) są w modelach hierarchicznych niezalecane.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="priory">Priory — dobór rozkładów a priori</a>.</li>
+<li><a data-concept="modele-hierarchiczne">Modele hierarchiczne</a>, <a data-concept="partial-pooling">partial pooling</a>, <a data-concept="regresja-hierarchiczna">regresja hierarchiczna</a>.</li>
+<li><a data-concept="efekty-stale-i-losowe">Efekty stałe i losowe</a>, <a data-concept="identyfikowalnosc-parametrow">identyfikowalność parametrów</a>.</li>
+<li><a data-concept="mcmc">MCMC i Hamiltonian Monte Carlo</a> — dywergencje i geometria posterioru.</li>
+<li><a data-concept="rozklad-normalny">Rozkład normalny</a>.</li>
+<li><a data-concept="atrakcyjnosc-frekwencyjna">MAF i indeks IAF</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelman2006prior"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="papaspiliopoulos2007"></li>
+<li data-bib="betancourt2015hier"></li>
+<li data-bib="betancourt2017"></li>
+<li data-bib="gelmanhill2007"></li>
+</ul>
+</section>

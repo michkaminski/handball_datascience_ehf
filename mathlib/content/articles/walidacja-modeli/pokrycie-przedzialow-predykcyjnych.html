@@ -1,0 +1,183 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Prognoza probabilistyczna nie mówi tylko „przyjdzie 1300 widzów”, lecz np. „z prawdopodobieństwem 80% przyjdzie od 1000 do 1650 widzów”. Takie stwierdzenie da się sprawdzić — nie na jednym meczu, lecz na wielu. Jeśli model jest uczciwy, to spośród wszystkich meczów, dla których podał 80-procentowy <a data-concept="przedzialy-predykcyjne">przedział predykcyjny</a>, mniej więcej 80% powinno zakończyć się frekwencją wewnątrz przedziału. Odsetek ten nazywamy <em>empirycznym pokryciem</em> (ang. <em>empirical coverage</em>).</p>
+<p>Pokrycie wyraźnie niższe od nominalnego oznacza, że model jest <em>zbyt pewny siebie</em> — jego przedziały są za wąskie. Pokrycie wyraźnie wyższe oznacza przedziały zbyt szerokie, czyli marnowanie informacji. Ale samo pokrycie nie wystarcza: przedział „od 0 do pojemności hali” ma pokrycie 100%, a jest bezużyteczny. Dlatego Gneiting, Balabdaoui i Raftery <cite data-bib="gneiting2007calibration"></cite> sformułowali zasadę: <strong>maksymalizuj ostrość (ang. <em>sharpness</em>) przy zachowaniu kalibracji (ang. <em>calibration</em>)</strong>. Kalibracja to zgodność prognoz z częstościami, ostrość — koncentracja (wąskość) rozkładów predykcyjnych.</p>
+<p>Ponieważ pokrycie liczymy na skończonej liczbie meczów, nawet idealny model nie da dokładnie 80%. Trzeba więc umieć ocenić, czy odchylenie od poziomu nominalnego jest większe, niż wynikałoby z losowości — służy temu test dwumianowy i przedział ufności dla odsetka.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech dla meczów \( i = 1,\dots,n \) zbioru testowego model poda rozkład predykcyjny o dystrybuancie \( F_i \) (wyznaczony bez znajomości \( y_i \)) i niech \( 0 \lt \alpha \lt 1 \).</p>
+<div class="ml-box ml-def" id="def-przedzial-centralny"><p class="ml-box-title">Definicja (centralny przedział predykcyjny)</p>
+<p>Centralnym przedziałem predykcyjnym na poziomie \( 1-\alpha \) nazywamy \( [l_i, u_i] \), gdzie \( l_i = F_i^{-1}(\alpha/2) \), \( u_i = F_i^{-1}(1-\alpha/2) \), a \( F^{-1}(p) = \inf\{y: F(y)\ge p\} \) jest funkcją kwantylową. W praktyce \( l_i, u_i \) są empirycznymi kwantylami próbek z rozkładu predykcyjnego.</p>
+</div>
+<div class="ml-box ml-def" id="def-pokrycie"><p class="ml-box-title">Definicja (empiryczne pokrycie)</p>
+<p>Niech \( I_i = I(l_i \le y_i \le u_i) \) i \( K = \sum_{i=1}^n I_i \). Empirycznym pokryciem nazywamy</p>
+<div class="ml-eq" id="eq-pokrycie-przedzialow-predykcyjnych">\[ \hat c_{1-\alpha} \;=\; \frac{K}{n} \;=\; \frac1n\sum_{i=1}^n I\big(l_i \le y_i \le u_i\big). \]</div>
+<p>Model nazywamy <strong>skalibrowanym na poziomie \( 1-\alpha \)</strong> (w sensie pokrycia bezwarunkowego), jeśli \( P(l_i \le Y_i \le u_i) = 1-\alpha \); <strong>warunkowo skalibrowanym względem podziału na grupy</strong>, jeśli równość zachodzi w każdej grupie (np. dla każdych rozgrywek, każdego przedziału wielkości hali).</p>
+</div>
+<div class="ml-box ml-def" id="def-ostrosc"><p class="ml-box-title">Definicja (ostrość i wynik przedziałowy)</p>
+<p>Ostrość przedziałów mierzymy średnią szerokością \( \bar w = \frac1n\sum_i (u_i - l_i) \) (im mniejsza, tym ostrzej). Wynikiem przedziałowym (ang. <em>interval score</em>) <cite data-bib="gneiting2007scoring"></cite> nazywamy</p>
+<div class="ml-eq" id="eq-pokrycie-przedzialow-predykcyjnych-is">\[ S_\alpha(l,u;y) \;=\; (u - l) \;+\; \frac{2}{\alpha}\,(l - y)\,I(y \lt l) \;+\; \frac{2}{\alpha}\,(y - u)\,I(y \gt u). \]</div>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( n \)</td><td>liczba prognoz (meczów) w zbiorze testowym</td></tr>
+<tr><td>\( 1-\alpha \)</td><td>nominalny poziom przedziału (np. 0,5; 0,8; 0,95)</td></tr>
+<tr><td>\( F_i,\ F_i^{-1} \)</td><td>dystrybuanta i funkcja kwantylowa rozkładu predykcyjnego meczu \( i \)</td></tr>
+<tr><td>\( l_i,\ u_i \)</td><td>dolny i górny koniec przedziału predykcyjnego</td></tr>
+<tr><td>\( I_i \)</td><td>wskaźnik pokrycia (1 — obserwacja w przedziale)</td></tr>
+<tr><td>\( K \)</td><td>liczba pokrytych obserwacji</td></tr>
+<tr><td>\( \hat c_{1-\alpha} \)</td><td>empiryczne pokrycie</td></tr>
+<tr><td>\( z \)</td><td>statystyka testu dwumianowego w przybliżeniu normalnym; też kwantyl \( z_{0{,}975}\approx1{,}96 \)</td></tr>
+<tr><td>\( \bar w \)</td><td>średnia szerokość przedziałów (miara ostrości)</td></tr>
+<tr><td>\( S_\alpha \)</td><td>wynik przedziałowy (interval score)</td></tr>
+<tr><td>\( \rho_\tau \)</td><td>strata kwantylowa rzędu \( \tau \)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li><strong>Prognozy ex ante.</strong> Przedziały muszą być wyznaczone bez wiedzy o \( y_i \) — w ramach <a data-concept="backtesting">walidacji chronologicznej</a>. Pokrycie liczone na danych treningowych jest zawyżone.</li>
+<li><strong>Niezależność wskaźników</strong> (dla testu dwumianowego). Przy prawdziwym modelu \( I_i \) są zmiennymi Bernoulliego z parametrem \( 1-\alpha \); test dwumianowy zakłada ich niezależność. W danych sportowych wskaźniki tego samego klubu i sezonu są dodatnio skorelowane (wspólny, nieprzewidziany szok popularności), co zwiększa wariancję \( K \).</li>
+<li><strong>Rozkład ciągły lub poprawna obsługa dyskretności.</strong> Dla liczby widzów (dane dyskretne) przedział z kwantyli ma pokrycie co najmniej \( 1-\alpha \), zwykle nieznacznie większe; przy dużych liczbach widzów efekt jest pomijalny, przy atomach (komplet widzów) — nie.</li>
+<li><strong>Stały poziom nominalny</strong> w obrębie analizowanego zbioru (nie mieszamy przedziałów 80% i 95%).</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Przy kalibracji i niezależności liczba trafień ma rozkład dwumianowy (por. <a data-concept="rozklad-dwumianowy">rozkład dwumianowy</a>):</p>
+<div class="ml-eq" id="eq-pokrycie-przedzialow-predykcyjnych-bin">\[ K \sim \text{Bin}(n,\ 1-\alpha), \qquad \mathbb{E}K = n(1-\alpha), \qquad \operatorname{Var}K = n\alpha(1-\alpha). \]</div>
+<p>Statystyka testu (przybliżenie normalne) i dokładna dwustronna wartość p:</p>
+<div class="ml-eq" id="eq-pokrycie-przedzialow-predykcyjnych-z">\[ z = \frac{K - n(1-\alpha)}{\sqrt{n\alpha(1-\alpha)}}, \qquad p_{\text{dokł}} = \sum_{k:\ b(k) \le b(K)} b(k), \quad b(k) = \tbinom{n}{k}(1-\alpha)^k\alpha^{n-k}. \]</div>
+<p>Przedział ufności Wilsona dla odsetka pokrycia (\( \hat c = K/n \), \( z = z_{0{,}975} \approx 1{,}96 \)):</p>
+<div class="ml-eq" id="eq-pokrycie-przedzialow-predykcyjnych-wilson">\[ \frac{\hat c + \frac{z^2}{2n}}{1 + \frac{z^2}{n}} \;\pm\; \frac{z}{1+\frac{z^2}{n}}\sqrt{\frac{\hat c(1-\hat c)}{n} + \frac{z^2}{4n^2}}. \]</div>
+<p>Rozbicie chybień na strony (przy kalibracji każda z nich ma prawdopodobieństwo \( \alpha/2 \)):</p>
+<div class="ml-eq" id="eq-pokrycie-przedzialow-predykcyjnych-strony">\[ \hat c^{-} = \frac1n\sum_i I(y_i \lt l_i), \qquad \hat c^{+} = \frac1n\sum_i I(y_i \gt u_i), \qquad \hat c^{-} + \hat c + \hat c^{+} = 1. \]</div>
+<p>Wynik przedziałowy jako suma strat kwantylowych \( \rho_\tau(x) = x\,(\tau - I(x \lt 0)) \):</p>
+<div class="ml-eq" id="eq-pokrycie-przedzialow-predykcyjnych-pinball">\[ S_\alpha(l,u;y) \;=\; \frac{2}{\alpha}\Big[\rho_{\alpha/2}(y - l) + \rho_{1-\alpha/2}(y - u)\Big]. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-pokrycie-kalibracja"><p class="ml-box-title">Twierdzenie (pokrycie przy poprawnym rozkładzie)</p>
+<p>Jeśli \( Y_i \sim F_i \) i \( F_i \) jest ciągła, to \( P(l_i \le Y_i \le u_i) = 1-\alpha \). Jeśli \( F_i \) jest dowolna (np. dyskretna), to \( P(l_i \le Y_i \le u_i) \ge 1-\alpha \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-pokrycie-zgodnosc"><p class="ml-box-title">Twierdzenie (zgodność empirycznego pokrycia)</p>
+<p>Jeśli wskaźniki \( I_i \) są niezależne z \( P(I_i = 1) = c_i \), to \( \mathbb{E}\hat c = \bar c = \frac1n\sum c_i \), \( \operatorname{Var}\hat c = \frac{1}{n^2}\sum c_i(1-c_i) \le \frac{1}{4n} \), a \( \hat c - \bar c \to 0 \) prawie na pewno.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-pokrycie-is"><p class="ml-box-title">Twierdzenie (właściwość wyniku przedziałowego)</p>
+<p>Niech \( Y \) ma ciągłą dystrybuantę \( F \) i skończoną wartość oczekiwaną. Oczekiwany wynik przedziałowy \( \mathbb{E}S_\alpha(l,u;Y) \) jest minimalizowany przez \( l^\ast = F^{-1}(\alpha/2) \), \( u^\ast = F^{-1}(1-\alpha/2) \). Zatem prognozujący, który zna prawdziwy rozkład, nie zyskuje na zawężaniu ani poszerzaniu przedziału.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-pokrycie-nie-wystarcza"><p class="ml-box-title">Twierdzenie (kalibracja nie wystarcza)</p>
+<p>Niech \( Y_i = \mu_i + \varepsilon_i \), gdzie \( \mu_i \sim N(m, \sigma_\mu^2) \) i \( \varepsilon_i \sim N(0,\sigma^2) \) są niezależne, a pary \( (\mu_i,\varepsilon_i) \) i.i.d. Prognosta „idealny” zna \( \mu_i \) i podaje rozkład \( N(\mu_i,\sigma^2) \); prognosta „klimatologiczny” podaje dla każdego meczu rozkład brzegowy \( N(m, \sigma_\mu^2+\sigma^2) \). Obaj mają pokrycie \( 1-\alpha \), ale dla \( \sigma_\mu \gt 0 \) przedziały idealnego są ściśle węższe.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<div class="ml-proof"><p class="ml-box-title">Dowód (pokrycie przy poprawnym rozkładzie)</p>
+<ol>
+<li>\( P(l \le Y \le u) = F(u) - P(Y \lt l) = F(u) - F(l^-) \).</li>
+<li>Z definicji kwantyla \( F(u) = F(F^{-1}(1-\alpha/2)) \ge 1-\alpha/2 \) oraz \( F(l^-) \le \alpha/2 \) (bo dla \( y \lt l \) jest \( F(y) \lt \alpha/2 \)).</li>
+<li>Stąd \( P(l\le Y\le u) \ge 1 - \alpha/2 - \alpha/2 = 1-\alpha \).</li>
+<li>Dla ciągłej \( F \): \( F(u) = 1-\alpha/2 \) i \( F(l^-) = F(l) = \alpha/2 \), więc zachodzi równość.</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (zgodność empirycznego pokrycia)</p>
+<ol>
+<li>\( \mathbb{E}\hat c = \frac1n\sum\mathbb{E}I_i = \frac1n\sum c_i \).</li>
+<li>Z niezależności \( \operatorname{Var}\hat c = \frac1{n^2}\sum\operatorname{Var}I_i = \frac1{n^2}\sum c_i(1-c_i) \), a \( c(1-c)\le 1/4 \).</li>
+<li>Zbieżność p.n. wynika z mocnego prawa wielkich liczb dla ograniczonych, niezależnych zmiennych (np. twierdzenia Kołmogorowa, bo \( \sum \operatorname{Var}I_i/i^2 \lt \infty \)).</li>
+</ol>
+<p>Przy kalibracji \( c_i = 1-\alpha \) i \( K \sim \text{Bin}(n, 1-\alpha) \), co uzasadnia wzory <a class="ml-eqref" href="#eq-pokrycie-przedzialow-predykcyjnych-bin"></a>–<a class="ml-eqref" href="#eq-pokrycie-przedzialow-predykcyjnych-z"></a>.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (właściwość wyniku przedziałowego)</p>
+<ol>
+<li>Rozpisując \( S_\alpha \) jako funkcję \( l \) (dla ustalonego \( u \gt l \)): \( g(l) = -l + \frac2\alpha\,\mathbb{E}\big[(l-Y)\,I(Y\lt l)\big] + \text{const} = -l + \frac2\alpha\int_{-\infty}^{l}(l-y)\,dF(y) + \text{const} \).</li>
+<li>Różniczkując (reguła Leibniza; wyraz brzegowy znika, bo \( l - y = 0 \) dla \( y = l \)): \( g'(l) = -1 + \frac2\alpha F(l) \).</li>
+<li>\( g'(l) = 0 \iff F(l) = \alpha/2 \); ponieważ \( g''(l) = \frac2\alpha f(l) \ge 0 \), jest to minimum: \( l^\ast = F^{-1}(\alpha/2) \).</li>
+<li>Analogicznie dla \( u \): \( h(u) = u + \frac2\alpha\int_u^\infty (y-u)\,dF(y) + \text{const} \), \( h'(u) = 1 - \frac2\alpha\,(1 - F(u)) = 0 \iff F(u) = 1-\alpha/2 \).</li>
+</ol>
+<p>Interpretacja: koszt szerokości (\( u-l \)) i kara za chybienie (\( \frac2\alpha\times \) odległość) równoważą się dokładnie w kwantylach prawdziwego rozkładu. Wynik przedziałowy łączy więc ostrość i kalibrację w jednej liczbie — im mniejszy średni \( S_\alpha \), tym lepiej.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (kalibracja nie wystarcza)</p>
+<ol>
+<li>Prognosta idealny: warunkowo \( Y_i\mid\mu_i \sim N(\mu_i,\sigma^2) \), więc z twierdzenia o pokryciu (rozkład ciągły) \( P(l_i\le Y_i\le u_i\mid\mu_i) = 1-\alpha \) dla każdego \( \mu_i \), a po uśrednieniu po \( \mu_i \) — także bezwarunkowo. Szerokość: \( w_{\text{id}} = 2z_{1-\alpha/2}\,\sigma \).</li>
+<li>Prognosta klimatologiczny: suma niezależnych zmiennych normalnych \( Y_i = \mu_i + \varepsilon_i \sim N(m,\ \sigma_\mu^2+\sigma^2) \), czyli jego rozkład predykcyjny jest prawdziwym rozkładem brzegowym \( Y_i \); z twierdzenia o pokryciu jego przedział też ma pokrycie \( 1-\alpha \).</li>
+<li>Jego szerokość to \( w_{\text{klim}} = 2z_{1-\alpha/2}\sqrt{\sigma_\mu^2 + \sigma^2} \gt 2z_{1-\alpha/2}\sigma = w_{\text{id}} \) dla \( \sigma_\mu \gt 0 \).</li>
+</ol>
+<p>Obaj prognostowie są skalibrowani, ale tylko idealny wykorzystuje informację o meczu. Stąd paradygmat: kalibracja jest warunkiem koniecznym, a wśród modeli skalibrowanych wybieramy najostrzejszy <cite data-bib="gneiting2007calibration"></cite>.</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong> Sezon testowy: \( n = 280 \) meczów ligowych. Model podał dla każdego meczu przedziały 50%, 80% i 95%. Liczby meczów z frekwencją wewnątrz przedziału: 133, 212 i 259.</p>
+<ol class="ml-steps">
+<li><strong>Pokrycia empiryczne:</strong> \( 133/280 = 0{,}475 \); \( 212/280 \approx 0{,}757 \); \( 259/280 = 0{,}925 \). Wszystkie trzy są poniżej poziomów nominalnych.</li>
+<li><strong>Wartości oczekiwane i odchylenia</strong> (wzór <a class="ml-eqref" href="#eq-pokrycie-przedzialow-predykcyjnych-bin"></a>): dla 80%: \( \mathbb{E}K = 280\cdot0{,}8 = 224 \), \( \sqrt{280\cdot0{,}8\cdot0{,}2} = \sqrt{44{,}8} \approx 6{,}69 \). Dla 50%: 140 i \( \sqrt{70} \approx 8{,}37 \). Dla 95%: 266 i \( \sqrt{13{,}3} \approx 3{,}65 \).</li>
+<li><strong>Statystyki \( z \):</strong> 80%: \( (212-224)/6{,}69 \approx -1{,}79 \); 50%: \( (133-140)/8{,}37 \approx -0{,}84 \); 95%: \( (259-266)/3{,}65 \approx -1{,}92 \).</li>
+<li><strong>Wartości p:</strong> przybliżenie normalne: 0,073 (80%), 0,40 (50%), 0,055 (95%); dokładny test dwumianowy: 0,085, 0,44 i 0,072. Żadne z pokryć osobno nie odbiega od nominalnego istotnie na poziomie 0,05.</li>
+<li><strong>Przedział Wilsona dla 80%</strong> (wzór <a class="ml-eqref" href="#eq-pokrycie-przedzialow-predykcyjnych-wilson"></a>): \( \hat c = 0{,}75714 \), \( z^2 = 3{,}8415 \), \( z^2/(2n) = 0{,}00686 \), \( 1 + z^2/n = 1{,}01372 \). Środek: \( (0{,}75714 + 0{,}00686)/1{,}01372 \approx 0{,}75366 \). Połowa szerokości: \( 1{,}96\cdot\sqrt{0{,}00065671 + 0{,}00001225}/1{,}01372 = 1{,}96\cdot0{,}025864/1{,}01372 \approx 0{,}05001 \). Przedział: \( [0{,}704;\ 0{,}804] \) — zawiera 0,80, ale ledwo.</li>
+<li><strong>Pozostałe przedziały Wilsona:</strong> 50%: \( [0{,}417;\ 0{,}533] \); 95%: \( [0{,}888;\ 0{,}950] \).</li>
+<li><strong>Wniosek łączny.</strong> Wszystkie trzy poziomy są niedopokryte w tym samym kierunku. Pojedynczo to może być przypadek, ale spójny wzór (a do tego dodatnia korelacja meczów w sezonie, która zwiększa rzeczywistą wariancję \( K \)) sugeruje, że model jest lekko zbyt pewny siebie — warto sprawdzić rozbicie na strony <a class="ml-eqref" href="#eq-pokrycie-przedzialow-predykcyjnych-strony"></a> i grupy.</li>
+<li><strong>Wynik przedziałowy dla jednego meczu.</strong> Przedział 80% (\( \alpha = 0{,}2 \)) to \( [900;\ 1500] \). Jeśli przyszło 1650 widzów: \( S = 600 + \frac{2}{0{,}2}(1650 - 1500) = 600 + 10\cdot150 = 2100 \). Jeśli przyszło 1200: \( S = 600 \) (sama szerokość).</li>
+</ol>
+<div class="ml-plot" data-plot="binomial" data-params='{"n": 280, "p": 0.8}'></div>
+<p>Rozkład liczby pokrytych meczów \( K \) dla idealnie skalibrowanego modelu 80% przy 280 meczach: wartości od ok. 211 do 237 są typowe. Zmniejszając \( n \), zobaczysz, jak szybko rośnie względny rozrzut pokrycia — na 30 meczach pokrycie 70% nie jest niczym niezwykłym.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li><strong>Pokrycie poniżej nominalnego</strong> — przedziały za wąskie: model nie docenia niepewności (np. za duża precyzja \( \phi \), pominięta niepewność parametrów, nieprzewidziana zmienność sezonu).</li>
+<li><strong>Pokrycie powyżej nominalnego</strong> — przedziały za szerokie: model „ubezpiecza się”, jest skalibrowany kosztem ostrości.</li>
+<li><strong>Kilka poziomów naraz.</strong> Sprawdzanie 50%, 80% i 95% jednocześnie mówi więcej niż jeden poziom: niedopokrycie tylko na 95% oznacza zbyt lekkie ogony, na wszystkich poziomach — ogólnie zbyt małą wariancję.</li>
+<li><strong>Strony chybień.</strong> Gdy prawie wszystkie chybienia są powyżej \( u_i \), problemem jest obciążenie (model zaniża frekwencję), a nie szerokość.</li>
+<li><strong>Ostrość.</strong> Z dwóch modeli o zgodnym pokryciu lepszy jest ten o węższych przedziałach (mniejszym \( \bar w \)) — a łącznie oba aspekty ocenia średni wynik przedziałowy \( S_\alpha \).</li>
+<li><strong>Pokrycie warunkowe.</strong> Pokrycie 80% w całym zbiorze może ukrywać 90% dla małych hal i 65% dla dużych. Zawsze sprawdzamy pokrycie w grupach (por. <a data-concept="kalibracja-prawdopodobienstw">kalibracja prawdopodobieństw</a>).</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>Prognozy <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> zawierają przedziały predykcyjne 50/80/95% dla liczby widzów i wypełnienia, wyznaczane z rozkładu predykcyjnego (próbki parametrów a posteriori + losowanie liczby widzów z modelu beta-dwumianowego lub ujemnego dwumianowego). W walidacji chronologicznej na ostatnim sezonie raportujemy:</p>
+<ul>
+<li>empiryczne pokrycie każdego poziomu z przedziałem Wilsona i dokładnym testem dwumianowym, osobno dla Superligi, niższych lig i pucharów EHF;</li>
+<li>odsetki chybień poniżej i powyżej przedziału (np. czy model nie zaniża frekwencji w meczach o stawce);</li>
+<li>średnią szerokość przedziałów (w widzach i w punktach procentowych wypełnienia) oraz średni wynik przedziałowy — do porównywania wariantów modelu;</li>
+<li>pokrycie w grupach wielkości hali i prognozowanego wypełnienia; przy wypełnieniu bliskim 100% przedziały są „ucięte” pojemnością, a duża masa w punkcie \( A_i = C_i \) sprawia, że pokrycie tych meczów jest z natury wyższe od nominalnego (efekt dyskretności z twierdzenia o pokryciu).</li>
+</ul>
+<p>Pokrycie uzupełnia się z histogramem PIT i resztami kwantylowymi (<a data-concept="diagnostyka-reszt">diagnostyka reszt</a>): PIT sprawdza kalibrację na <em>wszystkich</em> poziomach naraz, pokrycie — na poziomach faktycznie komunikowanych klubom.</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Zależność obserwacji.</strong> Test dwumianowy zakłada niezależność; korelacja w obrębie sezonu i klubu powoduje, że rzeczywista niepewność pokrycia jest większa, a test zbyt często „wykrywa” niekalibrację. Ostrożniej jest liczyć pokrycie per kolejka lub per klub i analizować zmienność między grupami.</li>
+<li><strong>Kalibracja bezwarunkowa jest słaba.</strong> Zgodne pokrycie łączne może współistnieć ze znaczną niekalibracją w podgrupach, które się kompensują.</li>
+<li><strong>Brak informacji o ostrości.</strong> Samo pokrycie nagradza przedziały szerokie; zawsze raportujemy szerokość lub wynik przedziałowy <cite data-bib="gneiting2007scoring"></cite>.</li>
+<li><strong>Dane dyskretne i atomy.</strong> Przy kompletach widzów i małych frekwencjach pokrycie jest systematycznie nieco wyższe od nominalnego; nie należy tego interpretować jako „zbyt szerokich przedziałów”.</li>
+<li><strong>Mała moc.</strong> Przy 95% i kilkuset meczach oczekujemy kilkunastu chybień — test ma niewielką moc wykrycia umiarkowanej niekalibracji ogonów.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="przedzialy-predykcyjne">Przedziały predykcyjne</a> — obiekt oceny.</li>
+<li><a data-concept="kalibracja-prawdopodobienstw">Kalibracja prawdopodobieństw</a> — szersze ujęcie zgodności prognoz z częstościami.</li>
+<li><a data-concept="backtesting">Backtesting</a> — schemat walidacji chronologicznej.</li>
+<li><a data-concept="rozklad-dwumianowy">Rozkład dwumianowy</a> — rozkład liczby trafień.</li>
+<li><a data-concept="niepewnosc-predykcyjna">Niepewność predykcyjna</a> i <a data-concept="rozklad-predykcyjny">rozkład predykcyjny</a>.</li>
+<li><a data-concept="diagnostyka-reszt">Diagnostyka reszt</a> — PIT i reszty kwantylowe.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gneiting2007calibration"></li>
+<li data-bib="gneiting2007scoring"></li>
+<li data-bib="hyndman2021fpp3"></li>
+<li data-bib="dawid1984"></li>
+<li data-bib="hamill2001"></li>
+<li data-bib="casellaberger2002"></li>
+</ul>
+</section>

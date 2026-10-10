@@ -1,0 +1,235 @@
+<section id="cel"><h2>Cel badawczy</h2>
+<p>Model Atrakcyjności Frekwencyjnej (MAF) odpowiada na pytanie: <b>jaką dodatkową frekwencję wiąże się z obecnością konkretnego klubu jako przeciwnika i z jakim prawdopodobieństwem przyciąga on więcej kibiców niż typowy rywal?</b> Surowa średnia widzów na meczach wyjazdowych klubu tego nie mówi, bo miesza trzy różne zjawiska: kto był gospodarzem (duże i małe hale, silne i słabe ośrodki), kiedy grano (sezon, dzień tygodnia, godzina, faza rozgrywek) oraz kim był rywal. MAF rozdziela te składniki w jednym modelu statystycznym i raportuje efekt rywala razem z pełną niepewnością.</p>
+<p>Pytania szczegółowe, na które odpowiada dashboard „Atrakcyjność (MAF)”:</p>
+<ol>
+<li>które kluby mają największą publiczność u siebie (efekt gospodarza \(H\)) — osobno od ich wpływu jako rywala (efekt \(R\));</li>
+<li>które zespoły najbardziej zapełniają hale przeciwników (indeks IAF) i jak to się zmienia między sezonami (\(R + RS\));</li>
+<li>jak wielkość hali wpływa na interpretację (łącze logit i dyspersja zależna od pojemności);</li>
+<li>jakie jest prawdopodobieństwo osiągnięcia określonej liczby widzów w przyszłym meczu (rozkład predykcyjny);</li>
+<li>które mecze były największymi niespodziankami frekwencyjnymi (reszty predykcyjne).</li>
+</ol>
+<div class="ml-box ml-note"><p class="ml-box-title">Korelacja a przyczynowość</p><p>MAF szacuje <i>statystyczny efekt związany z obecnością rywala</i> przy kontroli gospodarza, sezonu, rozgrywek i warunków meczu. Nie dowodzi, że dana liczba kibiców przyszła wyłącznie z powodu rywala: nieobserwowane czynniki (ceny biletów, transmisje, promocje, derby, pogoda) mogą być skorelowane z rywalem. Pojęcia przyczynowości opisują <cite data-bib="rubin1974"></cite>, <cite data-bib="pearl2009"></cite> i <cite data-bib="hernan2020"></cite>.</p></div>
+<p>Literatura popytu na widowiska sportowe <cite data-bib="borland2003"></cite> <cite data-bib="garcia2002"></cite> <cite data-bib="forrest2002"></cite> <cite data-bib="schreyer2022"></cite> wskazuje, że frekwencja zależy od jakości i popularności obu drużyn, niepewności wyniku, terminu meczu i pojemności obiektu — te czynniki tworzą strukturę MAF.</p>
+</section>
+
+<section id="dane"><h2>Opis danych</h2>
+<p>Model działa w dwóch niezależnych aplikacjach, każda na własnych danych:</p>
+<table class="ml-table"><thead><tr><th>Aplikacja</th><th>Rozgrywki</th><th>Okres</th><th>Pojemność hali</th><th>Warianty modelu</th></tr></thead><tbody>
+<tr><td>handball_datascience</td><td>ligi ZPRP (Superliga, Liga Centralna, I–III liga, puchary), mężczyźni i kobiety</td><td>sezony z danymi o widzach od 2011/2012</td><td>nominalna, znana dla ok. 55% meczów ze znaną frekwencją</td><td>wypełnienie hali (beta-dwumianowy) oraz liczba widzów (ujemny dwumianowy), osobno dla płci</td></tr>
+<tr><td>handball_datascience_ehf</td><td>EHF Champions League, European League, European Cup</td><td>sezony 2021/22–2026/27</td><td>brak w bazie</td><td>liczba widzów (ujemny dwumianowy), osobno dla płci</td></tr>
+</tbody></table>
+<p>Jednostką obserwacji jest rozegrany mecz (bez walkowerów i meczów wycofanych). Kontrola jakości (<code>maf.quality</code>) stosuje reguły:</p>
+<ul>
+<li><b>NULL ≠ 0.</b> Brak informacji o widzach wyklucza mecz z modelu; nigdy nie jest traktowany jako zero.</li>
+<li><b>Zero widzów</b> oznacza mecz bez publiczności (np. ograniczenia sanitarne). To mechanizm administracyjny, a nie miara atrakcyjności, więc takie mecze są wyłączone.</li>
+<li><b>Duplikaty</b> (ten sam identyfikator albo ten sam dzień, para drużyn i rozgrywki) są usuwane przed estymacją.</li>
+<li><b>Teren neutralny</b>: mecz w hali, w której w ciągu ±2 dni grało co najmniej dwóch różnych gospodarzy, a „gospodarz” rozegrał tam najwyżej 34% swoich meczów domowych w sezonie (turnieje finałowe). Wykluczony, bo efekt gospodarza traci sens.</li>
+<li><b>Pojemność</b>: nominalna pojemność hali może zostać nadpisana korektą dla meczu albo pary (hala, sezon) — rozróżniamy pojemność nominalną i dostępną. Mecz, w którym widzów jest więcej niż miejsc, ma niespójną pojemność: zostaje w modelu liczby widzów, ale nie w modelu wypełnienia. Gdy pojemność jest nieznana, wypełnienia się nie wylicza.</li>
+<li><b>Wartości odstające</b> są oznaczane odpornym z-score logarytmu frekwencji względem mediany gospodarza (próg 4 MAD, <cite data-bib="leys2013"></cite>) — pozostają w modelu, bo rozkłady o grubszych ogonach (beta-dwumianowy, ujemny dwumianowy) je pomieszczą, a reszty predykcyjne je pokażą.</li>
+<li><b>Historyczne nazwy</b>: tożsamością klubu jest stały identyfikator (zespół w ZPRP, klub w EHF); nazwa wyświetlana to najnowsza, a wcześniejsze są pokazywane jako historia nazw.</li>
+</ul>
+<p>Liczby meczów odrzuconych na każdym etapie są zapisane w artefakcie modelu i pokazane w sekcji „Jakość danych” dashboardu.</p>
+</section>
+
+<section id="definicja"><h2>Definicje zmiennych</h2>
+<table class="ml-symbols"><thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead><tbody>
+<tr><td>\(i = 1,\dots,N\)</td><td>mecz użyty do estymacji</td></tr>
+<tr><td>\(A_i\)</td><td>liczba widzów (zmienna losowa, obserwacja \(a_i\))</td></tr>
+<tr><td>\(C_i\)</td><td>dostępna pojemność hali w meczu \(i\) (tylko wariant wypełnienia)</td></tr>
+<tr><td>\(W_i = A_i / C_i\)</td><td>wypełnienie hali, udział zajętych miejsc</td></tr>
+<tr><td>\(h(i), r(i), s(i), l(i)\)</td><td>gospodarz, rywal (gość), sezon i rozgrywki meczu \(i\)</td></tr>
+<tr><td>\(x_i \in \mathbb{R}^K\)</td><td>warunki meczu znane przed jego rozpoczęciem: weekend, godzina, forma i pozycja w tabeli obu drużyn, faza pucharowa, finał</td></tr>
+<tr><td>\(\eta_i\)</td><td>predyktor liniowy</td></tr>
+<tr><td>\(\mu_i\)</td><td>oczekiwane wypełnienie \(E(W_i)\) albo oczekiwana liczba widzów \(E(A_i)\)</td></tr>
+<tr><td>\(\alpha\)</td><td>wyraz wolny (poziom bazowy)</td></tr>
+<tr><td>\(H_h,\ R_r,\ S_s,\ L_l\)</td><td>efekty gospodarza, rywala, sezonu i rozgrywek</td></tr>
+<tr><td>\(HS_{h,s},\ RS_{r,s}\)</td><td>sezonowe odchylenia gospodarza i rywala od ich efektów ogólnych</td></tr>
+<tr><td>\(\beta\)</td><td>współczynniki warunków meczu</td></tr>
+<tr><td>\(\phi_i,\ \kappa\)</td><td>precyzja rozkładu beta (wariant wypełnienia) i parametr kształtu ujemnego dwumianu (wariant liczby widzów)</td></tr>
+<tr><td>\(\sigma_H,\sigma_R,\dots\)</td><td>odchylenia standardowe efektów losowych (hiperparametry)</td></tr>
+<tr><td>\(X_{\mathrm{ref}}\)</td><td>populacja referencyjna meczów do standaryzacji IAF</td></tr>
+</tbody></table>
+<div class="ml-box ml-def" id="def-cechy"><p class="ml-box-title">Definicja (warunki meczu)</p>
+<p>Forma drużyny przed meczem to <a data-concept="srednia-ruchoma">średnia ruchoma</a> punktów (zwycięstwo 1, remis ½, porażka 0) z co najwyżej 5 meczów rozegranych <i>wcześniej</i> — mecze o tym samym czasie rozpoczęcia nie wpływają na siebie. Pozycja w tabeli to ranga drużyny w tabeli danej edycji rozgrywek zbudowanej z meczów wcześniejszych (2 pkt za zwycięstwo, 1 za remis), przeskalowana do \([0,1]\) (0 = lider). Brak historii oznacza brak wartości; po <a data-concept="standaryzacja">standaryzacji</a> brak zastępujemy średnią treningową (wartość 0). Godzina 00:00 oznacza brak godziny.</p></div>
+</section>
+
+<section id="zalozenia"><h2>Założenia modelu</h2>
+<ol>
+<li><b>Warunkowa niezależność.</b> Przy danych parametrach liczby widzów w różnych meczach są niezależne.</li>
+<li><b>Addytywność na skali łącza.</b> Efekty gospodarza, rywala, sezonu, rozgrywek i warunków sumują się na skali logit (wypełnienie) albo log (liczba widzów). Interakcje gospodarz × rywal nie są modelowane (poza nieliniowością łącza).</li>
+<li><b>Wymienialność (exchangeability).</b> Przed obejrzeniem danych efekty klubów w obrębie grupy są wymienialne, co uzasadnia wspólny rozkład z hiperparametrem \(\sigma\) (<a data-concept="modele-hierarchiczne">model hierarchiczny</a>).</li>
+<li><b>Stała pojemność w sezonie.</b> Bez korekt pojemność dostępna równa się nominalnej.</li>
+<li><b>Brak wycieku informacji.</b> Kowariaty zawierają wyłącznie informacje znane przed meczem; wynik meczu nie jest predyktorem.</li>
+<li><b>Mechanizm braków.</b> Mecze bez frekwencji traktujemy jako brakujące losowo względem efektów (MAR) — nie zakładamy, że to zera.</li>
+</ol>
+</section>
+
+<section id="wiarygodnosc"><h2>Funkcja wiarygodności</h2>
+<h3 id="wariant-wypelnienia">Wariant wypełnienia (pojemność znana)</h3>
+<p>Liczba widzów to liczba zajętych z \(C_i\) miejsc. Jeżeli przy danym meczu każde miejsce jest zajęte z prawdopodobieństwem \(p_i\), a samo \(p_i\) ma <a data-concept="rozklad-beta">rozkład beta</a> o średniej \(\mu_i\) i precyzji \(\phi_i\), to \(A_i\) ma <a data-concept="rozklad-beta-dwumianowy">rozkład beta-dwumianowy</a>:</p>
+<div class="ml-eq" id="eq-maf-bb">\[ P(A_i = a \mid \mu_i, \phi_i) = \binom{C_i}{a} \frac{B\big(a + \mu_i\phi_i,\ C_i - a + (1-\mu_i)\phi_i\big)}{B\big(\mu_i\phi_i,\ (1-\mu_i)\phi_i\big)}, \qquad \operatorname{logit}\mu_i = \eta_i. \]</div>
+<p>Wybór uzasadniamy mechanizmem generowania danych: frekwencja jest liczbą całkowitą z przedziału \([0, C_i]\), a mecze z kompletem widzów (\(A_i = C_i\)) mają dodatnie prawdopodobieństwo. <a data-concept="regresja-beta">Regresja beta</a> wymaga \(W_i \in (0,1)\), więc komplety trzeba by przesuwać sztuczną transformacją; model zero-one-inflated beta (<a data-concept="rozklady-z-masa-na-granicach">masa na granicach</a>, <cite data-bib="ospina2012"></cite>) dodaje osobne procesy dla 0 i 1, których w danych frekwencyjnych nie potrafimy odróżnić od zwykłej zmienności. Rozkład beta-dwumianowy obsługuje oba końce przedziału bez dodatkowych parametrów, a przy dużym \(C_i\) zachowuje się jak regresja beta dla \(W_i\) <cite data-bib="ferrari2004"></cite>.</p>
+<p>Precyzja zależy od wielkości hali (posterior predictive check pokazał, że jedno \(\phi\) zaniża liczbę kompletów):</p>
+<div class="ml-eq" id="eq-maf-precyzja">\[ \log \phi_i = \gamma_0 + \gamma_1 \tilde c_i, \qquad \tilde c_i = \frac{\log C_i - \overline{\log C}}{\operatorname{sd}(\log C)}. \]</div>
+<h3 id="wariant-liczby">Wariant liczby widzów (pojemność nieznana)</h3>
+<div class="ml-eq" id="eq-maf-nb">\[ P(A_i = a \mid \mu_i, \kappa) = \frac{\Gamma(a+\kappa)}{\Gamma(\kappa)\, a!}\left(\frac{\kappa}{\kappa+\mu_i}\right)^{\kappa}\left(\frac{\mu_i}{\kappa+\mu_i}\right)^{a}, \qquad \log \mu_i = \eta_i, \]</div>
+<p>czyli <a data-concept="rozklad-ujemny-dwumianowy">rozkład ujemny dwumianowy</a> z wariancją \(\mu_i + \mu_i^2/\kappa\) — dla dużych frekwencji niepewność rośnie proporcjonalnie do średniej, co odpowiada multiplikatywnej zmienności frekwencji. Wypełnienia w tym wariancie się nie wylicza.</p>
+<p><a data-concept="funkcja-wiarygodnosci">Log-wiarygodność</a> to suma logarytmów <a class="ml-eqref" href="#eq-maf-bb"></a> albo <a class="ml-eqref" href="#eq-maf-nb"></a> po meczach. Gradienty względem \(\eta_i\) wyprowadzono analitycznie; dla wariantu beta-dwumianowego</p>
+<div class="ml-eq" id="eq-maf-gradient">\[ \frac{\partial \ell_i}{\partial \eta_i} = \phi_i \mu_i (1-\mu_i)\Big[\psi(a_i + \mu_i\phi_i) - \psi(\mu_i\phi_i) - \psi(C_i - a_i + (1-\mu_i)\phi_i) + \psi((1-\mu_i)\phi_i)\Big], \]</div>
+<p>gdzie \(\psi\) to funkcja digamma; dla ujemnego dwumianu \(\partial \ell_i / \partial \eta_i = \kappa (a_i - \mu_i)/(\kappa + \mu_i)\). Poprawność wszystkich pochodnych sprawdzają testy automatyczne (różnice skończone).</p>
+</section>
+
+<section id="hierarchia"><h2>Konstrukcja hierarchiczna</h2>
+<p>Predyktor liniowy (zob. <a data-concept="regresja-hierarchiczna">regresja hierarchiczna</a>):</p>
+<div class="ml-eq" id="eq-maf-eta">\[ \eta_i = \alpha + H_{h(i)} + HS_{h(i),s(i)} + R_{r(i)} + RS_{r(i),s(i)} + S_{s(i)} + L_{l(i)} + x_i^{\top}\beta. \]</div>
+<p>Każda grupa efektów ma wspólny rozkład — to właśnie <a data-concept="partial-pooling">partial pooling</a>: klub z kilkoma meczami dostaje oszacowanie ściągnięte do średniej populacji proporcjonalnie do niepewności, a klub z setką meczów — oszacowanie bliskie własnym danym.</p>
+<div class="ml-eq" id="eq-maf-warstwy">\[ R_r \sim N(0, \sigma_R^2),\quad RS_{r,s} \sim N(0, \sigma_{RS}^2),\quad H_h \sim N(0,\sigma_H^2),\quad HS_{h,s} \sim N(0,\sigma_{HS}^2),\quad L_l \sim N(0,\sigma_L^2),\quad S_s \sim N(0,\sigma_S^2), \]</div>
+<p>z ograniczeniami sumy zerowej opisanymi w sekcji o identyfikowalności. Grupy, które mają mniej niż 10 swobodnych poziomów (np. 3 rozgrywki EHF, kilka sezonów), są traktowane jako <a data-concept="efekty-stale-i-losowe">efekty stałe</a> z priorem \(N(0,1)\) — z kilku poziomów nie da się wiarygodnie oszacować \(\sigma\), a próba prowadzi do lejka Neala i dywergencji samplera.</p>
+<p>Parametryzację dobieramy automatycznie: grupa z co najmniej 25 meczami na poziom ma parametryzację centrowaną (dane dominują nad priorem), pozostałe — niecentrowaną \(R = \sigma_R z,\ z \sim N(0,1)\) <cite data-bib="papaspiliopoulos2007"></cite> <cite data-bib="betancourt2015hier"></cite>. Wybór jest zapisany w artefakcie i pokazany w diagnostyce.</p>
+</section>
+
+<section id="priory"><h2>Rozkłady a priori</h2>
+<table class="ml-table"><thead><tr><th>Parametr</th><th>Prior</th><th>Uzasadnienie</th></tr></thead><tbody>
+<tr><td>\(\alpha\)</td><td>\(N(m_0, 2^2)\), \(m_0 = \operatorname{logit}\bar W\) albo \(\log \bar A\)</td><td>centrowanie w empirycznym poziomie; odchylenie 2 na skali logit obejmuje wypełnienia od ok. 2% do 98%</td></tr>
+<tr><td>\(\beta_k\)</td><td>\(N(0,1)\)</td><td>kowariaty standaryzowane; zmiana o 1 SD rzadko przesuwa logit o więcej niż 2</td></tr>
+<tr><td>\(\gamma_0\)</td><td>\(N(\log 15, 1{,}5^2)\) (wypełnienie), \(N(\log 5, 1{,}5^2)\) (liczba widzów)</td><td>słabo informacyjny poziom dyspersji</td></tr>
+<tr><td>\(\gamma_1\)</td><td>\(N(0,1)\)</td><td>zależność precyzji od wielkości hali</td></tr>
+<tr><td>efekty stałe</td><td>\(N(0,1)\)</td><td>regularyzacja przy kilku poziomach</td></tr>
+</tbody></table>
+<p>Priory są <a data-concept="priory">słabo informacyjne</a>: przy tysiącach meczów dominują dane, a priory zapobiegają wartościom nierealistycznym przy małych grupach. Zgodnie z <a data-concept="twierdzenie-bayesa-w-estymacji">twierdzeniem Bayesa w estymacji</a> posterior jest proporcjonalny do wiarygodności razy prior.</p>
+</section>
+
+<section id="hiperpriory"><h2>Hiperpriory</h2>
+<div class="ml-eq" id="eq-maf-hiperprior">\[ \sigma_g \sim \text{Half-Normal}(0, 1), \qquad g \in \{H, R, S, L, HS, RS\}. \]</div>
+<p><a data-concept="hiperpriory">Hiperprior</a> półnormalny o skali 1 na skali logit/log dopuszcza duże różnice między klubami (\(\sigma = 1\) oznacza, że klub o 1 SD lepszy ma około 2,7 raza większe szanse zajęcia miejsca), ale zniechęca do wartości skrajnych. To rekomendacja <cite data-bib="gelman2006prior"></cite> dla odchyleń efektów losowych, lepsza od niewłaściwych priorów jednostajnych i od odwrotnych rozkładów gamma, które przy małej liczbie grup silnie wpływają na wynik. Próbkujemy \(\log\sigma\) z uwzględnieniem jakobianu przekształcenia.</p>
+</section>
+
+<section id="identyfikowalnosc"><h2>Identyfikowalność parametrów</h2>
+<p>W <a class="ml-eqref" href="#eq-maf-eta"></a> wyraz \(\alpha\) i średnie efektów są nieidentyfikowalne: dodanie stałej \(c\) do wszystkich \(R_r\) i odjęcie jej od \(\alpha\) nie zmienia żadnego \(\eta_i\) (<a data-concept="identyfikowalnosc-parametrow">identyfikowalność</a>). Podobnie średnia \(HS_{h,\cdot}\) zastępuje \(H_h\). Taki grzbiet w posteriorze spowalnia MCMC i rozmywa interpretację.</p>
+<div class="ml-box ml-def" id="def-suma-zerowa"><p class="ml-box-title">Definicja (ograniczenie sumy zerowej)</p>
+<p>Dla grupy z \(n\) poziomami efekty mają postać \(u = Q v\), gdzie \(v \in \mathbb{R}^{n-1}\), a \(Q \in \mathbb{R}^{n\times(n-1)}\) ma kolumny Helmerta</p>
+<div class="ml-eq" id="eq-maf-helmert">\[ Q_{jk} = \begin{cases} \dfrac{1}{\sqrt{k(k+1)}}, & j \le k,\\[1ex] -\dfrac{k}{\sqrt{k(k+1)}}, & j = k+1,\\[1ex] 0, & j > k+1. \end{cases} \]</div>
+<p>Dla \(H, R, S, L\) ograniczenie obejmuje całą grupę, dla \(HS\) i \(RS\) — każdy klub osobno (suma odchyleń sezonowych klubu jest zerowa).</p></div>
+<div class="ml-box ml-thm" id="thm-helmert"><p class="ml-box-title">Twierdzenie</p><p>\(Q^{\top}Q = I_{n-1}\) oraz \(\mathbf{1}^{\top} Q = 0\). W konsekwencji \(\sum_j u_j = 0\), a jeśli \(v \sim N(0, \sigma^2 I)\), to \(u \sim N\big(0, \sigma^2 (I - \tfrac{1}{n}\mathbf{1}\mathbf{1}^{\top})\big)\).</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p><p>Suma kolumny \(k\): \(k \cdot \frac{1}{\sqrt{k(k+1)}} - \frac{k}{\sqrt{k(k+1)}} = 0\). Norma: \(k \cdot \frac{1}{k(k+1)} + \frac{k^2}{k(k+1)} = \frac{k + k^2}{k(k+1)} = 1\). Dla \(k \lt m\) iloczyn skalarny kolumn \(k\) i \(m\) to \(\sum_{j\le k} \frac{1}{\sqrt{k(k+1)m(m+1)}} - \frac{k}{\sqrt{k(k+1)}}\cdot\frac{1}{\sqrt{m(m+1)}} = 0\), bo wiersz \(k+1 \le m\) w kolumnie \(m\) ma wartość \(1/\sqrt{m(m+1)}\). Kolumny są więc ortonormalne i prostopadłe do \(\mathbf{1}\), stąd \(QQ^{\top}\) jest rzutem na dopełnienie ortogonalne \(\mathbf{1}\), czyli \(I - \tfrac1n \mathbf{1}\mathbf{1}^{\top}\).</p><p class="ml-qed">∎</p></div>
+<p>Dzięki temu \(R = 0\) jest dokładnie średnią efektów wszystkich rywali w populacji — to „typowy rywal”, dla którego IAF = 100. Transformacja i jej sprzężenie liczone są w czasie \(O(n)\).</p>
+</section>
+
+<section id="estymacja"><h2>Estymacja posterior</h2>
+<p>Rozkład posterior <a data-concept="rozklad-posterior">\(p(\theta \mid a)\)</a> nie ma postaci analitycznej. Próbki generuje sampler NUTS — wariant <a data-concept="mcmc">Hamiltonian Monte Carlo</a> z automatycznym doborem długości trajektorii <cite data-bib="hoffman2014nuts"></cite> <cite data-bib="betancourt2017"></cite>. Implementacja (moduł <code>maf.nuts</code>, NumPy/SciPy) używa wielomianowego wyboru stanu, uogólnionego kryterium zawracania, diagonalnej macierzy mas adaptowanej w oknach (75 / 25·2<sup>k</sup> / 50 iteracji jak w Stanie <cite data-bib="carpenter2017stan"></cite>) i adaptacji kroku metodą dual averaging z docelową akceptacją 0,9.</p>
+<table class="ml-table"><thead><tr><th>Ustawienie</th><th>Wartość</th></tr></thead><tbody>
+<tr><td>łańcuchy</td><td>4, równolegle, różne punkty startowe</td></tr>
+<tr><td>rozgrzewka / próbki na łańcuch</td><td>1000 / 1500</td></tr>
+<tr><td>maks. głębokość drzewa</td><td>10</td></tr>
+<tr><td>zapisane próbki</td><td>co 4. (1500 łącznie) — do IAF, prognoz i porównań</td></tr>
+<tr><td>odtwarzalność</td><td>ziarno losowe, odcisk SHA-256 danych, wersje Pythona/NumPy/SciPy i pełna konfiguracja w artefakcie</td></tr>
+</tbody></table>
+<p>Kosztowne MCMC nie jest uruchamiane przy wejściu na stronę: trening to osobny proces (<code>python -m handball.maf_cli</code> albo <code>scripts/train_maf.py</code> w aplikacji EHF), a dashboard czyta zapisany artefakt. Podsumowania (średnie, kwantyle) wyznaczamy metodą <a data-concept="estymacja-posterior">estymacji posterior</a> z próbek.</p>
+</section>
+
+<section id="wyprowadzenie"><h2>Wyprowadzenie IAF</h2>
+<p>Niech \(\eta_i^{(0)}\) oznacza predyktor meczu \(i\) bez składników rywala: \(\eta_i^{(0)} = \eta_i - R_{r(i)} - RS_{r(i),s(i)}\). Oczekiwane wypełnienie meczu z referencyjnymi warunkami \(i\), gdyby rywalem był klub \(j\), to \(\operatorname{logit}^{-1}(\eta_i^{(0)} + R_j)\). Indeks atrakcyjności frekwencyjnej definiujemy jako iloraz średnich po populacji referencyjnej:</p>
+<div class="ml-eq" id="eq-atrakcyjnosc-frekwencyjna">\[ \mathrm{IAF}_j = 100 \cdot \frac{E\big(W \mid \text{rywal} = j,\ X_{\mathrm{ref}}\big)}{E\big(W \mid \text{rywal} = \text{typowy},\ X_{\mathrm{ref}}\big)} = 100\cdot \frac{\frac{1}{|X_{\mathrm{ref}}|}\sum_{i\in X_{\mathrm{ref}}} \operatorname{logit}^{-1}\!\big(\eta^{(0)}_i + R_j\big)}{\frac{1}{|X_{\mathrm{ref}}|}\sum_{i\in X_{\mathrm{ref}}} \operatorname{logit}^{-1}\!\big(\eta^{(0)}_i\big)}. \]</div>
+<p>IAF = 120 oznacza, że model przewiduje wypełnienie o 20% większe niż przy typowym rywalu (w tej samej populacji meczów), IAF = 85 — o 15% mniejsze.</p>
+<div class="ml-box ml-thm" id="thm-iaf-log"><p class="ml-box-title">Twierdzenie (wariant liczby widzów)</p><p>Przy łączu logarytmicznym \(\mathrm{IAF}_j = 100\, e^{R_j}\) niezależnie od populacji referencyjnej.</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p><p>\(\sum_i e^{\eta^{(0)}_i + R_j} = e^{R_j}\sum_i e^{\eta^{(0)}_i}\), więc iloraz średnich wynosi \(e^{R_j}\).</p><p class="ml-qed">∎</p></div>
+<p>Przy łączu logit taka redukcja nie zachodzi: funkcja logistyczna jest nieliniowa, efekt zależy od poziomu wypełnienia (w hali bliskiej kompletu ten sam rywal dodaje mniej punktów procentowych). Dlatego IAF jest uśrednieniem po konkretnej populacji meczów, a nie przekształceniem samego \(R_j\) — i dlatego \(E[\mathrm{IAF}] \ne \mathrm{IAF}(E[\theta])\) (<a data-concept="wartosc-oczekiwana">nierówność Jensena</a>).</p>
+<p>Wielkości pochodne, liczone dla każdej próbki posterior:</p>
+<div class="ml-eq" id="eq-maf-pochodne">\[ \Delta^{\mathrm{p.p.}}_j = 100\,\big(\bar W_j - \bar W_0\big), \qquad \Delta^{\mathrm{widzowie}}_j = C^{*}\,\big(\bar W_j - \bar W_0\big) \ \text{(wypełnienie)}, \qquad \Delta^{\mathrm{widzowie}}_j = \bar A_0\,(e^{R_j} - 1)\ \text{(liczba widzów)}, \]</div>
+<p>gdzie \(\bar W_j, \bar W_0\) to licznik i mianownik <a class="ml-eqref" href="#eq-atrakcyjnosc-frekwencyjna"></a>, \(C^{*}\) — mediana pojemności hal populacji referencyjnej (dashboard pozwala ją zmienić), \(\bar A_0\) — oczekiwana frekwencja referencyjna. Interpretację efektów na różnych skalach omawia <a data-concept="interpretacja-wspolczynnikow">interpretacja współczynników</a>.</p>
+</section>
+
+<section id="standaryzacja"><h2>Standaryzacja</h2>
+<p>Porównanie klubów ma sens tylko na wspólnej populacji meczów. \(X_{\mathrm{ref}}\) to mecze z trzech ostatnich sezonów modelu (dwóch dla EHF kobiet), z których losujemy do 500 (stałe ziarno). Każdy mecz referencyjny zachowuje swojego gospodarza, sezon, rozgrywki i warunki — zmieniamy tylko rywala. Wszystkie kluby są oceniane na tej samej populacji, więc ich IAF są porównywalne niezależnie od tego, z kim i gdzie faktycznie grały.</p>
+<ul>
+<li><b>IAF sezonowy</b> klubu \(j\) w sezonie \(s\) używa efektu \(R_j + RS_{j,s}\) i populacji referencyjnej złożonej z meczów sezonu \(s\) (do 160).</li>
+<li><b>Indeks gospodarza</b> (siła własnej publiczności) jest liczony analogicznie z \(H_h\) zamiast \(R_j\) — dashboard pokazuje go osobno, by nie mieszać publiczności własnej z atrakcyjnością jako rywala.</li>
+<li><b>Analiza gospodarza</b>: dla wybranego gospodarza \(h\) bazą jest średni predyktor jego meczów domowych z ostatniego sezonu, \(b_h\); indeks rywala \(j\) u tego gospodarza to \(100\,\operatorname{logit}^{-1}(b_h + R_j)/\operatorname{logit}^{-1}(b_h)\).</li>
+</ul>
+</section>
+
+<section id="przedzialy"><h2>Przedziały wiarygodności</h2>
+<p>Dla próbek \(\mathrm{IAF}^{(1)}_j,\dots,\mathrm{IAF}^{(S)}_j\) raportujemy medianę posterior oraz 95% <a data-concept="przedzial-wiarygodnosci">przedział wiarygodności</a> kwantylowy:</p>
+<div class="ml-eq" id="eq-maf-przedzial">\[ \big[\hat q_{0{,}025},\ \hat q_{0{,}975}\big], \qquad P\big(\hat q_{0{,}025} \le \mathrm{IAF}_j \le \hat q_{0{,}975} \mid a\big) \approx 0{,}95. \]</div>
+<p>To stwierdzenie o parametrze przy danych — inaczej niż przedział ufności. Dokładność kwantyli zależy od efektywnej liczby próbek (<a data-concept="effective-sample-size">ESS</a>), dlatego przy każdym klubie zapisujemy R-hat i ESS jego IAF.</p>
+<p>Oszacowanie jest oznaczane jako <b>niepewne</b>, gdy klub zagrał jako rywal mniej niż 6 meczów, szerokość przedziału 95% przekracza 60 punktów IAF albo jego R-hat ≥ 1,01 lub ESS &lt; 400. Takie kluby nie biorą udziału w wyborze KPI „najwyższy IAF”.</p>
+</section>
+
+<section id="prawdopodobienstwo"><h2>Obliczanie P(IAF &gt; 100)</h2>
+<div class="ml-eq" id="eq-maf-p100">\[ \widehat{P}(\mathrm{IAF}_j > 100 \mid a) = \frac{1}{S}\sum_{s=1}^{S} \mathbf{1}\big[\mathrm{IAF}^{(s)}_j > 100\big], \qquad \mathrm{MCSE} \approx \sqrt{\frac{\hat p (1-\hat p)}{\mathrm{ESS}}}. \]</div>
+<p>To <a data-concept="probabilistyczne-porownanie-parametrow">probabilistyczne porównanie parametrów</a> — odpowiedź na pytanie „z jakim prawdopodobieństwem klub przyciąga więcej kibiców niż typowy rywal”. Ta sama konstrukcja daje porównanie dwóch klubów: \(P(\mathrm{IAF}_A > \mathrm{IAF}_B \mid a) = \frac1S\sum_s \mathbf 1[\mathrm{IAF}^{(s)}_A > \mathrm{IAF}^{(s)}_B]\), liczone na tych samych próbkach, więc z uwzględnieniem korelacji posterior.</p>
+</section>
+
+<section id="prognozowanie"><h2>Prognozowanie</h2>
+<p>Symulator oblicza <a data-concept="rozklad-predykcyjny">rozkład predykcyjny</a> \(p(\tilde a \mid a) = \int p(\tilde a \mid \theta)\, p(\theta \mid a)\, d\theta\) metodą <a data-concept="monte-carlo">Monte Carlo</a>:</p>
+<ol class="ml-steps">
+<li>dla każdej z \(S = 1500\) zapisanych próbek posterior budujemy \(\eta^{(s)}\) scenariusza (gospodarz, rywal, rozgrywki, sezon, dzień, godzina, faza; forma i pozycja — ostatnie znane wartości drużyn);</li>
+<li>poziom nieobecny w danych (nowy sezon, nowy klub, nowa para klub × sezon) losujemy z rozkładu populacji: \(N(0, \sigma_g^{(s)\,2})\), dla efektów stałych z rozrzutu oszacowanych poziomów;</li>
+<li>losujemy 5 przyszłych meczów na próbkę: \(p \sim \mathrm{Beta}(\mu\phi, (1-\mu)\phi)\), \(\tilde a \sim \mathrm{Bin}(C, p)\) albo \(\lambda \sim \mathrm{Gamma}(\kappa, \mu/\kappa)\), \(\tilde a \sim \mathrm{Poisson}(\lambda)\);</li>
+<li>z 7500 symulacji odczytujemy średnią, medianę, <a data-concept="przedzialy-predykcyjne">przedziały predykcyjne</a> 50/80/95%, \(P(\tilde a / C \ge 0{,}75; 0{,}9; 0{,}95; 1)\) i \(P(\tilde a \ge c)\).</li>
+</ol>
+<p>Przedział wiarygodności średniej \(E(\tilde A \mid \theta)\) (tylko niepewność parametrów) pokazujemy obok przedziałów predykcyjnych, które obejmują także losową zmienność meczu — ich różnicę wyjaśnia <a data-concept="prawo-calkowitej-wariancji">prawo całkowitej wariancji</a> i <a data-concept="niepewnosc-predykcyjna">niepewność predykcyjna</a>.</p>
+</section>
+
+<section id="diagnostyka"><h2>Diagnostyka</h2>
+<table class="ml-table"><thead><tr><th>Miara</th><th>Próg</th><th>Pojęcie</th></tr></thead><tbody>
+<tr><td>rank-normalized split R-hat (maks. po wszystkich parametrach)</td><td>&lt; 1,01</td><td><a data-concept="r-hat">R-hat</a> <cite data-bib="vehtari2021rhat"></cite></td></tr>
+<tr><td>bulk-ESS i tail-ESS (min.)</td><td>≥ 400</td><td><a data-concept="effective-sample-size">ESS</a></td></tr>
+<tr><td>dywergencje NUTS</td><td>0</td><td><a data-concept="mcmc">MCMC</a></td></tr>
+<tr><td>E-BFMI każdego łańcucha</td><td>≥ 0,3</td><td><cite data-bib="betancourt2017"></cite></td></tr>
+<tr><td>posterior predictive checks</td><td>predykcyjne p nie bliskie 0 ani 1</td><td><a data-concept="posterior-predictive-checks">PPC</a> <cite data-bib="gabry2019"></cite></td></tr>
+</tbody></table>
+<p>Status modelu: <b>ok</b> — wszystkie progi spełnione; <b>ostrzeżenie</b> — R-hat &lt; 1,05, ESS ≥ 100 i dywergencje ≤ 0,2% próbek; w pozostałych przypadkach <b>niewiarygodny</b>. Dashboard wyświetla status nad wszystkimi wynikami i nie przedstawia niewiarygodnego modelu jako wiarygodnego. Diagnostykę reszt (standaryzowane reszty i dwustronne predykcyjne wartości p z poprawką mid-p — bez założenia normalności) opisuje <a data-concept="diagnostyka-reszt">diagnostyka reszt</a>.</p>
+</section>
+
+<section id="walidacja"><h2>Walidacja historyczna</h2>
+<p><a data-concept="backtesting">Walidacja chronologiczna</a>: model jest trenowany ponownie bez dwóch ostatnich sezonów (standaryzacja kowariat liczona tylko na danych treningowych), a następnie prognozuje mecze tych sezonów. Nowe pary klub × sezon i nowy sezon dostają efekty z rozkładu populacji — dokładnie tak, jak w prawdziwej prognozie przyszłości. Raportujemy <a data-concept="mae">MAE</a> (względem mediany predykcyjnej), <a data-concept="rmse">RMSE</a> (względem średniej), CRPS, <a data-concept="pokrycie-przedzialow-predykcyjnych">pokrycie przedziałów</a> 50/80/95% i histogram PIT (<a data-concept="kalibracja-prawdopodobienstw">kalibracja</a>), w porównaniu z punktem odniesienia: średnią frekwencją gospodarza w danych treningowych.</p>
+<div data-maf-results="walidacja"><table class="ml-table"><thead><tr><th>Model</th><th>Diagnostyka MCMC</th><th>Trening → test</th><th>Mecze testowe</th><th>MAE model / odniesienie</th><th>RMSE model / odniesienie</th><th>CRPS</th><th>Pokrycie 50 / 80 / 95%</th></tr></thead><tbody><tr><td>ZPRP mężczyźni — wypełnienie</td><td colspan="8">wyniki pojawią się po zakończeniu treningu (zob. dashboard)</td></tr><tr><td>ZPRP mężczyźni — widzowie</td><td colspan="8">wyniki pojawią się po zakończeniu treningu (zob. dashboard)</td></tr><tr><td>ZPRP kobiety — wypełnienie</td><td colspan="8">wyniki pojawią się po zakończeniu treningu (zob. dashboard)</td></tr><tr><td>ZPRP kobiety — widzowie</td><td>ok (R̂ ≤ 1,009, ESS ≥ 433)</td><td>2011/2012–2024/2025 → 2025/2026, 2026/2027</td><td class="num">755</td><td class="num">98 / 113</td><td class="num">184 / 247</td><td class="num">72</td><td class="num">56% / 85% / 97%</td></tr><tr><td>EHF mężczyźni — widzowie</td><td>ok (R̂ ≤ 1,004, ESS ≥ 696)</td><td>2021-22–2024-25 → 2025-26, 2026-27</td><td class="num">538</td><td class="num">734 / 741</td><td class="num">2 809 / 1 077</td><td class="num">787</td><td class="num">90% / 100% / 100%</td></tr><tr><td>EHF kobiety — widzowie</td><td colspan="8">za mało sezonów do walidacji chronologicznej</td></tr></tbody></table><p>Wartości pochodzą z artefaktów modeli (wersje widoczne w dashboardzie). Kluczowym kryterium jest pokrycie przedziałów predykcyjnych: jeśli obserwowane odsetki są bliskie nominalnym, prawdopodobieństwa z symulatora są skalibrowane. MAE mierzy błąd mediany prognozy, RMSE — średniej; model hierarchiczny szczególnie zmniejsza duże błędy (RMSE), bo ściąga skrajne oszacowania małych grup i przewiduje nowe pary klub × sezon z rozkładu populacji, zamiast przenosić historyczną średnią jednego gospodarza.</p><div class="ml-box ml-note"><p class="ml-box-title">Uwaga — rozgrywki EHF</p><p>W pucharach EHF wiele klubów w sezonach testowych gra po raz pierwszy, więc ich efekty gospodarza i rywala pochodzą wyłącznie z rozkładu populacji. Przedziały predykcyjne są wtedy bardzo szerokie (pokrycie powyżej nominalnego — prognoza ostrożna), a średnia predykcyjna ma ciężki prawy ogon, co podnosi RMSE powyżej punktu odniesienia przy zbliżonym MAE. Dla nowych klubów należy więc czytać medianę i przedziały, a nie średnią; ranking IAF klubów z historią pozostaje wiarygodny zgodnie z diagnostyką. Model EHF kobiet obejmuje dwa sezony, więc walidacja chronologiczna nie jest możliwa.</p></div></div>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia</h2>
+<ul>
+<li><b>Brak identyfikacji przyczynowej.</b> Efekt rywala może zawierać wpływ czynników z nim skorelowanych (cena biletów, transmisja, promocja meczu, odległość dojazdu kibiców gości).</li>
+<li><b>Pojemność nominalna.</b> Baza ZPRP zawiera jedną pojemność hali bez historii; korekty trzeba wprowadzić ręcznie. Dla ok. 45% meczów krajowych i wszystkich meczów EHF pojemność jest nieznana — wtedy działa tylko wariant liczby widzów.</li>
+<li><b>Jakość raportowania frekwencji.</b> Liczby bywają zaokrąglane (100, 500, 1000) albo szacowane przez organizatora; model traktuje je jako dokładne.</li>
+<li><b>Brak interakcji gospodarz × rywal</b> (np. derby) poza nieliniowością łącza; brak korelacji między \(H\) i \(R\) tego samego klubu.</li>
+<li><b>Czas lokalny w EHF.</b> Godzina rozpoczęcia jest przeliczana na strefę Europe/Berlin, co dla meczów w innych strefach przesuwa godzinę o ±1–2 h.</li>
+<li><b>Forma i tabela</b> są przybliżeniami siły drużyny; w fazie pucharowej tabela edycji rozgrywek łączy mecze grupowe i pucharowe.</li>
+<li><b>Małe próby.</b> Kluby z kilkoma meczami jako rywal mają szerokie przedziały — partial pooling chroni przed skrajnymi wartościami, ale nie tworzy informacji, której nie ma w danych.</li>
+</ul>
+</section>
+
+<section id="przyklad"><h2>Przykład rzeczywistego meczu</h2>
+<div data-maf-results="przyklad"><p>Przykład zostanie uzupełniony danymi modelu M-wypełnienie po zakończeniu jego treningu.</p></div>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="borland2003"></li>
+<li data-bib="garcia2002"></li>
+<li data-bib="forrest2002"></li>
+<li data-bib="schreyer2022"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="gelmanhill2007"></li>
+<li data-bib="ferrari2004"></li>
+<li data-bib="ospina2012"></li>
+<li data-bib="hilbe2011"></li>
+<li data-bib="gelman2006prior"></li>
+<li data-bib="papaspiliopoulos2007"></li>
+<li data-bib="betancourt2015hier"></li>
+<li data-bib="hoffman2014nuts"></li>
+<li data-bib="betancourt2017"></li>
+<li data-bib="carpenter2017stan"></li>
+<li data-bib="vehtari2021rhat"></li>
+<li data-bib="gabry2019"></li>
+<li data-bib="gneiting2007scoring"></li>
+<li data-bib="gneiting2007calibration"></li>
+<li data-bib="leys2013"></li>
+<li data-bib="rubin1974"></li>
+<li data-bib="pearl2009"></li>
+<li data-bib="hernan2020"></li>
+<li data-bib="doc-pymc-examples"></li>
+<li data-bib="doc-stan-users"></li>
+<li data-bib="doc-arviz"></li>
+</ul>
+</section>

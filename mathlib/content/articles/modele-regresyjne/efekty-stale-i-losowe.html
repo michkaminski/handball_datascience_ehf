@@ -1,0 +1,148 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Chcemy ocenić, ilu widzów „przyciąga” każdy klub jako rywal. Klub z Superligi grał na wyjeździe 120 razy, beniaminek — 4 razy. Możemy postąpić na trzy sposoby:</p>
+<ul>
+<li><strong>Brak łączenia</strong> (ang. <em>no pooling</em>) — każdy klub dostaje własny, niczym nieograniczony parametr, szacowany wyłącznie z jego meczów. To <strong>efekt stały</strong> (ang. <em>fixed effect</em>). Dla beniaminka cztery mecze dają oszacowanie bardzo niepewne, a skrajne wartości są często przypadkiem.</li>
+<li><strong>Pełne łączenie</strong> (ang. <em>complete pooling</em>) — wszyscy rywale są tacy sami. Oszacowanie stabilne, ale ignoruje oczywiste różnice.</li>
+<li><strong>Częściowe łączenie</strong> (ang. <em>partial pooling</em>) — efekty klubów są różne, ale pochodzą ze wspólnego rozkładu populacji, którego rozrzut \( \tau \) szacujemy z danych. To <strong>efekt losowy</strong> (ang. <em>random effect</em>). Klub z dużą liczbą meczów zachowuje swoje oszacowanie, klub z małą jest „ściągany” (ang. <em>shrinkage</em>) do średniej.</li>
+</ul>
+<p>Efekty losowe są kompromisem między obciążeniem a wariancją: akceptujemy niewielkie obciążenie (ściąganie do średniej) w zamian za dużą redukcję wariancji. Jak pokażemy, przy rozsądnych założeniach ten kompromis daje <em>mniejszy</em> średni błąd kwadratowy niż efekty stałe.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Rozważmy obserwacje \( y_{ij} \), \( i=1,\dots,n_j \), w grupach \( j=1,\dots,J \), i predyktor liniowy \( \eta_{ij} = x_{ij}^\top\beta + \alpha_j \).</p>
+<div class="ml-box ml-def" id="def-efekt-staly"><p class="ml-box-title">Definicja</p>
+<p>Efekty grup \( \alpha_1,\dots,\alpha_J \) są <strong>efektami stałymi</strong>, jeśli są traktowane jako nieznane stałe z \( \mathbb{R} \) bez wspólnego modelu probabilistycznego (w ujęciu bayesowskim: z niezależnymi priorami o ustalonym, zwykle dużym rozrzucie). Estymacja każdego \( \alpha_j \) korzysta wyłącznie z informacji z grupy \( j \) (warunkowo na \( \beta \)).</p>
+</div>
+<div class="ml-box ml-def" id="def-efekt-losowy"><p class="ml-box-title">Definicja</p>
+<p>Efekty grup są <strong>efektami losowymi</strong>, jeśli są modelowane jako wymienialne zmienne losowe ze wspólnego rozkładu o nieznanych hiperparametrach, zwykle</p>
+<div class="ml-eq" id="eq-efekty-stale-i-losowe">\[ \alpha_j \overset{\text{iid}}{\sim} N(\mu_\alpha,\ \tau^2), \qquad j=1,\dots,J, \]</div>
+<p>przy czym \( \tau \) (odchylenie standardowe efektów) jest estymowane wspólnie z pozostałymi parametrami.</p>
+</div>
+<p>Przypadki graniczne: \( \tau\to\infty \) daje efekty stałe (brak łączenia), \( \tau=0 \) — pełne łączenie. Terminologia „stały/losowy” nie jest w literaturze jednolita; Gelman i Hill <cite data-bib="gelmanhill2007"></cite> wskazują kilka niezgodnych definicji i zalecają mówić raczej o <em>modelowanych</em> i <em>niemodelowanych</em> współczynnikach grupowych. W ujęciu bayesowskim „losowe” są wszystkie parametry; różnica polega na tym, czy rozkład a priori grup ma parametry estymowane z danych (<a data-concept="hiperpriory">hiperpriory</a>).</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( j=1,\dots,J \)</td><td>indeks grupy (klubu, sezonu)</td></tr>
+<tr><td>\( n_j \)</td><td>liczba obserwacji w grupie \( j \)</td></tr>
+<tr><td>\( y_{ij} \)</td><td>obserwacja \( i \) w grupie \( j \)</td></tr>
+<tr><td>\( \alpha_j,\ \theta_j \)</td><td>efekt (prawdziwa średnia) grupy \( j \)</td></tr>
+<tr><td>\( \mu_\alpha,\ \mu \)</td><td>średnia populacji efektów</td></tr>
+<tr><td>\( \tau \)</td><td>odchylenie standardowe efektów między grupami</td></tr>
+<tr><td>\( \sigma \)</td><td>odchylenie standardowe obserwacji wewnątrz grupy</td></tr>
+<tr><td>\( \bar y_j \)</td><td>średnia z próby w grupie \( j \) (estymator efektu stałego)</td></tr>
+<tr><td>\( w_j \)</td><td>waga danych grupy w estymatorze częściowego łączenia</td></tr>
+<tr><td>\( \hat\theta_j^{\mathrm{PP}} \)</td><td>estymator częściowego łączenia (ściągnięty)</td></tr>
+<tr><td>\( \mathrm{MSE} \)</td><td>błąd średniokwadratowy</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li><strong>Wymienialność</strong> (ang. <em>exchangeability</em>) efektów: przed zobaczeniem danych nie mamy powodu, by efekt konkretnej grupy uznać za systematycznie większy od innych (o ile nie wyjaśniają tego kowariaty w modelu). Uzasadnia to wspólny rozkład <a class="ml-eqref" href="#eq-efekty-stale-i-losowe"></a>.</li>
+<li><strong>Postać rozkładu</strong> grup (najczęściej normalny) — przy grubych ogonach skrajne grupy są nadmiernie ściągane.</li>
+<li><strong>Niezależność efektu od kowariat</strong> poziomu obserwacji. Gdy efekt grupy jest skorelowany z \( x_{ij} \), estymator \( \beta \) w modelu z efektami losowymi może być obciążony; efekty stałe są na to odporne.</li>
+<li><strong>Wystarczająca liczba grup</strong> do oszacowania \( \tau \) — przy \( J \) rzędu 3–5 \( \tau \) jest słabo identyfikowane i wynik silnie zależy od priora <cite data-bib="gelman2006prior"></cite>.</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Model normalno-normalny (dwa poziomy, \( \sigma \) znane):</p>
+<div class="ml-eq" id="eq-efekty-stale-i-losowe-model">\[ \bar y_j\mid\theta_j \sim N\!\left(\theta_j,\ \frac{\sigma^2}{n_j}\right), \qquad \theta_j \sim N(\mu,\tau^2). \]</div>
+<p><strong>Estymator efektu stałego</strong> (brak łączenia): \( \hat\theta_j^{\mathrm{FE}} = \bar y_j \), \( \operatorname{Var} = \sigma^2/n_j \).</p>
+<p><strong>Estymator częściowego łączenia</strong> (średnia a posteriori przy znanych \( \mu,\tau \)):</p>
+<div class="ml-eq" id="eq-efekty-stale-i-losowe-shrinkage">\[ \hat\theta_j^{\mathrm{PP}} = w_j\,\bar y_j + (1-w_j)\,\mu, \qquad w_j = \frac{n_j/\sigma^2}{n_j/\sigma^2 + 1/\tau^2} = \frac{\tau^2}{\tau^2 + \sigma^2/n_j}. \]</div>
+<p><strong>Wariancja a posteriori:</strong> \( \operatorname{Var}(\theta_j\mid\bar y_j) = \bigl(n_j/\sigma^2 + 1/\tau^2\bigr)^{-1} \).</p>
+<p><strong>Rozkład obciążenia i wariancji</strong> dla ustalonego \( \theta_j \):</p>
+<div class="ml-eq" id="eq-efekty-stale-i-losowe-mse">\[ \mathrm{MSE}\bigl(\hat\theta_j^{\mathrm{PP}}\mid\theta_j\bigr) = \underbrace{w_j^2\frac{\sigma^2}{n_j}}_{\text{wariancja}} + \underbrace{(1-w_j)^2(\theta_j-\mu)^2}_{\text{obciążenie}^2}. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-posterior-normalny"><p class="ml-box-title">Twierdzenie (rozkład a posteriori efektu grupy)</p>
+<p>W modelu <a class="ml-eqref" href="#eq-efekty-stale-i-losowe-model"></a> przy znanych \( \mu,\tau,\sigma \): \( \theta_j\mid\bar y_j \sim N\bigl(\hat\theta_j^{\mathrm{PP}},\ (n_j/\sigma^2+1/\tau^2)^{-1}\bigr) \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-kompromis"><p class="ml-box-title">Twierdzenie (kompromis obciążenie–wariancja)</p>
+<p>Uśredniając <a class="ml-eqref" href="#eq-efekty-stale-i-losowe-mse"></a> po \( \theta_j\sim N(\mu,\tau^2) \), wśród estymatorów postaci \( c\,\bar y_j + (1-c)\mu \), \( c\in[0,1] \), minimalne ryzyko (oczekiwany MSE) osiąga \( c = w_j \) i wynosi</p>
+<div class="ml-eq" id="eq-efekty-stale-i-losowe-ryzyko">\[ \mathcal{R}^{\mathrm{PP}}_j = \left(\frac{n_j}{\sigma^2}+\frac{1}{\tau^2}\right)^{-1} \lt \frac{\sigma^2}{n_j} = \mathcal{R}^{\mathrm{FE}}_j. \]</div>
+<p>Względny zysk \( 1 - \mathcal{R}^{\mathrm{PP}}_j/\mathcal{R}^{\mathrm{FE}}_j = 1-w_j \) jest największy dla grup z małą liczbą obserwacji.</p>
+</div>
+<div class="ml-box ml-note"><p>Wynik ten jest bayesowskim odpowiednikiem zjawiska Steina: przy \( J\ge3 \) grupach estymator ściągający do wspólnej średniej (z \( \mu,\tau \) szacowanymi z danych) ma łącznie mniejszy błąd kwadratowy niż osobne średnie — nawet z perspektywy częstościowej, dla każdego ustalonego wektora \( \theta \) <cite data-bib="efron1975"></cite>.</p></div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="wyprowadzenie-posterior">Rozkład a posteriori</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z <a data-concept="twierdzenie-bayesa">twierdzenia Bayesa</a> \( p(\theta_j\mid\bar y_j) \propto \exp\bigl\{-\frac{n_j}{2\sigma^2}(\bar y_j-\theta_j)^2 - \frac{1}{2\tau^2}(\theta_j-\mu)^2\bigr\} \). Wykładnik jest kwadratowy w \( \theta_j \) ze współczynnikiem przy \( \theta_j^2 \) równym \( -\frac12(n_j/\sigma^2 + 1/\tau^2) \) i przy \( \theta_j \) równym \( n_j\bar y_j/\sigma^2 + \mu/\tau^2 \). Uzupełniając do kwadratu: precyzja \( P = n_j/\sigma^2+1/\tau^2 \), średnia \( (n_j\bar y_j/\sigma^2 + \mu/\tau^2)/P = w_j\bar y_j + (1-w_j)\mu \).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-kompromis">Kompromis obciążenie–wariancja</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<ol>
+<li>Dla \( \hat\theta = c\bar y_j + (1-c)\mu \) i ustalonego \( \theta_j \): \( \mathbb{E}\hat\theta - \theta_j = c\theta_j + (1-c)\mu - \theta_j = (1-c)(\mu-\theta_j) \) (obciążenie), \( \operatorname{Var}\hat\theta = c^2\sigma^2/n_j \). MSE = wariancja + obciążenie², co daje <a class="ml-eqref" href="#eq-efekty-stale-i-losowe-mse"></a> dla \( c = w_j \).</li>
+<li>Uśrednienie po \( \theta_j\sim N(\mu,\tau^2) \): \( \mathbb{E}(\theta_j-\mu)^2 = \tau^2 \), więc \( \mathcal{R}(c) = c^2\sigma^2/n_j + (1-c)^2\tau^2 \).</li>
+<li>\( \mathcal{R}'(c) = 2c\sigma^2/n_j - 2(1-c)\tau^2 = 0 \Rightarrow c^* = \tau^2/(\tau^2+\sigma^2/n_j) = w_j \); \( \mathcal{R}''\gt0 \), więc to minimum.</li>
+<li>Podstawiając: \( \mathcal{R}(w_j) = \frac{\tau^4\sigma^2/n_j + (\sigma^2/n_j)^2\tau^2}{(\tau^2+\sigma^2/n_j)^2} = \frac{\tau^2\sigma^2/n_j}{\tau^2+\sigma^2/n_j} = \bigl(n_j/\sigma^2 + 1/\tau^2\bigr)^{-1} \).</li>
+<li>Efekt stały to \( c=1 \): \( \mathcal{R}(1) = \sigma^2/n_j \). Iloraz \( \mathcal{R}(w_j)/\mathcal{R}(1) = \tau^2/(\tau^2+\sigma^2/n_j) = w_j \lt 1 \) dla \( \tau\lt\infty \).</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+<p>Uwaga: dla <em>konkretnej</em> grupy o efekcie daleko od średniej (\( |\theta_j-\mu|\gg\tau \)) obciążenie może przeważyć i MSE częściowego łączenia bywa większy niż efektu stałego. Twierdzenie mówi o ryzyku <em>przeciętnym</em> po populacji grup.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne</strong> (skala logit wypełnienia). Odchylenie meczu wokół efektu klubu \( \sigma = 0{,}5 \); rozrzut efektów rywali \( \tau = 0{,}3 \); średnia populacji \( \mu = 0 \). Dwa kluby mają tę samą średnią z próby \( \bar y = 0{,}6 \): klub A z \( n=4 \) meczów, klub B z \( n=40 \).</p>
+<ol class="ml-steps">
+<li>Precyzja priora: \( 1/\tau^2 = 1/0{,}09 \approx 11{,}11 \).</li>
+<li>Klub A: precyzja danych \( 4/0{,}25 = 16 \); \( w_A = 16/(16+11{,}11) \approx 0{,}590 \); \( \hat\theta_A^{\mathrm{PP}} = 0{,}590\cdot0{,}6 \approx 0{,}354 \).</li>
+<li>Klub B: precyzja danych \( 40/0{,}25 = 160 \); \( w_B = 160/171{,}11 \approx 0{,}935 \); \( \hat\theta_B^{\mathrm{PP}} \approx 0{,}561 \).</li>
+<li>Ryzyko efektu stałego: A — \( 0{,}25/4 = 0{,}0625 \); B — \( 0{,}25/40 = 0{,}00625 \).</li>
+<li>Ryzyko częściowego łączenia: A — \( 1/27{,}11 \approx 0{,}0369 \) (spadek o 41%, czyli \( 1-w_A \)); B — \( 1/171{,}11 \approx 0{,}00584 \) (spadek o 6,5%).</li>
+<li>Na skali ilorazu szans: efekt stały A sugeruje \( e^{0{,}6}\approx1{,}82 \), efekt losowy \( e^{0{,}354}\approx1{,}42 \) — cztery mecze nie wystarczą, by uwierzyć w tak silny efekt.</li>
+</ol>
+<div class="ml-plot" data-plot="shrinkage" data-params='{"tau": 0.3, "sigma": 0.5}'></div>
+<p>Wykres pokazuje, jak waga danych grupy \( w_j \) rośnie z liczbą meczów. Zwiększ \( \tau \) — ściąganie słabnie (grupy naprawdę się różnią); zwiększ \( \sigma \) — pojedyncze mecze są głośniejsze, więc ściąganie się nasila.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Oba kluby mają tę samą średnią z próby, ale model z efektami losowymi „wierzy” jej w różnym stopniu: w 59% dla klubu A i w 94% dla klubu B. To nie jest kara za bycie małym klubem — to rachunek informacji. Gdy klub A rozegra więcej meczów, jego \( w_A \) wzrośnie, a oszacowanie zbliży się do średniej z próby, jeśli efekt jest prawdziwy.</p>
+<p>Parametr \( \tau \) sam ma interpretację: \( \tau = 0{,}3 \) na skali logit oznacza, że typowy rywal (±1 odchylenie) zmienia szanse wypełnienia o czynnik \( e^{\pm0{,}3}\approx 0{,}74\text{–}1{,}35 \). Duże \( \tau \) — kluby się wyraźnie różnią; \( \tau \) bliskie 0 — różnice są w większości szumem.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W modelu <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> wszystkie efekty grupowe są losowe: \( H \) (gospodarz), \( HS \) (gospodarz×sezon), \( R \) (rywal), \( RS \) (rywal×sezon), \( S \) (sezon) i \( L \) (rozgrywki). Każdy blok ma własne odchylenie, np. \( \sigma_R \), z hiperpriorem \( \mathrm{Half\text{-}Normal}(0,1) \), a efekty zapisuje się w <a data-concept="modele-hierarchiczne">parametryzacji niecentrowanej</a> \( R_j = \sigma_R z_j \), \( z_j\sim N(0,1) \) (równoważnej <a class="ml-eqref" href="#eq-efekty-stale-i-losowe"></a> z \( \mu_\alpha = 0 \)).</p>
+<p>Uzasadnienie jest dokładnie twierdzeniem o kompromisie: w danych ZPRP są kluby z setkami meczów i beniaminkowie z kilkoma; w pucharach EHF wiele drużyn pojawia się w kilku spotkaniach. Efekty stałe dawałyby dla nich skrajne, niestabilne wartości indeksu IAF; efekty losowe ściągają je do średniej proporcjonalnie do ilości informacji. Interakcje \( HS \) i \( RS \) (klub×sezon) mają jeszcze mniej obserwacji na komórkę — bez częściowego łączenia byłyby praktycznie nieestymowalne.</p>
+<p>Kowariaty warunków meczu (\( \beta \): weekend, godzina, forma, pozycja) są efektami „stałymi” w sensie braku hiperpriora — mają ustalony prior \( N(0,1) \) na standaryzowanej skali.</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Obciążenie skrajnych grup:</strong> naprawdę wyjątkowy klub z małą liczbą meczów będzie niedoszacowany; to cena za mniejsze ryzyko przeciętne.</li>
+<li><strong>Korelacja efektu z kowariatami</strong> (np. silne kluby grają w weekendy) może obciążać \( \beta \); pomocne jest dodanie średnich grupowych kowariat do modelu.</li>
+<li><strong>Mała liczba grup</strong> (np. kilka rozgrywek \( L \)) — \( \tau \) słabo identyfikowane, wynik zależny od <a data-concept="hiperpriory">hiperpriora</a>.</li>
+<li><strong>Założenie normalności</strong> efektów — przy wyraźnych podgrupach (np. kluby z różnych lig) warto dodać je jako kowariaty lub osobne poziomy.</li>
+<li><strong>Obliczenia:</strong> modele z wieloma efektami losowymi wymagają MCMC i starannej parametryzacji (dywergencje w „lejku” przy małym \( \tau \)).</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="partial-pooling">Częściowe łączenie (partial pooling)</a> — mechanizm ściągania.</li>
+<li><a data-concept="modele-hierarchiczne">Modele hierarchiczne</a> — ogólna konstrukcja.</li>
+<li><a data-concept="regresja-hierarchiczna">Regresja hierarchiczna</a> — pełny model MAF z efektami losowymi.</li>
+<li><a data-concept="hiperpriory">Hiperpriory</a> — priory dla \( \tau \).</li>
+<li><a data-concept="identyfikowalnosc-parametrow">Identyfikowalność parametrów</a> — średnia efektów a wyraz wolny.</li>
+<li><a data-concept="twierdzenie-bayesa">Twierdzenie Bayesa</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelmanhill2007"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="efron1975"></li>
+<li data-bib="gelman2006prior"></li>
+<li data-bib="papaspiliopoulos2007"></li>
+</ul>
+</section>

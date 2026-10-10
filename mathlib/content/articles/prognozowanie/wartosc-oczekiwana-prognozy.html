@@ -1,0 +1,163 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Model probabilistyczny nie odpowiada na pytanie „ilu widzów przyjdzie?” jedną liczbą, tylko całym <a data-concept="rozklad-predykcyjny">rozkładem predykcyjnym</a>: 900 widzów jest bardzo prawdopodobne, 1500 — możliwe, 3000 — mało prawdopodobne. Klub, który planuje catering, ochronę czy liczbę otwartych sektorów, często potrzebuje jednak <em>jednej</em> liczby. Którą wybrać?</p>
+<p>Odpowiedź zależy od tego, jak bolesne są pomyłki. Jeżeli koszt błędu rośnie z jego kwadratem (duże pomyłki są nieproporcjonalnie dotkliwe), najlepszą prognozą punktową jest <strong>wartość oczekiwana</strong> rozkładu predykcyjnego — jego „środek ciężkości”. Jeżeli koszt jest proporcjonalny do wielkości błędu, najlepsza jest <strong>mediana</strong>. Przy rozkładach prawoskośnych, typowych dla frekwencji (sporadyczne derby i mecze z kompletem w hali), te dwie liczby wyraźnie się różnią.</p>
+<p>Wartość oczekiwana prognozy (ang. <em>expected value of the forecast</em>, <em>predictive mean</em>) ma też dogodną własność rachunkową: daje się policzyć „warstwami” — najpierw średnia przy ustalonych parametrach, potem uśrednienie po niepewności parametrów (<a data-concept="prawo-calkowitej-wartosci-oczekiwanej">prawo całkowitej wartości oczekiwanej</a>). W modelach z nieliniową funkcją łączącą (logit, logarytm) trzeba jednak uważać: średnia z przekształconych wartości nie jest przekształceniem średniej. Ramę teoretyczną — funkcje straty i reguły oceny — daje <cite data-bib="gneiting2007scoring"></cite>, praktyczne aspekty prognozowania — <cite data-bib="hyndman2021fpp3"></cite>.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \( D \) oznacza dane obserwowane, \( \theta\in\Theta \) — parametry modelu z rozkładem posterior \( p(\theta\mid D) \), a \( \tilde y \) — przyszłą obserwację (np. liczbę widzów na meczu \( i \) z warunkami \( x_i \)), o rozkładzie warunkowym \( p(\tilde y\mid\theta, x_i) \). Rozkład predykcyjny a posteriori to \( p(\tilde y\mid D, x_i)=\int_\Theta p(\tilde y\mid\theta,x_i)\,p(\theta\mid D)\,d\theta \).</p>
+<div class="ml-box ml-def" id="def-wartosc-oczekiwana-prognozy"><p class="ml-box-title">Definicja</p>
+<p><strong>Wartością oczekiwaną prognozy</strong> (średnią predykcyjną) nazywamy wartość oczekiwaną rozkładu predykcyjnego, o ile \( \mathbb{E}|\tilde y|\lt\infty \):</p>
+<div class="ml-eq" id="eq-wartosc-oczekiwana-prognozy">\[ \hat y_i \;=\; \mathbb{E}(\tilde y\mid D, x_i) \;=\; \int_\Theta \mathbb{E}(\tilde y\mid\theta, x_i)\; p(\theta\mid D)\,d\theta . \]</div>
+</div>
+<div class="ml-box ml-def" id="def-strata"><p class="ml-box-title">Definicja (funkcja straty i prognoza optymalna)</p>
+<p><strong>Funkcją straty</strong> nazywamy mierzalną funkcję \( \ell:\mathbb{R}\times\mathbb{R}\to[0,\infty) \), gdzie \( \ell(a,y) \) to koszt podania prognozy punktowej \( a \), gdy zrealizowała się wartość \( y \). Prognozą <strong>optymalną</strong> (bayesowską) względem \( \ell \) i rozkładu predykcyjnego \( P \) nazywamy</p>
+<div class="ml-eq" id="eq-wartosc-oczekiwana-prognozy-ryzyko">\[ a^\ast \in \arg\min_{a\in\mathbb{R}} \; \mathbb{E}_{\tilde y\sim P}\,\ell(a,\tilde y). \]</div>
+<p>Stratę kwadratową definiujemy jako \( \ell_2(a,y)=(a-y)^2 \), a bezwzględną jako \( \ell_1(a,y)=|a-y| \).</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( D \)</td><td>dane obserwowane (mecze historyczne)</td></tr>
+<tr><td>\( \theta \)</td><td>wektor parametrów modelu</td></tr>
+<tr><td>\( p(\theta\mid D) \)</td><td>rozkład posterior parametrów</td></tr>
+<tr><td>\( \tilde y \)</td><td>przyszła (prognozowana) obserwacja</td></tr>
+<tr><td>\( x_i \)</td><td>warunki meczu \( i \) (zmienne objaśniające)</td></tr>
+<tr><td>\( \hat y_i \)</td><td>wartość oczekiwana prognozy</td></tr>
+<tr><td>\( \ell(a,y) \)</td><td>funkcja straty prognozy \( a \) przy wyniku \( y \)</td></tr>
+<tr><td>\( a^\ast \)</td><td>prognoza punktowa optymalna względem straty</td></tr>
+<tr><td>\( F \)</td><td>dystrybuanta rozkładu predykcyjnego</td></tr>
+<tr><td>\( m \)</td><td>mediana rozkładu predykcyjnego</td></tr>
+<tr><td>\( \theta^{(s)},\ S \)</td><td>\( s \)-ta próbka z posterior, liczba próbek</td></tr>
+<tr><td>\( \eta_i,\ \mu_i \)</td><td>predyktor liniowy i średnia warunkowa meczu \( i \)</td></tr>
+<tr><td>\( C_i,\ A_i,\ W_i \)</td><td>pojemność hali, liczba widzów, wypełnienie \( A_i/C_i \)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li><strong>Istnienie momentów.</strong> Dla straty kwadratowej wymagamy \( \mathbb{E}\tilde y^2\lt\infty \) (wtedy ryzyko jest skończone), dla definicji średniej — \( \mathbb{E}|\tilde y|\lt\infty \). Rozkłady beta-dwumianowy (ograniczony przez \( C_i \)) i ujemny dwumianowy mają wszystkie momenty.</li>
+<li><strong>Poprawność modelu.</strong> Optymalność dotyczy rozkładu predykcyjnego <em>modelu</em>. Jeżeli model jest źle wyspecyfikowany, „optymalna” prognoza minimalizuje stratę względem złego rozkładu; jakość sprawdzamy empirycznie (<a data-concept="backtesting">backtesting</a>).</li>
+<li><strong>Znane warunki meczu.</strong> Prognozę liczymy przy ustalonym \( x_i \) (dzień tygodnia, godzina, forma przed meczem). Jeżeli niektóre składowe \( x_i \) są w chwili prognozy nieznane, trzeba je również uśrednić.</li>
+<li><strong>Symetria kosztów w czasie.</strong> Funkcja straty jest ustalona z góry i nie zależy od tego, który mecz prognozujemy.</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p><strong>Rozkład ryzyka kwadratowego</strong> (wariancja + kwadrat obciążenia):</p>
+<div class="ml-eq" id="eq-wartosc-oczekiwana-prognozy-mse">\[ \mathbb{E}(\tilde y-a)^2 \;=\; \operatorname{Var}(\tilde y) + \bigl(\mathbb{E}\tilde y - a\bigr)^2 . \]</div>
+<p><strong>Ryzyko bezwzględne przez dystrybuantę:</strong></p>
+<div class="ml-eq" id="eq-wartosc-oczekiwana-prognozy-abs">\[ \mathbb{E}|\tilde y-a| \;=\; \int_{-\infty}^{a}F(y)\,dy + \int_{a}^{\infty}\bigl(1-F(y)\bigr)\,dy . \]</div>
+<p><strong>Średnia predykcyjna w MAF.</strong> W wariancie „wypełnienie” \( \mathbb{E}(A_i\mid\theta)=C_i\mu_i \) z \( \mu_i=\operatorname{logit}^{-1}(\eta_i) \); w wariancie „liczba widzów” \( \mathbb{E}(A_i\mid\theta)=\mu_i=e^{\eta_i} \). Stąd</p>
+<div class="ml-eq" id="eq-wartosc-oczekiwana-prognozy-maf">\[ \mathbb{E}(W_i\mid D) = \mathbb{E}\bigl[\operatorname{logit}^{-1}(\eta_i)\bigm| D\bigr] \approx \frac1S\sum_{s=1}^S \operatorname{logit}^{-1}\bigl(\eta_i^{(s)}\bigr), \qquad \mathbb{E}(A_i\mid D) \approx \frac1S\sum_{s=1}^S e^{\eta_i^{(s)}} . \]</div>
+<p><strong>Strata kwantylowa</strong> (uogólnienie): \( \ell_\alpha(a,y)=(\mathbf 1\{y\lt a\}-\alpha)(a-y) \) jest minimalizowana przez kwantyl rzędu \( \alpha \); dla \( \alpha=\tfrac12 \) jest to połowa straty bezwzględnej.</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-kwadratowa"><p class="ml-box-title">Twierdzenie (optymalność średniej przy stracie kwadratowej)</p>
+<p>Jeżeli \( \mathbb{E}\tilde y^2\lt\infty \), to funkcja \( a\mapsto\mathbb{E}(\tilde y-a)^2 \) ma jedyne minimum w \( a^\ast=\mathbb{E}\tilde y \), a wartość minimalna wynosi \( \operatorname{Var}\tilde y \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-bezwzgledna"><p class="ml-box-title">Twierdzenie (optymalność mediany przy stracie bezwzględnej)</p>
+<p>Jeżeli \( \mathbb{E}|\tilde y|\lt\infty \), to \( a\mapsto\mathbb{E}|\tilde y-a| \) jest wypukła i osiąga minimum dokładnie na zbiorze median, tj. punktów \( m \) spełniających \( F(m^-)\le\tfrac12\le F(m) \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-jensen"><p class="ml-box-title">Twierdzenie (nierówność Jensena dla średniej predykcyjnej)</p>
+<p>Jeżeli \( g \) jest wypukła, to \( \mathbb{E}g(\eta)\ge g(\mathbb{E}\eta) \); dla wklęsłej — nierówność odwrotna. W szczególności \( \mathbb{E}e^{\eta}\ge e^{\mathbb{E}\eta} \), więc „podstawienie średniej predyktora” zaniża średnią liczbę widzów w wariancie ujemnym dwumianowym.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-rao-blackwell"><p class="ml-box-title">Twierdzenie (estymacja Monte Carlo z warunkowaniem)</p>
+<p>Niech \( (\theta^{(s)},\tilde y^{(s)}) \), \( s=1,\dots,S \), będą niezależnymi losowaniami z \( p(\theta\mid D)\,p(\tilde y\mid\theta) \). Estymatory \( \bar y_{\mathrm{sym}}=\frac1S\sum_s\tilde y^{(s)} \) i \( \bar y_{\mathrm{war}}=\frac1S\sum_s\mathbb{E}(\tilde y\mid\theta^{(s)}) \) są nieobciążone dla \( \hat y \), a \( \operatorname{Var}\bar y_{\mathrm{war}}\le\operatorname{Var}\bar y_{\mathrm{sym}} \).</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-kwadratowa">Strata kwadratowa</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Oznaczmy \( \mu=\mathbb{E}\tilde y \). Dla dowolnego \( a \):</p>
+\[ \begin{aligned} \mathbb{E}(\tilde y-a)^2 &amp;= \mathbb{E}\bigl[(\tilde y-\mu)+(\mu-a)\bigr]^2 \\ &amp;= \mathbb{E}(\tilde y-\mu)^2 + 2(\mu-a)\,\mathbb{E}(\tilde y-\mu) + (\mu-a)^2 \\ &amp;= \operatorname{Var}\tilde y + 0 + (\mu-a)^2 , \end{aligned} \]
+<p>bo \( \mu-a \) jest stałą, a \( \mathbb{E}(\tilde y-\mu)=0 \). Pierwszy składnik nie zależy od \( a \), drugi jest nieujemny i zeruje się wyłącznie dla \( a=\mu \). Stąd jedyne minimum w \( a^\ast=\mu \) i wartość minimalna \( \operatorname{Var}\tilde y \). To jest wzór <a class="ml-eqref" href="#eq-wartosc-oczekiwana-prognozy-mse"></a>.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-bezwzgledna">Strata bezwzględna</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla \( y\in\mathbb{R} \) i ustalonego \( a \) zachodzi \( |y-a| = \int_{-\infty}^{a}\mathbf 1\{y\le u\}\,du + \int_a^{\infty}\mathbf 1\{y\gt u\}\,du \) (pierwsza całka to długość odcinka \( [y,a] \), gdy \( y\lt a \), druga — odcinka \( [a,y] \), gdy \( y\gt a \)). Biorąc wartość oczekiwaną i zamieniając kolejność całkowania (twierdzenie Tonellego, funkcje nieujemne) dostajemy <a class="ml-eqref" href="#eq-wartosc-oczekiwana-prognozy-abs"></a>. Funkcja \( R(a)=\int_{-\infty}^aF+\int_a^\infty(1-F) \) ma pochodne jednostronne</p>
+\[ R'_+(a) = F(a) - \bigl(1-F(a)\bigr) = 2F(a)-1, \qquad R'_-(a) = 2F(a^-)-1 , \]
+<p>niemalejące w \( a \), więc \( R \) jest wypukła. Punkt \( m \) jest minimum funkcji wypukłej wtedy i tylko wtedy, gdy \( R'_-(m)\le0\le R'_+(m) \), tj. \( F(m^-)\le\tfrac12\le F(m) \) — to definicja mediany. Skończoność \( R \) wynika z \( \mathbb{E}|\tilde y|\lt\infty \).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-prawo-calkowite">Średnia predykcyjna jako uśrednienie po posterior</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z definicji rozkładu predykcyjnego i twierdzenia Fubiniego (przy \( \mathbb{E}|\tilde y|\lt\infty \)):</p>
+\[ \mathbb{E}(\tilde y\mid D) = \int \tilde y \int p(\tilde y\mid\theta)p(\theta\mid D)\,d\theta\,d\tilde y = \int\Bigl[\int\tilde y\,p(\tilde y\mid\theta)\,d\tilde y\Bigr]p(\theta\mid D)\,d\theta = \int\mathbb{E}(\tilde y\mid\theta)\,p(\theta\mid D)\,d\theta , \]
+<p>co jest wzorem <a class="ml-eqref" href="#eq-wartosc-oczekiwana-prognozy"></a> i szczególnym przypadkiem prawa całkowitej wartości oczekiwanej.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-rao-blackwell">Mniejsza wariancja estymatora warunkowego</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Nieobciążoność: \( \mathbb{E}\tilde y^{(s)}=\hat y \) i \( \mathbb{E}\,\mathbb{E}(\tilde y\mid\theta^{(s)})=\hat y \) z poprzedniego wyprowadzenia. Z <a data-concept="prawo-calkowitej-wariancji">prawa całkowitej wariancji</a> dla jednej pary: \( \operatorname{Var}\tilde y^{(s)} = \mathbb{E}\operatorname{Var}(\tilde y\mid\theta^{(s)}) + \operatorname{Var}\mathbb{E}(\tilde y\mid\theta^{(s)})\ge\operatorname{Var}\mathbb{E}(\tilde y\mid\theta^{(s)}) \). Przy niezależnych losowaniach obie wariancje dzielimy przez \( S \).</p>
+<p class="ml-qed">∎</p></div>
+<p>Dla próbek z MCMC (zależnych) nieobciążoność zastępujemy zgodnością, a w miejsce \( S \) wchodzi efektywna liczebność próby; nierówność między estymatorami zachodzi w typowych przypadkach, choć nie jest gwarantowana dla każdego łańcucha.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><em>Dane ilustracyjne.</em> Uproszczony, dyskretny rozkład predykcyjny liczby widzów na meczu Superligi:</p>
+<table class="ml-table">
+<thead><tr><th>Liczba widzów \( y \)</th><th>800</th><th>1000</th><th>1200</th><th>2000</th></tr></thead>
+<tbody><tr><td>\( P(\tilde y=y) \)</td><td>0,2</td><td>0,4</td><td>0,2</td><td>0,2</td></tr></tbody>
+</table>
+<ol class="ml-steps">
+<li><strong>Średnia</strong>: \( \hat y = 0{,}2\cdot800+0{,}4\cdot1000+0{,}2\cdot1200+0{,}2\cdot2000 = 160+400+240+400 = 1200 \).</li>
+<li><strong>Mediana</strong>: \( F(800)=0{,}2 \), \( F(1000)=0{,}6\ge0{,}5 \), \( F(1000^-)=0{,}2\le0{,}5 \), więc \( m=1000 \). Rozkład jest prawoskośny (rzadki mecz z 2000 widzów), dlatego \( \hat y\gt m \).</li>
+<li><strong>Ryzyko kwadratowe średniej</strong>: \( 0{,}2\cdot400^2+0{,}4\cdot200^2+0{,}2\cdot0^2+0{,}2\cdot800^2 = 32\,000+16\,000+0+128\,000=176\,000 \) (to wariancja; odchylenie standardowe \( \approx419{,}5 \)).</li>
+<li><strong>Ryzyko kwadratowe mediany</strong>: z <a class="ml-eqref" href="#eq-wartosc-oczekiwana-prognozy-mse"></a> \( 176\,000+(1200-1000)^2=216\,000 \). Kontrola wprost: \( 0{,}2\cdot200^2+0+0{,}2\cdot200^2+0{,}2\cdot1000^2 = 8000+8000+200\,000=216\,000 \).</li>
+<li><strong>Ryzyko bezwzględne mediany</strong>: \( 0{,}2\cdot200+0{,}4\cdot0+0{,}2\cdot200+0{,}2\cdot1000 = 40+0+40+200=280 \).</li>
+<li><strong>Ryzyko bezwzględne średniej</strong>: \( 0{,}2\cdot400+0{,}4\cdot200+0{,}2\cdot0+0{,}2\cdot800 = 80+80+0+160=320 \gt 280 \).</li>
+<li><strong>Pułapka Jensena.</strong> Dwie równie prawdopodobne próbki posterior predyktora meczu w hali na \( C=2000 \) miejsc: \( \eta^{(1)}=0{,}8 \), \( \eta^{(2)}=2{,}0 \). Wtedy \( \operatorname{logit}^{-1}(0{,}8)=0{,}6900 \), \( \operatorname{logit}^{-1}(2{,}0)=0{,}8808 \) i poprawna średnia wypełnienia to \( (0{,}6900+0{,}8808)/2=0{,}7854 \), czyli \( 1570{,}8 \) widza. Podstawienie średniej predyktora daje \( \operatorname{logit}^{-1}(1{,}4)=0{,}8022 \), czyli \( 1604{,}4 \) widza — zawyżenie o ok. 34 osoby, bo funkcja logistyczna jest wklęsła dla \( \eta\gt0 \).</li>
+</ol>
+<div class="ml-plot" data-plot="negbinomial" data-params='{"mu": 1100, "kappa": 5}'></div>
+<p>Na wykresie rozkładu ujemnego dwumianowego o średniej 1100 zmniejszaj parametr \( \kappa \): średnia pozostaje 1100, ale masa przesuwa się w lewo, a długi prawy ogon rośnie — mediana spada (dla \( \kappa=5 \) wynosi 1027, dla \( \kappa=3 \) — 980), więc wybór między średnią a medianą jako prognozą punktową ma coraz większe znaczenie.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>W przykładzie średnia 1200 jest najlepszą prognozą, jeśli rozliczamy się z kwadratów błędów (ocena RMSE), a mediana 1000 — jeśli z wartości bezwzględnych (ocena MAE). Nie ma tu sprzeczności: obie liczby odpowiadają na różne pytania. Średnia „płaci” za uwzględnienie rzadkiego scenariusza 2000 widzów — w 60% przypadków przeszacowuje — ale chroni przed dużym błędem w tym scenariuszu.</p>
+<p>Średnia predykcyjna jest jedyną prognozą punktową, która się <em>sumuje</em>: oczekiwana łączna frekwencja kolejki lub sezonu to suma średnich meczów (liniowość wartości oczekiwanej). Mediany się nie sumują. Dlatego do planowania zagregowanego (sumaryczna sprzedaż biletów) używa się średnich, a do komunikatu „typowy mecz” — mediany.</p>
+<p>Przypadek Jensena uczy, że prognozę liczymy na skali obserwacji dla każdej próbki osobno, a dopiero potem uśredniamy. Różnica rośnie z niepewnością predyktora: przy dobrze oszacowanych parametrach jest pomijalna, przy klubach z kilkoma meczami w danych — istotna.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> dla każdego przyszłego meczu raportujemy rozkład predykcyjny, a jako prognozę punktową — jego średnią i medianę. Średnią liczymy wzorem <a class="ml-eqref" href="#eq-wartosc-oczekiwana-prognozy-maf"></a>: dla każdej próbki posterior \( \theta^{(s)} \) obliczamy predyktor \( \eta_i^{(s)} \) (z efektem gospodarza, rywala, sezonu, rozgrywek i warunkami meczu) i średnią warunkową \( C_i\operatorname{logit}^{-1}(\eta_i^{(s)}) \) w wariancie „wypełnienie” lub \( e^{\eta_i^{(s)}} \) w wariancie „liczba widzów”, po czym uśredniamy po \( s \). Jest to estymator „warunkowy” z twierdzenia o estymacji Monte Carlo — ma mniejszy błąd Monte Carlo niż średnia z symulowanych liczb widzów.</p>
+<p>Ta sama zasada działa w indeksie IAF: liczniki i mianowniki indeksu to średnie wartości oczekiwanych \( \mathbb{E}(W\mid\eta^{(0)}_i+R_j) \) po populacji referencyjnej meczów, liczone na skali wypełnienia, a nie na skali logitu.</p>
+<p>W walidacji chronologicznej średnia predykcyjna jest prognozą ocenianą przez <a data-concept="rmse">RMSE</a>, a mediana — przez <a data-concept="mae">MAE</a>; raportowanie każdej miary z „jej” prognozą punktową jest spójne z teorią funkcji straty <cite data-bib="gneiting2007scoring"></cite>. Rozkład frekwencji jest prawoskośny (średnio ok. 1100–1300 widzów w Superlidze mężczyzn, ale pojedyncze mecze w dużych halach przekraczają kilka tysięcy), więc różnica średnia–mediana jest dla wielu meczów rzędu kilkudziesięciu widzów.</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Jedna liczba to nie prognoza ryzyka.</strong> Średnia nie mówi nic o rozrzucie. Klub potrzebujący informacji „czy zabraknie miejsc” powinien patrzeć na <a data-concept="przedzialy-predykcyjne">przedziały predykcyjne</a> i prawdopodobieństwa progowe, nie na średnią.</li>
+<li><strong>Wrażliwość na ogon.</strong> Średnia reaguje na rzadkie, skrajne scenariusze; przy źle wyspecyfikowanym ogonie (np. zbyt małe \( \kappa \)) może być zawyżona.</li>
+<li><strong>Asymetryczne koszty.</strong> Gdy niedoszacowanie kosztuje więcej niż przeszacowanie (np. za mało ochrony), optymalna jest prognoza kwantylowa (np. kwantyl 0,8), a nie średnia ani mediana.</li>
+<li><strong>Nieliniowość.</strong> Średnia przekształconej zmiennej (np. wypełnienia) nie jest przekształceniem średniej; mieszanie skal prowadzi do błędów rzędu przedstawionego w przykładzie.</li>
+<li><strong>Dyskretność i granice.</strong> Średnia liczby widzów zwykle nie jest liczbą całkowitą i — przy masie w punkcie \( A=C \) — może leżeć w obszarze mało prawdopodobnych wartości; to cecha, nie błąd, ale wymaga objaśnienia odbiorcy.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="rozklad-predykcyjny">Rozkład predykcyjny</a> — obiekt, którego średnią liczymy.</li>
+<li><a data-concept="prawo-calkowitej-wartosci-oczekiwanej">Prawo całkowitej wartości oczekiwanej</a> — uśrednianie po posterior.</li>
+<li><a data-concept="wartosc-oczekiwana">Wartość oczekiwana</a> i <a data-concept="mediana">mediana</a> — definicje i własności.</li>
+<li><a data-concept="niepewnosc-predykcyjna">Niepewność predykcyjna</a> — co tracimy, sprowadzając rozkład do średniej.</li>
+<li><a data-concept="rmse">RMSE</a> i <a data-concept="mae">MAE</a> — miary błędu zgodne odpowiednio ze średnią i medianą.</li>
+<li><a data-concept="funkcja-logit">Funkcja logit</a> — źródło efektu Jensena w MAF.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gneiting2007scoring"></li>
+<li data-bib="hyndman2021fpp3"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="casellaberger2002"></li>
+</ul>
+</section>

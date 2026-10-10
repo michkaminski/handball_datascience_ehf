@@ -1,0 +1,215 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Model probabilistyczny odpowiada na pytanie: „jeśli parametr ma wartość \(\theta\), jak prawdopodobne są takie a takie dane?”. Funkcja wiarygodności (ang. <em>likelihood function</em>) odwraca perspektywę: dane są już znane i ustalone, a zmienną jest parametr. Dla każdej kandydującej wartości \(\theta\) pytamy, jak dobrze wyjaśnia ona to, co faktycznie zaobserwowaliśmy. Wartości, przy których zaobserwowane dane byłyby bardzo mało prawdopodobne, są „mało wiarygodne”.</p>
+<p>Jeśli na meczu w hali na 2000 miejsc było 1240 widzów, to hipoteza „średnie wypełnienie tej hali wynosi 60%” wyjaśnia ten wynik znacznie lepiej niż „wynosi 20%”. Funkcja wiarygodności zamienia to porównanie w liczbę. Wiarygodność nie jest rozkładem prawdopodobieństwa parametru — nie całkuje się do jedności po \(\theta\) — ale po pomnożeniu przez prior i unormowaniu staje się rozkładem a posteriori (zob. <a data-concept="twierdzenie-bayesa-w-estymacji">twierdzenie Bayesa w estymacji</a>). W statystyce klasycznej jej maksimum wyznacza estymator największej wiarygodności (ENW; ang. <em>maximum likelihood estimator</em>, MLE).</p>
+<p>Wybór funkcji wiarygodności to wybór tego, jak model „wyobraża sobie” zmienność danych. Dla frekwencji kluczowe jest, czy zmienność między meczami jest tylko losowym szumem pojedynczych widzów (rozkład dwumianowy, Poissona), czy ma też składnik systematyczny — pogodę, rangę meczu, promocję biletów — którego model nie widzi (nadmierna dyspersja). To pytanie decyduje, czy MAF używa rozkładu beta-dwumianowego i ujemnego dwumianowego.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \(\{p(y\mid\theta):\theta\in\Theta\}\) będzie modelem statystycznym na przestrzeni obserwacji \(\mathcal{Y}\), z gęstościami względem miary dominującej \(\nu\) (miara licząca dla danych dyskretnych, takich jak liczba widzów).</p>
+<div class="ml-box ml-def" id="def-wiarygodnosc"><p class="ml-box-title">Definicja</p>
+<p><strong>Funkcją wiarygodności</strong> dla zaobserwowanych danych \(y\in\mathcal{Y}\) nazywamy funkcję \(L(\cdot\,;y):\Theta\to[0,\infty)\), \(L(\theta;y)=p(y\mid\theta)\). Dla obserwacji \(y_1,\dots,y_n\) warunkowo niezależnych przy \(\theta\):</p>
+<div class="ml-eq" id="eq-funkcja-wiarygodnosci">\[ L(\theta;y)=\prod_{i=1}^n p(y_i\mid\theta),\qquad \ell(\theta;y)=\log L(\theta;y)=\sum_{i=1}^n\log p(y_i\mid\theta). \]</div>
+<p>Funkcję \(\ell\) nazywamy <strong>log-wiarygodnością</strong>. <strong>Estymatorem największej wiarygodności</strong> nazywamy \(\hat\theta\in\arg\max_{\theta\in\Theta}L(\theta;y)\) (o ile istnieje). <strong>Funkcją wynikową</strong> (ang. <em>score</em>) nazywamy \(U(\theta)=\nabla_\theta\ell(\theta;y)\), a <strong>informacją Fishera</strong> — \(I(\theta)=\mathbb{E}_\theta\big[U(\theta)U(\theta)^\top\big]\).</p>
+</div>
+<p>Wiarygodność jest określona z dokładnością do czynnika dodatniego niezależnego od \(\theta\): \(L\) i \(cL\) niosą tę samą informację o parametrze (pomijanie współczynników dwumianowych w obliczeniach jest więc dozwolone). Porównuje się zatem ilorazy \(L(\theta_1)/L(\theta_2)\) lub różnice \(\ell(\theta_1)-\ell(\theta_2)\), a nie wartości bezwzględne <cite data-bib="casellaberger2002"></cite>.</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(L(\theta;y)\), \(\ell(\theta;y)\)</td><td>wiarygodność i log-wiarygodność</td></tr>
+<tr><td>\(\hat\theta\)</td><td>estymator największej wiarygodności (ENW)</td></tr>
+<tr><td>\(U(\theta)\)</td><td>funkcja wynikowa (gradient log-wiarygodności)</td></tr>
+<tr><td>\(I(\theta)\), \(J(\hat\theta)\)</td><td>informacja Fishera (oczekiwana) i obserwowana \(J=-\nabla^2\ell(\hat\theta)\)</td></tr>
+<tr><td>\(A_i\)</td><td>liczba widzów w meczu \(i\)</td></tr>
+<tr><td>\(C_i\)</td><td>pojemność hali w meczu \(i\)</td></tr>
+<tr><td>\(W_i=A_i/C_i\)</td><td>wypełnienie hali</td></tr>
+<tr><td>\(\mu_i\)</td><td>oczekiwane wypełnienie (beta-dwumian) lub oczekiwana liczba widzów (ujemny dwumian)</td></tr>
+<tr><td>\(\phi\gt0\)</td><td>precyzja rozkładu beta-dwumianowego (im większa, tym mniejsza nadmierna dyspersja)</td></tr>
+<tr><td>\(\kappa\gt0\)</td><td>parametr dyspersji (kształtu) rozkładu ujemnego dwumianowego</td></tr>
+<tr><td>\(\eta_i\)</td><td>predyktor liniowy MAF</td></tr>
+<tr><td>\(\Gamma,\ B\)</td><td>funkcje gamma i beta Eulera</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li><strong>Poprawna specyfikacja</strong> — wnioskowanie zakłada, że dane pochodzą z rodziny \(p(y\mid\theta)\) dla pewnego \(\theta_0\). Przy błędnej specyfikacji ENW zbiega do wartości minimalizującej rozbieżność Kullbacka–Leiblera do prawdziwego rozkładu <cite data-bib="kullback1951"></cite>, a przedziały mogą być źle skalibrowane.</li>
+<li><strong>Warunkowa niezależność</strong> obserwacji przy \(\theta\) — uzasadnia iloczyn we wzorze <a class="ml-eqref" href="#eq-funkcja-wiarygodnosci"></a>. W MAF zależność między meczami tego samego gospodarza czy sezonu jest przenoszona przez efekty losowe, a warunkowo na nich mecze traktujemy jako niezależne.</li>
+<li><strong>Regularność</strong> (dla twierdzeń asymptotycznych): \(\Theta\) otwarty, nośnik \(p(y\mid\theta)\) niezależny od \(\theta\), \(\ell\) dwukrotnie różniczkowalna, możliwa zamiana różniczkowania i całkowania, identyfikowalność.</li>
+<li><strong>Obserwacje rzeczywiste.</strong> Do wiarygodności wchodzą tylko mecze ze znaną frekwencją; brak danych (NULL) nie jest obserwacją \(A_i=0\).</li>
+<li>W wariancie „wypełnienie”: \(0\le A_i\le C_i\) i \(C_i\) jest znaną, poprawną pojemnością.</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p><strong>Dwumian.</strong> Dla \(A_i\mid p\sim\operatorname{Bin}(C_i,p)\), \(i=1,\dots,n\):</p>
+<div class="ml-eq" id="eq-funkcja-wiarygodnosci-dwumian">\[ \ell(p)=\sum_{i=1}^n\left[\log\binom{C_i}{A_i}+A_i\log p+(C_i-A_i)\log(1-p)\right],\qquad \hat p=\frac{\sum_iA_i}{\sum_iC_i}. \]</div>
+<p><strong>Beta-dwumian</strong> w parametryzacji średnia–precyzja (<a data-concept="rozklad-beta-dwumianowy">rozkład beta-dwumianowy</a>): \(A_i\mid\mu_i,\phi\sim\operatorname{BetaBin}(C_i,\mu_i\phi,(1-\mu_i)\phi)\):</p>
+<div class="ml-eq" id="eq-funkcja-wiarygodnosci-betabin">\[ \log p(A_i\mid\mu_i,\phi)=\log\binom{C_i}{A_i}+\log B\big(A_i+\mu_i\phi,\ C_i-A_i+(1-\mu_i)\phi\big)-\log B\big(\mu_i\phi,\ (1-\mu_i)\phi\big). \]</div>
+<p>Momenty:</p>
+<div class="ml-eq" id="eq-funkcja-wiarygodnosci-betabin-momenty">\[ \mathbb{E}A_i=C_i\mu_i,\qquad \operatorname{Var}A_i=C_i\mu_i(1-\mu_i)\left[1+\frac{C_i-1}{\phi+1}\right]. \]</div>
+<p><strong>Ujemny dwumian</strong> w parametryzacji średnia–dyspersja (<a data-concept="rozklad-ujemny-dwumianowy">rozkład ujemny dwumianowy</a>): \(A_i\mid\mu_i,\kappa\sim\operatorname{NegBin}(\mu_i,\kappa)\):</p>
+<div class="ml-eq" id="eq-funkcja-wiarygodnosci-negbin">\[ \log p(A_i\mid\mu_i,\kappa)=\log\Gamma(A_i+\kappa)-\log\Gamma(\kappa)-\log A_i!+\kappa\log\frac{\kappa}{\kappa+\mu_i}+A_i\log\frac{\mu_i}{\kappa+\mu_i}, \]</div>
+<div class="ml-eq" id="eq-funkcja-wiarygodnosci-negbin-momenty">\[ \mathbb{E}A_i=\mu_i,\qquad \operatorname{Var}A_i=\mu_i+\frac{\mu_i^2}{\kappa}. \]</div>
+<p><strong>Pełna log-wiarygodność MAF</strong> (przy funkcjach łączących \(\operatorname{logit}\mu_i=\eta_i\) lub \(\log\mu_i=\eta_i\)):</p>
+<div class="ml-eq" id="eq-funkcja-wiarygodnosci-maf">\[ \ell(\theta)=\sum_{i:\,C_i\ \text{znane}}\log p_{\mathrm{BB}}\big(A_i\mid C_i,\operatorname{logit}^{-1}\eta_i,\phi\big)\quad\text{lub}\quad \ell(\theta)=\sum_{i}\log p_{\mathrm{NB}}\big(A_i\mid e^{\eta_i},\kappa\big). \]</div>
+<p><strong>Asymptotyka ENW</strong> (przy założeniach regularności):</p>
+<div class="ml-eq" id="eq-funkcja-wiarygodnosci-asymptotyka">\[ \sqrt n\,(\hat\theta_n-\theta_0)\ \xrightarrow{d}\ N\big(0,\ I_1(\theta_0)^{-1}\big),\qquad \widehat{\operatorname{se}}(\hat\theta)\approx\sqrt{\operatorname{diag}J(\hat\theta)^{-1}}. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-enw-dwumian"><p class="ml-box-title">Twierdzenie (ENW wspólnego wypełnienia)</p>
+<p>Jeżeli \(A_i\sim\operatorname{Bin}(C_i,p)\) niezależnie i \(0\lt\sum A_i\lt\sum C_i\), to jedynym ENW jest \(\hat p=\sum_iA_i/\sum_iC_i\) — wypełnienie łączne (ważone pojemnościami), a nie średnia z \(W_i\). Informacja Fishera wynosi \(I(p)=\sum_iC_i/(p(1-p))\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-niezmienniczosc"><p class="ml-box-title">Twierdzenie (niezmienniczość ENW)</p>
+<p>Jeżeli \(\hat\theta\) jest ENW parametru \(\theta\), a \(g\) jest bijekcją, to \(g(\hat\theta)\) jest ENW parametru \(\psi=g(\theta)\). W szczególności ENW logitu wypełnienia to \(\operatorname{logit}\hat p\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-score"><p class="ml-box-title">Twierdzenie (własności funkcji wynikowej)</p>
+<p>Przy założeniach regularności \(\mathbb{E}_\theta U(\theta)=0\) oraz \(\operatorname{Var}_\theta U(\theta)=I(\theta)=-\mathbb{E}_\theta\nabla^2\ell(\theta)\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-asymptotyka"><p class="ml-box-title">Twierdzenie (asymptotyczna normalność ENW)</p>
+<p>Przy założeniach regularności i dla obserwacji i.i.d. ENW jest zgodny i spełnia <a class="ml-eqref" href="#eq-funkcja-wiarygodnosci-asymptotyka"></a>. Dowód: <cite data-bib="casellaberger2002"></cite>, rozdz. 10.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-nadmierna-dyspersja"><p class="ml-box-title">Twierdzenie (mieszaniny generują nadmierną dyspersję)</p>
+<p>(a) Jeżeli \(p_i\sim\operatorname{Beta}(\mu\phi,(1-\mu)\phi)\) i \(A_i\mid p_i\sim\operatorname{Bin}(C_i,p_i)\), to \(A_i\) ma rozkład beta-dwumianowy z momentami <a class="ml-eqref" href="#eq-funkcja-wiarygodnosci-betabin-momenty"></a>.
+(b) Jeżeli \(\lambda_i\sim\operatorname{Gamma}(\kappa,\ \text{tempo }\kappa/\mu)\) i \(A_i\mid\lambda_i\sim\operatorname{Poisson}(\lambda_i)\), to \(A_i\sim\operatorname{NegBin}(\mu,\kappa)\) z momentami <a class="ml-eqref" href="#eq-funkcja-wiarygodnosci-negbin-momenty"></a>. Przy \(\phi\to\infty\) i \(\kappa\to\infty\) rozkłady sprowadzają się odpowiednio do dwumianowego i Poissona.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-enw-dwumian">ENW wspólnego wypełnienia</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Krok 1. Niech \(S_A=\sum A_i\), \(S_C=\sum C_i\). Z <a class="ml-eqref" href="#eq-funkcja-wiarygodnosci-dwumian"></a>: \(\ell(p)=\text{const}+S_A\log p+(S_C-S_A)\log(1-p)\).</p>
+<p>Krok 2. \(\ell'(p)=\frac{S_A}{p}-\frac{S_C-S_A}{1-p}\). Równanie \(\ell'(p)=0\) daje \(S_A(1-p)=(S_C-S_A)p\), czyli \(p=S_A/S_C\).</p>
+<p>Krok 3. \(\ell''(p)=-\frac{S_A}{p^2}-\frac{S_C-S_A}{(1-p)^2}\lt0\) na \((0,1)\) — funkcja ściśle wklęsła, więc punkt krytyczny jest jedynym maksimum globalnym.</p>
+<p>Krok 4. \(I(p)=-\mathbb{E}\ell''(p)=\frac{\mathbb{E}S_A}{p^2}+\frac{S_C-\mathbb{E}S_A}{(1-p)^2}=\frac{S_C}{p}+\frac{S_C}{1-p}=\frac{S_C}{p(1-p)}\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-niezmienniczosc">Niezmienniczość ENW</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Wiarygodność w nowej parametryzacji to \(L^*(\psi)=L(g^{-1}(\psi))\) — wiarygodność, w przeciwieństwie do gęstości, nie dostaje jakobianu, bo jest funkcją parametru, a nie gęstością względem niego. Dla każdego \(\psi\): \(L^*(\psi)=L(g^{-1}(\psi))\le L(\hat\theta)=L^*(g(\hat\theta))\). Zatem \(g(\hat\theta)\) maksymalizuje \(L^*\).</p>
+<p class="ml-qed">∎</p></div>
+<p>Kontrast z priorem jest istotny: maksimum <em>posterioru</em> (MAP) nie jest niezmiennicze, bo gęstość a posteriori przy reparametryzacji mnoży się przez jakobian (zob. <a data-concept="priory" data-anchor="wzory">zamiana zmiennych w priorach</a>).</p>
+
+<h3 id="dowod-score">Własności funkcji wynikowej</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Krok 1. \(\int p(y\mid\theta)\,\nu(dy)=1\) dla każdego \(\theta\). Różniczkując pod całką: \(0=\int\nabla_\theta p\,d\nu=\int(\nabla_\theta\log p)\,p\,d\nu=\mathbb{E}_\theta U\).</p>
+<p>Krok 2. Różniczkując ponownie \(\int(\nabla_\theta\log p)\,p\,d\nu=0\):
+\(0=\int(\nabla^2_\theta\log p)\,p\,d\nu+\int(\nabla_\theta\log p)(\nabla_\theta\log p)^\top p\,d\nu\), czyli \(\mathbb{E}UU^\top=-\mathbb{E}\nabla^2\ell\). Ponieważ \(\mathbb{E}U=0\), \(\operatorname{Var}U=\mathbb{E}UU^\top=I(\theta)\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-mieszaniny">Momenty mieszanin</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>(a) Krok 1. \(\mathbb{E}p_i=\mu\), \(\operatorname{Var}p_i=\frac{\mu(1-\mu)}{\phi+1}\) (wariancja rozkładu beta w parametryzacji średnia–precyzja). Z <a data-concept="prawo-calkowitej-wartosci-oczekiwanej">prawa całkowitej wartości oczekiwanej</a>: \(\mathbb{E}A_i=\mathbb{E}[C_ip_i]=C_i\mu\).</p>
+<p>Krok 2. Z <a data-concept="prawo-calkowitej-wariancji">prawa całkowitej wariancji</a>:
+\[ \begin{aligned}
+\operatorname{Var}A_i&amp;=\mathbb{E}\big[C_ip_i(1-p_i)\big]+\operatorname{Var}(C_ip_i)\\
+&amp;=C_i\big[\mu-(\operatorname{Var}p_i+\mu^2)\big]+C_i^2\operatorname{Var}p_i\\
+&amp;=C_i\mu(1-\mu)+C_i(C_i-1)\operatorname{Var}p_i\\
+&amp;=C_i\mu(1-\mu)\left[1+\frac{C_i-1}{\phi+1}\right].
+\end{aligned} \]</p>
+<p>Krok 3 (postać rozkładu). \(P(A_i=a)=\int_0^1\binom{C_i}{a}p^a(1-p)^{C_i-a}\frac{p^{\mu\phi-1}(1-p)^{(1-\mu)\phi-1}}{B(\mu\phi,(1-\mu)\phi)}dp=\binom{C_i}{a}\frac{B(a+\mu\phi,\,C_i-a+(1-\mu)\phi)}{B(\mu\phi,(1-\mu)\phi)}\), co po zlogarytmowaniu daje <a class="ml-eqref" href="#eq-funkcja-wiarygodnosci-betabin"></a>.</p>
+<p>(b) Krok 1. \(\mathbb{E}\lambda_i=\kappa\cdot\mu/\kappa=\mu\), \(\operatorname{Var}\lambda_i=\kappa(\mu/\kappa)^2=\mu^2/\kappa\). Zatem \(\mathbb{E}A_i=\mu\), \(\operatorname{Var}A_i=\mathbb{E}\lambda_i+\operatorname{Var}\lambda_i=\mu+\mu^2/\kappa\).</p>
+<p>Krok 2. \(P(A_i=a)=\int_0^\infty\frac{e^{-\lambda}\lambda^a}{a!}\cdot\frac{(\kappa/\mu)^\kappa\lambda^{\kappa-1}e^{-\kappa\lambda/\mu}}{\Gamma(\kappa)}d\lambda=\frac{(\kappa/\mu)^\kappa}{a!\,\Gamma(\kappa)}\cdot\frac{\Gamma(a+\kappa)}{(1+\kappa/\mu)^{a+\kappa}}\). Ponieważ \(\frac{(\kappa/\mu)^\kappa}{(1+\kappa/\mu)^{a+\kappa}}=\left(\frac{\kappa}{\kappa+\mu}\right)^{\kappa}\left(\frac{\mu}{\kappa+\mu}\right)^{a}\), otrzymujemy <a class="ml-eqref" href="#eq-funkcja-wiarygodnosci-negbin"></a>.</p>
+<p>Krok 3 (granice). Gdy \(\phi\to\infty\), \(\operatorname{Var}p_i\to0\), więc \(p_i\to\mu\) według prawdopodobieństwa i mieszanina zbiega do \(\operatorname{Bin}(C_i,\mu)\); analogicznie \(\kappa\to\infty\) daje \(\operatorname{Poisson}(\mu)\).</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><em>Dane ilustracyjne.</em> Trzy mecze klubu ekstraklasy:</p>
+<table class="ml-table">
+<thead><tr><th>Mecz</th><th>Pojemność \(C_i\)</th><th>Widzowie \(A_i\)</th><th>\(W_i\)</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>2000</td><td>1240</td><td>0,620</td></tr>
+<tr><td>2</td><td>1500</td><td>1020</td><td>0,680</td></tr>
+<tr><td>3</td><td>3000</td><td>1650</td><td>0,550</td></tr>
+<tr><td>suma</td><td>6500</td><td>3910</td><td>—</td></tr>
+</tbody>
+</table>
+<h3 id="przyklad-dwumian">Model dwumianowy</h3>
+<ol class="ml-steps">
+<li><strong>ENW.</strong> \(\hat p=3910/6500\approx0{,}6015\) (średnia arytmetyczna \(W_i\) to \(0{,}6167\) — inna, bo hala 3 ma największą wagę).</li>
+<li><strong>Log-wiarygodność</strong> (pełna, ze współczynnikami dwumianowymi): \(\ell(0{,}55)\approx-84{,}86\); \(\ell(0{,}60)\approx-49{,}71\); \(\ell(\hat p)\approx-49{,}67\); \(\ell(0{,}65)\approx-82{,}59\).</li>
+<li><strong>Iloraz wiarygodności.</strong> \(\ell(\hat p)-\ell(0{,}55)\approx35{,}2\), czyli \(L(\hat p)/L(0{,}55)\approx e^{35{,}2}\approx2\cdot10^{15}\) — model dwumianowy uważa \(p=0{,}55\) za praktycznie wykluczone.</li>
+<li><strong>Błąd standardowy.</strong> \(I(\hat p)=6500/(0{,}6015\cdot0{,}3985)\), więc \(\operatorname{se}=\sqrt{0{,}6015\cdot0{,}3985/6500}\approx0{,}0061\). Przedział \(\pm2\operatorname{se}\): \([0{,}589;\ 0{,}614]\).</li>
+<li><strong>Diagnoza.</strong> Tymczasem mecz 3 miał wypełnienie 0,55, a mecz 2 — 0,68. Rozrzut \(W_i\) jest ok. 10 razy większy niż \(\operatorname{se}\). Model dwumianowy jest źle wyspecyfikowany: zakłada, że jedynym źródłem zmienności jest niezależna decyzja każdego z tysięcy potencjalnych widzów.</li>
+</ol>
+<h3 id="przyklad-betabin">Model beta-dwumianowy</h3>
+<ol class="ml-steps">
+<li><strong>Jeden mecz</strong> (mecz 1, \(\mu=0{,}6\), \(\phi=20\), więc \(a=\mu\phi=12\), \(b=8\)). Ze wzoru <a class="ml-eqref" href="#eq-funkcja-wiarygodnosci-betabin"></a>:
+\(\log\binom{2000}{1240}\approx1324{,}132\); \(\log B(1252,\ 768)\approx-1343{,}769\); \(\log B(12,8)\approx-13{,}312\).
+Suma: \(1324{,}132-1343{,}769+13{,}312\approx-6{,}325\), czyli \(p(A_1=1240)\approx0{,}00179\).</li>
+<li><strong>Rozrzut implikowany.</strong> Ze wzoru <a class="ml-eqref" href="#eq-funkcja-wiarygodnosci-betabin-momenty"></a>: \(\operatorname{Var}A_1=2000\cdot0{,}6\cdot0{,}4\cdot(1+1999/21)=480\cdot96{,}19\approx46\,171\), odchylenie \(\approx215\) widzów, podczas gdy dwumian daje \(\sqrt{480}\approx21{,}9\).</li>
+<li><strong>Profil po \(\phi\)</strong> przy \(\mu=0{,}6015\) (suma po trzech meczach):
+<table class="ml-table">
+<thead><tr><th>\(\phi\)</th><th>5</th><th>20</th><th>50</th><th>100</th><th>200</th><th>1000</th><th>\(10^5\)</th><th>\(\infty\) (dwumian)</th></tr></thead>
+<tbody><tr><td>\(\ell\)</td><td>−21,30</td><td>−19,41</td><td>−18,60</td><td>−18,50</td><td>−19,20</td><td>−26,33</td><td>−48,91</td><td>−49,67</td></tr></tbody>
+</table></li>
+<li><strong>ENW łączny</strong> (optymalizacja numeryczna po \(\operatorname{logit}\mu\), \(\log\phi\)): \(\hat\mu\approx0{,}616\), \(\hat\phi\approx87\), \(\ell\approx-18{,}35\). Poprawa względem dwumianu o \(\approx31{,}3\) jednostki log-wiarygodności za cenę jednego parametru.</li>
+</ol>
+<h3 id="przyklad-negbin">Model ujemny dwumianowy (mecz pucharowy)</h3>
+<ol class="ml-steps">
+<li><em>Dane ilustracyjne:</em> mecz Ligi Mistrzów, pojemność nieznana, \(A=4200\), model \(\mu=4500\), \(\kappa=8\).</li>
+<li>Składniki wzoru <a class="ml-eqref" href="#eq-funkcja-wiarygodnosci-negbin"></a>: \(\log\Gamma(4208)-\log\Gamma(8)-\log4200!\approx49{,}881\); \(8\log(8/4508)\approx-50{,}673\); \(4200\log(4500/4508)\approx-7{,}460\).</li>
+<li>Suma: \(\log p\approx-8{,}252\). Dla porównania Poisson(4500): \(\log p\approx-15{,}32\) — obserwacja odległa o 300 od średniej jest dla Poissona (sd \(\approx67\)) zaskakująca, dla NB (sd \(=\sqrt{4500+4500^2/8}\approx1592\)) — typowa.</li>
+</ol>
+<div class="ml-plot" data-plot="betabinomial" data-params='{"n": 100, "a": 12, "b": 8}'></div>
+<p>Porównaj ten rozkład (wypełnienie hali na 100 miejsc przy \(\mu=0{,}6\), \(\phi=20\)) z rozkładem dwumianowym poniżej: ta sama średnia, ale wielokrotnie większy rozrzut. Zwiększanie \(a\) i \(b\) przy stałym stosunku zbliża go do dwumianu.</p>
+<div class="ml-plot" data-plot="binomial" data-params='{"n": 100, "p": 0.6}'></div>
+<p>Rozkład dwumianowy Bin(100; 0,6): odchylenie standardowe \(\sqrt{24}\approx4{,}9\) widza wobec \(\sqrt{24\cdot(1+99/21)}\approx11{,}7\) w wariancie beta-dwumianowym powyżej.</p>
+<div class="ml-plot" data-plot="negbinomial" data-params='{"mu": 1200, "kappa": 8}'></div>
+<p>Ujemny dwumian dla typowego meczu ekstraklasy (średnio 1200 widzów, \(\kappa=8\)): prawostronna asymetria i odchylenie ok. 430 widzów; zmniejszanie \(\kappa\) poszerza ogon.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Funkcja wiarygodności mierzy <em>względne</em> poparcie danych dla wartości parametru. Profil po \(\phi\) pokazuje, że dane z trzech meczów silnie preferują \(\phi\) rzędu 50–200 nad \(\phi\to\infty\) (dwumian): różnica log-wiarygodności ok. 31 oznacza iloraz rzędu \(10^{13}\). Wartość \(\phi\approx87\) przy hali na 2000 miejsc daje czynnik inflacji wariancji \(1+1999/88\approx23{,}7\) — odchylenie standardowe liczby widzów jest blisko 5 razy większe niż w modelu dwumianowym.</p>
+<p>Model dwumianowy prowadzi do przedziałów fałszywie wąskich (\(\pm0{,}012\) wokół 0,60), sugerujących precyzję, której dane nie dają. To najważniejsza lekcja przykładu: <strong>wiarygodność trzeba wybierać tak, by odzwierciedlała rzeczywistą zmienność danych</strong>, a nie tylko ich zakres. Bezwzględne wartości \(\ell\) (np. \(-18{,}35\)) nie mają interpretacji samodzielnej — zależą od liczby i skali obserwacji.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> funkcja wiarygodności występuje w dwóch wariantach (wzór <a class="ml-eqref" href="#eq-funkcja-wiarygodnosci-maf"></a>):</p>
+<ul>
+<li><strong>Wariant „wypełnienie”</strong> (pojemność hali znana, ok. 55% meczów lig ZPRP): \(A_i\sim\operatorname{BetaBin}(C_i,\mu_i\phi,(1-\mu_i)\phi)\), \(\operatorname{logit}\mu_i=\eta_i\). Rozkład beta-dwumianowy jest określony na \(\{0,1,\dots,C_i\}\), więc w naturalny sposób obsługuje mecze z kompletem widzów (\(A_i=C_i\)) i mecze bez publiczności (\(A_i=0\)) — wnoszą one skończony wkład do \(\ell\). <a data-concept="regresja-beta">Regresja beta</a> na \(W_i\) wymaga \(W_i\in(0,1)\) i takie mecze musiałaby wykluczać lub „przycinać”; alternatywą są modele z masą na granicach (ZOIB; zob. <a data-concept="rozklady-z-masa-na-granicach">rozkłady z masą na granicach</a>).</li>
+<li><strong>Wariant „liczba widzów”</strong> (pojemność nieznana — pozostałe mecze ligowe i ok. 2,8 tys. meczów pucharów EHF): \(A_i\sim\operatorname{NegBin}(\mu_i,\kappa)\), \(\log\mu_i=\eta_i\). Wariancja kwadratowa w \(\mu\) odpowiada temu, że w dużych halach (Liga Mistrzów, średnio ok. 4500 widzów) bezwzględny rozrzut jest dużo większy niż w niższych ligach (100–300 widzów).</li>
+</ul>
+<p>W obu wariantach wiarygodność jest sumą po meczach ze znaną frekwencją — mecze z frekwencją NULL nie wchodzą do \(\ell\) (NULL \(\ne\) 0 widzów), a ich prognozy są generowane z rozkładu predykcyjnego. Log-wiarygodność punktowa \(\log p(A_i\mid\theta^{(s)})\) dla każdej próbki posterior jest też podstawą porównywania wariantów modelu metodą LOO <cite data-bib="vehtari2017loo"></cite> oraz wartości PIT w walidacji.</p>
+<p>W praktyce obliczeniowej log-wiarygodność liczymy wyłącznie przez funkcje \(\log\Gamma\) i \(\log B\) (dostępne w Stan i PyMC <cite data-bib="doc-stan-functions"></cite>) — bezpośrednie obliczanie \(\binom{2000}{1240}\) lub \(\Gamma(4208)\) przekracza zakres liczb zmiennoprzecinkowych.</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Błędna specyfikacja</strong> — wiarygodność „wierzy” w swój model; zbyt mała wariancja (dwumian, Poisson) daje fałszywie precyzyjne wnioski. Konieczna jest kontrola predykcyjna (<a data-concept="posterior-predictive-checks">posterior predictive checks</a>, <a data-concept="diagnostyka-reszt">diagnostyka reszt</a>).</li>
+<li><strong>Asymptotyka</strong> — przybliżenia normalne ENW mogą być złe przy małych próbach i parametrach blisko brzegu (\(\phi\) bardzo duże, \(p\) bliskie 0 lub 1, \(\sigma\) bliskie 0 w modelach hierarchicznych).</li>
+<li><strong>Brak ENW</strong> — przy \(\sum A_i=\sum C_i\) (same komplety) ENW \(p\) leży na brzegu (\(\hat p=1\), \(\operatorname{logit}\hat p=\infty\)); w modelach hierarchicznych wiarygodność bywa nieograniczona. Prior regularyzuje te przypadki.</li>
+<li><strong>Jakość \(C_i\)</strong> — błędna pojemność hali (np. pojemność po rozbudowie trybun) bezpośrednio zniekształca wiarygodność beta-dwumianową; \(A_i\gt C_i\) daje \(\log p=-\infty\).</li>
+<li><strong>Zależności</strong> — iloczyn wiarygodności zakłada warunkową niezależność; nieuwzględnione korelacje (np. derby w tym samym tygodniu) zaniżają niepewność.</li>
+<li><strong>Dane zaokrąglone</strong> — frekwencje raportowane „na oko” (np. 1000, 1500) nie są dokładnymi liczbami; wiarygodność dyskretna traktuje je dosłownie.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="twierdzenie-bayesa-w-estymacji">Twierdzenie Bayesa w estymacji</a> — wiarygodność jako składnik posterioru.</li>
+<li><a data-concept="estymacja-posterior">Estymacja posterior</a>.</li>
+<li><a data-concept="rozklad-dwumianowy">Rozkład dwumianowy</a>, <a data-concept="rozklad-beta-dwumianowy">rozkład beta-dwumianowy</a>, <a data-concept="rozklad-ujemny-dwumianowy">rozkład ujemny dwumianowy</a>, <a data-concept="rozklady-z-masa-na-granicach">rozkłady z masą na granicach</a>.</li>
+<li><a data-concept="uogolnione-modele-liniowe">Uogólnione modele liniowe</a>, <a data-concept="funkcja-logit">funkcja logit</a>, <a data-concept="regresja-beta">regresja beta</a>.</li>
+<li><a data-concept="prawo-calkowitej-wariancji">Prawo całkowitej wariancji</a>.</li>
+<li><a data-concept="atrakcyjnosc-frekwencyjna">MAF i indeks IAF</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="casellaberger2002"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="johnson2005discrete"></li>
+<li data-bib="hilbe2011"></li>
+<li data-bib="mccullagh1989"></li>
+<li data-bib="kullback1951"></li>
+<li data-bib="vehtari2017loo"></li>
+<li data-bib="doc-stan-functions"></li>
+</ul>
+</section>

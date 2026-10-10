@@ -1,0 +1,170 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Gdyby ten sam mecz można było rozegrać tysiąc razy w identycznych warunkach, frekwencja za każdym razem byłaby nieco inna. Średnia z tych tysiąca frekwencji to dobre przybliżenie <strong>wartości oczekiwanej</strong> (ang. <em>expected value</em>, <em>expectation</em>) — „środka ciężkości” rozkładu zmiennej losowej. Każda możliwa wartość jest ważona swoim prawdopodobieństwem, tak jak w <a data-concept="srednia-wazona">średniej ważonej</a>.</p>
+<p>Wartość oczekiwana jest najważniejszą liczbową charakterystyką rozkładu, bo zachowuje się <em>liniowo</em>: oczekiwana łączna frekwencja dwóch meczów to suma oczekiwanych frekwencji — bez względu na to, czy mecze są zależne. Jednocześnie <em>nie</em> przechodzi przez funkcje nieliniowe: średnia z przekształconej zmiennej nie jest przekształceniem średniej. Ta druga obserwacja, ujęta w <strong>nierówności Jensena</strong>, ma bezpośrednie konsekwencje dla indeksu IAF w modelu MAF, gdzie skala logitowa jest przekształcana funkcją logistyczną.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-wartosc-oczekiwana"><p class="ml-box-title">Definicja (wartość oczekiwana)</p>
+<p>Niech \(X\) będzie zmienną losową na przestrzeni \((\Omega,\mathcal F,P)\). <strong>Wartością oczekiwaną</strong> \(X\) nazywamy całkę Lebesgue’a</p>
+<div class="ml-eq" id="eq-wartosc-oczekiwana">\[ \mathbb E[X]=\int_{\Omega}X(\omega)\,P(d\omega)=\int_{\mathbb R}x\,P_X(dx), \]</div>
+<p>o ile \(\mathbb E|X|\lt\infty\) (mówimy wtedy, że \(X\) jest <strong>całkowalna</strong>). W szczególności:</p>
+<div class="ml-eq" id="eq-wartosc-oczekiwana-dyskretna">\[ \mathbb E[X]=\sum_k x_k\,p_X(x_k) \quad\text{(zmienna dyskretna)}, \qquad \mathbb E[X]=\int_{-\infty}^{\infty}x\,f_X(x)\,dx \quad\text{(zmienna ciągła)}. \]</div>
+</div>
+<p>Konstrukcja ogólna przebiega w trzech krokach <cite data-bib="billingsley1995"></cite>: (1) dla zmiennych prostych \(X=\sum_{k=1}^m a_k\mathbf 1_{A_k}\) przyjmujemy \(\mathbb E[X]=\sum_k a_kP(A_k)\); (2) dla \(X\ge0\) — supremum po zmiennych prostych \(0\le s\le X\); (3) dla dowolnej \(X=X^+-X^-\) — różnica \(\mathbb E[X^+]-\mathbb E[X^-]\), gdy obie są skończone. Dzięki temu jedna definicja obejmuje przypadki dyskretny, ciągły i mieszany (np. wypełnienie hali z atomem w \(W=1\)).</p>
+<h3 id="lotus">Wartość oczekiwana funkcji zmiennej</h3>
+<p>Dla funkcji borelowskiej \(g\) (prawo „nieświadomego statystyka”, ang. <em>law of the unconscious statistician</em>, LOTUS):</p>
+<div class="ml-eq" id="eq-wartosc-oczekiwana-lotus">\[ \mathbb E[g(X)]=\sum_k g(x_k)\,p_X(x_k) \qquad\text{lub}\qquad \mathbb E[g(X)]=\int g(x)\,f_X(x)\,dx. \]</div>
+<p>Nie trzeba więc wyznaczać rozkładu \(g(X)\), by policzyć jego wartość oczekiwaną.</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(\mathbb E[X]\)</td><td>wartość oczekiwana zmiennej \(X\) (oznaczana też \(\mu_X\))</td></tr>
+<tr><td>\(P_X\)</td><td>rozkład zmiennej \(X\)</td></tr>
+<tr><td>\(p_X, f_X\)</td><td>funkcja prawdopodobieństwa, gęstość</td></tr>
+<tr><td>\(\mathbf 1_A\)</td><td>indykator zdarzenia \(A\): 1 gdy \(\omega\in A\), 0 w przeciwnym razie</td></tr>
+<tr><td>\(X^+, X^-\)</td><td>część dodatnia \(\max(X,0)\) i ujemna \(\max(-X,0)\)</td></tr>
+<tr><td>\(g, \varphi\)</td><td>funkcja borelowska; funkcja wypukła (w nierówności Jensena)</td></tr>
+<tr><td>\(a, b\)</td><td>stałe rzeczywiste</td></tr>
+<tr><td>\(\operatorname{logit}^{-1}(\eta)\)</td><td>funkcja logistyczna \(1/(1+e^{-\eta})\)</td></tr>
+<tr><td>\(\eta\)</td><td>predyktor liniowy (skala logitowa)</td></tr>
+<tr><td>\(\mu\)</td><td>średnie wypełnienie \(\operatorname{logit}^{-1}(\eta)\)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li><strong>Całkowalność:</strong> \(\mathbb E|X|\lt\infty\). Bez niej wartość oczekiwana może nie istnieć (rozkład Cauchy’ego) lub być nieskończona. Liczba widzów jest ograniczona pojemnością, więc w wariancie „wypełnienie” problem nie występuje; w modelu ujemnym dwumianowym wszystkie momenty są skończone.</li>
+<li>Liniowość nie wymaga niezależności; wzór \(\mathbb E[XY]=\mathbb E[X]\,\mathbb E[Y]\) — wymaga (lub przynajmniej nieskorelowania).</li>
+<li>Nierówność Jensena wymaga wypukłości (wklęsłości) \(\varphi\) na zbiorze, w którym \(X\) przyjmuje wartości, oraz całkowalności \(X\) i \(\varphi(X)\).</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<div class="ml-eq" id="eq-wartosc-oczekiwana-liniowosc">\[ \mathbb E[aX+bY+c]=a\,\mathbb E[X]+b\,\mathbb E[Y]+c \]</div>
+<div class="ml-eq" id="eq-wartosc-oczekiwana-indykator">\[ \mathbb E[\mathbf 1_A]=P(A) \]</div>
+<div class="ml-eq" id="eq-wartosc-oczekiwana-monotonicznosc">\[ X\le Y \ \text{p.n.} \ \Rightarrow\ \mathbb E[X]\le\mathbb E[Y] \]</div>
+<div class="ml-eq" id="eq-wartosc-oczekiwana-niezaleznosc">\[ X \perp Y \ \Rightarrow\ \mathbb E[XY]=\mathbb E[X]\,\mathbb E[Y] \]</div>
+<div class="ml-eq" id="eq-wartosc-oczekiwana-markow">\[ X\ge0,\ t\gt0 \ \Rightarrow\ P(X\ge t)\le\frac{\mathbb E[X]}{t} \]</div>
+<div class="ml-eq" id="eq-wartosc-oczekiwana-jensen">\[ \varphi \text{ wypukła} \ \Rightarrow\ \varphi\big(\mathbb E[X]\big)\le\mathbb E\big[\varphi(X)\big]; \qquad \varphi \text{ wklęsła} \ \Rightarrow\ \varphi\big(\mathbb E[X]\big)\ge\mathbb E\big[\varphi(X)\big] \]</div>
+<div class="ml-eq" id="eq-wartosc-oczekiwana-ogon">\[ X\ge0 \ \Rightarrow\ \mathbb E[X]=\int_0^\infty P(X\gt t)\,dt, \qquad X\in\{0,1,2,\ldots\} \ \Rightarrow\ \mathbb E[X]=\sum_{n=1}^{\infty}P(X\ge n) \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-liniowosc"><p class="ml-box-title">Twierdzenie (liniowość wartości oczekiwanej)</p>
+<p>Jeśli \(X\) i \(Y\) są całkowalne, a \(a,b,c\in\mathbb R\), to \(aX+bY+c\) jest całkowalna i zachodzi <a class="ml-eqref" href="#eq-wartosc-oczekiwana-liniowosc"></a>. Założenie niezależności nie jest potrzebne.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-jensen"><p class="ml-box-title">Twierdzenie (nierówność Jensena)</p>
+<p>Niech \(X\) będzie całkowalna o wartościach w przedziale \(I\), a \(\varphi:I\to\mathbb R\) wypukła, przy czym \(\varphi(X)\) jest całkowalna. Wtedy \(\varphi(\mathbb E[X])\le\mathbb E[\varphi(X)]\). Jeśli \(\varphi\) jest ściśle wypukła, równość zachodzi wtedy i tylko wtedy, gdy \(X\) jest stała prawie na pewno. Dla \(\varphi\) wklęsłej nierówność się odwraca.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-markow"><p class="ml-box-title">Twierdzenie (nierówność Markowa)</p>
+<p>Dla \(X\ge0\) i \(t\gt0\) zachodzi <a class="ml-eqref" href="#eq-wartosc-oczekiwana-markow"></a>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-iloczyn"><p class="ml-box-title">Twierdzenie (iloczyn zmiennych niezależnych)</p>
+<p>Jeśli \(X\) i \(Y\) są niezależne i całkowalne, to \(XY\) jest całkowalna i \(\mathbb E[XY]=\mathbb E[X]\,\mathbb E[Y]\).</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<div class="ml-proof"><p class="ml-box-title">Dowód liniowości (przypadek dyskretny)</p>
+<p>Niech \((X,Y)\) ma łączną funkcję prawdopodobieństwa \(p(x,y)=P(X=x,Y=y)\), a rozkłady brzegowe \(p_X(x)=\sum_y p(x,y)\), \(p_Y(y)=\sum_x p(x,y)\). Z LOTUS dla funkcji \(g(x,y)=ax+by+c\):</p>
+<div class="ml-eq" id="eq-wartosc-oczekiwana-dowod-liniowosc">\[ \begin{aligned} \mathbb E[aX+bY+c] &amp;= \sum_x\sum_y (ax+by+c)\,p(x,y)\\ &amp;= a\sum_x x\sum_y p(x,y)+b\sum_y y\sum_x p(x,y)+c\sum_x\sum_y p(x,y)\\ &amp;= a\sum_x x\,p_X(x)+b\sum_y y\,p_Y(y)+c\cdot1\\ &amp;= a\,\mathbb E[X]+b\,\mathbb E[Y]+c. \end{aligned} \]</div>
+<p>Zamiana kolejności sumowania jest dozwolona, bo szeregi są bezwzględnie zbieżne (całkowalność \(X\), \(Y\)). Nigdzie nie użyto faktoryzacji \(p(x,y)=p_X(x)p_Y(y)\) — liniowość nie wymaga niezależności.</p>
+<p><em>Przypadek ogólny.</em> Dla zmiennych prostych \(X=\sum_i x_i\mathbf 1_{A_i}\), \(Y=\sum_j y_j\mathbf 1_{B_j}\) ten sam rachunek przeprowadza się na wspólnym rozbiciu \(\{A_i\cap B_j\}\). Dla \(X,Y\ge0\) przechodzi się do granicy po rosnących ciągach zmiennych prostych (twierdzenie Lebesgue’a o zbieżności monotonicznej), a dla dowolnych — przez rozkład \(X=X^+-X^-\) <cite data-bib="billingsley1995"></cite>.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód monotoniczności i wzoru dla indykatora</p>
+<p>\(\mathbf 1_A\) jest zmienną prostą o wartościach 1 (z prawdopodobieństwem \(P(A)\)) i 0, więc \(\mathbb E[\mathbf 1_A]=1\cdot P(A)+0\cdot P(A^c)=P(A)\). Jeśli \(X\le Y\), to \(Y-X\ge0\), więc \(\mathbb E[Y-X]\ge0\) (całka funkcji nieujemnej), a z liniowości \(\mathbb E[Y]-\mathbb E[X]\ge0\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód nierówności Markowa</p>
+<p>Dla \(X\ge0\) zachodzi punktowo \(t\,\mathbf 1_{\{X\ge t\}}\le X\) (gdy \(X\ge t\) lewa strona to \(t\le X\), w przeciwnym razie 0). Z monotoniczności i <a class="ml-eqref" href="#eq-wartosc-oczekiwana-indykator"></a>: \(t\,P(X\ge t)\le\mathbb E[X]\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód nierówności Jensena</p>
+<p>Niech \(m=\mathbb E[X]\in I\). Funkcja wypukła ma w każdym punkcie wnętrza dziedziny <em>prostą podpierającą</em>: istnieje \(\lambda\in\mathbb R\) (np. pochodna jednostronna), takie że</p>
+<div class="ml-eq" id="eq-wartosc-oczekiwana-podpierajaca">\[ \varphi(x)\ge\varphi(m)+\lambda\,(x-m)\qquad\text{dla wszystkich } x\in I. \]</div>
+<p>Podstawiając \(x=X(\omega)\) i biorąc wartość oczekiwaną obu stron (monotoniczność, liniowość):</p>
+<div class="ml-eq" id="eq-wartosc-oczekiwana-dowod-jensen">\[ \mathbb E[\varphi(X)]\ge\varphi(m)+\lambda\,(\mathbb E[X]-m)=\varphi(m)=\varphi(\mathbb E[X]). \]</div>
+<p>Jeśli \(\varphi\) jest ściśle wypukła, nierówność <a class="ml-eqref" href="#eq-wartosc-oczekiwana-podpierajaca"></a> jest ostra dla \(x\neq m\); równość wartości oczekiwanych wymaga więc \(X=m\) prawie na pewno. Dla \(\varphi\) wklęsłej stosujemy wynik do \(-\varphi\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód wzoru dla iloczynu zmiennych niezależnych (przypadek dyskretny)</p>
+<p>Z niezależności \(p(x,y)=p_X(x)p_Y(y)\), więc \(\mathbb E[XY]=\sum_x\sum_y xy\,p_X(x)p_Y(y)=\big(\sum_x x\,p_X(x)\big)\big(\sum_y y\,p_Y(y)\big)=\mathbb E[X]\,\mathbb E[Y]\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Wyprowadzenie wzoru ogonowego <a class="ml-eqref" href="#eq-wartosc-oczekiwana-ogon"></a></p>
+<p>Dla \(X\in\{0,1,2,\ldots\}\): \(X=\sum_{n=1}^{\infty}\mathbf 1_{\{X\ge n\}}\) (zmienna \(X=k\) „zalicza” dokładnie \(k\) indykatorów). Z liniowości (dla szeregów o wyrazach nieujemnych — z twierdzenia o zbieżności monotonicznej): \(\mathbb E[X]=\sum_{n\ge1}P(X\ge n)\). Wersja ciągła wynika z \(X=\int_0^\infty\mathbf 1_{\{X\gt t\}}dt\) i twierdzenia Fubiniego.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-box ml-note" id="jensen-logistyczna"><p class="ml-box-title">Jensen a funkcja logistyczna</p>
+<p>Funkcja \(\operatorname{logit}^{-1}(\eta)=1/(1+e^{-\eta})\) ma drugą pochodną \(\sigma(\eta)(1-\sigma(\eta))(1-2\sigma(\eta))\), gdzie \(\sigma=\operatorname{logit}^{-1}\). Jest więc <strong>wypukła dla \(\eta\lt0\)</strong> (średnie wypełnienie poniżej 50%) i <strong>wklęsła dla \(\eta\gt0\)</strong> (powyżej 50%). Zatem, gdy \(\eta\) jest niepewne, \(\mathbb E[\operatorname{logit}^{-1}(\eta)]\) jest <em>większe</em> od \(\operatorname{logit}^{-1}(\mathbb E\eta)\) dla słabo zapełnianych hal i <em>mniejsze</em> dla dobrze zapełnianych. Ogólnie \(\mathbb E[f(X)]\neq f(\mathbb E[X])\) dla nieliniowej \(f\).</p>
+</div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<h3 id="przyklad-liniowosc">Liniowość: oczekiwana frekwencja i przychód</h3>
+<p><strong>Dane ilustracyjne.</strong> Frekwencja meczu 1 (Superliga, hala na 2000 miejsc) przyjmuje wartości 800, 1100, 1500 z prawdopodobieństwami 0,2; 0,5; 0,3. Dla meczu 2 wiemy tylko, że \(\mathbb E[A_2]=950\); mecze mogą być zależne (ta sama pogoda, forma drużyny).</p>
+<ol class="ml-steps">
+<li>\(\mathbb E[A_1]=800\cdot0{,}2+1100\cdot0{,}5+1500\cdot0{,}3=160+550+450=1160\).</li>
+<li>Z liniowości, bez wiedzy o zależności: \(\mathbb E[A_1+A_2]=1160+950=2110\).</li>
+<li>Przychód netto przy cenie 25 zł i koszcie stałym 10 000 zł: \(\mathbb E[25(A_1+A_2)-10\,000]=25\cdot2110-10\,000=52\,750-10\,000=42\,750\) zł.</li>
+<li>Wypełnienie meczu 1: \(\mathbb E[A_1/2000]=1160/2000=0{,}58\).</li>
+<li>Prawdopodobieństwo jako wartość oczekiwana: \(\mathbb E[\mathbf 1_{\{A_1\ge1100\}}]=0{,}5+0{,}3=0{,}8\).</li>
+</ol>
+<h3 id="przyklad-jensen">Nierówność Jensena dla funkcji logistycznej</h3>
+<p><strong>Dane ilustracyjne.</strong> Niepewność co do predyktora \(\eta\) meczu opisujemy dwupunktowo: \(\eta=m-1\) lub \(\eta=m+1\) z prawdopodobieństwem \(\tfrac12\) każda (zaokrąglenia do 4 miejsc).</p>
+<ol class="ml-steps">
+<li><strong>Hala dobrze zapełniana, \(m=0{,}5\).</strong> \(\operatorname{logit}^{-1}(0{,}5)=0{,}6225\). Wartości: \(\operatorname{logit}^{-1}(-0{,}5)=0{,}3775\), \(\operatorname{logit}^{-1}(1{,}5)=0{,}8176\). Średnia: \((0{,}3775+0{,}8176)/2=0{,}5976\lt0{,}6225\). Różnica: \(-0{,}0249\) (ok. 2,5 p.p. wypełnienia).</li>
+<li><strong>Hala słabo zapełniana, \(m=-1{,}5\).</strong> \(\operatorname{logit}^{-1}(-1{,}5)=0{,}1824\). Wartości: \(\operatorname{logit}^{-1}(-2{,}5)=0{,}0759\), \(\operatorname{logit}^{-1}(-0{,}5)=0{,}3775\). Średnia: \(0{,}2267\gt0{,}1824\). Różnica: \(+0{,}0443\).</li>
+<li><strong>Rozkład ciągły.</strong> Dla \(\eta\sim N(0{,}5;\,1)\) całkowanie numeryczne daje \(\mathbb E[\operatorname{logit}^{-1}(\eta)]\approx0{,}6020\lt0{,}6225\) — kierunek ten sam co w punkcie 1.</li>
+<li><strong>Efekt rywala na skali wypełnienia.</strong> Niech efekt rywala wynosi \(R_j=0{,}4\), a dwa referencyjne mecze mają \(\eta^{(0)}=-1{,}5\) oraz \(1{,}5\). Bez rywala: \((0{,}1824+0{,}8176)/2=0{,}5000\). Z rywalem: \((\operatorname{logit}^{-1}(-1{,}1)+\operatorname{logit}^{-1}(1{,}9))/2=(0{,}2497+0{,}8699)/2=0{,}5598\). Stosunek: \(100\cdot0{,}5598/0{,}5000=112{,}0\).</li>
+<li><strong>Porównanie z „meczem przeciętnym”.</strong> Gdybyśmy najpierw uśrednili \(\eta^{(0)}\) (średnia 0), a dopiero potem przekształcili: \(100\cdot\operatorname{logit}^{-1}(0{,}4)/\operatorname{logit}^{-1}(0)=100\cdot0{,}5987/0{,}5=119{,}7\). Wynik różni się o prawie 8 punktów indeksu — bo \(\mathbb E[f(X)]\neq f(\mathbb E[X])\).</li>
+</ol>
+<div class="ml-plot" data-plot="logistic" data-params='{"alpha": 0, "beta": 1}'></div>
+<p>Krzywa logistyczna jest wypukła na lewo od punktu przegięcia (\(\eta=0\), wypełnienie 50%) i wklęsła na prawo. Cięciwa łącząca dwa punkty krzywej leży nad nią po lewej stronie i pod nią po prawej — to graficzny obraz nierówności Jensena.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Wartość \(\mathbb E[A_1]=1160\) to długookresowa średnia frekwencja w powtórzeniach takiego meczu, a nie wartość „najbardziej prawdopodobna” (moda wynosi 1100) ani mediana. Liniowość pozwala bezpiecznie sumować oczekiwania przez mecze i sezony nawet bez modelu zależności.</p>
+<p>Wynik Jensena mówi, że <strong>kolejność operacji ma znaczenie</strong>: najpierw przekształć, potem uśredniaj. Prognoza wypełnienia oparta na „średnim \(\eta\)” jest obciążona w górę dla słabo zapełnianych hal i w dół dla dobrze zapełnianych. Wielkość obciążenia rośnie z niepewnością \(\eta\) — w punkcie 1 rozrzut \(\pm1\) obniżył oczekiwane wypełnienie o 2,5 p.p.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> wartość oczekiwana pojawia się na trzech poziomach:</p>
+<ul>
+<li><strong>Średnia rozkładu obserwacji.</strong> W wariancie „wypełnienie” \(\mathbb E[A_i\mid\mu_i,\phi]=C_i\mu_i\), więc \(\mathbb E[W_i\mid\eta_i]=\mu_i=\operatorname{logit}^{-1}(\eta_i)\). W wariancie „liczba widzów” \(\mathbb E[A_i\mid\mu_i]=\mu_i=e^{\eta_i}\).</li>
+<li><strong>Indeks IAF.</strong> W definicji \(\mathrm{IAF}_j=100\cdot\frac{\frac1{|X_{ref}|}\sum_{i}\mathbb E(W\mid\eta_i^{(0)}+R_j)}{\frac1{|X_{ref}|}\sum_i\mathbb E(W\mid\eta_i^{(0)})}\) uśrednia się <em>wypełnienia</em> po populacji referencyjnej meczów, a nie predyktory. Z nierówności Jensena wynika, że ten sam efekt \(R_j\) daje różny przyrost wypełnienia w zależności od tego, czy mecze referencyjne odbywają się w halach pustawych czy prawie pełnych — przykład z punktu 4–5 pokazuje różnicę 112 vs. 120. Dlatego IAF liczy się na skali wypełnienia, mecz po meczu, dla każdej próbki posterior, a dopiero potem raportuje medianę.</li>
+<li><strong>Uśrednianie po niepewności parametrów.</strong> Prognoza punktowa to \(\mathbb E[A_i\mid\text{dane}]\), czyli średnia po próbkach posterior z \(C_i\mu_i^{(s)}\) (zob. <a data-concept="wartosc-oczekiwana-prognozy">wartość oczekiwana prognozy</a> i <a data-concept="prawo-calkowitej-wartosci-oczekiwanej">prawo całkowitej wartości oczekiwanej</a>). Wstawienie średniej posterior parametrów do \(\operatorname{logit}^{-1}\) dałoby wynik obciążony (Jensen).</li>
+<li><strong>Metryki.</strong> MAE i RMSE to empiryczne odpowiedniki \(\mathbb E|A-\hat A|\) i \(\sqrt{\mathbb E(A-\hat A)^2}\); wartość oczekiwana minimalizuje błąd kwadratowy, a mediana — bezwzględny.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Wartość oczekiwana nie opisuje rozrzutu ani kształtu.</strong> Dwa mecze o \(\mathbb E[A]=1160\) mogą mieć zupełnie różne ryzyko pustej hali; potrzebna jest co najmniej <a data-concept="wariancja-zmiennej-losowej">wariancja</a>, a najlepiej cały rozkład predykcyjny.</li>
+<li><strong>Wrażliwość na ogony.</strong> Pojedyncze rekordowe mecze (np. derby w dużej arenie) silnie przesuwają średnią; dla rozkładów skośnych mediana bywa bardziej reprezentatywna.</li>
+<li><strong>Istnienie.</strong> Dla rozkładów o ciężkich ogonach wartość oczekiwana może nie istnieć.</li>
+<li><strong>Nieliniowe przekształcenia.</strong> \(\mathbb E[f(X)]\neq f(\mathbb E[X])\); każde „wstawienie średniej do wzoru” wymaga uzasadnienia (Jensen).</li>
+<li><strong>Wartość oczekiwana to nie wartość typowa.</strong> Dla zmiennej dyskretnej może nie być nawet możliwą wartością (np. 1,5 kompletu na sezon).</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="zmienna-losowa">Zmienna losowa</a>.</li>
+<li><a data-concept="srednia-arytmetyczna">Średnia arytmetyczna</a> — empiryczny odpowiednik wartości oczekiwanej.</li>
+<li><a data-concept="wariancja-zmiennej-losowej">Wariancja zmiennej losowej</a>.</li>
+<li><a data-concept="prawo-calkowitej-wartosci-oczekiwanej">Prawo całkowitej wartości oczekiwanej</a>.</li>
+<li><a data-concept="funkcja-logit">Funkcja logit</a> i <a data-concept="uogolnione-modele-liniowe">uogólnione modele liniowe</a>.</li>
+<li><a data-concept="wartosc-oczekiwana-prognozy">Wartość oczekiwana prognozy</a>, <a data-concept="monte-carlo">Monte Carlo</a>.</li>
+<li><a data-concept="atrakcyjnosc-frekwencyjna">Atrakcyjność frekwencyjna (MAF)</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="casellaberger2002"></li>
+<li data-bib="pishronik2014"></li>
+<li data-bib="wasserman2004"></li>
+<li data-bib="billingsley1995"></li>
+<li data-bib="gelman2013bda"></li>
+</ul>
+</section>

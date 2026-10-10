@@ -1,0 +1,179 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p><a data-concept="regresja-liniowa">Regresja liniowa</a> zakłada, że zmienna objaśniana może przyjąć dowolną wartość rzeczywistą, a jej wariancja jest stała. Frekwencja na meczu nie spełnia żadnego z tych warunków: liczba widzów jest nieujemną liczbą całkowitą, wypełnienie hali leży w przedziale \( [0,1] \), a rozrzut zależy od poziomu — hala wypełniona w 98% nie może się „wahać” o 20 punktów procentowych w górę.</p>
+<p>Uogólnione modele liniowe (ang. <em>generalized linear models</em>, GLM), wprowadzone przez Neldera i Wedderburna <cite data-bib="nelder1972"></cite>, rozwiązują ten problem, rozdzielając model na trzy klocki:</p>
+<ol>
+<li><strong>składnik losowy</strong> — rozkład zmiennej objaśnianej dobrany do jej natury (dwumianowy dla odsetków, Poissona lub ujemny dwumianowy dla zliczeń, normalny dla wielkości ciągłych);</li>
+<li><strong>składnik systematyczny</strong> — ten sam co w regresji predyktor liniowy \( \eta_i = x_i^\top\beta \), przyjmujący dowolne wartości rzeczywiste;</li>
+<li><strong>funkcja łącząca</strong> (ang. <em>link function</em>) \( g \) — „tłumacz” między nieograniczonym \( \eta_i \) a dopuszczalnym zakresem wartości oczekiwanej \( \mu_i \): \( g(\mu_i) = \eta_i \).</li>
+</ol>
+<p>Dzięki temu cała intuicja i algebra regresji (macierz planu, efekty czynników, interakcje, kowariaty) zostaje zachowana, a prognozy z definicji trafiają w poprawny zakres.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-rodzina-wykladnicza"><p class="ml-box-title">Definicja</p>
+<p>Rodzina rozkładów zmiennej \( Y \) (o nośniku niezależnym od parametrów) jest <strong>wykładniczą rodziną z parametrem dyspersji</strong> (ang. <em>exponential dispersion family</em>), jeśli jej gęstość lub funkcja prawdopodobieństwa względem miary dominującej ma postać</p>
+<div class="ml-eq" id="eq-uogolnione-modele-liniowe-rodzina">\[ f(y;\theta,\varphi) = \exp\!\left\{ \frac{y\theta - b(\theta)}{a(\varphi)} + c(y,\varphi) \right\}, \qquad \theta\in\Theta\subseteq\mathbb{R},\ \varphi \gt 0, \]</div>
+<p>gdzie \( \theta \) jest <em>parametrem kanonicznym (naturalnym)</em>, \( \varphi \) — <em>parametrem dyspersji</em>, \( b \) — dwukrotnie różniczkowalną funkcją kumulant na wnętrzu \( \Theta \), a \( a(\varphi)\gt 0 \) i \( c \) — znanymi funkcjami.</p>
+</div>
+<div class="ml-box ml-def" id="def-glm"><p class="ml-box-title">Definicja</p>
+<p><strong>Uogólnionym modelem liniowym</strong> nazywamy model, w którym obserwacje \( y_1,\dots,y_n \) są warunkowo niezależne przy danych \( x_1,\dots,x_n \in\mathbb{R}^p \), każda ma rozkład z tej samej rodziny <a class="ml-eqref" href="#eq-uogolnione-modele-liniowe-rodzina"></a> z parametrem \( \theta_i \) (i wspólnym \( \varphi \)), a wartość oczekiwana \( \mu_i = \mathbb{E}(y_i\mid x_i) \) spełnia</p>
+<div class="ml-eq" id="eq-uogolnione-modele-liniowe">\[ g(\mu_i) = \eta_i = x_i^\top\beta, \qquad i=1,\dots,n, \]</div>
+<p>dla ściśle monotonicznej, różniczkowalnej <strong>funkcji łączącej</strong> \( g \) określonej na zbiorze dopuszczalnych wartości \( \mu \). Funkcję \( g \) nazywamy <strong>kanoniczną</strong>, gdy \( g = (b')^{-1} \), tj. gdy \( \theta_i = \eta_i \).</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( y_i \)</td><td>obserwacja \( i \) (np. liczba widzów, wypełnienie)</td></tr>
+<tr><td>\( \theta_i \)</td><td>parametr kanoniczny rozkładu obserwacji \( i \)</td></tr>
+<tr><td>\( \varphi,\ a(\varphi) \)</td><td>parametr dyspersji i jego funkcja skalująca</td></tr>
+<tr><td>\( b(\theta) \)</td><td>funkcja kumulant (logarytm stałej normującej)</td></tr>
+<tr><td>\( c(y,\varphi) \)</td><td>składnik normujący niezależny od \( \theta \)</td></tr>
+<tr><td>\( \mu_i \)</td><td>wartość oczekiwana \( \mathbb{E}(y_i\mid x_i) \)</td></tr>
+<tr><td>\( V(\mu) \)</td><td>funkcja wariancji: \( \operatorname{Var}(y) = a(\varphi)V(\mu) \)</td></tr>
+<tr><td>\( g \)</td><td>funkcja łącząca, \( g(\mu_i)=\eta_i \)</td></tr>
+<tr><td>\( \eta_i = x_i^\top\beta \)</td><td>predyktor liniowy</td></tr>
+<tr><td>\( \beta \)</td><td>wektor współczynników</td></tr>
+<tr><td>\( W \)</td><td>diagonalna macierz wag w algorytmie IRLS</td></tr>
+<tr><td>\( z \)</td><td>robocza zmienna objaśniana w IRLS</td></tr>
+<tr><td>\( \sigma(\cdot) \)</td><td>funkcja logistyczna, odwrotność logitu</td></tr>
+<tr><td>\( \kappa \)</td><td>parametr kształtu (odwrotność nadmiernej dyspersji) rozkładu ujemnego dwumianowego</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li><strong>Warunkowa niezależność</strong> obserwacji przy danych predyktorach (w modelach hierarchicznych — przy danych także efektach losowych).</li>
+<li><strong>Poprawny rozkład</strong>: obserwacje pochodzą z jednej rodziny <a class="ml-eqref" href="#eq-uogolnione-modele-liniowe-rodzina"></a> — w praktyce przede wszystkim poprawna <em>funkcja wariancji</em> \( V(\mu) \); jej błędne określenie (np. nadmierna dyspersja w modelu Poissona) zaniża niepewność.</li>
+<li><strong>Poprawna funkcja łącząca</strong>: wpływ predyktorów jest addytywny na skali \( g(\mu) \).</li>
+<li><strong>Pełny rząd macierzy planu</strong> \( X \) (zob. <a data-concept="identyfikowalnosc-parametrow">identyfikowalność</a>).</li>
+<li><strong>Istnienie skończonego ENW</strong> — np. w regresji logistycznej wymaga braku pełnej separacji danych.</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p><strong>Momenty rodziny wykładniczej:</strong></p>
+<div class="ml-eq" id="eq-uogolnione-modele-liniowe-momenty">\[ \mathbb{E}(Y) = \mu = b'(\theta), \qquad \operatorname{Var}(Y) = a(\varphi)\, b''(\theta) = a(\varphi)\,V(\mu). \]</div>
+<p><strong>Najważniejsze rozkłady i łącza</strong> <cite data-bib="mccullagh1989"></cite>:</p>
+<table class="ml-table">
+<thead><tr><th>Rozkład</th><th>\( \theta \)</th><th>\( b(\theta) \)</th><th>\( V(\mu) \)</th><th>Łącze kanoniczne</th></tr></thead>
+<tbody>
+<tr><td>Normalny \( N(\mu,\sigma^2) \)</td><td>\( \mu \)</td><td>\( \theta^2/2 \)</td><td>\( 1 \)</td><td>tożsamość</td></tr>
+<tr><td>Bernoulli \( \mathrm{Bin}(1,\mu) \)</td><td>\( \ln\frac{\mu}{1-\mu} \)</td><td>\( \ln(1+e^\theta) \)</td><td>\( \mu(1-\mu) \)</td><td>logit</td></tr>
+<tr><td>Poissona</td><td>\( \ln\mu \)</td><td>\( e^\theta \)</td><td>\( \mu \)</td><td>log</td></tr>
+<tr><td>Ujemny dwumianowy (\( \kappa \) znane)</td><td>\( \ln\frac{\mu}{\mu+\kappa} \)</td><td>\( -\kappa\ln(1-e^\theta) \)</td><td>\( \mu + \mu^2/\kappa \)</td><td>\( \ln\frac{\mu}{\mu+\kappa} \) (w praktyce: log)</td></tr>
+<tr><td>Gamma</td><td>\( -1/\mu \)</td><td>\( -\ln(-\theta) \)</td><td>\( \mu^2 \)</td><td>odwrotność</td></tr>
+</tbody>
+</table>
+<p><strong>Funkcja wynikowa (score) i informacja Fishera</strong> dla dowolnego łącza:</p>
+<div class="ml-eq" id="eq-uogolnione-modele-liniowe-score">\[ U(\beta) = \sum_{i=1}^n \frac{(y_i-\mu_i)}{a(\varphi)V(\mu_i)\,g'(\mu_i)}\,x_i, \qquad \mathcal{I}(\beta) = \frac{1}{a(\varphi)} X^\top W X,\quad W_{ii} = \frac{1}{V(\mu_i)\,g'(\mu_i)^2}. \]</div>
+<p><strong>Iteracyjnie ważona metoda najmniejszych kwadratów</strong> (IRLS, ang. <em>iteratively reweighted least squares</em>):</p>
+<div class="ml-eq" id="eq-uogolnione-modele-liniowe-irls">\[ \beta^{(t+1)} = \bigl(X^\top W^{(t)} X\bigr)^{-1} X^\top W^{(t)} z^{(t)}, \qquad z_i^{(t)} = \eta_i^{(t)} + \bigl(y_i - \mu_i^{(t)}\bigr)\,g'\bigl(\mu_i^{(t)}\bigr). \]</div>
+<p><strong>Dewiancja</strong> (miara dopasowania względem modelu nasyconego): \( D = 2a(\varphi)\bigl[\ell(\text{nasycony}) - \ell(\hat\beta)\bigr] \).</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-momenty-rodziny"><p class="ml-box-title">Twierdzenie (momenty rodziny wykładniczej)</p>
+<p>Jeśli \( \theta \) leży we wnętrzu \( \Theta \) i można różniczkować pod znakiem całki, to dla rodziny <a class="ml-eqref" href="#eq-uogolnione-modele-liniowe-rodzina"></a> zachodzi <a class="ml-eqref" href="#eq-uogolnione-modele-liniowe-momenty"></a>. Ponieważ \( b''(\theta) = \operatorname{Var}(Y)/a(\varphi) \gt 0 \) dla rozkładu niezdegenerowanego, \( b' \) jest ściśle rosnąca, więc odwzorowanie \( \theta\mapsto\mu \) jest odwracalne.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-lacze-kanoniczne"><p class="ml-box-title">Twierdzenie (własności łącza kanonicznego)</p>
+<p>Przy łączu kanonicznym: (i) \( X^\top y \) jest statystyką dostateczną dla \( \beta \); (ii) równania wiarygodności mają postać \( X^\top(y-\mu)=0 \); (iii) obserwowana i oczekiwana informacja Fishera są równe, więc metoda Newtona–Raphsona pokrywa się z metodą Fishera (ang. <em>Fisher scoring</em>); (iv) log-wiarygodność jest wklęsła w \( \beta \), więc ENW, jeśli istnieje, jest jedyny przy pełnym rzędzie \( X \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-irls"><p class="ml-box-title">Twierdzenie (IRLS jako metoda Fishera)</p>
+<p>Krok <a class="ml-eqref" href="#eq-uogolnione-modele-liniowe-irls"></a> jest algebraicznie równy krokowi metody Fishera \( \beta^{(t+1)} = \beta^{(t)} + \mathcal{I}(\beta^{(t)})^{-1}U(\beta^{(t)}) \).</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="wyprowadzenie-momenty">Momenty rodziny wykładniczej</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<ol>
+<li>Dla każdego \( \theta \): \( \int f(y;\theta,\varphi)\,dy = 1 \). Różniczkujemy po \( \theta \): \( \int \frac{y-b'(\theta)}{a(\varphi)} f\,dy = 0 \), czyli \( \mathbb{E}(Y) = b'(\theta) \).</li>
+<li>Różniczkujemy po raz drugi: \( \int \Bigl[\frac{-b''(\theta)}{a(\varphi)} + \Bigl(\frac{y-b'(\theta)}{a(\varphi)}\Bigr)^2\Bigr] f\,dy = 0 \).</li>
+<li>Stąd \( \mathbb{E}\bigl[(Y-\mu)^2\bigr]/a(\varphi)^2 = b''(\theta)/a(\varphi) \), tj. \( \operatorname{Var}(Y) = a(\varphi)b''(\theta) \).</li>
+</ol>
+<p>Przykład: rozkład Bernoulliego \( \mu^y(1-\mu)^{1-y} = \exp\{y\ln\frac{\mu}{1-\mu} + \ln(1-\mu)\} \), więc \( \theta = \operatorname{logit}\mu \), \( b(\theta) = \ln(1+e^\theta) \), \( b'(\theta) = e^\theta/(1+e^\theta) = \sigma(\theta) \), \( b''(\theta) = \sigma(\theta)(1-\sigma(\theta)) = \mu(1-\mu) \) (por. <a data-concept="funkcja-logit" data-anchor="wyprowadzenie">pochodna funkcji logistycznej</a>).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-score">Funkcja wynikowa i łącze kanoniczne</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<ol>
+<li>Log-wiarygodność: \( \ell(\beta) = \sum_i \frac{y_i\theta_i - b(\theta_i)}{a(\varphi)} + \text{const} \).</li>
+<li>Reguła łańcuchowa: \( \frac{\partial\ell_i}{\partial\beta} = \frac{\partial\ell_i}{\partial\theta_i}\frac{d\theta_i}{d\mu_i}\frac{d\mu_i}{d\eta_i}\frac{\partial\eta_i}{\partial\beta} = \frac{y_i-\mu_i}{a(\varphi)}\cdot\frac{1}{V(\mu_i)}\cdot\frac{1}{g'(\mu_i)}\cdot x_i \), bo \( d\mu/d\theta = b''(\theta) = V(\mu) \) i \( d\eta/d\mu = g'(\mu) \). Daje to <a class="ml-eqref" href="#eq-uogolnione-modele-liniowe-score"></a>.</li>
+<li>Informacja Fishera: \( \mathcal{I} = \operatorname{Var}(U) = \sum_i \frac{\operatorname{Var}(y_i)}{a^2V_i^2 g_i'^2} x_ix_i^\top = \frac1a\sum_i \frac{1}{V_i g_i'^2}x_ix_i^\top = \frac1a X^\top W X \).</li>
+<li>Łącze kanoniczne: \( \theta_i = \eta_i \), więc \( g'(\mu) = d\theta/d\mu = 1/V(\mu) \) i \( U = \frac1a X^\top(y-\mu) \). Równanie \( U=0 \) zależy od danych tylko przez \( X^\top y \) (dostateczność wynika z faktoryzacji \( \exp\{\beta^\top X^\top y/a - \sum_i b(x_i^\top\beta)/a\} \)).</li>
+<li>Hesjan przy łączu kanonicznym: \( \nabla^2\ell = -\frac1a\sum_i b''(\eta_i)x_ix_i^\top = -\frac1a X^\top W X \) — nie zależy od \( y \), więc równa się \( -\mathcal{I} \), a ponieważ \( W \) ma dodatnią przekątną, przy pełnym rzędzie \( X \) jest ujemnie określony: \( \ell \) jest ściśle wklęsła.</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-irls">IRLS</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Krok Fishera: \( \mathcal{I}\beta^{(t+1)} = \mathcal{I}\beta^{(t)} + U \). Mnożąc przez \( a(\varphi) \): \( X^\top W X\beta^{(t+1)} = X^\top W X\beta^{(t)} + X^\top W\,\mathrm{diag}(g'(\mu_i))(y-\mu) = X^\top W\bigl[\eta^{(t)} + (y-\mu)g'(\mu)\bigr] = X^\top W z^{(t)} \), bo \( W_{ii}\,g'(\mu_i) = 1/(V_i g'_i) \), co zgadza się ze składnikiem score. To są równania normalne ważonej MNK z wagami \( W \) i zmienną \( z \).</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<h3 id="przyklad-fisher">Metoda Fishera dla modelu logistycznego</h3>
+<p><strong>Dane ilustracyjne.</strong> W 10 meczach klubu odnotowano, czy hala była wypełniona co najmniej w 75%: 7 razy tak, 3 razy nie. Model z samym wyrazem wolnym: \( y_i\sim\mathrm{Bin}(1,\mu) \), \( \operatorname{logit}\mu = \beta_0 \). Przy łączu kanonicznym \( U = \sum(y_i-\mu) = 7 - 10\mu \), \( \mathcal{I} = 10\,\mu(1-\mu) \).</p>
+<ol class="ml-steps">
+<li>Start: \( \beta_0^{(0)} = 0 \Rightarrow \mu = 0{,}5 \); \( U = 7-5 = 2 \); \( \mathcal{I} = 10\cdot0{,}25 = 2{,}5 \); \( \beta_0^{(1)} = 0 + 2/2{,}5 = 0{,}8 \).</li>
+<li>\( \mu = \sigma(0{,}8) \approx 0{,}68997 \); \( U \approx 7 - 6{,}8997 = 0{,}1003 \); \( \mathcal{I} \approx 10\cdot0{,}68997\cdot0{,}31003 \approx 2{,}1391 \); \( \beta_0^{(2)} \approx 0{,}8 + 0{,}0469 = 0{,}8469 \).</li>
+<li>\( \mu \approx 0{,}69991 \); \( U \approx 0{,}0009 \); \( \mathcal{I}\approx 2{,}1004 \); \( \beta_0^{(3)} \approx 0{,}84730 \).</li>
+<li>Wartość dokładna: \( \hat\beta_0 = \operatorname{logit}(0{,}7) = \ln(7/3) \approx 0{,}84730 \) — trzy iteracje dają 5 cyfr znaczących (zbieżność kwadratowa).</li>
+<li>Błąd standardowy: \( \operatorname{SE} = 1/\sqrt{\mathcal{I}(\hat\beta_0)} = 1/\sqrt{10\cdot0{,}7\cdot0{,}3} = 1/\sqrt{2{,}1} \approx 0{,}690 \).</li>
+</ol>
+<h3 id="przyklad-lacza">Przekład predyktora na skalę wyniku</h3>
+<ol class="ml-steps">
+<li>Łącze logit, \( \eta = 0{,}4 \), pojemność \( C = 2000 \): \( \mu = \sigma(0{,}4) \approx 0{,}5987 \), oczekiwana frekwencja \( 2000\cdot0{,}5987 \approx 1197 \) widzów.</li>
+<li>Łącze log, współczynnik weekendu \( \beta = 0{,}15 \), średnia w dzień roboczy 1200: \( 1200\cdot e^{0{,}15} \approx 1200\cdot1{,}1618 \approx 1394 \) widzów (+16,2%).</li>
+</ol>
+<div class="ml-plot" data-plot="logistic" data-params='{"alpha": 0.85, "beta": 1}'></div>
+<p>Krzywa \( \sigma(\alpha+\beta x) \) pokazuje odwrotność łącza logit: zmień \( \alpha \) i zauważ, że przesuwa ona krzywą w poziomie, a \( \beta \) zmienia jej stromość — ale wartości zawsze pozostają w \( (0,1) \).</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>W GLM współczynnik \( \beta_k \) mówi o zmianie <em>predyktora liniowego</em> \( \eta \), a nie wartości oczekiwanej. Przy łączu log zmiana \( x_k \) o jednostkę mnoży \( \mu \) przez \( e^{\beta_k} \) (efekt multiplikatywny, niezależny od poziomu). Przy łączu logit mnoży <em>szanse</em> \( \mu/(1-\mu) \) przez \( e^{\beta_k} \), a zmiana samego \( \mu \) zależy od punktu wyjścia — największa przy \( \mu=0{,}5 \), znikoma przy wypełnieniu bliskim 0 lub 100%. Szczegóły: <a data-concept="interpretacja-wspolczynnikow">interpretacja współczynników</a>.</p>
+<p>W przykładzie z metodą Fishera \( \hat\beta_0 \approx 0{,}847 \) to logarytm szans wypełnienia ≥ 75%: szanse \( 7:3 \approx 2{,}33 \). Duży błąd standardowy (0,69) przypomina, że 10 meczów to mało informacji — w modelu hierarchicznym taki klub zostałby częściowo ściągnięty do średniej ligi.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>Oba warianty modelu <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> są hierarchicznymi uogólnieniami GLM ze wspólnym predyktorem \( \eta_i \) (gospodarz, rywal, sezon, rozgrywki, warunki meczu):</p>
+<ul>
+<li><strong>Wariant „wypełnienie” — łącze logit.</strong> Gdy znana jest pojemność hali \( C_i \): \( A_i\sim\text{BetaBinomial}(C_i,\ \mu_i\phi,\ (1-\mu_i)\phi) \), \( \operatorname{logit}\mu_i = \eta_i \). \( \mu_i \) to oczekiwane wypełnienie. Rozkład <a data-concept="rozklad-beta-dwumianowy">beta-dwumianowy</a> to dwumianowy z nadmierną dyspersją; przy ustalonym \( \phi \) nie należy formalnie do rodziny <a class="ml-eqref" href="#eq-uogolnione-modele-liniowe-rodzina"></a>, ale zachowuje strukturę GLM: wartość oczekiwana \( C_i\mu_i \), łącze logit (kanoniczne dla części dwumianowej) i wariancję \( C_i\mu_i(1-\mu_i)\frac{C_i+\phi}{1+\phi} \).</li>
+<li><strong>Wariant „liczba widzów” — łącze log.</strong> Gdy pojemność jest nieznana (m.in. puchary EHF): \( A_i\sim\mathrm{NegBin}(\mu_i,\kappa) \), \( \log\mu_i=\eta_i \). Łącze log nie jest tu kanoniczne, ale daje interpretację multiplikatywną i dodatnie \( \mu_i \) <cite data-bib="hilbe2011"></cite>.</li>
+</ul>
+<p>MAF nie jest estymowany metodą IRLS, tylko bayesowsko (NUTS), z priorami na \( \beta \) i efekty losowe — rola GLM sprowadza się do określenia wiarygodności. Przydatne pozostają jednak pojęcia funkcji wariancji (diagnostyka nadmiernej dyspersji, <a data-concept="diagnostyka-reszt">reszty standaryzowane</a>) i rozróżnienie skal: predyktora \( \eta \) i wyniku \( \mu \).</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Jednoparametryczna wariancja:</strong> w rodzinach Bernoulliego i Poissona wariancja jest wyznaczona przez średnią; dane frekwencyjne mają zwykle nadmierną dyspersję — potrzebne są rozszerzenia (ujemny dwumianowy, beta-dwumianowy, efekty losowe).</li>
+<li><strong>Addytywność na skali łącza</strong> jest założeniem; nieliniowości trzeba modelować jawnie (składniki wielomianowe, splajny, interakcje).</li>
+<li><strong>Separacja</strong> w modelach logistycznych prowadzi do nieskończonych ENW; priory lub kara rozwiązują problem.</li>
+<li><strong>Wnioskowanie asymptotyczne</strong> (błędy standardowe z \( \mathcal{I}^{-1} \)) bywa niedokładne w małych próbach i przy wartościach na granicy zakresu.</li>
+<li><strong>Obserwacje skorelowane</strong> (ten sam klub, sezon) wymagają efektów losowych — <a data-concept="regresja-hierarchiczna">regresja hierarchiczna</a>.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="regresja-liniowa">Regresja liniowa</a> — GLM z rozkładem normalnym i łączem tożsamościowym.</li>
+<li><a data-concept="funkcja-logit">Funkcja logit</a> — łącze kanoniczne dla odsetków.</li>
+<li><a data-concept="regresja-beta">Regresja beta</a> — model GLM-podobny dla udziałów w \( (0,1) \).</li>
+<li><a data-concept="rozklad-dwumianowy">Rozkład dwumianowy</a>, <a data-concept="rozklad-beta-dwumianowy">beta-dwumianowy</a>, <a data-concept="rozklad-ujemny-dwumianowy">ujemny dwumianowy</a> — rozkłady obserwacji w MAF.</li>
+<li><a data-concept="funkcja-wiarygodnosci">Funkcja wiarygodności</a> — podstawa estymacji.</li>
+<li><a data-concept="interpretacja-wspolczynnikow">Interpretacja współczynników</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="nelder1972"></li>
+<li data-bib="mccullagh1989"></li>
+<li data-bib="hilbe2011"></li>
+<li data-bib="gelmanhill2007"></li>
+</ul>
+</section>

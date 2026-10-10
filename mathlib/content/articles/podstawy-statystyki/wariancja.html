@@ -1,0 +1,195 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Dwa kluby mogą mieć tę samą średnią frekwencję 1200 widzów, a zupełnie inny „charakter” widowni: w pierwszym na każdy mecz przychodzi 1150–1250 osób, w drugim raz 600, raz 2000. Średnia tego nie odróżnia. Potrzebna jest miara <em>rozproszenia</em> (ang. <em>dispersion</em>), czyli tego, jak daleko obserwacje leżą od swojego środka.</p>
+<p>Wariancja (ang. <em>variance</em>) mierzy rozproszenie jako przeciętny <em>kwadrat</em> odchylenia od średniej. Kwadrat ma trzy zalety: usuwa znak (odchylenia w górę i w dół się nie znoszą), silniej karze duże odchylenia i — co najważniejsze — prowadzi do eleganckiej algebry: wariancja sumy niezależnych składników jest sumą ich wariancji, a całkowitą zmienność da się rozłożyć na części (np. „między klubami” i „wewnątrz klubów”). Ceną jest jednostka: wariancja frekwencji wyraża się w „widzach do kwadratu”, dlatego do interpretacji używa się jej pierwiastka — <a data-concept="odchylenie-standardowe">odchylenia standardowego</a>.</p>
+<p>W praktyce pojawiają się dwie wersje wariancji z próby: z dzielnikiem \(n\) i z dzielnikiem \(n-1\). Ten artykuł wyjaśnia, skąd bierze się \(n-1\) (poprawka Bessela), dowodzi, że daje ona estymator nieobciążony, oraz pokazuje, jak liczyć wariancję stabilnie numerycznie w jednym przebiegu danych — algorytmem Welforda.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-wariancja-populacji"><p class="ml-box-title">Definicja (wariancja zbioru danych / populacji skończonej)</p>
+<p>Dla skończonego zbioru wartości \(x_1,\dots,x_N\) ze średnią \(\mu=\frac1N\sum_ix_i\) <strong>wariancją populacyjną</strong> nazywamy \(\sigma^2=\frac1N\sum_{i=1}^N(x_i-\mu)^2\). Jest to wariancja zmiennej losowej przyjmującej każdą z wartości \(x_i\) z prawdopodobieństwem \(1/N\).</p>
+</div>
+<div class="ml-box ml-def" id="def-wariancja-proby"><p class="ml-box-title">Definicja (wariancja z próby)</p>
+<p>Niech \(x_1,\dots,x_n\), \(n\ge2\), będzie próbą ze średnią \(\bar x\). <strong>Wariancją z próby</strong> (nieobciążoną) nazywamy</p>
+<div class="ml-eq" id="eq-wariancja">\[ s^2 = \frac{1}{n-1}\sum_{i=1}^{n}(x_i-\bar x)^2 , \]</div>
+<p>a <strong>wariancją z próby z dzielnikiem \(n\)</strong> (obciążoną, estymatorem największej wiarygodności przy rozkładzie normalnym)</p>
+<div class="ml-eq" id="eq-wariancja-obciazona">\[ \hat\sigma^2 = \frac{1}{n}\sum_{i=1}^{n}(x_i-\bar x)^2 = \frac{n-1}{n}\,s^2 . \]</div>
+</div>
+<p>Licznik \(SS=\sum_i(x_i-\bar x)^2\) nazywamy <em>sumą kwadratów odchyleń</em> (ang. <em>sum of squares</em>), a liczbę \(n-1\) — <em>liczbą stopni swobody</em>. Odpowiednikiem dla zmiennej losowej jest \(\operatorname{Var}(X)=E\big[(X-E X)^2\big]\) — zob. <a data-concept="wariancja-zmiennej-losowej">wariancja zmiennej losowej</a>. Jako zmienne losowe estymatory zapisujemy \(S^2\) i \(\hat\sigma^2\) dla próby \(X_1,\dots,X_n\) <cite data-bib="casellaberger2002"></cite>.</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(n\)</td><td>liczność próby</td></tr>
+<tr><td>\(x_i,\ \bar x\)</td><td>obserwacje i ich średnia arytmetyczna</td></tr>
+<tr><td>\(SS\)</td><td>suma kwadratów odchyleń od średniej</td></tr>
+<tr><td>\(s^2\)</td><td>wariancja z próby z dzielnikiem \(n-1\) (nieobciążona)</td></tr>
+<tr><td>\(\hat\sigma^2\)</td><td>wariancja z próby z dzielnikiem \(n\) (obciążona)</td></tr>
+<tr><td>\(\mu,\ \sigma^2\)</td><td>wartość oczekiwana i wariancja rozkładu (populacji)</td></tr>
+<tr><td>\(M_k,\ S_k\)</td><td>bieżąca średnia i bieżąca suma kwadratów odchyleń po \(k\) obserwacjach (algorytm Welforda)</td></tr>
+<tr><td>\(\delta_k\)</td><td>odchylenie nowej obserwacji od poprzedniej średniej, \(\delta_k=x_k-M_{k-1}\)</td></tr>
+<tr><td>\(n_A,\ n_B\)</td><td>liczności dwóch łączonych podzbiorów</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Dane na skali co najmniej przedziałowej (kwadraty różnic muszą mieć sens).</li>
+<li>Nieobciążoność \(S^2\): obserwacje \(X_1,\dots,X_n\) nieskorelowane, o wspólnej wartości oczekiwanej \(\mu\) i wspólnej skończonej wariancji \(\sigma^2\) (w szczególności i.i.d. z \(E X^2\lt\infty\)). Normalność <em>nie</em> jest wymagana.</li>
+<li>Wzory na rozkład \(S^2\) (np. \((n-1)S^2/\sigma^2\sim\chi^2_{n-1}\)) wymagają już normalności obserwacji.</li>
+<li>Algorytm Welforda nie wymaga żadnych założeń probabilistycznych — jest tożsamością algebraiczną; jego zaletą jest stabilność w arytmetyce zmiennoprzecinkowej.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Wzór „obliczeniowy” (tożsamość Königa–Huygensa):</p>
+<div class="ml-eq" id="eq-wariancja-konig">\[ SS=\sum_{i=1}^n(x_i-\bar x)^2=\sum_{i=1}^n x_i^2 - n\bar x^2, \qquad \operatorname{Var}(X)=E(X^2)-(E X)^2 . \]</div>
+<p>Przekształcenie liniowe:</p>
+<div class="ml-eq" id="eq-wariancja-liniowa">\[ y_i=a+bx_i \ \Longrightarrow\ s_y^2=b^2s_x^2 . \]</div>
+<p>Wartości oczekiwane estymatorów (obciążenie \(\hat\sigma^2\) wynosi \(-\sigma^2/n\)):</p>
+<div class="ml-eq" id="eq-wariancja-bessel">\[ E(S^2)=\sigma^2, \qquad E(\hat\sigma^2)=\frac{n-1}{n}\,\sigma^2 . \]</div>
+<p>Algorytm Welforda — rekurencja dla \(k=1,\dots,n\), z \(M_0=0\), \(S_0=0\):</p>
+<div class="ml-eq" id="eq-wariancja-welford">\[ \delta_k = x_k - M_{k-1},\qquad M_k = M_{k-1}+\frac{\delta_k}{k},\qquad S_k = S_{k-1}+\delta_k\,(x_k-M_k), \]</div>
+<p>a na końcu \(s^2=S_n/(n-1)\), \(\hat\sigma^2=S_n/n\).</p>
+<p>Łączenie wyników dwóch podzbiorów (np. obliczonych równolegle), \(n=n_A+n_B\), \(\delta=\bar x_B-\bar x_A\):</p>
+<div class="ml-eq" id="eq-wariancja-laczenie">\[ SS = SS_A + SS_B + \delta^2\,\frac{n_An_B}{n}, \qquad \bar x = \bar x_A + \delta\,\frac{n_B}{n} . \]</div>
+<p>Rozkład sumy kwadratów na część wewnątrzgrupową i międzygrupową (grupy \(g=1,\dots,G\) o licznościach \(n_g\) i średnich \(\bar x_g\)):</p>
+<div class="ml-eq" id="eq-wariancja-dekompozycja">\[ \sum_{g=1}^{G}\sum_{i\in g}(x_i-\bar x)^2 = \sum_{g=1}^{G}\sum_{i\in g}(x_i-\bar x_g)^2 + \sum_{g=1}^{G} n_g(\bar x_g-\bar x)^2 . \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-bessel"><p class="ml-box-title">Twierdzenie (poprawka Bessela)</p>
+<p>Niech \(X_1,\dots,X_n\), \(n\ge2\), będą parami nieskorelowane, \(E(X_i)=\mu\), \(\operatorname{Var}(X_i)=\sigma^2\lt\infty\). Wtedy \(E\big[\sum_i(X_i-\bar X)^2\big]=(n-1)\sigma^2\). W konsekwencji \(S^2\) jest nieobciążonym estymatorem \(\sigma^2\), a \(\hat\sigma^2\) zaniża \(\sigma^2\) średnio o czynnik \((n-1)/n\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-welford"><p class="ml-box-title">Twierdzenie (poprawność algorytmu Welforda)</p>
+<p>Dla każdego \(k\ge1\) wielkości z <a class="ml-eqref" href="#eq-wariancja-welford"></a> spełniają \(M_k=\frac1k\sum_{i\le k}x_i\) oraz \(S_k=\sum_{i\le k}(x_i-M_k)^2\) <cite data-bib="welford1962"></cite>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-laczenie"><p class="ml-box-title">Twierdzenie (łączenie podzbiorów i dekompozycja)</p>
+<p>Wzory <a class="ml-eqref" href="#eq-wariancja-laczenie"></a> i <a class="ml-eqref" href="#eq-wariancja-dekompozycja"></a> są tożsamościami prawdziwymi dla dowolnych danych.</p>
+</div>
+<div class="ml-box ml-note"><p>Nieobciążoność nie oznacza najmniejszego błędu. Dla danych normalnych błąd średniokwadratowy wynosi \(\mathrm{MSE}(S^2)=2\sigma^4/(n-1)\) oraz \(\mathrm{MSE}(\hat\sigma^2)=(2n-1)\sigma^4/n^2\), a ten drugi jest mniejszy dla każdego \(n\ge2\) <cite data-bib="casellaberger2002"></cite>. Wybór dzielnika jest więc kompromisem między obciążeniem a wariancją; przy \(n\) rzędu setek różnica jest zaniedbywalna.</p></div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-konig">Tożsamość Königa–Huygensa</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>\(\sum_i(x_i-\bar x)^2=\sum_ix_i^2-2\bar x\sum_ix_i+n\bar x^2=\sum_ix_i^2-2n\bar x^2+n\bar x^2=\sum_ix_i^2-n\bar x^2\), bo \(\sum_ix_i=n\bar x\). Wersja dla zmiennej losowej: \(E(X-\mu)^2=E X^2-2\mu E X+\mu^2=E X^2-\mu^2\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-bessel">Poprawka Bessela</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p><em>Krok 1 (rozkład względem \(\mu\)).</em> Z tożsamości \(\sum_i(x_i-c)^2=\sum_i(x_i-\bar x)^2+n(\bar x-c)^2\) (zob. <a data-concept="srednia-arytmetyczna" data-anchor="wyprowadzenie">średnia arytmetyczna</a>) z \(c=\mu\):</p>
+\[ \sum_{i=1}^n(X_i-\bar X)^2=\sum_{i=1}^n(X_i-\mu)^2-n(\bar X-\mu)^2 . \]
+<p><em>Krok 2 (wartość oczekiwana pierwszego składnika).</em> \(E(X_i-\mu)^2=\operatorname{Var}(X_i)=\sigma^2\), więc \(E\sum_i(X_i-\mu)^2=n\sigma^2\).</p>
+<p><em>Krok 3 (wartość oczekiwana drugiego składnika).</em> \(E(\bar X)=\mu\), zatem \(E(\bar X-\mu)^2=\operatorname{Var}(\bar X)=\sigma^2/n\) (z nieskorelowania), czyli \(E\big[n(\bar X-\mu)^2\big]=\sigma^2\).</p>
+<p><em>Krok 4.</em> Odejmując: \(E\sum_i(X_i-\bar X)^2=n\sigma^2-\sigma^2=(n-1)\sigma^2\). Dzieląc przez \(n-1\) dostajemy \(E(S^2)=\sigma^2\), a dzieląc przez \(n\): \(E(\hat\sigma^2)=\frac{n-1}{n}\sigma^2\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-box ml-note"><p><strong>Intuicja stopni swobody.</strong> Odchylenia mierzymy od \(\bar x\), a nie od nieznanego \(\mu\). Ponieważ \(\bar x\) minimalizuje sumę kwadratów, \(\sum(x_i-\bar x)^2\le\sum(x_i-\mu)^2\) — suma liczona od średniej z próby jest systematycznie za mała. Ponadto odchylenia \(x_i-\bar x\) spełniają jedno więzy liniowe \(\sum_i(x_i-\bar x)=0\), więc tylko \(n-1\) z nich jest „swobodnych”. Dzielnik \(n-1\) dokładnie kompensuje ten efekt.</p></div>
+
+<h3 id="dowod-welford">Algorytm Welforda</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Indukcja po \(k\). Dla \(k=1\): \(\delta_1=x_1\), \(M_1=x_1\), \(S_1=0\) — poprawnie. Załóżmy tezę dla \(k-1\). Wzór na \(M_k\) to aktualizacja przyrostowa średniej: \(M_k=\frac{(k-1)M_{k-1}+x_k}{k}=M_{k-1}+\frac{x_k-M_{k-1}}{k}\).</p>
+<p>Dla \(S_k\) stosujemy rozkład sumy kwadratów od punktu \(c=M_{k-1}\) dla pierwszych \(k\) obserwacji, których średnią jest \(M_k\):</p>
+\[ \begin{aligned}
+S_k=\sum_{i\le k}(x_i-M_k)^2 &amp;= \sum_{i\le k}(x_i-M_{k-1})^2 - k\,(M_k-M_{k-1})^2 \\
+&amp;= \underbrace{\sum_{i\le k-1}(x_i-M_{k-1})^2}_{S_{k-1}} + \delta_k^2 - k\Big(\frac{\delta_k}{k}\Big)^2 \\
+&amp;= S_{k-1} + \delta_k^2\,\frac{k-1}{k} .
+\end{aligned} \]
+<p>Pozostaje zauważyć, że \(x_k-M_k=x_k-M_{k-1}-\frac{\delta_k}{k}=\delta_k\frac{k-1}{k}\), więc \(\delta_k^2\frac{k-1}{k}=\delta_k(x_k-M_k)\), co daje <a class="ml-eqref" href="#eq-wariancja-welford"></a>.</p>
+<p class="ml-qed">∎</p></div>
+<p><strong>Dlaczego to ważne numerycznie.</strong> Wzór <a class="ml-eqref" href="#eq-wariancja-konig"></a> odejmuje od siebie dwie ogromne, prawie równe liczby \(\sum x_i^2\) i \(n\bar x^2\). W arytmetyce zmiennoprzecinkowej o względnej precyzji ok. \(10^{-16}\) różnica może stracić wszystkie cyfry znaczące (ang. <em>catastrophic cancellation</em>), a wynik może wyjść nawet ujemny. Algorytm Welforda operuje na odchyleniach \(\delta_k\) od bieżącej średniej, które są rzędu rozrzutu danych, a nie ich wartości, a przy tym wymaga tylko jednego przebiegu i stałej pamięci — można go stosować do strumieni danych (np. próbek MCMC napływających w trakcie próbkowania).</p>
+
+<h3 id="dowod-laczenie">Łączenie podzbiorów i dekompozycja</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla podzbioru \(A\) z tożsamości rozkładu sumy kwadratów od punktu \(\bar x\): \(\sum_{i\in A}(x_i-\bar x)^2=SS_A+n_A(\bar x_A-\bar x)^2\); analogicznie dla \(B\). Sumując, otrzymujemy \(SS=SS_A+SS_B+n_A(\bar x_A-\bar x)^2+n_B(\bar x_B-\bar x)^2\) — to jest <a class="ml-eqref" href="#eq-wariancja-dekompozycja"></a> dla \(G=2\) (dla dowolnego \(G\) rozumowanie jest identyczne). Ponieważ \(\bar x=(n_A\bar x_A+n_B\bar x_B)/n\), mamy \(\bar x_A-\bar x=-\delta\,n_B/n\) i \(\bar x_B-\bar x=\delta\,n_A/n\), skąd</p>
+\[ n_A\frac{\delta^2n_B^2}{n^2}+n_B\frac{\delta^2n_A^2}{n^2}=\delta^2\frac{n_An_B(n_A+n_B)}{n^2}=\delta^2\frac{n_An_B}{n} . \]
+<p class="ml-qed">∎</p></div>
+<p>Dekompozycja <a class="ml-eqref" href="#eq-wariancja-dekompozycja"></a> jest empiryczną wersją <a data-concept="prawo-calkowitej-wariancji">prawa całkowitej wariancji</a> \(\operatorname{Var}(X)=E\operatorname{Var}(X\mid G)+\operatorname{Var}E(X\mid G)\).</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p>Frekwencja w pięciu meczach domowych (dane ilustracyjne): 1200, 1350, 1100, 1450, 1300.</p>
+<h3 id="przyklad-dwuprzebiegowy">Algorytm dwuprzebiegowy</h3>
+<ol class="ml-steps">
+<li>Średnia: \(\bar x=(1200+1350+1100+1450+1300)/5=6400/5=1280\).</li>
+<li>Odchylenia: \(-80,\ 70,\ -180,\ 170,\ 20\) (suma 0 ✓).</li>
+<li>Kwadraty: \(6400,\ 4900,\ 32\,400,\ 28\,900,\ 400\); \(SS=73\,000\).</li>
+<li>Wariancja nieobciążona: \(s^2=73\,000/4=18\,250\) (widzów²); obciążona: \(\hat\sigma^2=73\,000/5=14\,600\).</li>
+<li>Odchylenia standardowe: \(s=\sqrt{18\,250}\approx135{,}09\), \(\hat\sigma=\sqrt{14\,600}\approx120{,}83\) widzów.</li>
+<li>Kontrola wzorem Königa: \(\sum x_i^2=1\,440\,000+1\,822\,500+1\,210\,000+2\,102\,500+1\,690\,000=8\,265\,000\); \(n\bar x^2=5\cdot1\,638\,400=8\,192\,000\); różnica \(73\,000\) ✓.</li>
+</ol>
+<h3 id="przyklad-welford">Algorytm Welforda</h3>
+<table class="ml-table">
+<thead><tr><th>\(k\)</th><th>\(x_k\)</th><th>\(\delta_k=x_k-M_{k-1}\)</th><th>\(M_k\)</th><th>\(x_k-M_k\)</th><th>\(S_k\)</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>1200</td><td>1200</td><td>1200</td><td>0</td><td>0</td></tr>
+<tr><td>2</td><td>1350</td><td>150</td><td>1275</td><td>75</td><td>\(0+150\cdot75=11\,250\)</td></tr>
+<tr><td>3</td><td>1100</td><td>−175</td><td>1216,667</td><td>−116,667</td><td>\(11\,250+20\,416{,}67=31\,666{,}67\)</td></tr>
+<tr><td>4</td><td>1450</td><td>233,333</td><td>1275</td><td>175</td><td>\(31\,666{,}67+40\,833{,}33=72\,500\)</td></tr>
+<tr><td>5</td><td>1300</td><td>25</td><td>1280</td><td>20</td><td>\(72\,500+500=73\,000\)</td></tr>
+</tbody>
+</table>
+<p>Wynik \(S_5=73\,000\) i \(M_5=1280\) jest identyczny z algorytmem dwuprzebiegowym.</p>
+<h3 id="przyklad-laczenie">Łączenie dwóch części</h3>
+<ol class="ml-steps">
+<li>Część \(A\) = pierwsze trzy mecze: \(n_A=3\), \(\bar x_A=1216{,}667\), \(SS_A=31\,666{,}67\) (wiersz \(k=3\) tabeli).</li>
+<li>Część \(B\) = mecze 1450 i 1300: \(n_B=2\), \(\bar x_B=1375\), \(SS_B=75^2+75^2=11\,250\).</li>
+<li>\(\delta=1375-1216{,}667=158{,}333\); \(\delta^2n_An_B/n=25\,069{,}44\cdot6/5=30\,083{,}33\).</li>
+<li>\(SS=31\,666{,}67+11\,250+30\,083{,}33=73\,000\) ✓.</li>
+</ol>
+<h3 id="przyklad-numeryka">Utrata precyzji we wzorze „obliczeniowym”</h3>
+<p>Dla danych \(10^9+4,\ 10^9+7,\ 10^9+13,\ 10^9+16\) (np. identyfikatory czasu lub sumy narastające) prawdziwa wariancja z próby to \(SS/3=90/3=30\). Wzór <a class="ml-eqref" href="#eq-wariancja-konig"></a> w arytmetyce podwójnej precyzji odejmuje liczby rzędu \(4\cdot10^{18}\), których odstęp między sąsiednimi reprezentowalnymi wartościami wynosi 512; w zależności od kolejności działań daje np. 0 albo \(-170{,}7\). Algorytm Welforda zwraca dokładnie 30 (\(S_4=90\)).</p>
+<div class="ml-plot" data-plot="normal" data-params='{"mu": 1280, "sigma": 135}'></div>
+<p>Gęstość normalna o średniej 1280 i odchyleniu ok. 135 widzów odpowiada danym z przykładu. Zmieniając \(\sigma\), zauważ, że podwojenie odchylenia (czterokrotny wzrost wariancji) rozciąga krzywą dwukrotnie w poziomie i obniża ją dwukrotnie.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li>\(s^2=18\,250\) widzów² nie ma bezpośredniej interpretacji; interpretujemy \(s\approx135\) widzów: typowe odchylenie meczu od średniej klubu jest rzędu 135 osób.</li>
+<li>Różnica \(s^2\) a \(\hat\sigma^2\) (18 250 vs 14 600) jest przy \(n=5\) duża (25%) — przy małych próbach wybór dzielnika ma znaczenie i musi być raportowany. Przy 200 meczach różnica wynosi 0,5%.</li>
+<li>Wariancja jest addytywna: jeżeli frekwencję rozłożymy na efekt klubu, sezonu i szum meczowy, to (przy niezależności) wariancje tych składników się sumują, co pozwala mówić o „udziale” każdego źródła zmienności.</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<ul>
+<li><strong>Parametry wariancyjne MAF.</strong> W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> każdy efekt losowy (gospodarz \(H\), gospodarz×sezon \(HS\), rywal \(R\), rywal×sezon \(RS\), sezon \(S\), rozgrywki \(L\)) ma własne odchylenie \(\sigma\), np. \(R_j=\sigma_Rz_j\). Kwadraty \(\sigma_H^2,\sigma_R^2,\dots\) są wariancjami na skali predyktora liniowego \(\eta\) (logit lub log), a ich porównanie mówi, które źródło zmienności frekwencji dominuje — empiryczny odpowiednik dekompozycji <a class="ml-eqref" href="#eq-wariancja-dekompozycja"></a>.</li>
+<li><strong>Nadmierna dyspersja.</strong> Wariancja liczby widzów w modelu ujemnym dwumianowym wynosi \(\mu+\mu^2/\kappa\), a w beta-dwumianowym \(C\mu(1-\mu)\frac{\phi+C}{\phi+1}\) — w obu przypadkach więcej niż w modelach Poissona i dwumianowym. Porównanie wariancji empirycznej z modelową to podstawowy test, czy rozkład jest dobrze dobrany; zob. <a data-concept="rozklad-ujemny-dwumianowy">rozkład ujemny dwumianowy</a> i <a data-concept="rozklad-beta-dwumianowy">rozkład beta-dwumianowy</a>.</li>
+<li><strong>Niepewność posterior i diagnostyka MCMC.</strong> Wariancja próbek posterior opisuje niepewność parametru; <a data-concept="r-hat">R-hat</a> porównuje wariancję wewnątrz łańcuchów z wariancją między łańcuchami — to właśnie dekompozycja na część wewnątrz- i międzygrupową.</li>
+<li><strong>Obliczenia strumieniowe.</strong> Przy agregowaniu dziesiątek tysięcy meczów lub próbek posterior wariancję warto liczyć algorytmem Welforda lub wzorem łączenia <a class="ml-eqref" href="#eq-wariancja-laczenie"></a> (np. osobno dla każdego sezonu, a potem łącznie), a nie wzorem „suma kwadratów minus kwadrat sumy”.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Wrażliwość na wartości odstające</strong> jest jeszcze silniejsza niż dla średniej, bo odchylenia są podnoszone do kwadratu: jeden mecz z frekwencją o 1700 widzów powyżej średniej wnosi do \(SS\) blisko 3 mln. Odporne alternatywy: <a data-concept="kwartyle">IQR</a>, MAD.</li>
+<li><strong>Jednostka kwadratowa</strong> utrudnia interpretację; do komunikacji używaj odchylenia standardowego.</li>
+<li><strong>Zależność od skali i poziomu:</strong> wariancja frekwencji rośnie ze średnią (kluby z większą widownią mają większy rozrzut w liczbach bezwzględnych). Do porównań między klubami lepszy bywa <a data-concept="wspolczynnik-zmiennosci">współczynnik zmienności</a> lub analiza na skali logarytmicznej.</li>
+<li><strong>Zmienne ograniczone:</strong> dla wypełnienia \(W\in[0,1]\) wariancja jest ograniczona przez \(\bar W(1-\bar W)\) i zależy od średniej; porównania wariancji przy różnych średnich wypełnienia są mylące.</li>
+<li><strong>Nieobciążoność nie przenosi się</strong> na nieliniowe funkcje: \(S\) jest obciążonym estymatorem \(\sigma\) (zob. <a data-concept="odchylenie-standardowe" data-anchor="twierdzenia">odchylenie standardowe</a>).</li>
+<li><strong>Zależność obserwacji:</strong> przy autokorelacji \(E(S^2)\ne\sigma^2\) — na przykład przy dodatniej korelacji kolejnych meczów \(S^2\) zaniża wariancję rozkładu brzegowego.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="odchylenie-standardowe">Odchylenie standardowe</a> — pierwiastek z wariancji.</li>
+<li><a data-concept="wariancja-zmiennej-losowej">Wariancja zmiennej losowej</a> — wersja populacyjna i jej własności.</li>
+<li><a data-concept="prawo-calkowitej-wariancji">Prawo całkowitej wariancji</a> — teoretyczna wersja dekompozycji.</li>
+<li><a data-concept="srednia-arytmetyczna">Średnia arytmetyczna</a> — punkt odniesienia odchyleń.</li>
+<li><a data-concept="standaryzacja">Standaryzacja</a> — dzielenie przez \(s\).</li>
+<li><a data-concept="r-hat">R-hat</a> — porównanie wariancji wewnątrz i między łańcuchami.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="openintro2019"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="welford1962"></li>
+<li data-bib="wasserman2004"></li>
+<li data-bib="hilbe2011"></li>
+</ul>
+</section>

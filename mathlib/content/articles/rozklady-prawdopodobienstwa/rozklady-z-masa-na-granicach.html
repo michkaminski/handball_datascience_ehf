@@ -1,0 +1,154 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Wiele proporcji obserwowanych w praktyce przyjmuje wartości z całego odcinka \([0,1]\), łącznie z jego krańcami. Wypełnienie hali jest dobrym przykładem: większość meczów ma wypełnienie gdzieś pomiędzy, ale część kończy się kompletem widzów (\(W=1\)), a zdarzają się mecze bez publiczności (\(W=0\)). <a data-concept="rozklad-beta">Rozkład beta</a> przypisuje obu krańcom prawdopodobieństwo zero, więc już jedna obserwacja \(W=1\) jest z modelem niezgodna — w praktyce oprogramowanie zwraca wiarygodność zerową lub nieokreśloną i dopasowanie regresji beta się nie udaje.</p>
+<p>Rozkłady z masą prawdopodobieństwa na granicach (ang. <em>boundary-inflated distributions</em>) rozwiązują ten problem, łącząc dwa składniki: dyskretny, który „odpowiada” za wartości 0 i 1, oraz ciągły (beta), który opisuje wartości wewnętrzne. Najważniejszym przedstawicielem jest rozkład beta z inflacją zer i jedynek, ZOIB (ang. <em>zero-and-one inflated beta</em>), wraz z modelem regresji <cite data-bib="ospina2012"></cite>. Drugą, konkurencyjną drogą jest model dyskretny, w którym krańce pojawiają się naturalnie — <a data-concept="rozklad-beta-dwumianowy">rozkład beta-dwumianowy</a>.</p>
+<div class="ml-plot" data-plot="beta-mean" data-params='{"mu": 0.6, "phi": 20}'></div>
+<p>Wykres pokazuje tylko część ciągłą ZOIB. Zauważ, że niezależnie od \(\mu\) i \(\phi\) gęstość beta nie tworzy „atomów” w punktach 0 i 1 — tę rolę w ZOIB przejmują osobne parametry \(\alpha\) i \(\gamma\).</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-zoib"><p class="ml-box-title">Definicja (rozkład ZOIB)</p>
+<p>Niech \(\alpha\in(0,1)\), \(\gamma\in[0,1]\), \(\mu\in(0,1)\), \(\phi\gt0\). Zmienna losowa \(Y\) o wartościach w \([0,1]\) ma rozkład beta z inflacją zer i jedynek, \(Y\sim\text{ZOIB}(\alpha,\gamma,\mu,\phi)\), jeśli jej rozkład ma względem miary \(\nu=\lambda|_{(0,1)}+\delta_0+\delta_1\) (miara Lebesgue’a na \((0,1)\) plus miary Diraca w 0 i 1) gęstość</p>
+<div class="ml-eq" id="eq-rozklady-z-masa-na-granicach">\[ p(y\mid\alpha,\gamma,\mu,\phi)=\begin{cases}\alpha(1-\gamma), &amp; y=0,\\ \alpha\gamma, &amp; y=1,\\ (1-\alpha)\,f(y\mid\mu,\phi), &amp; y\in(0,1),\end{cases} \]</div>
+<p>gdzie \(f(\cdot\mid\mu,\phi)\) jest gęstością <a data-concept="rozklad-beta" data-anchor="definicja">rozkładu beta</a> w parametryzacji średnia–precyzja (\(a=\mu\phi\), \(b=(1-\mu)\phi\)).</p>
+</div>
+<p>Interpretacja parametrów <cite data-bib="ospina2012"></cite>: \(\alpha=P(Y\in\{0,1\})\) — prawdopodobieństwo wyniku brzegowego; \(\gamma=P(Y=1\mid Y\in\{0,1\})\) — udział jedynek wśród wyników brzegowych; \(\mu,\phi\) — średnia i precyzja wyników wewnętrznych. Przypadki szczególne: \(\gamma=0\) — beta z inflacją zer (ZIB), \(\gamma=1\) — beta z inflacją jedynek (OIB).</p>
+<div class="ml-box ml-def" id="def-zoib-regresja"><p class="ml-box-title">Definicja (regresja ZOIB)</p>
+<p>Dla obserwacji \(Y_i\) z wektorami zmiennych \(x_i\) model regresji ZOIB zakłada \(Y_i\sim\text{ZOIB}(\alpha_i,\gamma_i,\mu_i,\phi_i)\), niezależnie przy danych parametrach, z czterema podmodelami</p>
+<div class="ml-eq" id="eq-rozklady-z-masa-na-granicach-regresja">\[ \operatorname{logit}\alpha_i=x_i^\top\beta_\alpha,\qquad \operatorname{logit}\gamma_i=x_i^\top\beta_\gamma,\qquad \operatorname{logit}\mu_i=x_i^\top\beta_\mu,\qquad \log\phi_i=x_i^\top\beta_\phi. \]</div>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(Y\), \(W\)</td><td>proporcja w \([0,1]\); w MAF wypełnienie hali \(W=A/C\)</td></tr>
+<tr><td>\(\alpha\)</td><td>prawdopodobieństwo wyniku brzegowego, \(P(Y\in\{0,1\})\)</td></tr>
+<tr><td>\(\gamma\)</td><td>prawdopodobieństwo jedynki wśród wyników brzegowych</td></tr>
+<tr><td>\(\mu,\ \phi\)</td><td>średnia i precyzja części ciągłej (beta)</td></tr>
+<tr><td>\(f(y\mid\mu,\phi)\)</td><td>gęstość rozkładu beta</td></tr>
+<tr><td>\(\nu\)</td><td>miara dominująca: Lebesgue’a na \((0,1)\) plus atomy w 0 i 1</td></tr>
+<tr><td>\(n_0,\ n_1,\ n_c\)</td><td>liczby obserwacji równych 0, równych 1 i wewnętrznych</td></tr>
+<tr><td>\(C,\ A\)</td><td>pojemność hali i liczba widzów (model beta-dwumianowy)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Wartości brzegowe są generowane przez mechanizm odrębny od mechanizmu wartości wewnętrznych (np. komplet = popyt przewyższył podaż miejsc; zero = mecz przy zamkniętych drzwiach).</li>
+<li>Wartości wewnętrzne mają (warunkowo) rozkład beta — obowiązują więc założenia <a data-concept="regresja-beta">regresji beta</a> <cite data-bib="ferrari2004"></cite>.</li>
+<li>Obserwacje są warunkowo niezależne przy danych parametrach.</li>
+<li>Proporcja jest traktowana jako zmienna ciągła na \((0,1)\); dyskretność wynikająca z całkowitej liczby widzów jest pomijana.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Wartość oczekiwana i wariancja:</p>
+<div class="ml-eq" id="eq-rozklady-z-masa-na-granicach-srednia">\[ EY=\alpha\gamma+(1-\alpha)\mu, \]</div>
+<div class="ml-eq" id="eq-rozklady-z-masa-na-granicach-wariancja">\[ \operatorname{Var}Y=\alpha\gamma(1-\gamma)+(1-\alpha)\frac{\mu(1-\mu)}{1+\phi}+\alpha(1-\alpha)(\gamma-\mu)^2. \]</div>
+<p>Funkcja wiarygodności dla próby \(y_1,\dots,y_n\) (wspólne parametry):</p>
+<div class="ml-eq" id="eq-rozklady-z-masa-na-granicach-wiarygodnosc">\[ L(\alpha,\gamma,\mu,\phi)=\underbrace{\alpha^{n_0+n_1}(1-\alpha)^{n_c}}_{L_1(\alpha)}\cdot\underbrace{\gamma^{n_1}(1-\gamma)^{n_0}}_{L_2(\gamma)}\cdot\underbrace{\prod_{i:\,0\lt y_i\lt1}f(y_i\mid\mu,\phi)}_{L_3(\mu,\phi)}. \]</div>
+<p>Estymatory największej wiarygodności parametrów dyskretnych:</p>
+<div class="ml-eq" id="eq-rozklady-z-masa-na-granicach-mle">\[ \hat\alpha=\frac{n_0+n_1}{n},\qquad \hat\gamma=\frac{n_1}{n_0+n_1}. \]</div>
+<p>Przekształcenie ściskające (alternatywa ad hoc) <cite data-bib="smithson2006"></cite>:</p>
+<div class="ml-eq" id="eq-rozklady-z-masa-na-granicach-scisniecie">\[ y'=\frac{y\,(n-1)+1/2}{n}\in(0,1). \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-momenty-zoib"><p class="ml-box-title">Twierdzenie (momenty ZOIB)</p>
+<p>Dla \(Y\sim\text{ZOIB}(\alpha,\gamma,\mu,\phi)\) zachodzą wzory <a class="ml-eqref" href="#eq-rozklady-z-masa-na-granicach-srednia"></a> i <a class="ml-eqref" href="#eq-rozklady-z-masa-na-granicach-wariancja"></a>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-faktoryzacja"><p class="ml-box-title">Twierdzenie (faktoryzacja wiarygodności)</p>
+<p>Jeśli zbiory parametrów \(\{\alpha\}\) (lub \(\beta_\alpha\)), \(\{\gamma\}\) (\(\beta_\gamma\)) i \(\{\mu,\phi\}\) (\(\beta_\mu,\beta_\phi\)) są rozłączne, wiarygodność rozkłada się na iloczyn trzech czynników <a class="ml-eqref" href="#eq-rozklady-z-masa-na-granicach-wiarygodnosc"></a>. W konsekwencji: (i) estymatory największej wiarygodności każdej grupy można liczyć osobno — \((\mu,\phi)\) tylko z obserwacji wewnętrznych; (ii) przy niezależnych priorach dla trzech grup rozkład posterior jest iloczynem trzech niezależnych rozkładów.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-nosnik-beta"><p class="ml-box-title">Twierdzenie (niezgodność regresji beta z danymi z krańcami)</p>
+<p>Dla każdego \(\mu\in(0,1)\) i \(\phi\gt0\) rozkład beta spełnia \(P(Y\in\{0,1\})=0\). Jeśli więc w próbie występuje \(y_i\in\{0,1\}\), to próba ma w modelu beta prawdopodobieństwo zero (model jest błędnie wyspecyfikowany), a gęstość <a data-concept="rozklad-beta" data-anchor="definicja">beta</a>, określona na \((0,1)\), nie wyznacza wkładu takiej obserwacji do wiarygodności: jej przedłużenie przez ciągłość daje w 0 wartość \(0\) dla \(a\gt1\), \(+\infty\) dla \(a\lt1\) i \(b\) dla \(a=1\) — wynik zależny od parametrów w sposób pozbawiony interpretacji probabilistycznej (analogicznie w 1).</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="momenty-zoib-wyprowadzenie">Momenty</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Niech \(D=\mathbf 1\{Y\in\{0,1\}\}\), \(P(D=1)=\alpha\). Warunkowo: \(Y\mid D=1\sim\text{Bernoulli}(\gamma)\), więc \(E(Y\mid D=1)=\gamma\), \(\operatorname{Var}(Y\mid D=1)=\gamma(1-\gamma)\); \(Y\mid D=0\sim\text{Beta}(\mu,\phi)\), więc \(E(Y\mid D=0)=\mu\), \(\operatorname{Var}(Y\mid D=0)=\frac{\mu(1-\mu)}{1+\phi}\).</p>
+<p>Średnia: \(EY=\alpha\gamma+(1-\alpha)\mu\). Wariancja z <a data-concept="prawo-calkowitej-wariancji">prawa całkowitej wariancji</a>:</p>
+\[ \begin{aligned} \operatorname{Var}Y&amp;=E[\operatorname{Var}(Y\mid D)]+\operatorname{Var}(E[Y\mid D])\\ &amp;=\alpha\gamma(1-\gamma)+(1-\alpha)\frac{\mu(1-\mu)}{1+\phi}+\operatorname{Var}(E[Y\mid D]). \end{aligned} \]
+<p>Zmienna \(E[Y\mid D]\) przyjmuje wartość \(\gamma\) z prawdopodobieństwem \(\alpha\) i \(\mu\) z prawdopodobieństwem \(1-\alpha\); wariancja zmiennej dwupunktowej to \(\alpha(1-\alpha)(\gamma-\mu)^2\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="faktoryzacja-wyprowadzenie">Faktoryzacja wiarygodności i estymatory</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z niezależności \(L=\prod_ip(y_i)\). Obserwacje \(y_i=0\) wnoszą czynnik \(\alpha(1-\gamma)\), \(y_i=1\) — \(\alpha\gamma\), wewnętrzne — \((1-\alpha)f(y_i\mid\mu,\phi)\). Grupując:</p>
+\[ L=\big[\alpha(1-\gamma)\big]^{n_0}\big[\alpha\gamma\big]^{n_1}(1-\alpha)^{n_c}\prod_{0\lt y_i\lt1}f(y_i\mid\mu,\phi)=L_1(\alpha)\,L_2(\gamma)\,L_3(\mu,\phi). \]
+<p>Logarytm wiarygodności jest sumą trzech funkcji różnych zmiennych, więc maksymalizuje się je osobno. \(\log L_1=(n_0+n_1)\log\alpha+n_c\log(1-\alpha)\) jest logarytmem wiarygodności dwumianowej z \(n_0+n_1\) „sukcesami” na \(n\) prób, stąd \(\hat\alpha=(n_0+n_1)/n\); analogicznie \(\hat\gamma=n_1/(n_0+n_1)\). Przy priorze \(p(\alpha)p(\gamma)p(\mu,\phi)\) posterior \(\propto[L_1p(\alpha)][L_2p(\gamma)][L_3p(\mu,\phi)]\) jest iloczynem funkcji rozłącznych grup parametrów, czyli grupy są a posteriori niezależne. W regresji argument jest identyczny, o ile wektory \(\beta_\alpha,\beta_\gamma,(\beta_\mu,\beta_\phi)\) nie mają wspólnych składowych.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="sciskanie">Uwaga o przekształceniu ściskającym</h3>
+<p>Przekształcenie <a class="ml-eqref" href="#eq-rozklady-z-masa-na-granicach-scisniecie"></a> odwzorowuje \([0,1]\) na \([\frac1{2n},1-\frac1{2n}]\), co pozwala dopasować regresję beta. Wynik zależy jednak od arbitralnego wyboru stałej i od \(n\), a obserwacje przesunięte z krańców mogą silnie wpływać na estymację \(\phi\) (wartości bliskie 0 i 1 mają bardzo duże \(|\log y|\), \(|\log(1-y)|\)). Dlatego w modelu docelowym traktujemy je tylko jako rozwiązanie awaryjne.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong></p>
+<ol class="ml-steps">
+<li><strong>Parametry.</strong> \(\alpha=0{,}10\), \(\gamma=0{,}8\), \(\mu=0{,}6\), \(\phi=20\). Stąd \(P(W=1)=\alpha\gamma=0{,}08\), \(P(W=0)=\alpha(1-\gamma)=0{,}02\), \(P(0\lt W\lt1)=0{,}90\).</li>
+<li><strong>Średnia.</strong> \(EW=0{,}10\cdot0{,}8+0{,}90\cdot0{,}6=0{,}08+0{,}54=0{,}62\).</li>
+<li><strong>Składniki wariancji.</strong> \(\alpha\gamma(1-\gamma)=0{,}1\cdot0{,}8\cdot0{,}2=0{,}0160\); \((1-\alpha)\frac{\mu(1-\mu)}{1+\phi}=0{,}9\cdot\frac{0{,}24}{21}=0{,}010286\); \(\alpha(1-\alpha)(\gamma-\mu)^2=0{,}1\cdot0{,}9\cdot0{,}04=0{,}0036\).</li>
+<li><strong>Wariancja.</strong> \(0{,}0160+0{,}010286+0{,}0036=0{,}029886\), odchylenie standardowe \(0{,}1729\). Kontrola bezpośrednia: \(EW^2=\alpha\gamma+(1-\alpha)\big(\frac{0{,}24}{21}+0{,}36\big)=0{,}08+0{,}9\cdot0{,}371429=0{,}414286\); \(0{,}414286-0{,}62^2=0{,}029886\) ✓.</li>
+<li><strong>Estymacja z próby.</strong> W 40 meczach odnotowano 4 komplety, 1 mecz przy zamkniętych drzwiach i 35 wyników wewnętrznych. \(\hat\alpha=5/40=0{,}125\), \(\hat\gamma=4/5=0{,}8\); \((\hat\mu,\hat\phi)\) wyznacza się z regresji beta na 35 obserwacjach wewnętrznych.</li>
+<li><strong>Porównanie z modelem beta-dwumianowym.</strong> W modelu \(\text{BetaBinomial}(2000;\ 12;\ 8)\) (\(\mu=0{,}6,\ \phi=20\)) prawdopodobieństwo kompletu wynosi ok. \(10^{-17}\); aby uzyskać \(P(A=C)\approx0{,}05\), potrzeba parametrów rzędu \(\mu=0{,}9,\ \phi=5\) przy \(C=1500\) (zob. <a data-concept="rozklad-beta-dwumianowy" data-anchor="przyklad">przykład</a>). Model ZOIB pozwala na 8% kompletów przy średnim wypełnieniu meczów niewyprzedanych równym 60%.</li>
+</ol>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>W przykładzie średnie wypełnienie (0,62) jest wyższe od średniej części ciągłej (0,60), bo 8% meczów z kompletem „podciąga” wynik. Ponad połowa wariancji (0,016 z 0,030) pochodzi z części dyskretnej — wynik brzegowy jest bardzo informacyjny o rozrzucie. ZOIB odpowiada więc na dwa różne pytania: <em>jak często mecz się wyprzedaje?</em> (\(\alpha,\gamma\)) i <em>jak wysokie jest wypełnienie, gdy się nie wyprzedaje?</em> (\(\mu,\phi\)).</p>
+<p>W modelu beta-dwumianowym te pytania są połączone: częstość kompletów wynika z tych samych \(\mu\) i \(\phi\), które opisują resztę rozkładu, i dodatkowo zależy od pojemności (\(P(A=C)\sim n^{-b}\)). Jest to zaleta (mniej parametrów, spójny mechanizm), ale i ograniczenie (model nie odda kompletów w meczach, których predyktor nie wskazuje jako atrakcyjne).</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> podstawowym modelem wypełnienia przy znanej pojemności jest model beta-dwumianowy; ZOIB jest rozważany jako alternatywa i narzędzie kontroli. Porównanie:</p>
+<table class="ml-table">
+<thead><tr><th>Cecha</th><th>Beta-dwumianowy</th><th>ZOIB</th></tr></thead>
+<tbody>
+<tr><td>Obserwacja</td><td>liczba widzów \(A\in\{0,\dots,C\}\)</td><td>wypełnienie \(W\in[0,1]\)</td></tr>
+<tr><td>Krańce</td><td>naturalnie w nośniku, z tych samych \(\mu,\phi\)</td><td>osobne parametry \(\alpha,\gamma\)</td></tr>
+<tr><td>Liczba podmodeli</td><td>1 (\(\mu\)) + \(\phi\)</td><td>do 4 (\(\alpha,\gamma,\mu,\phi\))</td></tr>
+<tr><td>Wpływ pojemności</td><td>uwzględniony (szum dwumianowy, \(P(A=C)\) maleje z \(C\))</td><td>pominięty (ułamek ciągły)</td></tr>
+<tr><td>\(E(W\mid\eta)\)</td><td>\(\operatorname{logit}^{-1}(\eta)\) — prosty indeks IAF</td><td>\(\alpha\gamma+(1-\alpha)\mu\) — wymaga łączenia podmodeli</td></tr>
+<tr><td>Mecze bez publiczności</td><td>w nośniku, ale bardzo mało prawdopodobne</td><td>jawny parametr \(\alpha(1-\gamma)\)</td></tr>
+</tbody>
+</table>
+<ul>
+<li>Mecze przy zamkniętych drzwiach (kara, ograniczenia sanitarne) są zjawiskiem administracyjnym, a nie wyrazem atrakcyjności — w MAF lepiej je oznaczyć i wyłączyć niż modelować. Brak danych (NULL) nie jest zerem.</li>
+<li>Gdy częstość kompletów zależy od innych czynników niż średnie wypełnienie (np. limit sprzedaży biletów, dostawiane trybuny), ZOIB z osobnym podmodelem \(\gamma\) lepiej odtworzy dane — warto to sprawdzić w <a data-concept="posterior-predictive-checks">posterior predictive checks</a>, porównując obserwowaną i przewidywaną liczbę kompletów.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li>Więcej parametrów: przy niewielu wynikach brzegowych \(\gamma\) i \(\beta_\gamma\) są słabo identyfikowalne (np. \(\hat\gamma=1\), gdy nie ma żadnego zera), co wymaga priorów.</li>
+<li>Faktoryzacja oznacza, że obserwacje brzegowe nie wnoszą informacji o \((\mu,\phi)\) — komplet nie „mówi” niczego o tym, jak wysokie byłoby wypełnienie w meczach niewyprzedanych. To bywa nierealistyczne: komplet zwykle oznacza popyt wyższy od pojemności (cenzurowanie), a nie odrębny proces.</li>
+<li>Model ignoruje dyskretność i pojemność: wypełnienie 0,999 w hali na 1000 miejsc (999 widzów) i 1,0 są traktowane jakościowo różnie.</li>
+<li>Interpretacja średniej \(EW\) wymaga złożenia czterech podmodeli; efekty zmiennych na \(EW\) nie mają prostej postaci.</li>
+<li>Alternatywą koncepcyjnie lepszą dla kompletów jest model cenzurowany (popyt nieobserwowany powyżej pojemności), który jednak wykracza poza ten artykuł.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="rozklad-beta">Rozkład beta</a> — część ciągła.</li>
+<li><a data-concept="rozklad-beta-dwumianowy">Rozkład beta-dwumianowy</a> — model z krańcami w nośniku.</li>
+<li><a data-concept="regresja-beta">Regresja beta</a>.</li>
+<li><a data-concept="prawo-calkowitej-wariancji">Prawo całkowitej wariancji</a>.</li>
+<li><a data-concept="posterior-predictive-checks">Posterior predictive checks</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="ospina2012"></li>
+<li data-bib="ferrari2004"></li>
+<li data-bib="smithson2006"></li>
+<li data-bib="johnson2005discrete"></li>
+<li data-bib="gelman2013bda"></li>
+</ul>
+</section>

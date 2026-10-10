@@ -1,0 +1,201 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Prawie każda wielkość, którą raportujemy z modelu bayesowskiego, jest całką: średnia posterior to \(\int \theta\, p(\theta\mid y)\,d\theta\), prawdopodobieństwo \(P(\mathrm{IAF} \gt 100\mid y)\) to całka z funkcji wskaźnikowej, a prognoza liczby widzów to całka po wszystkich parametrach modelu. W modelu MAF parametrów są setki (efekty klubów, sezonów, interakcji), więc całek nie da się policzyć ani analitycznie, ani metodami siatkowymi — siatka o 10 punktach na wymiar w 300 wymiarach ma \(10^{300}\) węzłów.</p>
+<p>Metody Monte Carlo (<em>Monte Carlo methods</em>) zastępują całkę średnią z losowej próby: jeśli potrafimy losować \(\theta^{(1)},\dots,\theta^{(S)}\) z rozkładu \(p\), to</p>
+\[ \int h(\theta)\, p(\theta)\, d\theta \approx \frac1S \sum_{s=1}^S h(\theta^{(s)}). \]
+<p>Prawo wielkich liczb gwarantuje, że przybliżenie jest zbieżne, a centralne twierdzenie graniczne mówi, jak szybko: błąd maleje jak \(1/\sqrt{S}\) <strong>niezależnie od wymiaru</strong> przestrzeni parametrów. To właśnie ta niezależność od wymiaru czyni Monte Carlo podstawowym narzędziem obliczeń bayesowskich. Gdy nie potrafimy losować z \(p\) bezpośrednio, używamy losowania z ważeniem (<em>importance sampling</em>) albo łańcuchów Markowa (<a data-concept="mcmc">MCMC</a>).</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \((\Omega, \mathcal F, P)\) będzie <a data-concept="przestrzen-probabilistyczna">przestrzenią probabilistyczną</a>, \(\theta\) — <a data-concept="zmienna-losowa">zmienną losową</a> o wartościach w \(\Theta \subseteq \mathbb{R}^d\) z gęstością \(p\), a \(h: \Theta \to \mathbb{R}\) — funkcją mierzalną z \(E|h(\theta)| \lt \infty\). Celem jest wyznaczenie</p>
+\[ I = E_p[h(\theta)] = \int_\Theta h(\theta)\, p(\theta)\, d\theta. \]
+<div class="ml-box ml-def" id="def-estymator-mc"><p class="ml-box-title">Definicja (estymator Monte Carlo)</p>
+<p>Dla niezależnych zmiennych \(\theta^{(1)},\dots,\theta^{(S)}\) o rozkładzie \(p\) estymatorem Monte Carlo wielkości \(I\) jest średnia</p>
+\[ \hat I_S = \frac{1}{S}\sum_{s=1}^S h(\theta^{(s)}). \]
+<p>Błędem standardowym Monte Carlo (MCSE) nazywamy \(\sqrt{\operatorname{Var}\hat I_S}\), szacowany przez \(\hat\sigma_h/\sqrt{S}\), gdzie \(\hat\sigma_h^2 = \frac{1}{S-1}\sum_s \big(h(\theta^{(s)}) - \hat I_S\big)^2\).</p>
+</div>
+<div class="ml-box ml-def" id="def-importance-sampling"><p class="ml-box-title">Definicja (losowanie z ważeniem)</p>
+<p>Niech \(q\) będzie gęstością (rozkładem proponującym, <em>proposal</em>), z której umiemy losować, taką że \(q(\theta) \gt 0\) wszędzie tam, gdzie \(h(\theta)p(\theta) \ne 0\). Dla \(\theta^{(s)} \overset{\text{iid}}{\sim} q\) i wag \(w(\theta) = p(\theta)/q(\theta)\) estymator z ważeniem (<em>importance sampling</em>, IS) to</p>
+\[ \hat I_S^{\text{IS}} = \frac1S\sum_{s=1}^S w(\theta^{(s)})\, h(\theta^{(s)}). \]
+<p>Gdy \(p\) jest znana tylko z dokładnością do stałej (\(p = \tilde p/Z\), typowe dla posterioru), stosuje się wersję samonormalizowaną \(\tilde I_S = \sum_s \tilde w_s h(\theta^{(s)}) / \sum_s \tilde w_s\), \(\tilde w_s = \tilde p(\theta^{(s)})/q(\theta^{(s)})\).</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(\theta\), \(\Theta\)</td><td>zmienna losowa (parametr) i jej przestrzeń wartości</td></tr>
+<tr><td>\(p\)</td><td>gęstość docelowa (np. posterior \(p(\theta\mid y)\))</td></tr>
+<tr><td>\(h\)</td><td>funkcja, której wartość oczekiwaną liczymy</td></tr>
+<tr><td>\(I\)</td><td>szukana wartość oczekiwana \(E_p[h(\theta)]\)</td></tr>
+<tr><td>\(S\)</td><td>liczba próbek</td></tr>
+<tr><td>\(\theta^{(s)}\)</td><td>\(s\)-ta próbka</td></tr>
+<tr><td>\(\hat I_S\)</td><td>estymator Monte Carlo</td></tr>
+<tr><td>\(\sigma_h^2\), \(\hat\sigma_h^2\)</td><td>wariancja \(h(\theta)\) i jej oszacowanie z próby</td></tr>
+<tr><td>\(\mathrm{MCSE}\)</td><td>błąd standardowy Monte Carlo</td></tr>
+<tr><td>\(q\), \(w\)</td><td>gęstość proponująca i waga \(p/q\) w losowaniu z ważeniem</td></tr>
+<tr><td>\(\tilde p\), \(Z\)</td><td>gęstość nienormalizowana i stała normalizująca</td></tr>
+<tr><td>\(\mathrm{ESS}_{\text{IS}}\)</td><td>efektywna liczebność próby w losowaniu z ważeniem</td></tr>
+<tr><td>\(F\), \(F^{-1}\), \(U\)</td><td>dystrybuanta, funkcja kwantylowa, zmienna jednostajna na \((0,1)\)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li><strong>Losowanie z \(p\) (albo \(q\))</strong> jest możliwe; w praktyce używamy generatorów liczb pseudolosowych, które dla celów statystycznych traktujemy jak niezależne zmienne jednostajne.</li>
+<li><strong>Skończona wartość oczekiwana</strong> \(E|h(\theta)| \lt \infty\) — warunek prawa wielkich liczb.</li>
+<li><strong>Skończona wariancja</strong> \(\sigma_h^2 = \operatorname{Var}_p h(\theta) \lt \infty\) — warunek CLT i sensowności MCSE. Dla IS wymaga się skończonej wariancji \(w h\) pod \(q\), co nie wynika automatycznie z poprawności \(q\).</li>
+<li><strong>Niezależność próbek</strong> w podstawowej wersji; dla próbek z łańcucha Markowa \(S\) zastępuje się efektywną liczebnością próby (<a data-concept="effective-sample-size">ESS</a>).</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Estymator Monte Carlo:</p>
+<div class="ml-eq" id="eq-metody-monte-carlo">\[ E_p[h(\theta)] = \int_\Theta h(\theta)\, p(\theta)\, d\theta \;\approx\; \hat I_S = \frac{1}{S}\sum_{s=1}^S h(\theta^{(s)}), \qquad \theta^{(s)} \overset{\text{iid}}{\sim} p. \]</div>
+<p>Wariancja i błąd standardowy:</p>
+<div class="ml-eq" id="eq-metody-monte-carlo-wariancja">\[ \operatorname{Var}\hat I_S = \frac{\sigma_h^2}{S}, \qquad \mathrm{MCSE} \approx \frac{\hat\sigma_h}{\sqrt S}. \]</div>
+<p>Przybliżony przedział dla \(I\) wynikający z CLT:</p>
+<div class="ml-eq" id="eq-metody-monte-carlo-przedzial">\[ \hat I_S \pm z_{1-\alpha/2}\,\frac{\hat\sigma_h}{\sqrt{S}}. \]</div>
+<p>Liczba próbek potrzebna do osiągnięcia zadanego MCSE równego \(\varepsilon\):</p>
+<div class="ml-eq" id="eq-metody-monte-carlo-liczba-probek">\[ S \approx \frac{\sigma_h^2}{\varepsilon^2}; \qquad \text{dla prawdopodobieństwa } (h = \mathbf{1}_A):\ S \approx \frac{p_A(1-p_A)}{\varepsilon^2}. \]</div>
+<p>Losowanie z ważeniem i jego wariancja:</p>
+<div class="ml-eq" id="eq-metody-monte-carlo-is">\[ I = E_q\!\left[h(\theta)\frac{p(\theta)}{q(\theta)}\right], \qquad \operatorname{Var}\hat I^{\text{IS}}_S = \frac{1}{S}\left(E_q\!\left[h^2 w^2\right] - I^2\right). \]</div>
+<p>Efektywna liczebność próby wag (przybliżenie Kisha):</p>
+<div class="ml-eq" id="eq-metody-monte-carlo-ess-is">\[ \mathrm{ESS}_{\text{IS}} = \frac{\left(\sum_{s} \tilde w_s\right)^2}{\sum_{s} \tilde w_s^2}. \]</div>
+<p>Metoda odwrotnej dystrybuanty (<em>inverse transform sampling</em>):</p>
+<div class="ml-eq" id="eq-metody-monte-carlo-odwrotna">\[ U \sim \text{U}(0,1) \ \Longrightarrow\ X = F^{-1}(U) \sim F. \]</div>
+<div class="ml-plot" data-plot="beta" data-params='{"a": 2, "b": 1}'></div>
+<p>Rozkład Beta(2, 1) z przykładu poniżej ma gęstość \(2w\): wypełnienia bliskie 100% są najbardziej prawdopodobne, a pole na prawo od 0,9 wynosi dokładnie 0,19. Obszar ten jest wąski, dlatego zwykłe Monte Carlo trafia w niego rzadko, a losowanie z ważeniem może się na nim skupić.</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-nieobciazonosc"><p class="ml-box-title">Twierdzenie (nieobciążoność i wariancja)</p>
+<p>Przy założeniach 2–4: \(E\hat I_S = I\) oraz \(\operatorname{Var}\hat I_S = \sigma_h^2/S\). Ponadto \(\hat\sigma_h^2\) jest nieobciążonym estymatorem \(\sigma_h^2\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-slabe-pwl"><p class="ml-box-title">Twierdzenie (słabe prawo wielkich liczb)</p>
+<p>Jeśli \(\sigma_h^2 \lt \infty\), to dla każdego \(\varepsilon \gt 0\): \(P(|\hat I_S - I| \ge \varepsilon) \le \sigma_h^2/(S\varepsilon^2) \to 0\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-mocne-pwl"><p class="ml-box-title">Twierdzenie (mocne prawo wielkich liczb Kołmogorowa)</p>
+<p>Jeśli \(E|h(\theta)| \lt \infty\), to \(\hat I_S \to I\) prawie na pewno, gdy \(S \to \infty\) <cite data-bib="billingsley1995"></cite>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-clt"><p class="ml-box-title">Twierdzenie (centralne twierdzenie graniczne Lindeberga–Lévy’ego)</p>
+<p>Jeśli \(0 \lt \sigma_h^2 \lt \infty\), to \(\sqrt{S}\,(\hat I_S - I)/\sigma_h \Rightarrow N(0,1)\). Ponieważ \(\hat\sigma_h \to \sigma_h\) prawie na pewno, to samo zachodzi po zastąpieniu \(\sigma_h\) przez \(\hat\sigma_h\) (lemat Słuckiego), co uzasadnia przedział <a class="ml-eqref" href="#eq-metody-monte-carlo-przedzial"></a>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-odwrotna-dystrybuanta"><p class="ml-box-title">Twierdzenie (odwrotna dystrybuanta)</p>
+<p>Jeśli \(F\) jest dystrybuantą, \(F^{-1}(u) = \inf\{x: F(x) \ge u\}\) i \(U \sim \text{U}(0,1)\), to \(F^{-1}(U)\) ma dystrybuantę \(F\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-is"><p class="ml-box-title">Twierdzenie (losowanie z ważeniem)</p>
+<p>(a) Jeśli \(q \gt 0\) na zbiorze \(\{hp \ne 0\}\), to \(E_q \hat I^{\text{IS}}_S = I\). (b) Spośród gęstości \(q\) wariancję \(\hat I^{\text{IS}}_S\) minimalizuje \(q^*(\theta) = |h(\theta)|p(\theta)/\int |h|p\); gdy \(h \ge 0\), wariancja przy \(q^*\) wynosi zero. (c) Estymator samonormalizowany \(\tilde I_S\) jest zgodny (choć na ogół obciążony dla skończonego \(S\)).</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-wariancja">Nieobciążoność i wariancja \(1/S\)</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p><strong>Nieobciążoność.</strong> Z liniowości <a data-concept="wartosc-oczekiwana">wartości oczekiwanej</a>: \(E \hat I_S = \frac1S\sum_s E\,h(\theta^{(s)}) = \frac1S \cdot S \cdot I = I\).</p>
+<p><strong>Wariancja.</strong> Oznaczmy \(H_s = h(\theta^{(s)})\). Ponieważ \(\theta^{(s)}\) są niezależne, \(H_s\) też są niezależne, więc \(\operatorname{Cov}(H_s, H_{s'}) = 0\) dla \(s \ne s'\). Zatem</p>
+\[ \begin{aligned} \operatorname{Var}\hat I_S &amp;= \frac{1}{S^2}\operatorname{Var}\Big(\sum_{s=1}^S H_s\Big) = \frac{1}{S^2}\sum_{s=1}^S\sum_{s'=1}^S \operatorname{Cov}(H_s, H_{s'}) \\ &amp;= \frac{1}{S^2}\sum_{s=1}^S \operatorname{Var} H_s = \frac{1}{S^2}\cdot S\sigma_h^2 = \frac{\sigma_h^2}{S}. \end{aligned} \]
+<p>Odchylenie standardowe maleje więc jak \(1/\sqrt S\): aby zmniejszyć błąd dziesięciokrotnie, potrzeba stukrotnie więcej próbek. Wymiar \(d\) przestrzeni \(\Theta\) nie występuje w tym wzorze — wpływa jedynie przez \(\sigma_h^2\).</p>
+<p><strong>Nieobciążoność \(\hat\sigma_h^2\).</strong> Ze wzoru \(\sum_s (H_s - \hat I_S)^2 = \sum_s (H_s - I)^2 - S(\hat I_S - I)^2\) mamy \(E\sum_s (H_s - \hat I_S)^2 = S\sigma_h^2 - S\cdot\sigma_h^2/S = (S-1)\sigma_h^2\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-pwl">Słabe prawo wielkich liczb</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z nierówności Czebyszewa dla zmiennej \(\hat I_S\) o wartości oczekiwanej \(I\) i wariancji \(\sigma_h^2/S\): \(P(|\hat I_S - I| \ge \varepsilon) \le \operatorname{Var}\hat I_S/\varepsilon^2 = \sigma_h^2/(S\varepsilon^2)\), co dąży do zera przy \(S\to\infty\). Nierówność Czebyszewa wynika z nierówności Markowa zastosowanej do \((\hat I_S - I)^2\): \(P((\hat I_S - I)^2 \ge \varepsilon^2) \le E(\hat I_S - I)^2/\varepsilon^2\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-clt">Szkic dowodu CLT</h3>
+<div class="ml-proof"><p class="ml-box-title">Szkic dowodu</p>
+<p>Niech \(X_s = (H_s - I)/\sigma_h\) — niezależne, \(EX_s = 0\), \(EX_s^2 = 1\), z funkcją charakterystyczną \(\varphi(t) = E e^{itX_s}\). Rozwinięcie Taylora wokół zera (istnieją dwa momenty): \(\varphi(t) = 1 - t^2/2 + o(t^2)\). Funkcja charakterystyczna \(Z_S = S^{-1/2}\sum_s X_s\) jest iloczynem:</p>
+\[ \varphi_{Z_S}(t) = \left[\varphi\!\left(\tfrac{t}{\sqrt S}\right)\right]^S = \left[1 - \frac{t^2}{2S} + o\!\left(\tfrac1S\right)\right]^S \longrightarrow e^{-t^2/2}, \]
+<p>czyli funkcja charakterystyczna \(N(0,1)\). Z twierdzenia Lévy’ego o ciągłości wynika zbieżność według rozkładu <cite data-bib="billingsley1995"></cite>.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-odwrotna">Metoda odwrotnej dystrybuanty</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z prawostronnej ciągłości i monotoniczności \(F\) wynika równoważność \(F^{-1}(u) \le x \iff u \le F(x)\). Zatem \(P(F^{-1}(U) \le x) = P(U \le F(x)) = F(x)\), bo \(U\) jest jednostajna na \((0,1)\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-is">Losowanie z ważeniem</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>(a) \(E_q[w h] = \int h(\theta)\frac{p(\theta)}{q(\theta)}q(\theta)\,d\theta = \int h p = I\); całka obejmuje cały zbiór \(\{hp\ne 0\}\) dzięki warunkowi na nośnik \(q\). Wariancja <a class="ml-eqref" href="#eq-metody-monte-carlo-is"></a> wynika z poprzedniego dowodu zastosowanego do \(H_s = w(\theta^{(s)})h(\theta^{(s)})\).</p>
+<p>(b) Wystarczy zminimalizować \(E_q[h^2w^2] = \int h^2p^2/q\). Z nierówności Cauchy’ego–Schwarza</p>
+\[ \left(\int |h|p\right)^2 = \left(\int \frac{|h|p}{\sqrt q}\sqrt q\right)^2 \le \int\frac{h^2p^2}{q}\cdot\int q = \int\frac{h^2p^2}{q}, \]
+<p>z równością, gdy \(|h|p/\sqrt q \propto \sqrt q\), czyli \(q \propto |h|p\). Dla \(h\ge 0\) dolne ograniczenie to \(I^2\), więc wariancja wynosi zero. Optymalna \(q^*\) wymaga znajomości \(I\), więc w praktyce jest tylko wskazówką: dobra propozycja ma kształt zbliżony do \(|h|p\).</p>
+<p>(c) Licznik i mianownik \(\tilde I_S\), podzielone przez \(S\), zbiegają prawie na pewno do \(E_q[\tilde w h] = Z I\) i \(E_q[\tilde w] = Z\) (mocne PWL), więc ich iloraz zbiega do \(I\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-mcmc">Rozszerzenie na łańcuchy Markowa</h3>
+<p>Gdy próbki pochodzą z ergodycznego łańcucha Markowa o rozkładzie stacjonarnym \(p\), zbieżność \(\hat I_S \to I\) zapewnia twierdzenie ergodyczne, a wariancja ma postać \(\operatorname{Var}\hat I_S \approx \frac{\sigma_h^2}{S}\big(1 + 2\sum_{t\ge 1}\rho_t\big) = \sigma_h^2/\mathrm{ESS}\), gdzie \(\rho_t\) to <a data-concept="autokorelacja">autokorelacja</a> ciągu \(h(\theta^{(s)})\) z opóźnieniem \(t\) <cite data-bib="geyer1992"></cite>. Szczegóły w artykule o <a data-concept="mcmc">MCMC</a>.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><em>Dane ilustracyjne.</em> Przyjmijmy, że wypełnienie hali \(W\) w meczu ma rozkład Beta(2, 1), o gęstości \(p(w) = 2w\) i dystrybuancie \(F(w) = w^2\) na \([0,1]\). Znamy dokładne wartości: \(E W = 2/3 \approx 0{,}667\), \(\operatorname{Var}W = \frac{2\cdot 1}{3^2\cdot 4} = 0{,}0556\) oraz \(P(W \ge 0{,}9) = 1 - 0{,}81 = 0{,}19\). Sprawdzimy, jak radzi sobie Monte Carlo.</p>
+<h3 id="przyklad-zwykle">Zwykłe Monte Carlo</h3>
+<ol class="ml-steps">
+<li><strong>Liczby jednostajne</strong>: \(u = 0{,}12;\ 0{,}85;\ 0{,}47;\ 0{,}93;\ 0{,}66;\ 0{,}31;\ 0{,}98;\ 0{,}74;\ 0{,}05;\ 0{,}89\).</li>
+<li><strong>Odwrotna dystrybuanta</strong>: \(F^{-1}(u) = \sqrt u\), więc \(w = 0{,}346;\ 0{,}922;\ 0{,}686;\ 0{,}964;\ 0{,}812;\ 0{,}557;\ 0{,}990;\ 0{,}860;\ 0{,}224;\ 0{,}943\).</li>
+<li><strong>Średnia</strong>: suma \(= 7{,}305\), więc \(\hat E W = 0{,}730\). MCSE \(= \sqrt{0{,}0556/10} = 0{,}075\); błąd \(0{,}730 - 0{,}667 = 0{,}064\) to ok. 0,9 MCSE — wynik zgodny z teorią.</li>
+<li><strong>Prawdopodobieństwo</strong> \(P(W \ge 0{,}9)\): próbki \(\ge 0{,}9\) to 0,922; 0,964; 0,990; 0,943, czyli \(\hat p = 4/10 = 0{,}40\). MCSE (przy prawdziwym \(p\)) \(= \sqrt{0{,}19 \cdot 0{,}81/10} = 0{,}124\); błąd \(0{,}21\) to ok. 1,7 MCSE.</li>
+<li><strong>Ile próbek potrzeba</strong>, by MCSE prawdopodobieństwa wynosił 0,005? Z <a class="ml-eqref" href="#eq-metody-monte-carlo-liczba-probek"></a>: \(S = 0{,}1539/0{,}000\,025 = 6156\).</li>
+</ol>
+<h3 id="przyklad-is">Losowanie z ważeniem</h3>
+<ol class="ml-steps">
+<li><strong>Propozycja</strong>: \(q = \text{U}(0{,}9;\ 1)\), gęstość \(q(w) = 10\) na \([0{,}9;1]\). Dla \(h = \mathbf 1\{w \ge 0{,}9\}\) na nośniku \(q\) mamy \(h=1\), więc wyrażenie pod średnią to \(h(x)\,p(x)/q(x) = 2x/10 = 0{,}2x\).</li>
+<li><strong>Losowanie</strong> z pięciu pierwszych liczb jednostajnych: \(x = 0{,}9 + 0{,}1u = 0{,}912;\ 0{,}985;\ 0{,}947;\ 0{,}993;\ 0{,}966\).</li>
+<li><strong>Wagi</strong> \(0{,}2x\): \(0{,}1824;\ 0{,}1970;\ 0{,}1894;\ 0{,}1986;\ 0{,}1932\); średnia \(\hat p^{\text{IS}} = 0{,}9606/5 = 0{,}1921\).</li>
+<li><strong>Wariancja na próbkę</strong>: \(\operatorname{Var}_q(0{,}2X) = 0{,}04\cdot\frac{0{,}1^2}{12} = 3{,}33\cdot10^{-5}\), czyli odchylenie \(0{,}0058\) — wobec \(\sqrt{0{,}1539} = 0{,}392\) w zwykłym Monte Carlo. Iloraz wariancji \(0{,}1539/3{,}33\cdot10^{-5} \approx 4617\): pięć próbek IS daje dokładność (MCSE \(= 0{,}0058/\sqrt5 = 0{,}0026\)), do której zwykłe Monte Carlo potrzebowałoby ok. 23 tysięcy próbek.</li>
+</ol>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li><strong>Wynik Monte Carlo jest szacunkiem</strong> i zawsze ma błąd; należy go raportować z dokładnością odpowiadającą MCSE. Przy MCSE = 0,075 wynik 0,730 należy czytać jako „około 0,7”.</li>
+<li><strong>Błąd maleje jak \(1/\sqrt S\)</strong>. Podwojenie liczby próbek zmniejsza błąd tylko o ok. 29%; dla wysokiej precyzji ważniejsze jest zmniejszenie wariancji (\(\sigma_h^2\)) niż zwiększanie \(S\).</li>
+<li><strong>Zdarzenia rzadkie</strong> są trudne: względny błąd \(\mathrm{MCSE}/p = \sqrt{(1-p)/(pS)}\) rośnie bez ograniczeń, gdy \(p \to 0\). Losowanie z ważeniem skupione na obszarze zdarzenia może zmniejszyć wariancję o rzędy wielkości — pod warunkiem dobrej propozycji.</li>
+<li><strong>Niezależność od wymiaru</strong> dotyczy szybkości zbieżności, nie łatwości losowania; trudność wielowymiarowych problemów przenosi się na konstrukcję samplera (MCMC).</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> wszystkie raportowane liczby są estymatorami Monte Carlo liczonymi na próbkach posterior uzyskanych samplerem NUTS (4 łańcuchy):</p>
+<ul>
+<li><strong>Mediana i przedział IAF</strong> — kwantyle empiryczne z próbek; <strong>\(P(\mathrm{IAF} \gt 100)\)</strong> — średnia funkcji wskaźnikowej (<a data-concept="probabilistyczne-porownanie-parametrow">porównanie probabilistyczne</a>).</li>
+<li><strong>Sam IAF</strong> zawiera wewnętrzne uśrednienie po populacji referencyjnej meczów \(X_{ref}\): dla każdej próbki parametrów liczymy średnią \(E(W\mid\eta_i)\) po meczach — to całkowanie po rozkładzie empirycznym warunków meczu, a zewnętrzne uśrednienie po próbkach to całkowanie po posteriorze.</li>
+<li><strong>Prognozy meczów</strong> to symulacja dwupoziomowa (<a data-concept="monte-carlo">symulacja Monte Carlo w prognozowaniu</a>): dla każdej próbki parametrów losujemy liczbę widzów z rozkładu beta-dwumianowego lub ujemnego dwumianowego; prawdopodobieństwa \(P(W \ge 0{,}9)\) i przedziały predykcyjne liczone są z otrzymanych wylosowanych wartości.</li>
+<li><strong>Kontrola precyzji</strong>: wymóg bulk-ESS i tail-ESS ≥ 400 oznacza, że MCSE średniej posterior wynosi najwyżej ok. \(\sigma_{\text{post}}/20\), czyli 5% odchylenia posterior — wystarczająco dla raportowania median i przedziałów z rozsądną liczbą cyfr.</li>
+<li><strong>Losowanie z ważeniem</strong> pojawia się pośrednio w walidacji (np. przybliżona walidacja krzyżowa typu leave-one-out ważąca próbki posterior <cite data-bib="vehtari2017loo"></cite>), gdzie diagnostyką jest właśnie rozkład wag.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Wolna zbieżność</strong> \(O(S^{-1/2})\): wysoka precyzja jest kosztowna. Dla niskowymiarowych, gładkich całek kwadratury deterministyczne są dużo szybsze.</li>
+<li><strong>Nieskończona wariancja</strong>: dla rozkładów o ciężkich ogonach (lub złej propozycji IS) \(\sigma_h^2 = \infty\); estymator jest wtedy zbieżny (jeśli \(E|h| \lt \infty\)), ale bardzo niestabilny, a MCSE bezużyteczny.</li>
+<li><strong>Degeneracja wag IS w wielu wymiarach</strong>: przy rosnącym wymiarze jedna waga zaczyna dominować i \(\mathrm{ESS}_{\text{IS}} \to 1\). Dlatego posteriorów MAF nie liczymy przez IS, lecz przez MCMC.</li>
+<li><strong>Jakość generatora</strong> liczb pseudolosowych i ustalenie ziarna (powtarzalność) mają znaczenie w raportowaniu.</li>
+<li><strong>Zależne próbki MCMC</strong> wymagają zastąpienia \(S\) przez ESS; ignorowanie autokorelacji zaniża MCSE.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="mcmc">MCMC i Hamiltonian Monte Carlo</a> — losowanie z posterioru, gdy bezpośrednie losowanie jest niemożliwe.</li>
+<li><a data-concept="monte-carlo">Symulacja Monte Carlo w prognozowaniu</a> — zastosowanie do rozkładów predykcyjnych.</li>
+<li><a data-concept="wartosc-oczekiwana">Wartość oczekiwana</a> i <a data-concept="wariancja-zmiennej-losowej">wariancja zmiennej losowej</a> — obiekty estymowane i ich błąd.</li>
+<li><a data-concept="effective-sample-size">Effective Sample Size</a> — odpowiednik \(S\) dla próbek zależnych.</li>
+<li><a data-concept="probabilistyczne-porownanie-parametrow">Probabilistyczne porównanie parametrów</a> — Monte Carlo dla prawdopodobieństw.</li>
+<li><a data-concept="rozklad-beta">Rozkład beta</a> — rozkład z przykładu.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="robert2004"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="billingsley1995"></li>
+<li data-bib="geyer1992"></li>
+<li data-bib="vehtari2017loo"></li>
+</ul>
+</section>

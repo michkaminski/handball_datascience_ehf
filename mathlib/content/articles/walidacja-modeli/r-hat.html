@@ -1,0 +1,211 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Algorytmy <a data-concept="mcmc">MCMC</a> nie zwracają rozkładu a posteriori w postaci wzoru, lecz ciąg skorelowanych próbek, który dopiero <em>asymptotycznie</em> pochodzi z rozkładu docelowego. W praktyce nigdy nie wiemy, czy „asymptotycznie” już nastąpiło. Najprostszy sposób, by to sprawdzić, polega na uruchomieniu kilku niezależnych łańcuchów (ang. <em>chains</em>) z rozproszonych punktów startowych i porównaniu ich ze sobą. Jeżeli wszystkie łańcuchy eksplorują ten sam rozkład, to każdy z osobna powinien wyglądać jak cała próbka: średnie łańcuchów będą bliskie, a rozrzut wewnątrz każdego łańcucha będzie równy rozrzutowi łącznemu. Jeśli natomiast któryś łańcuch utknął w innym obszarze przestrzeni parametrów, różnice <em>między</em> łańcuchami będą duże w porównaniu z rozrzutem <em>wewnątrz</em> łańcuchów.</p>
+<p>Potencjalny czynnik redukcji skali \( \widehat{R} \) (ang. <em>potential scale reduction factor</em>, PSRF, potocznie „R-hat”) zamienia tę obserwację w jedną liczbę. Wprowadzili go Gelman i Rubin <cite data-bib="gelmanrubin1992"></cite>: porównuje on dwa estymatory wariancji a posteriori — jeden oparty wyłącznie na zmienności wewnątrz łańcuchów, drugi uwzględniający również zmienność między nimi. Gdy łańcuchy się wymieszały, oba estymatory mierzą to samo i \( \widehat{R} \approx 1 \). Gdy się nie wymieszały, \( \widehat{R} \) jest wyraźnie większy od 1, a jego wartość mówi, o ile (w skali odchylenia standardowego) mogłaby się jeszcze zmniejszyć niepewność, gdyby symulację prowadzić dalej — stąd nazwa „czynnik redukcji skali”.</p>
+<p>Współczesna wersja wskaźnika <cite data-bib="vehtari2021rhat"></cite> dodaje trzy usprawnienia: dzielenie łańcuchów na połowy (wykrywa dryf wewnątrz łańcucha), normalizację rangową (odporność na ciężkie ogony i nieskończone momenty) oraz „składanie” (ang. <em>folding</em>), które czyni wskaźnik wrażliwym na różnice w rozproszeniu, a nie tylko w położeniu. Rekomendowany próg to \( \widehat{R} \lt 1{,}01 \), łącznie z odpowiednio dużą <a data-concept="effective-sample-size">efektywną liczebnością próby</a>.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \( \pi \) będzie rozkładem docelowym (rozkładem a posteriori, por. <a data-concept="rozklad-posterior">rozkład posterior</a>) na przestrzeni parametrów \( \Theta \subseteq \mathbb{R}^d \) i niech \( \theta = g(\vartheta) \in \mathbb{R} \) będzie skalarną wielkością, której zbieżność badamy (pojedynczy parametr lub dowolna funkcja parametrów). Uruchamiamy \( m \ge 2 \) łańcuchów Markowa o jądrze przejścia zachowującym \( \pi \); po odrzuceniu fazy rozgrzewania (ang. <em>warm-up</em>) każdy łańcuch daje \( n \ge 2 \) wartości \( \theta_{tj} \), \( t = 1,\dots,n \), \( j = 1,\dots,m \).</p>
+<div class="ml-box ml-def" id="def-r-hat-klasyczny"><p class="ml-box-title">Definicja (klasyczny \( \widehat{R} \) Gelmana–Rubina)</p>
+<p>Niech \( \bar\theta_{\cdot j} = \frac1n \sum_{t=1}^n \theta_{tj} \) oznacza średnią \( j \)-tego łańcucha, \( \bar\theta_{\cdot\cdot} = \frac1m \sum_{j=1}^m \bar\theta_{\cdot j} \) — średnią ogólną, a \( s_j^2 = \frac{1}{n-1}\sum_{t=1}^n (\theta_{tj} - \bar\theta_{\cdot j})^2 \) — wariancję wewnątrz łańcucha. Definiujemy wariancję międzyłańcuchową \( B \), wewnątrzłańcuchową \( W \) i estymator wariancji brzegowej \( \widehat{\operatorname{var}}^{+} \) wzorami <a class="ml-eqref" href="#eq-r-hat-b"></a>–<a class="ml-eqref" href="#eq-r-hat-varplus"></a>. Potencjalnym czynnikiem redukcji skali nazywamy</p>
+<div class="ml-eq" id="eq-r-hat">\[ \widehat{R} \;=\; \sqrt{\frac{\widehat{\operatorname{var}}^{+}(\theta)}{W}}. \]</div>
+</div>
+<div class="ml-box ml-def" id="def-r-hat-split"><p class="ml-box-title">Definicja (split-\( \widehat{R} \))</p>
+<p>Każdy łańcuch o długości \( n \) (dla \( n \) nieparzystego odrzucamy jedną próbkę) dzielimy na dwie połowy długości \( n/2 \). Split-\( \widehat{R} \) to wartość <a class="ml-eqref" href="#eq-r-hat"></a> obliczona dla \( 2m \) „półłańcuchów” długości \( n/2 \).</p>
+</div>
+<div class="ml-box ml-def" id="def-r-hat-rank"><p class="ml-box-title">Definicja (rank-normalizowany i złożony \( \widehat{R} \); Vehtari i in. 2021)</p>
+<p>Niech \( S = mn \) i niech \( r_{tj} \) będzie rangą \( \theta_{tj} \) w połączonej próbce wszystkich \( S \) wartości (remisy — rangi średnie). Wartości rank-normalizowane to \( z_{tj} = \Phi^{-1}\!\big( (r_{tj} - 3/8)/(S + 1/4) \big) \), gdzie \( \Phi \) jest dystrybuantą rozkładu \( N(0,1) \). <strong>Bulk-\( \widehat{R} \)</strong> to split-\( \widehat{R} \) policzony dla \( z_{tj} \). <strong>Złożony (folded) \( \widehat{R} \)</strong> to split-\( \widehat{R} \) policzony dla rank-normalizowanych wartości \( \zeta_{tj} = |\theta_{tj} - \operatorname{med}(\theta)| \), gdzie mediana jest liczona z połączonej próbki. Ostateczny wskaźnik raportowany przez współczesne oprogramowanie to</p>
+<div class="ml-eq" id="eq-r-hat-max">\[ \widehat{R} \;=\; \max\big(\widehat{R}_{\text{bulk}},\ \widehat{R}_{\text{fold}}\big). \]</div>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( m \)</td><td>liczba łańcuchów (w MAF: 4)</td></tr>
+<tr><td>\( n \)</td><td>liczba próbek na łańcuch po odrzuceniu rozgrzewania</td></tr>
+<tr><td>\( S = mn \)</td><td>łączna liczba próbek</td></tr>
+<tr><td>\( \theta_{tj} \)</td><td>wartość badanej wielkości skalarnej w iteracji \( t \) łańcucha \( j \)</td></tr>
+<tr><td>\( \bar\theta_{\cdot j},\ \bar\theta_{\cdot\cdot} \)</td><td>średnia łańcucha \( j \) i średnia ogólna</td></tr>
+<tr><td>\( s_j^2 \)</td><td>wariancja próbkowa wewnątrz łańcucha \( j \)</td></tr>
+<tr><td>\( B \)</td><td>wariancja międzyłańcuchowa (przeskalowana przez \( n \))</td></tr>
+<tr><td>\( W \)</td><td>średnia wariancja wewnątrzłańcuchowa</td></tr>
+<tr><td>\( \widehat{\operatorname{var}}^{+} \)</td><td>estymator wariancji brzegowej \( \operatorname{Var}_\pi(\theta) \)</td></tr>
+<tr><td>\( \sigma^2 \)</td><td>prawdziwa wariancja \( \theta \) w rozkładzie docelowym \( \pi \)</td></tr>
+<tr><td>\( r_{tj},\ z_{tj} \)</td><td>ranga w połączonej próbce i wartość rank-normalizowana</td></tr>
+<tr><td>\( \zeta_{tj} \)</td><td>wartość „złożona”: odległość bezwzględna od mediany</td></tr>
+<tr><td>\( \Phi,\ \Phi^{-1} \)</td><td>dystrybuanta i funkcja kwantylowa rozkładu \( N(0,1) \)</td></tr>
+<tr><td>\( \widehat{R} \)</td><td>potencjalny czynnik redukcji skali</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li><strong>Wiele łańcuchów.</strong> \( m \ge 2 \), w praktyce 4 lub więcej. Jeden łańcuch nie pozwala ocenić, czy symulacja „zapomniała” punkt startowy.</li>
+<li><strong>Rozproszone punkty startowe.</strong> Punkty startowe powinny być bardziej rozproszone niż rozkład docelowy (ang. <em>overdispersed</em>). Wtedy dopóki łańcuchy nie zbiegną, zmienność między nimi zawyża \( \widehat{\operatorname{var}}^{+} \), a ograniczona eksploracja zaniża \( W \) — oba efekty podnoszą \( \widehat{R} \).</li>
+<li><strong>Poprawne jądro przejścia.</strong> Każdy łańcuch ma \( \pi \) jako rozkład stacjonarny i jest ergodyczny. \( \widehat{R} \) nie wykrywa błędów w samym modelu ani w implementacji gęstości — sprawdza tylko, czy łańcuchy zgadzają się ze sobą.</li>
+<li><strong>Skończona wariancja (wersja klasyczna).</strong> Klasyczny wzór wymaga \( \operatorname{Var}_\pi(\theta) \lt \infty \). Wersja rank-normalizowana tego nie wymaga, bo wartości \( z_{tj} \) mają zawsze skończone momenty.</li>
+<li><strong>Wielkość skalarna.</strong> \( \widehat{R} \) liczy się osobno dla każdego parametru i każdej interesującej funkcji parametrów (np. dla indeksu IAF, a nie tylko dla efektów składowych). Zbieżność wszystkich parametrów brzegowo nie gwarantuje zbieżności rozkładu łącznego, ale w praktyce jest dobrą przesłanką.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Wariancja międzyłańcuchowa (wariancja średnich łańcuchów pomnożona przez \( n \)):</p>
+<div class="ml-eq" id="eq-r-hat-b">\[ B \;=\; \frac{n}{m-1}\sum_{j=1}^{m}\big(\bar\theta_{\cdot j} - \bar\theta_{\cdot\cdot}\big)^2. \]</div>
+<p>Średnia wariancja wewnątrzłańcuchowa:</p>
+<div class="ml-eq" id="eq-r-hat-w">\[ W \;=\; \frac1m\sum_{j=1}^{m} s_j^2, \qquad s_j^2 = \frac{1}{n-1}\sum_{t=1}^{n}\big(\theta_{tj}-\bar\theta_{\cdot j}\big)^2. \]</div>
+<p>Estymator wariancji brzegowej — średnia ważona \( W \) i \( B \):</p>
+<div class="ml-eq" id="eq-r-hat-varplus">\[ \widehat{\operatorname{var}}^{+}(\theta) \;=\; \frac{n-1}{n}\,W \;+\; \frac1n\,B. \]</div>
+<p>Podstawiając <a class="ml-eqref" href="#eq-r-hat-varplus"></a> do <a class="ml-eqref" href="#eq-r-hat"></a> otrzymujemy postać, która od razu pokazuje, kiedy \( \widehat{R} \) przekracza 1:</p>
+<div class="ml-eq" id="eq-r-hat-postac">\[ \widehat{R}^{\,2} \;=\; \frac{n-1}{n} \;+\; \frac{B}{nW}. \]</div>
+<p>Rank-normalizacja (przekształcenie Bloma) połączonej próbki:</p>
+<div class="ml-eq" id="eq-r-hat-rank">\[ z_{tj} \;=\; \Phi^{-1}\!\left(\frac{r_{tj} - 3/8}{S + 1/4}\right), \qquad S = mn. \]</div>
+<p>Składanie wokół mediany (wrażliwość na różnice w skali i w ogonach):</p>
+<div class="ml-eq" id="eq-r-hat-fold">\[ \zeta_{tj} \;=\; \big|\theta_{tj} - \operatorname{med}(\theta)\big|. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-r-hat-nieobciazonosc"><p class="ml-box-title">Twierdzenie (nieobciążoność \( \widehat{\operatorname{var}}^{+} \) w modelu wyidealizowanym)</p>
+<p>Załóżmy, że wszystkie \( mn \) wartości \( \theta_{tj} \) są niezależne i mają ten sam rozkład \( \pi \) o wariancji \( \sigma^2 \lt \infty \). Wtedy \( \mathbb{E}[W] = \sigma^2 \), \( \mathbb{E}[B] = \sigma^2 \), a zatem \( \mathbb{E}\big[\widehat{\operatorname{var}}^{+}\big] = \sigma^2 \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-r-hat-prog"><p class="ml-box-title">Twierdzenie (kiedy \( \widehat{R} > 1 \))</p>
+<p>Dla dowolnych danych z \( W > 0 \): \( \widehat{R} \ge 1 \) wtedy i tylko wtedy, gdy \( B \ge W \). Ponadto \( \widehat{R} \ge \sqrt{(n-1)/n} \), z równością dokładnie wtedy, gdy wszystkie średnie łańcuchów są równe.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-r-hat-zbieznosc"><p class="ml-box-title">Twierdzenie (zgodność)</p>
+<p>Jeśli każdy z \( m \) łańcuchów jest ergodyczny z rozkładem stacjonarnym \( \pi \) i \( 0 \lt \sigma^2 \lt \infty \), to przy ustalonym \( m \) i \( n \to \infty \) zachodzi \( \widehat{R} \to 1 \) prawie na pewno.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-r-hat-niezmienniczosc"><p class="ml-box-title">Twierdzenie (niezmienniczość bulk-\( \widehat{R} \))</p>
+<p>Jeśli \( h:\mathbb{R}\to\mathbb{R} \) jest ściśle rosnąca, to bulk-\( \widehat{R} \) policzony dla \( h(\theta_{tj}) \) jest równy bulk-\( \widehat{R} \) policzonemu dla \( \theta_{tj} \). W szczególności \( \widehat{R}_{\text{bulk}} \) jest taki sam dla \( \sigma_R \) i dla \( \log\sigma_R \).</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<div class="ml-proof"><p class="ml-box-title">Dowód (nieobciążoność \( \widehat{\operatorname{var}}^{+} \))</p>
+<ol>
+<li>Wariancja próbkowa z dzielnikiem \( n-1 \) jest nieobciążona dla próby i.i.d., więc \( \mathbb{E}[s_j^2] = \sigma^2 \) dla każdego \( j \), skąd \( \mathbb{E}[W] = \frac1m\sum_j \sigma^2 = \sigma^2 \).</li>
+<li>Średnie łańcuchów \( \bar\theta_{\cdot 1},\dots,\bar\theta_{\cdot m} \) są niezależne, mają wspólną wartość oczekiwaną \( \mu \) i wariancję \( \sigma^2/n \). Stosując ten sam fakt do próby \( m \) średnich: \( \mathbb{E}\big[\frac{1}{m-1}\sum_j(\bar\theta_{\cdot j}-\bar\theta_{\cdot\cdot})^2\big] = \sigma^2/n \).</li>
+<li>Mnożąc przez \( n \): \( \mathbb{E}[B] = n\cdot\sigma^2/n = \sigma^2 \).</li>
+<li>Z liniowości wartości oczekiwanej: \( \mathbb{E}[\widehat{\operatorname{var}}^{+}] = \frac{n-1}{n}\sigma^2 + \frac1n\sigma^2 = \sigma^2 \).</li>
+</ol>
+<p>W rzeczywistym łańcuchu MCMC próbki są dodatnio skorelowane; wtedy \( \operatorname{Var}(\bar\theta_{\cdot j}) = \sigma^2\tau/n \) z czasem autokorelacji \( \tau \ge 1 \) (por. <a data-concept="effective-sample-size" data-anchor="wzory">ESS</a>), więc \( \mathbb{E}[B] \approx \tau\sigma^2 \) i \( \widehat{\operatorname{var}}^{+} \) jest zawyżony o czynnik rzędu \( 1 + (\tau-1)/n \), który znika przy \( n\to\infty \). Właśnie dlatego Gelman i Rubin nazywali \( \widehat{\operatorname{var}}^{+} \) estymatorem „konserwatywnym” <cite data-bib="gelmanrubin1992"></cite>.</p>
+<p class="ml-qed">∎</p></div>
+
+<div class="ml-proof"><p class="ml-box-title">Dowód (kiedy \( \widehat{R} > 1 \))</p>
+<ol>
+<li>Z <a class="ml-eqref" href="#eq-r-hat"></a> i <a class="ml-eqref" href="#eq-r-hat-varplus"></a>: \( \widehat{R}^2 = \dfrac{\frac{n-1}{n}W + \frac1n B}{W} = \dfrac{n-1}{n} + \dfrac{B}{nW} \), co daje <a class="ml-eqref" href="#eq-r-hat-postac"></a>.</li>
+<li>\( \widehat{R}^2 \ge 1 \iff \dfrac{B}{nW} \ge \dfrac1n \iff B \ge W \) (bo \( n, W > 0 \)); pierwiastek jest funkcją rosnącą, więc to samo dotyczy \( \widehat{R} \).</li>
+<li>Ponieważ \( B \ge 0 \), mamy \( \widehat{R}^2 \ge (n-1)/n \), z równością wtedy i tylko wtedy, gdy \( B = 0 \), tj. gdy wszystkie \( \bar\theta_{\cdot j} \) są równe \( \bar\theta_{\cdot\cdot} \).</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+
+<div class="ml-proof"><p class="ml-box-title">Dowód (zgodność)</p>
+<ol>
+<li>Z ergodycznego twierdzenia granicznego dla łańcuchów Markowa: \( \bar\theta_{\cdot j} \to \mu = \mathbb{E}_\pi\theta \) oraz \( s_j^2 \to \sigma^2 \) prawie na pewno dla każdego \( j \) (drugie wynika z zastosowania twierdzenia do \( \theta \) i \( \theta^2 \)).</li>
+<li>Stąd \( W \to \sigma^2 \) i \( \sum_j(\bar\theta_{\cdot j}-\bar\theta_{\cdot\cdot})^2 \to 0 \) p.n.</li>
+<li>Zauważmy, że \( B/n = \frac{1}{m-1}\sum_j(\bar\theta_{\cdot j}-\bar\theta_{\cdot\cdot})^2 \to 0 \) p.n., a \( (n-1)/n \to 1 \).</li>
+<li>Z <a class="ml-eqref" href="#eq-r-hat-postac"></a> i ciągłości: \( \widehat{R}^2 \to 1 + 0/\sigma^2 = 1 \), więc \( \widehat{R}\to 1 \).</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+
+<div class="ml-proof"><p class="ml-box-title">Dowód (niezmienniczość bulk-\( \widehat{R} \))</p>
+<ol>
+<li>Ściśle rosnąca \( h \) zachowuje porządek: \( \theta_{tj} \lt \theta_{t'j'} \iff h(\theta_{tj}) \lt h(\theta_{t'j'}) \), a także równości. Zatem rangi \( r_{tj} \) w połączonej próbce są identyczne dla \( \theta \) i \( h(\theta) \).</li>
+<li>Wartości \( z_{tj} \) z <a class="ml-eqref" href="#eq-r-hat-rank"></a> zależą wyłącznie od rang i od \( S \), więc są identyczne.</li>
+<li>Split-\( \widehat{R} \) jest funkcją wartości \( z_{tj} \) i ich przynależności do półłańcuchów, a ta nie zależy od \( h \). Stąd równość bulk-\( \widehat{R} \).</li>
+</ol>
+<p>Klasyczny \( \widehat{R} \) tej własności nie ma: dla parametru o ciężkim prawym ogonie (np. odchylenia standardowego efektów losowych) pojedyncze ekstremalne próbki silnie wpływają na \( s_j^2 \) i \( \bar\theta_{\cdot j} \), a wynik zależy od wybranej skali. To jedna z głównych motywacji pracy Vehtariego i in. <cite data-bib="vehtari2021rhat"></cite>.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dlaczego-split">Dlaczego dzielić łańcuchy na połowy</h3>
+<p>Klasyczny \( \widehat{R} \) porównuje tylko średnie <em>całych</em> łańcuchów. Jeżeli wszystkie łańcuchy dryfują w ten sam sposób (np. powoli „schodzą” z obszaru startowego w tym samym kierunku), ich średnie mogą być równe, a \( B \approx 0 \), mimo że żaden łańcuch nie jest stacjonarny. Po podziale na połowy pierwsza i druga połowa każdego łańcucha mają różne średnie, co ujawnia się jako duże \( B \). Przykład liczbowy poniżej pokazuje to wprost.</p>
+<h3 id="dlaczego-folding">Dlaczego składać wokół mediany</h3>
+<p>Dwa łańcuchy o tej samej medianie, z których jeden ma znacznie większy rozrzut (np. jeden „wpada” w lejek hierarchiczny, a drugi nie), dają podobne średnie i \( B \approx 0 \). Wartości \( \zeta_{tj} \) z <a class="ml-eqref" href="#eq-r-hat-fold"></a> przekładają różnicę skali na różnicę <em>położenia</em>: łańcuch szerszy ma większą średnią \( \zeta \). Dzięki temu \( \widehat{R}_{\text{fold}} \) wykrywa niezgodność w ogonach rozkładu, istotną np. dla końców przedziałów wiarygodności.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong> Badamy parametr \( \sigma_R \) (odchylenie standardowe efektów rywala w MAF). Mamy \( m = 4 \) łańcuchy po \( n = 1000 \) próbek. Podsumowanie łańcuchów:</p>
+<table class="ml-table">
+<thead><tr><th>Łańcuch \( j \)</th><th>\( \bar\theta_{\cdot j} \)</th><th>\( s_j^2 \)</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>0,42</td><td>0,0036</td></tr>
+<tr><td>2</td><td>0,44</td><td>0,0040</td></tr>
+<tr><td>3</td><td>0,41</td><td>0,0034</td></tr>
+<tr><td>4</td><td>0,55</td><td>0,0030</td></tr>
+</tbody>
+</table>
+<ol class="ml-steps">
+<li>Średnia ogólna: \( \bar\theta_{\cdot\cdot} = (0{,}42+0{,}44+0{,}41+0{,}55)/4 = 1{,}82/4 = 0{,}455 \).</li>
+<li>Odchylenia średnich: \( -0{,}035;\ -0{,}015;\ -0{,}045;\ 0{,}095 \). Kwadraty: \( 0{,}001225;\ 0{,}000225;\ 0{,}002025;\ 0{,}009025 \); suma \( 0{,}0125 \).</li>
+<li>\( B = \frac{1000}{3}\cdot 0{,}0125 = 4{,}1667 \) (wzór <a class="ml-eqref" href="#eq-r-hat-b"></a>).</li>
+<li>\( W = (0{,}0036+0{,}0040+0{,}0034+0{,}0030)/4 = 0{,}0140/4 = 0{,}0035 \).</li>
+<li>\( \widehat{\operatorname{var}}^{+} = \frac{999}{1000}\cdot 0{,}0035 + \frac{4{,}1667}{1000} = 0{,}0034965 + 0{,}0041667 = 0{,}0076632 \).</li>
+<li>\( \widehat{R} = \sqrt{0{,}0076632/0{,}0035} = \sqrt{2{,}1895} \approx 1{,}480 \). Łańcuch 4 utknął w innym obszarze — wynik jest daleko powyżej progu 1,01.</li>
+</ol>
+<p><strong>Wariant poprawny.</strong> Te same wariancje wewnętrzne, ale średnie 0,452; 0,448; 0,455; 0,450:</p>
+<ol class="ml-steps">
+<li>\( \bar\theta_{\cdot\cdot} = 1{,}805/4 = 0{,}45125 \); odchylenia: \( 0{,}00075;\ -0{,}00325;\ 0{,}00375;\ -0{,}00125 \); suma kwadratów \( 0{,}00002675 \).</li>
+<li>\( B = \frac{1000}{3}\cdot 0{,}00002675 \approx 0{,}008917 \); \( W = 0{,}0035 \).</li>
+<li>\( \widehat{\operatorname{var}}^{+} = 0{,}0034965 + 0{,}0000089 = 0{,}0035054 \); \( \widehat{R} = \sqrt{1{,}00155} \approx 1{,}0008 \lt 1{,}01 \).</li>
+</ol>
+<p><strong>Wariant z dryfem (po co split).</strong> Każdy z 4 łańcuchów ma w pierwszej połowie (500 próbek) średnią 0,40, a w drugiej 0,50; wariancja wewnątrz każdej połowy wynosi 0,0030.</p>
+<ol class="ml-steps">
+<li>Klasycznie: wszystkie średnie całych łańcuchów są równe 0,45, więc \( B = 0 \) i \( \widehat{R} = \sqrt{999/1000} \approx 0{,}9995 \) — wskaźnik niczego nie wykrywa.</li>
+<li>Split: \( 2m = 8 \) półłańcuchów po \( n = 500 \); średnie: cztery razy 0,40 i cztery razy 0,50; średnia ogólna 0,45; suma kwadratów odchyleń \( 8\cdot 0{,}05^2 = 0{,}02 \).</li>
+<li>\( B = \frac{500}{7}\cdot 0{,}02 \approx 1{,}4286 \); \( W = 0{,}0030 \).</li>
+<li>\( \widehat{\operatorname{var}}^{+} = \frac{499}{500}\cdot 0{,}0030 + \frac{1{,}4286}{500} = 0{,}002994 + 0{,}002857 = 0{,}005851 \).</li>
+<li>Split-\( \widehat{R} = \sqrt{0{,}005851/0{,}0030} = \sqrt{1{,}9504} \approx 1{,}397 \) — dryf został wykryty.</li>
+</ol>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li>\( \widehat{R} \lt 1{,}01 \): brak dowodów na brak zbieżności dla danej wielkości. To warunek konieczny, a nie dostateczny — łańcuchy mogą zgodnie omijać ten sam trudny obszar.</li>
+<li>\( 1{,}01 \le \widehat{R} \lt 1{,}05 \): łańcuchy jeszcze się nie wymieszały w pełni; wyniki mogą być orientacyjne, ale nie do raportowania. Zwykle pomaga dłuższa symulacja lub reparametryzacja.</li>
+<li>\( \widehat{R} \ge 1{,}05 \) (a tym bardziej \( \ge 1{,}1 \), dawny próg z literatury): poważny problem — łańcuchy eksplorują różne obszary, model może być nieidentyfikowalny lub multimodalny (por. <a data-concept="identyfikowalnosc-parametrow">identyfikowalność parametrów</a>).</li>
+</ul>
+<p>Wartość \( \widehat{R} \) ma interpretację skali: \( \widehat{R} = 1{,}48 \) oznacza, że przy kontynuowaniu symulacji odchylenie standardowe brzegowego rozkładu \( \theta \) mogłoby się zmniejszyć nawet o czynnik ok. 1,48. Próg 1,01 zaproponowano w <cite data-bib="vehtari2021rhat"></cite> zamiast dawnego 1,1, bo ten okazał się zbyt liberalny — przepuszczał łańcuchy, które jeszcze się nie wymieszały. Należy patrzeć na <em>maksimum</em> \( \widehat{R} \) po wszystkich parametrach, a nie na wartość typową.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">Modelu Atrakcyjności Frekwencyjnej</a> parametry są estymowane algorytmem NUTS (por. <a data-concept="mcmc">MCMC i Hamiltonian Monte Carlo</a>) w 4 łańcuchach. Kryterium akceptacji dopasowania obejmuje rank-normalizowany split-\( \widehat{R} \lt 1{,}01 \) dla wszystkich parametrów, łącznie z bulk- i tail-ESS ≥ 400 oraz brakiem dywergencji.</p>
+<ul>
+<li><strong>Hiperparametry wariancyjne.</strong> Największe \( \widehat{R} \) zwykle mają \( \sigma_H, \sigma_{HS}, \sigma_R, \sigma_{RS} \) — odchylenia efektów losowych. Ich rozkłady a posteriori są prawostronnie skośne i mają masę blisko zera; tu szczególnie ważna jest wersja złożona \( \widehat{R}_{\text{fold}} \), która wykrywa, że jeden łańcuch nie eksploruje okolicy \( \sigma \approx 0 \) (charakterystyczny „lejek” modeli <a data-concept="modele-hierarchiczne">hierarchicznych</a>). Parametryzacja niecentrowana \( R_j = \sigma_R z_j \) w MAF istnieje m.in. po to, by te wartości \( \widehat{R} \) były bliskie 1.</li>
+<li><strong>Efekty klubów z małą liczbą meczów.</strong> Drużyny, które rozegrały kilka meczów (np. beniaminkowie, zespoły z jednego sezonu pucharów EHF), mają szerokie posteriory blisko średniej; \( \widehat{R} \) dla ich efektów bywa wyższy niż dla klubów z setkami meczów.</li>
+<li><strong>Wielkości pochodne.</strong> Indeks IAF jest nieliniową funkcją parametrów; \( \widehat{R} \) liczymy także dla niego, bo zbieżność składników nie przenosi się automatycznie na kwantyle funkcji. Dzięki niezmienniczości bulk-\( \widehat{R} \) nie ma znaczenia, czy analizujemy IAF w skali procentowej, czy logarytmicznej.</li>
+<li><strong>Precyzja \( \phi \) i dyspersja \( \kappa \).</strong> W wariancie beta-dwumianowym parametr \( \phi \) jest silnie skorelowany z wariancjami efektów losowych (oba „tłumaczą” rozrzut wypełnienia); wysoki \( \widehat{R} \) dla tej pary sygnalizuje słabą identyfikowalność.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Warunek konieczny, nie dostateczny.</strong> Wszystkie łańcuchy mogą zgodnie utknąć w jednym modzie lub nie dotrzeć do wąskiego obszaru o dużej masie (np. szyjki lejka); wtedy \( \widehat{R} \approx 1 \) mimo błędnych wyników. Dlatego \( \widehat{R} \) łączy się z diagnostykami specyficznymi dla HMC (dywergencje, E-BFMI) i z <a data-concept="posterior-predictive-checks">posterior predictive checks</a>.</li>
+<li><strong>Diagnostyka brzegowa.</strong> \( \widehat{R} \) bada każdą wielkość skalarną osobno; nie wykrywa problemów widocznych wyłącznie w zależnościach między parametrami.</li>
+<li><strong>Zależność od punktów startowych.</strong> Jeśli punkty startowe nie są rozproszone (np. wszystkie łańcuchy startują z tego samego miejsca), \( \widehat{R} \) traci moc wykrywania.</li>
+<li><strong>Krótkie łańcuchy.</strong> Przy małym \( n \) sam \( \widehat{R} \) jest zmienną losową o dużej wariancji; wartość 1,005 przy \( n = 50 \) mówi mało. Dlatego próg \( \widehat{R} \) zawsze łączy się z wymaganiem dużej <a data-concept="effective-sample-size">ESS</a>.</li>
+<li><strong>Parametry dyskretne i zdegenerowane.</strong> Dla wielkości o bardzo niewielu wartościach (np. wskaźnik zdarzenia) rangi zawierają wiele remisów i rank-normalizacja traci informację; \( \widehat{R} \) bywa wtedy nieokreślony lub mało czuły.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="mcmc">MCMC i Hamiltonian Monte Carlo</a> — algorytmy, których wynik diagnozujemy.</li>
+<li><a data-concept="effective-sample-size">Effective Sample Size (ESS)</a> — druga, komplementarna diagnostyka: \( \widehat{R} \) pyta „czy łańcuchy się zgadzają?”, ESS — „ile informacji zawierają?”.</li>
+<li><a data-concept="autokorelacja">Autokorelacja</a> — źródło zawyżenia \( B \) w łańcuchach skorelowanych.</li>
+<li><a data-concept="metody-monte-carlo">Metody Monte Carlo</a> — błąd Monte Carlo estymatorów a posteriori.</li>
+<li><a data-concept="modele-hierarchiczne">Modele hierarchiczne</a> i <a data-concept="identyfikowalnosc-parametrow">identyfikowalność parametrów</a> — typowe źródła problemów ze zbieżnością.</li>
+<li><a data-concept="posterior-predictive-checks">Posterior predictive checks</a> — sprawdzenie modelu, a nie algorytmu.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelmanrubin1992"></li>
+<li data-bib="vehtari2021rhat"></li>
+<li data-bib="doc-arviz-rhat"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="betancourt2017"></li>
+<li data-bib="papaspiliopoulos2007"></li>
+</ul>
+</section>

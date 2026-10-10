@@ -1,0 +1,158 @@
+<section class="panel" id="att-panel-maf" data-attendance-panel aria-labelledby="att-tab-maf">
+{% if appeal_models %}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/katex/katex.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/attendance_appeal.css') }}">
+<div class="panel-body maf" data-maf
+  data-echarts-url="{{ url_for('static', filename='vendor/echarts/echarts.min.js') }}"
+  data-url-data="{{ url_for('panel.appeal_data') }}"
+  data-url-club="{{ url_for('panel.appeal_club', club_id=0) }}"
+  data-url-host="{{ url_for('panel.appeal_host', club_id=0) }}"
+  data-url-compare="{{ url_for('panel.appeal_compare') }}"
+  data-url-forecast="{{ url_for('panel.appeal_forecast') }}"
+  data-url-export="{{ url_for('panel.appeal_export') }}"
+  data-url-team="{{ url_for('panel.team_detail', club_id=0) }}"
+  data-url-match="{{ url_for('panel.match_detail', match_id=0) }}">
+<div class="maf-head">
+<div>
+<h2 id="opponent-appeal-model">Opponent Attendance Appeal Model (MAF)</h2>
+<p class="note">A hierarchical Bayesian model separates the attendance strength of the host, the appeal of the opponent and the match conditions. An IAF index of 100 means a typical (average) opponent. Results come from the posterior distribution (MCMC), not from a single point estimate.</p>
+</div>
+<div class="maf-model-picker">
+<label for="maf-model">Model</label>
+<select id="maf-model" data-maf-model>
+{% for model in appeal_models %}
+<option value="{{ model.key }}"{% if not model.available %} disabled{% endif %}>{{ model.label }}{% if not model.available %} — not trained{% elif model.status != 'ok' %} — {{ 'warning' if model.status == 'ostrzezenie' else 'unreliable' }}{% endif %}</option>
+{% endfor %}
+</select>
+<a class="btn secondary small" href="{{ url_for('panel.math_article', category='modele-sportowe', slug='atrakcyjnosc-frekwencyjna') }}">Scientific documentation of the model</a>
+</div>
+</div>
+<p class="att-warning maf-scope-note">The report filters above do not narrow the model: MAF is estimated once on all matches of the given gender (a separate training process). The model choice decides the gender; EHF models measure the number of spectators only (no venue capacity data).</p>
+{% if not appeal_models|selectattr('available')|list %}
+<div class="maf-empty">
+<p><b>No MAF model has been trained yet.</b> Training (MCMC) runs separately, not when the page is opened:</p>
+<pre>python scripts/train_maf.py</pre>
+</div>
+{% else %}
+<div data-maf-status></div>
+<div class="maf-kpis" data-maf-kpis aria-live="polite"><p class="note">Loading model…</p></div>
+<nav class="maf-subnav" aria-label="MAF model sections">
+<a href="#maf-ranking">Ranking</a><a href="#maf-forest">Forest plot</a><a href="#maf-trends">IAF trends</a><a href="#maf-posterior">Posterior distribution</a><a href="#maf-host">Host analysis</a><a href="#maf-simulator">Simulator</a><a href="#maf-deviations">Deviations and records</a><a href="#maf-diagnostics">Diagnostics</a><a href="#maf-quality">Data quality</a>
+</nav>
+
+<div class="maf-section" id="maf-ranking">
+<h3>Opponent appeal ranking <span data-maf-info="iaf"></span></h3>
+<p class="note">Descriptive statistics refer to matches in which the club was the <b>visitor</b>. The club's own crowd (home matches) is shown separately in the row details — it is not mixed with the opponent effect.</p>
+<div class="toolbar">
+<div class="left">
+<input type="search" placeholder="Search club" aria-label="Search club" data-maf-search>
+<label class="maf-check"><input type="checkbox" data-maf-reliable> reliable estimates only</label>
+<label class="maf-check">min. matches <select data-maf-min><option value="0">0</option><option value="3">3</option><option value="6" selected>6</option><option value="15">15</option><option value="30">30</option></select></label>
+</div>
+<div class="right">
+<button type="button" class="btn secondary small" data-maf-compare disabled>Compare selected (0/2)</button>
+<a class="btn secondary small" data-maf-export href="#">Export CSV</a>
+</div>
+</div>
+<div data-maf-compare-result></div>
+<div class="table-wrap att-table-wrap"><table class="att-table maf-table" data-maf-ranking></table></div>
+<button type="button" class="btn secondary small" data-maf-more hidden>Show more</button>
+</div>
+
+<div class="maf-section" id="maf-forest">
+<h3>Forest plot — IAF with 95% credible interval <span data-maf-info="przedzial"></span></h3>
+<div class="toolbar"><div class="left">
+<label class="maf-check">Sort <select data-maf-forest-sort><option value="iaf">by index</option><option value="narrow">narrowest interval</option><option value="wide">widest interval</option><option value="matches">number of matches</option></select></label>
+<label class="maf-check">Clubs <select data-maf-forest-limit><option>20</option><option selected>30</option><option>50</option></select></label>
+<label class="maf-check"><input type="checkbox" data-maf-forest-reliable checked> reliable only</label>
+</div></div>
+<p class="note" data-maf-forest-note></p>
+<div class="att-chart maf-chart-tall" data-maf-chart="forest" role="img" aria-label="Forest plot: median IAF of clubs with 95% credible intervals and the IAF = 100 reference line. Numeric values are in the ranking table."></div>
+</div>
+
+<div class="maf-section" id="maf-trends">
+<h3>IAF trends across seasons <span data-maf-info="trend"></span></h3>
+<p class="note">Seasonal IAF = club effect R<sub>j</sub> + season deviation RS<sub>j,s</sub>, standardised on the matches of that season. Band = 80% credible interval.</p>
+<div class="toolbar"><div class="left">
+<select data-maf-trend-select aria-label="Add club to comparison"></select>
+<button type="button" class="btn secondary small" data-maf-trend-add>Add</button>
+<span data-maf-trend-chips></span>
+</div></div>
+<div class="att-chart" data-maf-chart="trend" role="img" aria-label="Change of the median IAF of selected clubs across seasons with an uncertainty band."></div>
+<div class="table-wrap att-table-wrap"><table class="att-table" data-maf-trend-table></table></div>
+</div>
+
+<div class="maf-section" id="maf-posterior">
+<h3>Posterior distribution of the selected club's IAF <span data-maf-info="iaf_posterior"></span></h3>
+<div class="toolbar"><div class="left"><select data-maf-posterior-select aria-label="Club"></select> <span data-maf-posterior-summary class="note"></span></div></div>
+<div class="att-chart" data-maf-chart="posterior" role="img" aria-label="Histogram of posterior IAF samples; bars above 100 mark the P(IAF > 100) region."></div>
+</div>
+
+<div class="maf-section" id="maf-host">
+<h3>Host analysis — which opponents increase interest <span data-maf-info="efekt_pp"></span></h3>
+<div class="toolbar"><div class="left"><select data-maf-host-select aria-label="Host"></select></div></div>
+<div data-maf-host></div>
+</div>
+
+<div class="maf-section" id="maf-simulator">
+<h3>Attendance simulator (predictive distribution) <span data-maf-info="predykcja"></span></h3>
+<p class="note">The forecast combines parameter uncertainty (posterior samples) and the random variation of a future match (drawing the number of spectators). Predictive intervals are wider than the credible interval of the mean. <span data-maf-info="monte_carlo"></span></p>
+<form class="filters maf-sim-form" data-maf-sim>
+<label>Host<select name="host" data-maf-sim-host required></select></label>
+<label>Opponent<select name="opponent" data-maf-sim-opponent required></select></label>
+<label>Competition<select name="competition" data-maf-sim-competition></select></label>
+<label>Season<select name="season" data-maf-sim-season></select></label>
+<label>Venue<select data-maf-sim-venue></select></label>
+<label>Capacity (optional)<input type="number" name="capacity" min="1" step="1" data-maf-sim-capacity></label>
+<label>Weekday<select name="weekday"><option value="0">Monday</option><option value="1">Tuesday</option><option value="2">Wednesday</option><option value="3">Thursday</option><option value="4">Friday</option><option value="5" selected>Saturday</option><option value="6">Sunday</option></select></label>
+<label>Kickoff<input type="time" name="hour" value="18:00"></label>
+<label>Phase<select name="phase"><option value="regular">regular season / group</option><option value="playoff">knockout / play-off</option><option value="final">final / medal match</option></select></label>
+<label>Spectator threshold<input type="number" name="threshold" min="0" step="1" placeholder="e.g. 1000"></label>
+<div class="maf-sim-actions"><button type="submit" class="btn">Simulate</button></div>
+</form>
+<p class="note">Capacity is optional: EHF models count spectators only. When given, it is used to show approximate fill rates and P(full house).</p>
+<div data-maf-sim-result></div>
+</div>
+
+<div class="maf-section" id="maf-deviations">
+<h3>Deviations from expected attendance <span data-maf-info="reszty"></span></h3>
+<p class="note">Standardised residual z = (spectators − E[spectators]) / predictive SD <span data-maf-info="z_score"></span>; p = two-sided predictive p-value (mid-p), i.e. the probability of an observation at least this extreme under the assumed model — without assuming normality.</p>
+<div class="att-chart" data-maf-chart="heatmap" role="img" aria-label="Heatmap of the mean standardised residual: hosts in rows, seasons in columns."></div>
+<div class="maf-two">
+<div><h4>Largest positive surprises</h4><div class="table-wrap att-table-wrap"><table class="att-table" data-maf-surprises="positive"></table></div></div>
+<div><h4>Largest negative deviations</h4><div class="table-wrap att-table-wrap"><table class="att-table" data-maf-surprises="negative"></table></div></div>
+</div>
+<h4>Records <span data-maf-info="rekord"></span></h4>
+<div class="maf-three">
+<div><h5>Season</h5><div class="table-wrap att-table-wrap"><table class="att-table" data-maf-records="season"></table></div></div>
+<div><h5>Club (home)</h5><div class="table-wrap att-table-wrap"><table class="att-table" data-maf-records="club"></table></div></div>
+<div><h5>Venue</h5><div class="table-wrap att-table-wrap"><table class="att-table" data-maf-records="venue"></table></div></div>
+</div>
+</div>
+
+<div class="maf-section" id="maf-diagnostics">
+<h3>Model diagnostics and validation <span data-maf-info="mcmc"></span></h3>
+<div data-maf-diagnostics></div>
+<div class="att-chart-grid">
+<div><h4>Posterior predictive check <span data-maf-info="ppc"></span></h4><div class="att-chart" data-maf-chart="ppc" role="img" aria-label="Histogram of observed data against the 90% band of data replicated from the model."></div></div>
+<div><h4>Forecast calibration (PIT) <span data-maf-info="kalibracja"></span></h4><div class="att-chart" data-maf-chart="pit" role="img" aria-label="Histogram of PIT values in the chronological validation; with good calibration the bars are equal."></div></div>
+</div>
+</div>
+
+<div class="maf-section" id="maf-quality">
+<h3>Input data quality</h3>
+<div data-maf-quality></div>
+</div>
+{% endif %}
+</div>
+<dialog class="maf-dialog" data-maf-dialog aria-labelledby="maf-dialog-title">
+<div class="maf-dialog-head"><h3 id="maf-dialog-title" data-maf-dialog-title>How was this computed?</h3><button type="button" class="btn secondary small" data-maf-dialog-close>Close</button></div>
+<div data-maf-dialog-body></div>
+</dialog>
+<div class="maf-popover" data-maf-popover hidden role="tooltip"></div>
+<script src="{{ url_for('static', filename='vendor/katex/katex.min.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/attendance_appeal.js') }}" defer></script>
+{% else %}
+<div class="panel-body"><p class="note">The opponent appeal model (MAF) is not configured in this application instance.</p></div>
+{% endif %}
+</section>

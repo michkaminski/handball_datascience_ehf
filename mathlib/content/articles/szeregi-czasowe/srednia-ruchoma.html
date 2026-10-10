@@ -1,0 +1,183 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Wyniki drużyny w kolejnych meczach tworzą szereg czasowy (ang. <em>time series</em>): ciąg obserwacji uporządkowanych w czasie. Pojedynczy wynik jest bardzo „głośny” — o zwycięstwie decyduje czasem jedna obrona bramkarza w ostatniej sekundzie, kontuzja rozgrywającego albo terminarz, w którym trzy mocne zespoły trafiły się pod rząd. Jeśli chcemy powiedzieć coś o <em>aktualnej dyspozycji</em> zespołu, nie powinniśmy patrzeć ani na jeden ostatni mecz (za dużo szumu), ani na cały sezon (za mało aktualności). Rozsądnym kompromisem jest uśrednienie kilku ostatnich wyników.</p>
+<p>Tak właśnie działa <strong>średnia ruchoma</strong> (ang. <em>moving average</em>): okno o ustalonej długości \( k \) „przesuwa się” wzdłuż szeregu i w każdej chwili liczymy średnią z obserwacji, które się w nim znajdują. Wraz z nadejściem nowej obserwacji najstarsza wypada z okna. Wersja <em>prosta</em> (ang. <em>simple moving average</em>, SMA) daje wszystkim obserwacjom w oknie jednakową wagę \( 1/k \); wersja <em>wykładnicza</em> (ang. <em>exponential moving average</em>, EMA, zwana też wygładzaniem wykładniczym, ang. <em>exponential smoothing</em>) nie ma ostrej granicy okna, lecz nadaje wagi malejące geometrycznie z wiekiem obserwacji.</p>
+<p>W analityce sportowej średnia ruchoma jest najprostszym i najbardziej przejrzystym miernikiem <em>formy</em>. W Modelu Atrakcyjności Frekwencyjnej (MAF) forma drużyny przed meczem to średnia punktów (zwycięstwo 1, remis 0,5, porażka 0) z jej pięciu ostatnich meczów rozegranych <em>przed</em> tym meczem. Słowo „przed” jest tu kluczowe: kibic kupujący bilet zna tylko przeszłe wyniki, więc i zmienna objaśniająca nie może zawierać wyniku meczu, którego frekwencję modelujemy — inaczej mielibyśmy wyciek informacji z przyszłości (ang. <em>look-ahead bias</em>, <em>leakage</em>).</p>
+<p>Średnia ruchoma jest też narzędziem eksploracji: wygładzona krzywa frekwencji klubu w kolejnych meczach domowych pozwala odróżnić trwały trend (np. wzrost zainteresowania po awansie) od przypadkowych skoków (derby, mecz z transmisją telewizyjną). Szerszy kontekst — dekompozycję szeregu na trend, sezonowość i resztę — omawiają <cite data-bib="hyndman2021fpp3"></cite> oraz <cite data-bib="boxjenkins2015"></cite>.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \( (y_t)_{t\in\mathbb{Z}} \) będzie szeregiem czasowym o wartościach rzeczywistych, tj. ciągiem zmiennych losowych (lub ich realizacji) indeksowanych dyskretnym czasem \( t \). W zastosowaniu sportowym \( t \) numeruje kolejne mecze danej drużyny w porządku chronologicznym, a nie dni kalendarzowe.</p>
+<div class="ml-box ml-def" id="def-sma"><p class="ml-box-title">Definicja (prosta średnia ruchoma, wsteczna)</p>
+<p>Dla ustalonej długości okna \( k \in \mathbb{N},\ k \ge 1 \), <strong>wsteczną prostą średnią ruchomą</strong> rzędu \( k \) w chwili \( t \) nazywamy</p>
+<div class="ml-eq" id="eq-srednia-ruchoma">\[ \bar y_t^{(k)} \;=\; \frac{1}{k}\sum_{j=1}^{k} y_{t-j} \;=\; \frac{y_{t-1}+y_{t-2}+\dots+y_{t-k}}{k}. \]</div>
+<p>Wartość \( \bar y_t^{(k)} \) jest mierzalna względem \( \mathcal{F}_{t-1} = \sigma(y_s : s \le t-1) \), czyli zależy wyłącznie od informacji dostępnej przed chwilą \( t \).</p>
+</div>
+<p>Spotyka się też wariant „bieżący” \( \frac1k\sum_{j=0}^{k-1} y_{t-j} \) (okno zawiera obserwację z chwili \( t \)) oraz wariant <em>scentrowany</em> \( \frac{1}{2m+1}\sum_{j=-m}^{m} y_{t+j} \), używany do wyodrębniania trendu w analizie retrospektywnej <cite data-bib="hyndman2021fpp3"></cite>. Oba zawierają obserwację bieżącą (a scentrowany — także przyszłe), więc <strong>nie nadają się</strong> jako zmienne objaśniające w modelu prognostycznym. W tym artykule, o ile nie zaznaczono inaczej, „średnia ruchoma” oznacza wariant wsteczny <a class="ml-eqref" href="#eq-srednia-ruchoma"></a>.</p>
+<div class="ml-box ml-def" id="def-ema"><p class="ml-box-title">Definicja (wykładnicza średnia ruchoma)</p>
+<p>Niech \( \alpha \in (0,1] \) będzie <em>stałą wygładzania</em>, a \( m_1 \in \mathbb{R} \) — wartością początkową. <strong>Wykładniczą średnią ruchomą</strong> nazywamy ciąg zadany rekurencją</p>
+<div class="ml-eq" id="eq-srednia-ruchoma-wykladnicza">\[ m_{t+1} \;=\; \alpha\, y_t + (1-\alpha)\, m_t, \qquad t = 1,2,\dots \]</div>
+<p>Wartość \( m_t \) jest, podobnie jak \( \bar y_t^{(k)} \), funkcją wyłącznie obserwacji \( y_1,\dots,y_{t-1} \) i wartości początkowej.</p>
+</div>
+<div class="ml-box ml-def" id="def-forma"><p class="ml-box-title">Definicja (forma drużyny w MAF)</p>
+<p>Niech \( \mathcal{M}_d \) będzie zbiorem meczów drużyny \( d \), uporządkowanym według daty rozpoczęcia, a \( p_{d,u} \in \{0,\ \tfrac12,\ 1\} \) — punktami drużyny w meczu \( u \) (porażka, remis, zwycięstwo). Dla meczu \( i \) z udziałem \( d \) oznaczmy przez \( u_1(i), u_2(i),\dots \) mecze drużyny \( d \) rozpoczęte <em>ściśle wcześniej</em> niż mecz \( i \), uporządkowane od najnowszego. <strong>Formą</strong> drużyny \( d \) przed meczem \( i \) nazywamy</p>
+<div class="ml-eq" id="eq-srednia-ruchoma-forma">\[ F_{d,i} \;=\; \frac{1}{k}\sum_{j=1}^{k} p_{d,\,u_j(i)}, \qquad k = 5, \]</div>
+<p>o ile drużyna rozegrała przed meczem \( i \) co najmniej \( k \) meczów. \( F_{d,i}\in[0,1] \); wartość 1 oznacza pięć zwycięstw z rzędu, 0 — pięć porażek.</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( y_t \)</td><td>obserwacja szeregu w chwili (meczu) \( t \)</td></tr>
+<tr><td>\( k \)</td><td>długość okna średniej ruchomej (liczba uśrednianych obserwacji)</td></tr>
+<tr><td>\( \bar y_t^{(k)} \)</td><td>wsteczna prosta średnia ruchoma rzędu \( k \) w chwili \( t \)</td></tr>
+<tr><td>\( \alpha \)</td><td>stała wygładzania wykładniczej średniej ruchomej, \( \alpha\in(0,1] \)</td></tr>
+<tr><td>\( m_t \)</td><td>wykładnicza średnia ruchoma dostępna przed chwilą \( t \)</td></tr>
+<tr><td>\( w_j \)</td><td>waga obserwacji sprzed \( j \) kroków</td></tr>
+<tr><td>\( \mathcal{F}_{t-1} \)</td><td>informacja (σ-ciało) dostępna przed chwilą \( t \)</td></tr>
+<tr><td>\( p_{d,u} \)</td><td>punkty drużyny \( d \) w meczu \( u \): 1, ½ lub 0</td></tr>
+<tr><td>\( F_{d,i} \)</td><td>forma drużyny \( d \) przed meczem \( i \)</td></tr>
+<tr><td>\( \mu,\ \sigma^2 \)</td><td>średnia i wariancja szeregu stacjonarnego</td></tr>
+<tr><td>\( \bar L \)</td><td>średni wiek (opóźnienie) informacji w średniej ruchomej</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li><strong>Uporządkowanie.</strong> Obserwacje mają jednoznaczny porządek czasowy. Dla meczów rozgrywanych tego samego dnia decyduje godzina rozpoczęcia; mecze bez ustalonej daty lub przełożone trzeba umieścić według faktycznej daty rozegrania, nie pierwotnej kolejki.</li>
+<li><strong>Brak wycieku.</strong> Średnia przypisana chwili \( t \) korzysta wyłącznie z obserwacji o indeksach \( \lt t \). Formalnie: \( \bar y^{(k)}_t \) i \( m_t \) są \( \mathcal{F}_{t-1} \)-mierzalne.</li>
+<li><strong>Lokalna stałość poziomu.</strong> Średnia ruchoma jest sensownym estymatorem „bieżącego poziomu”, gdy poziom szeregu zmienia się wolno w porównaniu z długością okna. Twierdzenia o nieobciążoności i wariancji (sekcja Twierdzenia) wymagają stacjonarności w szerokim sensie: \( \mathbb{E}y_t=\mu \), \( \operatorname{Var}y_t=\sigma^2 \), a w najprostszej wersji — nieskorelowania obserwacji.</li>
+<li><strong>Porównywalność obserwacji.</strong> Uśredniane wartości mierzą to samo (np. punkty w meczach o tej samej skali). Punktacja 1/½/0 jest znormalizowana i nie zależy od ligowego systemu punktowego (2–1–0 czy 3–1–0), dzięki czemu forma jest porównywalna między rozgrywkami.</li>
+<li><strong>Pełne okno.</strong> Definicja <a class="ml-eqref" href="#eq-srednia-ruchoma-forma"></a> wymaga co najmniej \( k \) wcześniejszych meczów; początek historii drużyny wymaga osobnej reguły (zob. Ograniczenia).</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p><strong>Rekurencja prostej średniej ruchomej.</strong> Przy przesunięciu okna o jeden krok wystarczy dodać nową obserwację i odjąć najstarszą:</p>
+<div class="ml-eq" id="eq-srednia-ruchoma-rekurencja">\[ \bar y_{t+1}^{(k)} \;=\; \bar y_t^{(k)} + \frac{y_t - y_{t-k}}{k}. \]</div>
+<p><strong>Postać jawna średniej wykładniczej.</strong> Rozwinięcie rekurencji <a class="ml-eqref" href="#eq-srednia-ruchoma-wykladnicza"></a> daje</p>
+<div class="ml-eq" id="eq-srednia-ruchoma-wagi">\[ m_{t} \;=\; \sum_{j=1}^{t-1} \alpha(1-\alpha)^{j-1}\, y_{t-j} \;+\; (1-\alpha)^{t-1} m_1 , \]</div>
+<p>czyli wagi \( w_j = \alpha(1-\alpha)^{j-1} \) maleją geometrycznie z wiekiem \( j \) obserwacji.</p>
+<p><strong>Ogólna liniowa średnia ruchoma.</strong> Obie wersje są szczególnymi przypadkami filtru \( \tilde y_t = \sum_{j\ge 1} w_j\, y_{t-j} \) z wagami \( w_j\ge 0 \), \( \sum_j w_j = 1 \): dla SMA \( w_j = 1/k \) przy \( j\le k \) i \( 0 \) dalej; dla EMA (w granicy długiej historii) \( w_j=\alpha(1-\alpha)^{j-1} \).</p>
+<p><strong>Średni wiek informacji.</strong> Dla filtru o wagach \( w_j \) definiujemy</p>
+<div class="ml-eq" id="eq-srednia-ruchoma-opoznienie">\[ \bar L \;=\; \sum_{j\ge1} j\, w_j, \qquad \bar L_{\text{SMA}} = \frac{k+1}{2}, \qquad \bar L_{\text{EMA}} = \frac{1}{\alpha}. \]</div>
+<p><strong>Wariancja wygładzonego szeregu.</strong> Jeżeli \( y_t \) są nieskorelowane o wariancji \( \sigma^2 \), to</p>
+<div class="ml-eq" id="eq-srednia-ruchoma-wariancja">\[ \operatorname{Var}\bigl(\bar y_t^{(k)}\bigr) = \frac{\sigma^2}{k}, \qquad \operatorname{Var}(m_t) \xrightarrow[t\to\infty]{} \frac{\alpha}{2-\alpha}\,\sigma^2 . \]</div>
+<p>Przy obserwacjach skorelowanych wariancja SMA wynosi \( \frac{\sigma^2}{k}\bigl(1 + 2\sum_{h=1}^{k-1}(1-\tfrac hk)\rho_h\bigr) \), gdzie \( \rho_h \) jest <a data-concept="autokorelacja">autokorelacją</a> na opóźnieniu \( h \).</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-nieobciazonosc"><p class="ml-box-title">Twierdzenie (nieobciążoność przy stałym poziomie)</p>
+<p>Jeżeli \( \mathbb{E}y_t=\mu \) dla wszystkich \( t \), to \( \mathbb{E}\,\bar y^{(k)}_t = \mu \) dla każdego \( k \). Jeżeli ponadto \( \mathbb{E}m_1=\mu \), to \( \mathbb{E}m_t=\mu \) dla każdego \( t \); przy dowolnym \( m_1 \) obciążenie \( (1-\alpha)^{t-1}(\mathbb{E}m_1-\mu) \) zanika geometrycznie.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-wariancja"><p class="ml-box-title">Twierdzenie (redukcja wariancji)</p>
+<p>Jeżeli \( y_t \) są nieskorelowane, o wspólnej wariancji \( \sigma^2 \), to zachodzą wzory <a class="ml-eqref" href="#eq-srednia-ruchoma-wariancja"></a>. W szczególności SMA rzędu \( k \) zmniejsza wariancję szumu \( k \)-krotnie, a EMA ze stałą \( \alpha \) — \( (2-\alpha)/\alpha \)-krotnie.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-rownowaznosc"><p class="ml-box-title">Twierdzenie (równoważność SMA i EMA co do opóźnienia)</p>
+<p>SMA rzędu \( k \) i EMA ze stałą \( \alpha \) mają ten sam średni wiek informacji \( \bar L \) wtedy i tylko wtedy, gdy \( \alpha = \dfrac{2}{k+1} \). Przy tym doborze w stanie ustalonym wariancja EMA, \( \frac{\alpha}{2-\alpha}\sigma^2 = \frac{\sigma^2}{k} \), jest <em>równa</em> wariancji SMA.</p>
+</div>
+<p>Ostatnie twierdzenie wyjaśnia popularną regułę doboru \( \alpha = 2/(k+1) \): obie średnie wygładzają wtedy szum tak samo i reagują na zmiany z tym samym przeciętnym opóźnieniem; różnią się kształtem wag — EMA reaguje szybciej na najświeższą obserwację, ale „pamięta” też, z malejącą wagą, dawne wyniki.</p>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-rekurencji">Rekurencja SMA i postać jawna EMA</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>(a) Z definicji <a class="ml-eqref" href="#eq-srednia-ruchoma"></a>: \( k\bar y_{t+1}^{(k)} = y_t + y_{t-1}+\dots+y_{t-k+1} \) oraz \( k\bar y_{t}^{(k)} = y_{t-1}+\dots+y_{t-k+1} + y_{t-k} \). Odejmując stronami, \( k(\bar y_{t+1}^{(k)}-\bar y_{t}^{(k)}) = y_t - y_{t-k} \), co daje <a class="ml-eqref" href="#eq-srednia-ruchoma-rekurencja"></a>.</p>
+<p>(b) Indukcja względem \( t \). Dla \( t=1 \) suma w <a class="ml-eqref" href="#eq-srednia-ruchoma-wagi"></a> jest pusta i \( m_1=m_1 \). Załóżmy wzór dla \( t \). Wtedy</p>
+\[ \begin{aligned} m_{t+1} &amp;= \alpha y_t + (1-\alpha)\Bigl[\sum_{j=1}^{t-1}\alpha(1-\alpha)^{j-1}y_{t-j} + (1-\alpha)^{t-1}m_1\Bigr] \\ &amp;= \alpha y_t + \sum_{j=1}^{t-1}\alpha(1-\alpha)^{j}y_{t-j} + (1-\alpha)^{t}m_1 \\ &amp;= \sum_{j'=1}^{t}\alpha(1-\alpha)^{j'-1}y_{t+1-j'} + (1-\alpha)^{t}m_1, \end{aligned} \]
+<p>gdzie podstawiliśmy \( j'=j+1 \) i włączyliśmy \( \alpha y_t \) jako składnik \( j'=1 \). To jest wzór dla \( t+1 \). Suma wag: \( \sum_{j=1}^{t-1}\alpha(1-\alpha)^{j-1} + (1-\alpha)^{t-1} = \bigl(1-(1-\alpha)^{t-1}\bigr) + (1-\alpha)^{t-1} = 1 \), więc \( m_t \) jest średnią ważoną.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-nieobciazonosci">Nieobciążoność</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z liniowości wartości oczekiwanej: \( \mathbb{E}\bar y^{(k)}_t = \frac1k\sum_{j=1}^k \mathbb{E}y_{t-j} = \frac1k\cdot k\mu = \mu \). Dla EMA z <a class="ml-eqref" href="#eq-srednia-ruchoma-wagi"></a>: \( \mathbb{E}m_t = \mu\sum_{j=1}^{t-1}\alpha(1-\alpha)^{j-1} + (1-\alpha)^{t-1}\mathbb{E}m_1 = \mu\bigl(1-(1-\alpha)^{t-1}\bigr) + (1-\alpha)^{t-1}\mathbb{E}m_1 \), skąd \( \mathbb{E}m_t-\mu = (1-\alpha)^{t-1}(\mathbb{E}m_1-\mu) \).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-wariancji">Wariancja</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla nieskorelowanych zmiennych wariancja sumy jest sumą wariancji, a \( \operatorname{Var}(cX)=c^2\operatorname{Var}X \). Stąd \( \operatorname{Var}\bar y^{(k)}_t = \frac{1}{k^2}\cdot k\sigma^2 = \sigma^2/k \). Dla EMA (traktując \( m_1 \) jako stałą) \( \operatorname{Var}m_t = \sigma^2\sum_{j=1}^{t-1}\alpha^2(1-\alpha)^{2(j-1)} \). Przy \( t\to\infty \) szereg geometryczny o ilorazie \( (1-\alpha)^2\lt 1 \) ma sumę</p>
+\[ \alpha^2\sigma^2\cdot\frac{1}{1-(1-\alpha)^2} = \frac{\alpha^2\sigma^2}{2\alpha-\alpha^2} = \frac{\alpha}{2-\alpha}\,\sigma^2 . \]
+<p>W przypadku skorelowanym \( \operatorname{Var}\bigl(\sum_{j=1}^k y_{t-j}\bigr) = \sum_{j,l}\operatorname{Cov}(y_{t-j},y_{t-l}) = \sigma^2\bigl(k + 2\sum_{h=1}^{k-1}(k-h)\rho_h\bigr) \), bo opóźnienie \( h \) występuje w \( k-h \) parach \( (j,l) \) z \( j\lt l \); dzielimy przez \( k^2 \).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-rownowaznosci">Średni wiek i reguła α = 2/(k+1)</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla SMA: \( \bar L = \sum_{j=1}^k j\cdot\frac1k = \frac1k\cdot\frac{k(k+1)}{2} = \frac{k+1}{2} \). Dla EMA: \( \bar L = \sum_{j\ge1} j\alpha(1-\alpha)^{j-1} \). Korzystając z tożsamości \( \sum_{j\ge1} j q^{j-1} = \frac{1}{(1-q)^2} \) dla \( |q|\lt 1 \) (pochodna szeregu geometrycznego \( \sum_{j\ge0}q^j = \frac1{1-q} \)), przy \( q=1-\alpha \) otrzymujemy \( \bar L = \alpha\cdot\frac{1}{\alpha^2} = \frac1\alpha \). Równość \( \frac{k+1}{2}=\frac1\alpha \) zachodzi wtedy i tylko wtedy, gdy \( \alpha = \frac{2}{k+1} \). Podstawiając do wariancji: \( \frac{\alpha}{2-\alpha} = \frac{2/(k+1)}{2-2/(k+1)} = \frac{2/(k+1)}{2k/(k+1)} = \frac1k \).</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><em>Dane ilustracyjne.</em> Drużyna rozegrała w sezonie osiem meczów z wynikami: Z, Z, P, R, Z, P, P, Z (Z — zwycięstwo, R — remis, P — porażka). Liczymy formę \( F \) przed meczami 6–9 (k = 5) oraz EMA ze stałą \( \alpha = 0{,}3 \) i wartością początkową \( m_1 = 0{,}5 \) (neutralna forma).</p>
+<table class="ml-table">
+<thead><tr><th>Mecz \( t \)</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr></thead>
+<tbody>
+<tr><td>Wynik</td><td>Z</td><td>Z</td><td>P</td><td>R</td><td>Z</td><td>P</td><td>P</td><td>Z</td></tr>
+<tr><td>Punkty \( p_t \)</td><td>1</td><td>1</td><td>0</td><td>0,5</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+</tbody>
+</table>
+<ol class="ml-steps">
+<li><strong>Forma przed meczem 6</strong> — okno: mecze 1–5. \( F_6 = (1+1+0+0{,}5+1)/5 = 3{,}5/5 = 0{,}70 \). Wynik meczu 6 (porażka) <em>nie</em> wchodzi do tej wartości.</li>
+<li><strong>Forma przed meczem 7</strong> — okno przesuwa się na mecze 2–6. Z rekurencji <a class="ml-eqref" href="#eq-srednia-ruchoma-rekurencja"></a>: \( F_7 = 0{,}70 + (p_6 - p_1)/5 = 0{,}70 + (0-1)/5 = 0{,}50 \). Kontrola wprost: \( (1+0+0{,}5+1+0)/5 = 2{,}5/5 = 0{,}50 \).</li>
+<li><strong>Forma przed meczem 8</strong>: \( F_8 = 0{,}50 + (p_7-p_2)/5 = 0{,}50 + (0-1)/5 = 0{,}30 \).</li>
+<li><strong>Forma przed meczem 9</strong> (następny, jeszcze nierozegrany): \( F_9 = 0{,}30 + (p_8-p_3)/5 = 0{,}30 + (1-0)/5 = 0{,}50 \).</li>
+<li><strong>EMA, α = 0,3.</strong> Rekurencja \( m_{t+1} = 0{,}3\,p_t + 0{,}7\,m_t \):
+\( m_2 = 0{,}3\cdot1 + 0{,}7\cdot0{,}5 = 0{,}65 \);
+\( m_3 = 0{,}3 + 0{,}7\cdot0{,}65 = 0{,}755 \);
+\( m_4 = 0 + 0{,}7\cdot0{,}755 = 0{,}5285 \);
+\( m_5 = 0{,}15 + 0{,}7\cdot0{,}5285 = 0{,}51995 \);
+\( m_6 = 0{,}3 + 0{,}7\cdot0{,}51995 = 0{,}663965 \);
+\( m_7 = 0{,}7\cdot0{,}663965 = 0{,}464776 \);
+\( m_8 = 0{,}7\cdot0{,}464776 = 0{,}325343 \);
+\( m_9 = 0{,}3 + 0{,}7\cdot0{,}325343 = 0{,}527740 \).
+Po zaokrągleniu do czterech miejsc: 0,6640; 0,4648; 0,3253; 0,5277 przed meczami 6–9.</li>
+<li><strong>Porównanie.</strong> Przed meczami 6–9: SMA daje 0,70; 0,50; 0,30; 0,50, a EMA 0,66; 0,46; 0,33; 0,53. Reguła z twierdzenia o równoważności wskazuje dla \( k=5 \) stałą \( \alpha = 2/6 \approx 0{,}333 \); użyte \( \alpha=0{,}3 \) jest jej bliskie, więc obie średnie mają zbliżony poziom wygładzenia. EMA zmienia się płynniej: po zwycięstwie w meczu 8 rośnie o \( 0{,}3\cdot(1-0{,}3253)\approx 0{,}20 \), a SMA o \( (1-0)/5 = 0{,}20 \) — tu przypadkowo tyle samo, ale SMA zależy także od tego, <em>który</em> wynik wypada z okna (tutaj porażka z meczu 3).</li>
+</ol>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Forma \( F=0{,}70 \) czytamy jako „w ostatnich pięciu meczach drużyna zdobyła 70% możliwych punktów”. Nie jest to prawdopodobieństwo wygrania następnego meczu: forma nie uwzględnia siły rywali, miejsca rozgrywania meczów ani rozmiaru zwycięstw. Jest to <em>opisowa</em> miara bieżącej dyspozycji, a jej rola w modelu polega na tym, że może korelować z zainteresowaniem kibiców.</p>
+<p>Ponieważ \( F \) przyjmuje tylko wartości z siatki \( \{0, 0{,}1, 0{,}2, \dots, 1\} \), różnica 0,1 odpowiada jednemu remisowi zamiast porażki (lub zwycięstwu zamiast remisu) w oknie. Odchylenie standardowe formy dla drużyny „przeciętnej” (punkty niezależne, \( P(Z)=P(P)=0{,}45,\ P(R)=0{,}1 \)) wynosi \( \sqrt{\operatorname{Var}(p)/5} \), gdzie \( \operatorname{Var}(p) = 0{,}45\cdot0{,}25+0{,}1\cdot 0 + 0{,}45\cdot0{,}25 = 0{,}225 \), czyli \( \sqrt{0{,}045}\approx 0{,}21 \) (dane ilustracyjne) — zatem zmiana formy z 0,5 na 0,7 mieści się w typowej losowej fluktuacji. To ważna przestroga przed nadinterpretacją „serii”.</p>
+<p>Wybór długości okna to kompromis obciążenie–wariancja: krótkie okno szybko wychwytuje zmianę dyspozycji, ale jest głośne (wariancja \( \sigma^2/k \)); długie okno jest stabilne, lecz opóźnione (średni wiek \( (k+1)/2 \) meczów). Dla \( k=5 \) średni wiek informacji to 3 mecze, a szum zostaje zredukowany pięciokrotnie.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">Modelu Atrakcyjności Frekwencyjnej</a> forma gospodarza i forma rywala są składnikami wektora warunków meczu \( x_i \) w predyktorze liniowym</p>
+\[ \eta_i = \alpha + H_{h(i)} + HS_{h(i),s(i)} + R_{r(i)} + RS_{r(i),s(i)} + S_{s(i)} + L_{l(i)} + x_i^\top\beta . \]
+<p>Konstrukcja jest dokładnie <a class="ml-eqref" href="#eq-srednia-ruchoma-forma"></a>: dla każdego meczu \( i \) i każdej z dwóch drużyn bierzemy jej pięć ostatnich meczów rozpoczętych <em>przed</em> meczem \( i \) (we wszystkich rozgrywkach, w których mamy wyniki), zamieniamy wyniki na punkty 1/½/0 i uśredniamy. Następnie zmienną <a data-concept="standaryzacja">standaryzujemy</a>, aby współczynnik \( \beta \) dało się porównywać z pozostałymi i aby prior \( \beta_k\sim N(0,1) \) miał tę samą skalę dla wszystkich zmiennych. Współczynnik przy formie mierzy zmianę logitu oczekiwanego wypełnienia hali (lub logarytmu oczekiwanej liczby widzów) przy wzroście formy o jedno odchylenie standardowe, przy pozostałych składnikach stałych — zob. <a data-concept="interpretacja-wspolczynnikow">interpretacja współczynników</a>.</p>
+<p>Dlaczego tylko mecze <em>przed</em>? Wynik meczu \( i \) jest silnie związany z frekwencją na tym meczu (atmosfera, przewaga własnej hali). Gdyby wliczyć go do formy, model zyskałby informację niedostępną w chwili prognozy, a jakość oceniana na danych historycznych byłaby zawyżona — klasyczny wyciek omawiany w artykule o <a data-concept="backtesting">walidacji chronologicznej</a>. Ta sama zasada obowiązuje przy pozycji w tabeli: bierzemy tabelę po ostatniej kolejce rozegranej przed meczem.</p>
+<p>Średnia ruchoma frekwencji służy też w raportach opisowych: wygładzona krzywa średniej z pięciu ostatnich meczów domowych pozwala zobaczyć trend klubu (w Superlidze mężczyzn średnio ok. 1100–1300 widzów na mecz) bez skoków powodowanych przez pojedyncze derby lub mecze z kompletem w hali na 3000 miejsc.</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Początek historii.</strong> Na początku pierwszego sezonu drużyny w danych (beniaminek, nowy klub) jest mniej niż \( k \) meczów. Typowe rozwiązania: średnia z dostępnych \( n\lt k \) meczów (większa wariancja, \( \sigma^2/n \)), uzupełnienie brakujących miejsc wartością neutralną 0,5 (ściąganie do środka, podobne w duchu do <a data-concept="partial-pooling">partial pooling</a>) albo wartość brakująca ze wskaźnikiem. Każda z reguł musi korzystać wyłącznie z informacji sprzed meczu.</li>
+<li><strong>Przerwa międzysezonowa.</strong> Okno złożone z ostatnich meczów poprzedniego sezonu może słabo opisywać drużynę po zmianach kadrowych. Średnia ruchoma liczona po indeksie meczu ignoruje upływ czasu kalendarzowego; alternatywą jest ważenie wiekiem w dniach.</li>
+<li><strong>Brak siły rywala.</strong> Pięć zwycięstw ze słabymi rywalami daje tę samą formę co pięć zwycięstw z czołówką. Miary uwzględniające siłę rywala (np. rankingi typu Elo <cite data-bib="elo1978"></cite>, modele stanowe <cite data-bib="glickman1998"></cite>) są bogatsze, ale mniej przejrzyste.</li>
+<li><strong>Efekt krawędzi okna.</strong> W SMA wynik sprzed \( k \) meczów wpływa na średnią z pełną wagą, a w następnym kroku znika całkowicie, przez co forma potrafi się zmienić „bez powodu” w ostatnim meczu. EMA tego efektu nie ma.</li>
+<li><strong>Opóźnienie.</strong> Każda wsteczna średnia ruchoma reaguje na trwałą zmianę poziomu z opóźnieniem rzędu \( \bar L \). Przy trendzie liniowym \( y_t = a + bt \) SMA jest obciążona o \( -b(k+1)/2 \).</li>
+<li><strong>Autokorelacja.</strong> Wyniki kolejnych meczów nie są niezależne (kadra, kontuzje), więc rzeczywista redukcja wariancji jest mniejsza niż \( k \)-krotna — wzór dla przypadku skorelowanego w sekcji Wzory.</li>
+<li><strong>Dyskretność.</strong> Przy \( k=5 \) forma ma 11 możliwych wartości; to wystarcza do modelu liniowego, ale wyklucza subtelne rozróżnienia.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="srednia-arytmetyczna">Średnia arytmetyczna</a> — SMA to średnia arytmetyczna z okna.</li>
+<li><a data-concept="srednia-wazona">Średnia ważona</a> — EMA to średnia ważona z wagami geometrycznymi.</li>
+<li><a data-concept="autokorelacja">Autokorelacja</a> — wpływa na wariancję średniej ruchomej i na jej użyteczność jako predyktora.</li>
+<li><a data-concept="standaryzacja">Standaryzacja</a> — forma wchodzi do MAF w postaci standaryzowanej.</li>
+<li><a data-concept="backtesting">Backtesting</a> — zasada „tylko informacja sprzed meczu” w ocenie prognoz.</li>
+<li><a data-concept="atrakcyjnosc-frekwencyjna">Model Atrakcyjności Frekwencyjnej</a> — miejsce formy w predyktorze liniowym.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="hyndman2021fpp3"></li>
+<li data-bib="boxjenkins2015"></li>
+<li data-bib="elo1978"></li>
+<li data-bib="glickman1998"></li>
+</ul>
+</section>

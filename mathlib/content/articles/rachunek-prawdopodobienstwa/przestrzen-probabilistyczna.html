@@ -1,0 +1,178 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Zanim zapytamy „jakie jest prawdopodobieństwo, że hala będzie pełna?”, musimy ustalić trzy rzeczy. Po pierwsze — <em>co w ogóle może się wydarzyć</em>: jakie są możliwe wyniki doświadczenia (meczu, sezonu, losowania). Po drugie — <em>o które zbiory wyników wolno nam pytać</em>: „frekwencja co najmniej 1000 widzów” jest sensownym pytaniem, ale chcemy mieć gwarancję, że jeśli umiemy mówić o zdarzeniach \(A\) i \(B\), to umiemy też mówić o „\(A\) lub \(B\)”, „nie \(A\)” itd. Po trzecie — <em>jak rozdzielić całkowitą „masę pewności” równą 1</em> między te zdarzenia w sposób niesprzeczny.</p>
+<p>Te trzy składniki tworzą <strong>przestrzeń probabilistyczną</strong> (ang. <em>probability space</em>): zbiór wyników \(\Omega\), rodzinę zdarzeń \(\mathcal F\) oraz miarę prawdopodobieństwa \(P\). Aksjomatyczne ujęcie tej konstrukcji podał Andriej Kołmogorow w 1933 roku <cite data-bib="kolmogorov1933"></cite>; od tego czasu cały rachunek prawdopodobieństwa — także wnioskowanie bayesowskie, na którym opiera się model MAF — jest formalnie rozdziałem teorii miary <cite data-bib="billingsley1995"></cite>.</p>
+<p>Siła aksjomatów polega na tym, że są bardzo skromne: prawdopodobieństwo jest nieujemne, całość ma prawdopodobieństwo 1, a prawdopodobieństwa zdarzeń rozłącznych się sumują. Wszystkie znane reguły — prawdopodobieństwo zdarzenia przeciwnego, wzór włączeń i wyłączeń, ciągłość — są <em>twierdzeniami</em> wyprowadzonymi z tych trzech zasad.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-sigma-cialo"><p class="ml-box-title">Definicja (σ-ciało)</p>
+<p>Niech \(\Omega\) będzie niepustym zbiorem. Rodzinę \(\mathcal F \subseteq 2^{\Omega}\) podzbiorów \(\Omega\) nazywamy <strong>σ-ciałem</strong> (σ-algebrą, ang. <em>σ-algebra</em>), jeżeli:</p>
+<ol>
+<li>\(\Omega \in \mathcal F\);</li>
+<li>jeśli \(A \in \mathcal F\), to \(A^c = \Omega \setminus A \in \mathcal F\) (zamkniętość na dopełnienie);</li>
+<li>jeśli \(A_1, A_2, \ldots \in \mathcal F\), to \(\bigcup_{n=1}^{\infty} A_n \in \mathcal F\) (zamkniętość na przeliczalne sumy).</li>
+</ol>
+<p>Elementy \(\mathcal F\) nazywamy <strong>zdarzeniami</strong>, a parę \((\Omega, \mathcal F)\) — <strong>przestrzenią mierzalną</strong>.</p>
+</div>
+<div class="ml-box ml-def" id="def-przestrzen-probabilistyczna"><p class="ml-box-title">Definicja (przestrzeń probabilistyczna, aksjomaty Kołmogorowa)</p>
+<p><strong>Przestrzenią probabilistyczną</strong> nazywamy trójkę \((\Omega, \mathcal F, P)\), w której \((\Omega,\mathcal F)\) jest przestrzenią mierzalną, a \(P : \mathcal F \to \mathbb R\) jest funkcją spełniającą <strong>aksjomaty Kołmogorowa</strong>:</p>
+<div class="ml-eq" id="eq-przestrzen-probabilistyczna">\[ \text{(A1)}\ \ P(A) \ge 0 \ \ \forall A\in\mathcal F, \qquad \text{(A2)}\ \ P(\Omega)=1, \qquad \text{(A3)}\ \ P\Big(\bigcup_{n=1}^{\infty} A_n\Big)=\sum_{n=1}^{\infty} P(A_n) \]</div>
+<p>przy czym (A3) — <strong>przeliczalna addytywność</strong> (σ-addytywność) — dotyczy każdego ciągu zdarzeń parami rozłącznych (\(A_i\cap A_j=\varnothing\) dla \(i\neq j\)). Funkcję \(P\) nazywamy <strong>miarą prawdopodobieństwa</strong>.</p>
+</div>
+<p>W języku teorii miary: \(P\) jest miarą na \((\Omega,\mathcal F)\) o masie całkowitej 1 <cite data-bib="billingsley1995"></cite>.</p>
+<h3 id="sigma-cialo-generowane">σ-ciało generowane i zbiory borelowskie</h3>
+<p>Dla dowolnej rodziny \(\mathcal G\) podzbiorów \(\Omega\) istnieje najmniejsze σ-ciało ją zawierające, oznaczane \(\sigma(\mathcal G)\) — jest to przekrój wszystkich σ-ciał zawierających \(\mathcal G\) (przekrój σ-ciał jest σ-ciałem). Najważniejszy przykład to <strong>σ-ciało zbiorów borelowskich</strong> \(\mathcal B(\mathbb R) = \sigma\big(\{(-\infty, x] : x\in\mathbb R\}\big)\), generowane przez półproste. Na nim definiuje się rozkłady zmiennych losowych o wartościach rzeczywistych (zob. <a data-concept="zmienna-losowa">zmienna losowa</a>).</p>
+<h3 id="typowe-przestrzenie">Typowe przestrzenie</h3>
+<ul>
+<li><strong>Dyskretna:</strong> \(\Omega\) skończony lub przeliczalny, \(\mathcal F = 2^\Omega\), a \(P(A) = \sum_{\omega\in A} p(\omega)\), gdzie \(p(\omega)\ge 0\), \(\sum_\omega p(\omega)=1\). Przykład: liczba widzów \(\Omega=\{0,1,\ldots,C\}\) w hali o pojemności \(C\).</li>
+<li><strong>Ciągła:</strong> \(\Omega=[0,1]\) (np. wypełnienie hali), \(\mathcal F = \mathcal B([0,1])\), \(P(A)=\int_A f(w)\,dw\) dla gęstości \(f\). Nie można tu przyjąć \(\mathcal F = 2^{\Omega}\): istnieją zbiory niemierzalne (zbiór Vitalego), którym nie da się niesprzecznie przypisać „długości”.</li>
+</ul>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(\Omega\)</td><td>przestrzeń zdarzeń elementarnych (zbiór wszystkich wyników)</td></tr>
+<tr><td>\(\omega\)</td><td>zdarzenie elementarne (pojedynczy wynik), \(\omega\in\Omega\)</td></tr>
+<tr><td>\(\mathcal F\)</td><td>σ-ciało zdarzeń (rodzina podzbiorów \(\Omega\), o które wolno pytać)</td></tr>
+<tr><td>\(P\)</td><td>miara prawdopodobieństwa, \(P:\mathcal F\to[0,1]\)</td></tr>
+<tr><td>\(A, B, A_n\)</td><td>zdarzenia, elementy \(\mathcal F\)</td></tr>
+<tr><td>\(A^c\)</td><td>zdarzenie przeciwne, \(\Omega\setminus A\)</td></tr>
+<tr><td>\(2^\Omega\)</td><td>rodzina wszystkich podzbiorów \(\Omega\)</td></tr>
+<tr><td>\(\sigma(\mathcal G)\)</td><td>σ-ciało generowane przez rodzinę \(\mathcal G\)</td></tr>
+<tr><td>\(\mathcal B(\mathbb R)\)</td><td>σ-ciało zbiorów borelowskich na prostej</td></tr>
+<tr><td>\(A_n\uparrow A\)</td><td>ciąg wstępujący: \(A_1\subseteq A_2\subseteq\ldots\), \(\bigcup_n A_n = A\)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>\(\Omega\neq\varnothing\) i \(\mathcal F\) spełnia trzy warunki σ-ciała; w szczególności \(\varnothing=\Omega^c\in\mathcal F\) i \(\mathcal F\) jest zamknięte na przeliczalne przekroje (prawa de Morgana).</li>
+<li>\(P\) jest określona <em>tylko</em> na \(\mathcal F\); pytanie o prawdopodobieństwo zbioru spoza \(\mathcal F\) nie ma sensu.</li>
+<li>Aksjomat (A3) wymaga rozłączności zdarzeń. Dla zdarzeń nierozłącznych obowiązują nierówności (subaddytywność) lub wzór włączeń i wyłączeń.</li>
+<li>Aksjomaty nie mówią, <em>skąd</em> brać wartości \(P\) — z symetrii, częstości czy przekonań. Interpretacja częstościowa i bayesowska (subiektywna) korzystają z tej samej struktury matematycznej <cite data-bib="gelman2013bda"></cite>.</li>
+<li>Modelowanie zakłada, że wybrana przestrzeń \(\Omega\) obejmuje wszystkie istotne wyniki. W danych frekwencyjnych „brak informacji” (NULL) nie jest wynikiem \(\omega=0\) widzów — to brak obserwacji, a nie zdarzenie w \(\Omega\).</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Z aksjomatów <a class="ml-eqref" href="#eq-przestrzen-probabilistyczna"></a> wynikają (dowody w sekcji <a href="#wyprowadzenie">Dowody i wyprowadzenia</a>):</p>
+<div class="ml-eq" id="eq-przestrzen-probabilistyczna-pusty">\[ P(\varnothing)=0 \]</div>
+<div class="ml-eq" id="eq-przestrzen-probabilistyczna-dopelnienie">\[ P(A^c) = 1 - P(A) \]</div>
+<div class="ml-eq" id="eq-przestrzen-probabilistyczna-monotonicznosc">\[ A\subseteq B \ \Rightarrow\ P(A)\le P(B), \qquad P(B\setminus A) = P(B)-P(A) \]</div>
+<div class="ml-eq" id="eq-przestrzen-probabilistyczna-wlaczenia">\[ P(A\cup B) = P(A)+P(B)-P(A\cap B) \]</div>
+<div class="ml-eq" id="eq-przestrzen-probabilistyczna-boole">\[ P\Big(\bigcup_{n=1}^{\infty}A_n\Big) \le \sum_{n=1}^{\infty}P(A_n) \]</div>
+<div class="ml-eq" id="eq-przestrzen-probabilistyczna-ciaglosc">\[ A_n\uparrow A \ \Rightarrow\ P(A_n)\to P(A), \qquad A_n\downarrow A \ \Rightarrow\ P(A_n)\to P(A) \]</div>
+<p>Wzór <a class="ml-eqref" href="#eq-przestrzen-probabilistyczna-wlaczenia"></a> uogólnia się na \(n\) zdarzeń (zasada włączeń i wyłączeń):</p>
+<div class="ml-eq" id="eq-przestrzen-probabilistyczna-wlaczenia-n">\[ P\Big(\bigcup_{i=1}^{n}A_i\Big)=\sum_{i}P(A_i)-\sum_{i\lt j}P(A_i\cap A_j)+\sum_{i\lt j\lt k}P(A_i\cap A_j\cap A_k)-\ldots+(-1)^{n+1}P(A_1\cap\ldots\cap A_n) \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-wlasnosci-podstawowe"><p class="ml-box-title">Twierdzenie (podstawowe własności miary prawdopodobieństwa)</p>
+<p>Niech \((\Omega,\mathcal F,P)\) będzie przestrzenią probabilistyczną oraz \(A,B\in\mathcal F\). Wtedy: (i) \(P(\varnothing)=0\); (ii) \(P\) jest skończenie addytywna; (iii) \(P(A^c)=1-P(A)\); (iv) jeśli \(A\subseteq B\), to \(P(A)\le P(B)\); (v) \(0\le P(A)\le 1\); (vi) zachodzi wzór <a class="ml-eqref" href="#eq-przestrzen-probabilistyczna-wlaczenia"></a>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-boole"><p class="ml-box-title">Twierdzenie (nierówność Boole’a, subaddytywność)</p>
+<p>Dla dowolnych zdarzeń \(A_1,A_2,\ldots\in\mathcal F\) (niekoniecznie rozłącznych) zachodzi <a class="ml-eqref" href="#eq-przestrzen-probabilistyczna-boole"></a>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-ciaglosc"><p class="ml-box-title">Twierdzenie (ciągłość miary prawdopodobieństwa)</p>
+<p>Jeśli \(A_1\subseteq A_2\subseteq\ldots\) i \(A=\bigcup_n A_n\), to \(P(A_n)\uparrow P(A)\). Jeśli \(A_1\supseteq A_2\supseteq\ldots\) i \(A=\bigcap_n A_n\), to \(P(A_n)\downarrow P(A)\).</p>
+</div>
+<div class="ml-box ml-note"><p>Twierdzenie o ciągłości jest równoważne σ-addytywności przy założeniu skończonej addytywności. To ono pozwala później udowodnić, że <a data-concept="zmienna-losowa" data-anchor="definicja">dystrybuanta</a> jest prawostronnie ciągła i ma granice 0 i 1.</p></div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<div class="ml-proof"><p class="ml-box-title">Dowód (i): \(P(\varnothing)=0\)</p>
+<p>Weźmy ciąg \(A_1=\Omega\), \(A_n=\varnothing\) dla \(n\ge 2\). Zdarzenia są parami rozłączne, a ich suma to \(\Omega\). Z (A3): \(P(\Omega)=P(\Omega)+\sum_{n\ge2}P(\varnothing)\). Ponieważ \(P(\Omega)=1\) jest skończone, \(\sum_{n\ge 2}P(\varnothing)=0\); z (A1) wszystkie składniki są nieujemne i równe, więc \(P(\varnothing)=0\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (ii): skończona addytywność</p>
+<p>Dla rozłącznych \(A_1,\ldots,A_n\) dopiszmy \(A_{k}=\varnothing\) dla \(k\gt n\). Ciąg jest parami rozłączny, więc z (A3) i (i): \(P\big(\bigcup_{k=1}^n A_k\big)=\sum_{k=1}^{n}P(A_k)+\sum_{k\gt n}0\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (iii): zdarzenie przeciwne</p>
+<p>\(A\) i \(A^c\) są rozłączne, a \(A\cup A^c=\Omega\). Z (ii) i (A2): \(1=P(\Omega)=P(A)+P(A^c)\), skąd \(P(A^c)=1-P(A)\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (iv)–(v): monotoniczność i ograniczenie</p>
+<p>Jeśli \(A\subseteq B\), to \(B=A\cup(B\setminus A)\) jako suma rozłączna, przy czym \(B\setminus A = B\cap A^c\in\mathcal F\). Z (ii): \(P(B)=P(A)+P(B\setminus A)\ge P(A)\), bo \(P(B\setminus A)\ge0\) na mocy (A1). Stąd też \(P(B\setminus A)=P(B)-P(A)\). Biorąc \(B=\Omega\): \(P(A)\le 1\); razem z (A1) mamy \(0\le P(A)\le1\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (vi): wzór włączeń i wyłączeń dla dwóch zdarzeń</p>
+<p>Rozłóżmy \(A\cup B\) na sumę rozłączną \(A\cup(B\setminus A)\), a \(B\) na sumę rozłączną \((A\cap B)\cup(B\setminus A)\). Z (ii):</p>
+<div class="ml-eq" id="eq-przestrzen-probabilistyczna-dowod-wlaczenia">\[ \begin{aligned} P(A\cup B) &amp;= P(A)+P(B\setminus A),\\ P(B) &amp;= P(A\cap B)+P(B\setminus A). \end{aligned} \]</div>
+<p>Odejmując stronami: \(P(A\cup B)-P(B)=P(A)-P(A\cap B)\), czyli \(P(A\cup B)=P(A)+P(B)-P(A\cap B)\). Wersję dla \(n\) zdarzeń <a class="ml-eqref" href="#eq-przestrzen-probabilistyczna-wlaczenia-n"></a> dowodzi się indukcyjnie, stosując wzór dla dwóch zdarzeń do \(\big(\bigcup_{i\le n}A_i\big)\cup A_{n+1}\) oraz rozdzielność \(\big(\bigcup_{i\le n}A_i\big)\cap A_{n+1}=\bigcup_{i\le n}(A_i\cap A_{n+1})\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód nierówności Boole’a</p>
+<p>Zdefiniujmy „rozłączne nowości”: \(B_1=A_1\), \(B_n=A_n\setminus\bigcup_{k\lt n}A_k\) dla \(n\ge2\). Wtedy \(B_n\in\mathcal F\), zbiory \(B_n\) są parami rozłączne, \(\bigcup_n B_n=\bigcup_n A_n\) oraz \(B_n\subseteq A_n\). Z (A3) i monotoniczności:</p>
+<div class="ml-eq" id="eq-przestrzen-probabilistyczna-dowod-boole">\[ P\Big(\bigcup_n A_n\Big)=P\Big(\bigcup_n B_n\Big)=\sum_n P(B_n)\le\sum_n P(A_n). \]</div>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód ciągłości</p>
+<p><em>Ciąg wstępujący.</em> Niech \(A_1\subseteq A_2\subseteq\ldots\), \(A_0=\varnothing\), \(D_n=A_n\setminus A_{n-1}\). Zbiory \(D_n\) są rozłączne, \(A_n=\bigcup_{k\le n}D_k\), \(A=\bigcup_k D_k\). Z (A3):</p>
+<div class="ml-eq" id="eq-przestrzen-probabilistyczna-dowod-ciaglosc">\[ P(A)=\sum_{k=1}^{\infty}P(D_k)=\lim_{n\to\infty}\sum_{k=1}^{n}P(D_k)=\lim_{n\to\infty}P(A_n). \]</div>
+<p><em>Ciąg zstępujący.</em> Jeśli \(A_n\downarrow A\), to \(A_n^c\uparrow A^c\) (prawo de Morgana), więc \(1-P(A_n)=P(A_n^c)\to P(A^c)=1-P(A)\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Wyprowadzenie: σ-ciało jest zamknięte na przeliczalne przekroje</p>
+<p>Dla \(A_n\in\mathcal F\): \(A_n^c\in\mathcal F\), więc \(\bigcup_n A_n^c\in\mathcal F\), a stąd \(\big(\bigcup_n A_n^c\big)^c=\bigcap_n A_n\in\mathcal F\) (prawo de Morgana). Analogicznie \(\varnothing=\Omega^c\in\mathcal F\) i \(A\setminus B=A\cap B^c\in\mathcal F\).</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong> Rozważmy mecz drużyny-gospodarza w Superlidze. Skupmy się na dwóch aspektach: wyniku sportowym i frekwencji.</p>
+<ol class="ml-steps">
+<li><strong>Przestrzeń wyników sportowych.</strong> \(\Omega=\{\mathrm{W},\mathrm{R},\mathrm{P}\}\) (wygrana, remis, porażka gospodarza), \(\mathcal F=2^\Omega\) — ma \(2^3=8\) elementów: \(\varnothing,\{\mathrm W\},\{\mathrm R\},\{\mathrm P\},\{\mathrm W,\mathrm R\},\{\mathrm W,\mathrm P\},\{\mathrm R,\mathrm P\},\Omega\). Przyjmijmy \(p(\mathrm W)=0{,}55\), \(p(\mathrm R)=0{,}10\), \(p(\mathrm P)=0{,}35\); suma \(=1{,}00\), więc (A1)–(A2) są spełnione.</li>
+<li><strong>Zdarzenie „gospodarz nie przegra”.</strong> \(\{\mathrm W,\mathrm R\}\) jest sumą rozłączną, więc \(P=0{,}55+0{,}10=0{,}65\). Kontrola wzorem <a class="ml-eqref" href="#eq-przestrzen-probabilistyczna-dopelnienie"></a>: \(1-P(\{\mathrm P\})=1-0{,}35=0{,}65\). ✓</li>
+<li><strong>Dwa nierozłączne zdarzenia frekwencyjne.</strong> Na rozszerzonej przestrzeni (termin i frekwencja meczu) niech \(A\) = „mecz w weekend”, \(B\) = „co najmniej 1200 widzów”. Z historii (dane ilustracyjne): \(P(A)=0{,}60\), \(P(B)=0{,}45\), \(P(A\cap B)=0{,}33\).</li>
+<li><strong>Suma zdarzeń.</strong> Ze wzoru <a class="ml-eqref" href="#eq-przestrzen-probabilistyczna-wlaczenia"></a>: \(P(A\cup B)=0{,}60+0{,}45-0{,}33=0{,}72\). Naiwne dodanie dałoby \(1{,}05\gt 1\) — sprzeczność z (v); to sygnał, że zdarzenia nie są rozłączne.</li>
+<li><strong>Ani weekend, ani wysoka frekwencja.</strong> \(P(A^c\cap B^c)=P\big((A\cup B)^c\big)=1-0{,}72=0{,}28\).</li>
+<li><strong>Wysoka frekwencja w dzień powszedni.</strong> \(P(B\setminus A)=P(B)-P(A\cap B)=0{,}45-0{,}33=0{,}12\).</li>
+<li><strong>Kontrola spójności.</strong> Cztery „komórki” \(A\cap B\), \(A\setminus B\), \(B\setminus A\), \(A^c\cap B^c\) mają prawdopodobieństwa \(0{,}33\); \(0{,}60-0{,}33=0{,}27\); \(0{,}12\); \(0{,}28\). Suma: \(0{,}33+0{,}27+0{,}12+0{,}28=1{,}00\). ✓</li>
+<li><strong>Ciągłość.</strong> Niech \(B_n\) = „co najmniej \(n\) widzów”. Ciąg jest zstępujący, a \(\bigcap_n B_n=\varnothing\) (żadna hala nie ma nieskończonej pojemności), więc \(P(B_n)\to 0\). Właśnie dlatego ogon rozkładu liczby widzów musi zanikać.</li>
+</ol>
+<div class="ml-plot" data-plot="binomial" data-params='{"n": 10, "p": 0.55}'></div>
+<p>Wykres pokazuje miarę prawdopodobieństwa na skończonej przestrzeni \(\Omega=\{0,1,\ldots,10\}\) (liczba wygranych gospodarza w 10 meczach przy niezależnych meczach z \(p=0{,}55\)). Zauważ, że niezależnie od suwaków suma wysokości słupków jest zawsze równa 1 — to aksjomat (A2), a prawdopodobieństwo każdego zbioru wyników jest sumą jego słupków — to (A3).</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Liczba \(P(A)\) to „udział pewności” przypisany zdarzeniu \(A\). Aksjomaty gwarantują, że te udziały zachowują się jak pole powierzchni lub masa: nie są ujemne, sumują się po rozłącznych kawałkach, a całość waży 1. W przykładzie wynik \(P(A\cup B)=0{,}72\) czytamy: w około 72% meczów o takim profilu spełniony jest co najmniej jeden z warunków „weekend” lub „≥ 1200 widzów”.</p>
+<p>Interpretacja <em>źródła</em> liczb jest osobną kwestią. W ujęciu częstościowym \(P(A)\) to graniczna częstość w powtórzeniach; w ujęciu bayesowskim — spójny stopień przekonania. Model MAF przypisuje prawdopodobieństwa także parametrom (np. efektowi rywala \(R_j\)), co jest dopuszczalne tylko w ujęciu bayesowskim, ale aksjomaty i wszystkie wyprowadzone tu reguły obowiązują identycznie.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">modelu atrakcyjności frekwencyjnej (MAF)</a> przestrzeń probabilistyczna jest wspólnym „podłożem” dla wszystkich wielkości losowych:</p>
+<ul>
+<li><strong>Wyniki obserwowalne.</strong> Liczba widzów meczu \(i\) przyjmuje wartości w \(\{0,1,\ldots,C_i\}\) (wariant „wypełnienie”, gdy pojemność \(C_i\) jest znana) lub w \(\{0,1,2,\ldots\}\) (wariant „liczba widzów”, gdy jej nie znamy). W pierwszym przypadku zdarzenia „komplet” \(\{A_i=C_i\}\) i „mecz bez widzów” \(\{A_i=0\}\) mają <em>dodatnie</em> prawdopodobieństwo — to jeden z powodów wyboru <a data-concept="rozklad-beta-dwumianowy">rozkładu beta-dwumianowego</a> zamiast ciągłej regresji beta, w której każde pojedyncze \(\{W=1\}\) ma prawdopodobieństwo 0.</li>
+<li><strong>Parametry.</strong> W ujęciu bayesowskim parametry \(\alpha, \beta, \sigma_R, R_j,\ldots\) są także zmiennymi losowymi na tej samej przestrzeni; ich łączny rozkład a posteriori (zob. <a data-concept="rozklad-posterior">rozkład a posteriori</a>) jest miarą prawdopodobieństwa na przestrzeni parametrów z σ-ciałem borelowskim.</li>
+<li><strong>Raportowane prawdopodobieństwa.</strong> Wielkości takie jak \(P(\mathrm{IAF}_j\gt 100)\) czy \(P(W_i\ge 0{,}9)\) są miarami zdarzeń; reguła dopełnienia daje od razu \(P(W_i\lt 0{,}9)=1-P(W_i\ge0{,}9)\), a monotoniczność gwarantuje \(P(W_i\ge 1)\le P(W_i\ge0{,}95)\le P(W_i\ge0{,}9)\le P(W_i\ge 0{,}75)\) — spójność, którą raporty prognostyczne powinny zachowywać także po zaokrągleniach.</li>
+<li><strong>Brak danych.</strong> NULL frekwencji nie jest zdarzeniem „0 widzów”. Mecz bez informacji wyłącza się z wiarygodności, zamiast wprowadzać go do \(\Omega\) jako wynik 0.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Wybór \(\Omega\) jest decyzją modelarską.</strong> Zbyt uboga przestrzeń (np. pominięcie meczów przy pustych trybunach z powodów administracyjnych) prowadzi do przypisania zera zdarzeniom, które realnie zachodzą.</li>
+<li><strong>Aksjomaty nie dostarczają liczb.</strong> Mówią, jakie reguły muszą spełniać prawdopodobieństwa, ale nie, ile one wynoszą; to zadanie modelu statystycznego i danych.</li>
+<li><strong>Zdarzenia o prawdopodobieństwie zero nie są niemożliwe.</strong> W przestrzeniach ciągłych \(P(W=0{,}8)=0\), choć wartość 0,8 może wystąpić; dlatego pytamy o przedziały, np. \(P(0{,}75\le W\le 0{,}85)\).</li>
+<li><strong>Niemierzalność.</strong> Na przestrzeniach nieprzeliczalnych nie każdy podzbiór jest zdarzeniem; w praktyce wystarczają zbiory borelowskie, ale konstrukcje „na wszystkich podzbiorach” są niedozwolone.</li>
+<li><strong>Interpretacja.</strong> Aksjomaty nie rozstrzygają sporu między interpretacją częstościową a bayesowską; wybór interpretacji wpływa na to, co wolno modelować jako losowe (np. parametry).</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="zmienna-losowa">Zmienna losowa</a> — funkcja mierzalna na przestrzeni probabilistycznej.</li>
+<li><a data-concept="prawdopodobienstwo-warunkowe">Prawdopodobieństwo warunkowe</a> — nowa miara \(P(\cdot\mid B)\) na tym samym σ-ciele.</li>
+<li><a data-concept="prawo-calkowitego-prawdopodobienstwa">Prawo całkowitego prawdopodobieństwa</a> — zastosowanie σ-addytywności do podziału \(\Omega\).</li>
+<li><a data-concept="twierdzenie-bayesa">Twierdzenie Bayesa</a>.</li>
+<li><a data-concept="wartosc-oczekiwana">Wartość oczekiwana</a> — całka względem miary \(P\).</li>
+<li><a data-concept="rozklad-beta-dwumianowy">Rozkład beta-dwumianowy</a> i <a data-concept="rozklady-z-masa-na-granicach">rozkłady z masą na granicach</a>.</li>
+<li><a data-concept="atrakcyjnosc-frekwencyjna">Atrakcyjność frekwencyjna (MAF)</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="kolmogorov1933"></li>
+<li data-bib="billingsley1995"></li>
+<li data-bib="pishronik2014"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="gelman2013bda"></li>
+</ul>
+</section>

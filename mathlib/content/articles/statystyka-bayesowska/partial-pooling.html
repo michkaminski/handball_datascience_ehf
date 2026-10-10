@@ -1,0 +1,226 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Załóżmy, że chcemy ocenić, jak dobrze klub wypełnia swoją halę. Jeden klub rozegrał w obserwowanym okresie 40 meczów u siebie, inny tylko 2 (bo właśnie awansował albo zmienił halę). Średnia z dwóch meczów może wynosić 85% — ale czy to znaczy, że klub naprawdę przyciąga więcej widzów niż drużyna z 40 meczami i średnią 50%? Dwa spotkania to bardzo mało: jeden derbowy mecz i jedna promocja biletowa wystarczą, by średnia była skrajna.</p>
+<p>Są trzy naturalne strategie:</p>
+<ul>
+<li><strong>brak łączenia</strong> (<em>no pooling</em>) — każdy klub ocenia się wyłącznie na podstawie jego własnych meczów; oszacowania małych grup są skrajnie niestabilne;</li>
+<li><strong>pełne łączenie</strong> (<em>complete pooling</em>) — wszystkie kluby traktuje się jak jeden; oszacowanie jest stabilne, ale ignoruje rzeczywiste różnice między klubami;</li>
+<li><strong>częściowe łączenie</strong> (<em>partial pooling</em>) — oszacowanie klubu jest kompromisem między jego własną średnią a średnią ogólną; im mniej danych ma klub i im bardziej są one zaszumione, tym silniej jego oszacowanie jest „ściągane” (<em>shrinkage</em>) w kierunku średniej ogólnej.</li>
+</ul>
+<p>Częściowe łączenie nie jest arbitralnym wygładzaniem: wynika automatycznie z <a data-concept="modele-hierarchiczne">modelu hierarchicznego</a>, w którym parametry grup pochodzą ze wspólnego rozkładu. Siła ściągania nie jest ustalana ręcznie, lecz wynika z porównania dwóch wariancji: zmienności wewnątrz grupy (szum pojedynczych meczów) i zmienności między grupami (rzeczywiste różnice między klubami). Ten artykuł wyprowadza ten mechanizm w najprostszym, w pełni analitycznym przypadku — modelu normalnym-normalnym.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Rozważmy \(J\) grup (np. klubów), indeksowanych \(j = 1,\dots,J\). W grupie \(j\) mamy \(n_j \ge 1\) obserwacji \(y_{1j},\dots,y_{n_j j} \in \mathbb{R}\).</p>
+<div class="ml-box ml-def" id="def-model-normalny-normalny"><p class="ml-box-title">Definicja (model normalny-normalny)</p>
+<p>Hierarchiczny model normalny-normalny (<em>normal–normal hierarchical model</em>) to model</p>
+\[ y_{ij} \mid \theta_j \overset{\text{iid}}{\sim} N(\theta_j, \sigma^2), \qquad \theta_j \mid \mu, \tau \overset{\text{iid}}{\sim} N(\mu, \tau^2), \qquad j=1,\dots,J, \]
+<p>gdzie \(\theta_j \in \mathbb{R}\) jest nieobserwowanym parametrem grupy, \(\sigma^2 \gt 0\) — wariancją wewnątrzgrupową, a \(\mu \in \mathbb{R}\), \(\tau^2 \ge 0\) — hiperparametrami (średnią i wariancją rozkładu populacji grup). Hiperparametry mogą być ustalone albo mieć własne <a data-concept="hiperpriory">hiperpriory</a>.</p>
+</div>
+<div class="ml-box ml-def" id="def-partial-pooling"><p class="ml-box-title">Definicja (estymatory łączenia)</p>
+<p>Niech \(\bar y_j = n_j^{-1}\sum_{i} y_{ij}\). Wyróżniamy trzy estymatory parametru \(\theta_j\):</p>
+<ul>
+<li>brak łączenia: \(\hat\theta_j^{\,\text{no}} = \bar y_j\);</li>
+<li>pełne łączenie: \(\hat\theta_j^{\,\text{cp}} = \bar y = \sum_j n_j \bar y_j \big/ \sum_j n_j\) (ten sam dla każdej grupy);</li>
+<li>częściowe łączenie: \(\hat\theta_j^{\,\text{pp}} = E(\theta_j \mid y, \mu, \tau, \sigma)\) — średnia <a data-concept="rozklad-posterior">rozkładu posterior</a> parametru grupy w modelu hierarchicznym.</li>
+</ul>
+<p>Współczynnikiem ściągania (<em>shrinkage factor</em>) grupy \(j\) nazywamy liczbę</p>
+\[ B_j = \frac{\sigma^2/n_j}{\sigma^2/n_j + \tau^2} \in [0, 1]. \]
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(J\)</td><td>liczba grup (klubów)</td></tr>
+<tr><td>\(n_j\)</td><td>liczba obserwacji (meczów) w grupie \(j\)</td></tr>
+<tr><td>\(y_{ij}\)</td><td>\(i\)-ta obserwacja w grupie \(j\)</td></tr>
+<tr><td>\(\bar y_j\)</td><td>średnia z próby w grupie \(j\)</td></tr>
+<tr><td>\(\bar y\)</td><td>średnia ze wszystkich obserwacji (ważona liczebnościami)</td></tr>
+<tr><td>\(\theta_j\)</td><td>prawdziwy (nieobserwowany) parametr grupy \(j\)</td></tr>
+<tr><td>\(\sigma^2\)</td><td>wariancja wewnątrzgrupowa (szum pojedynczej obserwacji)</td></tr>
+<tr><td>\(\mu\)</td><td>średnia populacji grup (hiperparametr)</td></tr>
+<tr><td>\(\tau^2\)</td><td>wariancja między grupami (hiperparametr)</td></tr>
+<tr><td>\(B_j\)</td><td>współczynnik ściągania grupy \(j\)</td></tr>
+<tr><td>\(\hat\theta_j^{\,\text{no}}, \hat\theta_j^{\,\text{cp}}, \hat\theta_j^{\,\text{pp}}\)</td><td>estymatory: brak, pełne i częściowe łączenie</td></tr>
+<tr><td>\(v_j\)</td><td>wariancja posterior parametru \(\theta_j\)</td></tr>
+<tr><td>\(k\)</td><td>wymiar wektora średnich w twierdzeniu Steina</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li><strong>Wymienialność grup</strong> (<em>exchangeability</em>). Przed obejrzeniem danych nie mamy powodu sądzić, że któraś grupa ma systematycznie wyższy parametr niż inna — dlatego modelujemy \(\theta_j\) jako losowania z tego samego rozkładu. Gdy taki powód istnieje (np. klub gra w większym mieście), należy go wprowadzić jako predyktor; wymienialność dotyczy wtedy reszt po uwzględnieniu predyktorów.</li>
+<li><strong>Warunkowa niezależność</strong>: przy danym \(\theta_j\) obserwacje w grupie są niezależne, a grupy są warunkowo niezależne przy danych hiperparametrach.</li>
+<li><strong>Normalność</strong> obu poziomów. Jest potrzebna do analitycznych wzorów tego artykułu; w modelach uogólnionych (logit, log) mechanizm ściągania działa tak samo, ale wzory mają postać przybliżoną.</li>
+<li><strong>Znana wariancja wewnątrzgrupowa \(\sigma^2\)</strong> oraz — w podstawowym wyprowadzeniu — znane \(\mu\) i \(\tau\). W pełnym modelu bayesowskim hiperparametry są estymowane razem z \(\theta_j\), a wynik jest uśrednieniem wzorów warunkowych po ich rozkładzie posterior.</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Średnia posterior parametru grupy jest średnią ważoną średniej grupy i średniej populacji:</p>
+<div class="ml-eq" id="eq-partial-pooling">\[ \hat\theta_j^{\,\text{pp}} = E(\theta_j \mid y, \mu, \tau, \sigma) = B_j\,\mu + (1 - B_j)\,\bar y_j, \qquad B_j = \frac{\sigma^2/n_j}{\sigma^2/n_j + \tau^2}. \]</div>
+<p>Równoważnie, w zapisie precyzji (odwrotności wariancji):</p>
+<div class="ml-eq" id="eq-partial-pooling-precyzja">\[ \hat\theta_j^{\,\text{pp}} = \frac{\dfrac{n_j}{\sigma^2}\,\bar y_j + \dfrac{1}{\tau^2}\,\mu}{\dfrac{n_j}{\sigma^2} + \dfrac{1}{\tau^2}}. \]</div>
+<p>Wariancja posterior:</p>
+<div class="ml-eq" id="eq-partial-pooling-wariancja">\[ v_j = \operatorname{Var}(\theta_j \mid y, \mu, \tau, \sigma) = \left(\frac{n_j}{\sigma^2} + \frac{1}{\tau^2}\right)^{-1} = (1 - B_j)\,\frac{\sigma^2}{n_j}. \]</div>
+<p>Rozkład brzegowy średniej grupy (po wycałkowaniu \(\theta_j\)):</p>
+<div class="ml-eq" id="eq-partial-pooling-brzegowy">\[ \bar y_j \mid \mu, \tau, \sigma \sim N\!\left(\mu,\ \tau^2 + \frac{\sigma^2}{n_j}\right). \]</div>
+<p>Estymator \(\mu\) przy danym \(\tau\) (średnia ważona precyzjami średnich grupowych):</p>
+<div class="ml-eq" id="eq-partial-pooling-mu">\[ \hat\mu(\tau) = \frac{\sum_{j=1}^{J} w_j\,\bar y_j}{\sum_{j=1}^{J} w_j}, \qquad w_j = \frac{1}{\tau^2 + \sigma^2/n_j}. \]</div>
+<p>Przypadki graniczne: \(\tau \to 0\) daje \(B_j \to 1\) (pełne łączenie, \(\hat\theta_j \to \mu\)), a \(\tau \to \infty\) daje \(B_j \to 0\) (brak łączenia, \(\hat\theta_j \to \bar y_j\)). Dla ustalonych \(\sigma,\tau\) współczynnik \(B_j\) maleje do zera, gdy \(n_j \to \infty\).</p>
+<p>Estymator Jamesa–Steina dla \(X \sim N_k(\theta, I_k)\):</p>
+<div class="ml-eq" id="eq-partial-pooling-james-stein">\[ \hat\theta^{\,\text{JS}} = \left(1 - \frac{k - 2}{\lVert X \rVert^2}\right) X. \]</div>
+<div class="ml-plot" data-plot="shrinkage" data-params='{"tau": 8, "sigma": 15}'></div>
+<p>Na wykresie widać, że przy małej liczbie meczów oszacowania grup leżą blisko średniej ogólnej, a wraz ze wzrostem \(n_j\) zbliżają się do własnych średnich grup. Zwiększenie \(\tau\) (większe rzeczywiste różnice między klubami) osłabia ściąganie; zwiększenie \(\sigma\) (większy szum pojedynczego meczu) je wzmacnia.</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-posterior-normalny"><p class="ml-box-title">Twierdzenie (posterior w modelu normalnym-normalnym)</p>
+<p>W modelu z <a href="#def-model-normalny-normalny">definicji</a>, przy znanych \(\mu, \tau \gt 0, \sigma \gt 0\), rozkład posterior parametru \(\theta_j\) jest normalny: \(\theta_j \mid y \sim N(\hat\theta_j^{\,\text{pp}}, v_j)\), ze średnią <a class="ml-eqref" href="#eq-partial-pooling"></a> i wariancją <a class="ml-eqref" href="#eq-partial-pooling-wariancja"></a>. Parametry \(\theta_1,\dots,\theta_J\) są a posteriori niezależne, a posterior \(\theta_j\) zależy od danych wyłącznie przez \(\bar y_j\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-ryzyko-bayesowskie"><p class="ml-box-title">Twierdzenie (przewaga częściowego łączenia w ryzyku bayesowskim)</p>
+<p>Przy kwadratowej funkcji straty i parametrach \(\theta_j\) losowanych z \(N(\mu,\tau^2)\) oczekiwany błąd kwadratowy (ryzyko bayesowskie) estymatorów wynosi</p>
+\[ E\big[(\bar y_j - \theta_j)^2\big] = \frac{\sigma^2}{n_j}, \qquad E\big[(\hat\theta_j^{\,\text{pp}} - \theta_j)^2\big] = (1 - B_j)\,\frac{\sigma^2}{n_j}, \qquad E\big[(\mu - \theta_j)^2\big] = \tau^2. \]
+<p>Estymator częściowego łączenia ma ryzyko nie większe niż każdy z dwóch pozostałych, ze ścisłą nierównością dla \(0 \lt B_j \lt 1\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-james-stein"><p class="ml-box-title">Twierdzenie (Stein, James–Stein)</p>
+<p>Niech \(X \sim N_k(\theta, I_k)\), \(k \ge 3\), i niech \(R(\hat\theta, \theta) = E_\theta \lVert \hat\theta - \theta \rVert^2\). Wtedy dla każdego \(\theta \in \mathbb{R}^k\)</p>
+\[ R(\hat\theta^{\,\text{JS}}, \theta) = k - (k-2)^2\, E_\theta\!\left[\frac{1}{\lVert X\rVert^2}\right] \lt k = R(X, \theta). \]
+<p>Zatem estymator „każda grupa osobno” \(\hat\theta = X\) jest niedopuszczalny (<em>inadmissible</em>) przy łącznej stracie kwadratowej, gdy grup jest co najmniej trzy.</p>
+</div>
+<p>Twierdzenie Jamesa–Steina jest frekwentystycznym uzasadnieniem częściowego łączenia: nawet bez przyjmowania rozkładu a priori ściąganie zmniejsza <em>łączny</em> błąd kwadratowy dla dowolnych prawdziwych parametrów. Efron i Morris pokazali, że estymator Jamesa–Steina można interpretować jako empiryczny estymator bayesowski modelu <a class="ml-eqref" href="#eq-partial-pooling"></a>, w którym \(B\) szacuje się z danych, i zilustrowali to na danych o skuteczności 18 baseballistów po 45 pierwszych podejściach do odbicia: oszacowania ściągnięte do średniej lepiej przewidziały wyniki z reszty sezonu niż indywidualne średnie <cite data-bib="efron1975"></cite>.</p>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="wyprowadzenie-posterior">Wyprowadzenie średniej posterior jako średniej ważonej</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód twierdzenia o posteriorze</p>
+<p><strong>Krok 1 — funkcja wiarygodności.</strong> Przy danym \(\theta_j\) obserwacje grupy są niezależne, więc</p>
+\[ p(y_{\cdot j} \mid \theta_j) \propto \prod_{i=1}^{n_j} \exp\!\left(-\frac{(y_{ij}-\theta_j)^2}{2\sigma^2}\right) = \exp\!\left(-\frac{1}{2\sigma^2}\sum_{i}(y_{ij}-\theta_j)^2\right). \]
+<p>Rozkładając \(\sum_i (y_{ij}-\theta_j)^2 = \sum_i (y_{ij}-\bar y_j)^2 + n_j(\bar y_j - \theta_j)^2\) (wyraz mieszany znika, bo \(\sum_i (y_{ij}-\bar y_j) = 0\)), pierwszy składnik nie zależy od \(\theta_j\), więc</p>
+\[ p(y_{\cdot j} \mid \theta_j) \propto \exp\!\left(-\frac{n_j}{2\sigma^2}(\theta_j - \bar y_j)^2\right). \]
+<p>Wiarygodność zależy od danych tylko przez \(\bar y_j\) — średnia jest statystyką dostateczną.</p>
+<p><strong>Krok 2 — posterior.</strong> Z <a data-concept="twierdzenie-bayesa-w-estymacji">twierdzenia Bayesa</a> i niezależności grup:</p>
+\[ p(\theta_j \mid y) \propto \exp\!\left(-\frac{n_j}{2\sigma^2}(\theta_j - \bar y_j)^2 - \frac{1}{2\tau^2}(\theta_j - \mu)^2\right). \]
+<p><strong>Krok 3 — dopełnienie do kwadratu.</strong> Oznaczmy \(a = n_j/\sigma^2\), \(b = 1/\tau^2\). Wykładnik (pomnożony przez \(-2\)) to</p>
+\[ \begin{aligned} a(\theta - \bar y_j)^2 + b(\theta - \mu)^2 &amp;= (a+b)\theta^2 - 2(a\bar y_j + b\mu)\theta + \text{const} \\ &amp;= (a+b)\left(\theta - \frac{a\bar y_j + b\mu}{a+b}\right)^2 + \text{const}. \end{aligned} \]
+<p>Jest to jądro gęstości normalnej o precyzji \(a+b\) i średniej \((a\bar y_j + b\mu)/(a+b)\), co daje <a class="ml-eqref" href="#eq-partial-pooling-precyzja"></a> oraz \(v_j = (a+b)^{-1}\).</p>
+<p><strong>Krok 4 — postać średniej ważonej.</strong> Waga przy \(\mu\) wynosi</p>
+\[ \frac{b}{a+b} = \frac{1/\tau^2}{n_j/\sigma^2 + 1/\tau^2} = \frac{\sigma^2/n_j}{\sigma^2/n_j + \tau^2} = B_j, \]
+<p>(licznik i mianownik pomnożono przez \(\tau^2 \sigma^2/n_j\)), a waga przy \(\bar y_j\) to \(a/(a+b) = 1 - B_j\). Stąd <a class="ml-eqref" href="#eq-partial-pooling"></a>. Wreszcie \(v_j = (a+b)^{-1} = \frac{a}{a+b}\cdot\frac1a = (1-B_j)\,\sigma^2/n_j\), co daje <a class="ml-eqref" href="#eq-partial-pooling-wariancja"></a>. Posterior łączny faktoryzuje się na iloczyn czynników zależnych od pojedynczych \(\theta_j\), więc parametry są a posteriori niezależne.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-brzegowy">Rozkład brzegowy i estymacja hiperparametrów</h3>
+<p>Ponieważ \(\bar y_j = \theta_j + \varepsilon_j\), gdzie \(\theta_j \sim N(\mu, \tau^2)\) i niezależne \(\varepsilon_j \sim N(0, \sigma^2/n_j)\), suma dwóch niezależnych zmiennych normalnych jest normalna o średniej \(\mu\) i wariancji \(\tau^2 + \sigma^2/n_j\) — to wzór <a class="ml-eqref" href="#eq-partial-pooling-brzegowy"></a>. Logarytm wiarygodności brzegowej względem \(\mu\) przy ustalonym \(\tau\) to \(-\tfrac12\sum_j w_j(\bar y_j - \mu)^2 + \text{const}\); przyrównanie pochodnej do zera daje \(\sum_j w_j(\bar y_j - \mu) = 0\), czyli <a class="ml-eqref" href="#eq-partial-pooling-mu"></a>. Wzór ten pokazuje, że także w estymacji średniej populacji grupy o małej liczbie obserwacji (duże \(\sigma^2/n_j\)) mają mniejszą wagę, ale nie mniejszą niż \(1/(\tau^2 + \sigma^2)\) — pojedynczy wielki klub nie zdominuje oszacowania \(\mu\), gdy \(\tau^2\) jest duże.</p>
+<p>W podejściu w pełni bayesowskim (stosowanym w MAF) nie wstawia się oszacowań punktowych \(\hat\mu, \hat\tau\), lecz całkuje po ich posteriorze: \(E(\theta_j \mid y) = E\big[B_j(\tau)\mu + (1-B_j(\tau))\bar y_j \mid y\big]\). Uwzględnia to niepewność co do \(\tau\), której pomija empiryczne podejście bayesowskie (zaniża ono zwykle szerokość przedziałów, gdy grup jest mało).</p>
+
+<h3 id="wyprowadzenie-ryzyko">Dowód twierdzenia o ryzyku bayesowskim</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla \(\bar y_j\): \(E[(\bar y_j - \theta_j)^2] = E[E((\bar y_j - \theta_j)^2 \mid \theta_j)] = \sigma^2/n_j\). Dla \(\mu\): \(E[(\mu - \theta_j)^2] = \operatorname{Var}(\theta_j) = \tau^2\). Dla \(\hat\theta_j^{\,\text{pp}}\): z <a data-concept="prawo-calkowitej-wartosci-oczekiwanej">prawa całkowitej wartości oczekiwanej</a>, warunkując na danych, \(E[(\hat\theta_j^{\,\text{pp}} - \theta_j)^2] = E\big[E((\theta_j - E(\theta_j\mid y))^2 \mid y)\big] = E[v_j] = (1-B_j)\sigma^2/n_j\), bo \(v_j\) nie zależy od danych. Wreszcie \((1-B_j)\sigma^2/n_j \le \sigma^2/n_j\) oraz \((1-B_j)\sigma^2/n_j = \dfrac{\tau^2 \sigma^2/n_j}{\sigma^2/n_j + \tau^2} \le \tau^2\), ze ścisłymi nierównościami, gdy obie wariancje są dodatnie i skończone.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-james-stein">Dowód twierdzenia Jamesa–Steina</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Wykorzystamy lemat Steina: jeśli \(Z \sim N(\theta_i, 1)\) i \(g\) jest prawie wszędzie różniczkowalna z \(E|g'(Z)| \lt \infty\), to \(E[(Z - \theta_i) g(Z)] = E[g'(Z)]\) (całkowanie przez części z gęstością normalną, dla której \(\varphi'(z) = -(z-\theta_i)\varphi(z)\)).</p>
+<p>Niech \(g(x) = (k-2)\,x / \lVert x\rVert^2\), więc \(\hat\theta^{\,\text{JS}} = X - g(X)\). Wtedy</p>
+\[ \lVert \hat\theta^{\,\text{JS}} - \theta \rVert^2 = \lVert X - \theta\rVert^2 - 2\sum_{i=1}^k (X_i - \theta_i)\, g_i(X) + \lVert g(X) \rVert^2. \]
+<p>Pierwszy składnik ma wartość oczekiwaną \(k\). Trzeci to \((k-2)^2/\lVert X\rVert^2\). Dla drugiego stosujemy lemat Steina w każdej współrzędnej (warunkowo względem pozostałych):</p>
+\[ \frac{\partial}{\partial x_i}\frac{x_i}{\lVert x\rVert^2} = \frac{1}{\lVert x\rVert^2} - \frac{2x_i^2}{\lVert x\rVert^4}, \qquad \sum_{i=1}^k \frac{\partial}{\partial x_i}\frac{x_i}{\lVert x\rVert^2} = \frac{k - 2}{\lVert x\rVert^2}. \]
+<p>Stąd \(E\big[\sum_i (X_i-\theta_i) g_i(X)\big] = (k-2)^2 E[1/\lVert X\rVert^2]\), a zatem</p>
+\[ R(\hat\theta^{\,\text{JS}}, \theta) = k - 2(k-2)^2 E\!\left[\tfrac{1}{\lVert X\rVert^2}\right] + (k-2)^2 E\!\left[\tfrac{1}{\lVert X\rVert^2}\right] = k - (k-2)^2 E\!\left[\tfrac{1}{\lVert X\rVert^2}\right]. \]
+<p>Dla \(k \ge 3\) wartość \(E[1/\lVert X\rVert^2]\) jest skończona i dodatnia (\(\lVert X\rVert^2\) ma niecentralny rozkład chi-kwadrat o \(k\) stopniach swobody), więc ryzyko jest ściśle mniejsze od \(k\).</p>
+<p class="ml-qed">∎</p></div>
+<p>Związek z modelem hierarchicznym: przy \(\theta_i \sim N(0, \tau^2)\) i \(\sigma^2/n = 1\) mamy \(B = 1/(1+\tau^2)\), a \(\lVert X\rVert^2 \sim (1+\tau^2)\chi^2_k\), więc \(E[(k-2)/\lVert X\rVert^2] = 1/(1+\tau^2) = B\). Czynnik \((k-2)/\lVert X\rVert^2\) jest zatem nieobciążonym estymatorem współczynnika ściągania — estymator Jamesa–Steina to empiryczny estymator bayesowski <cite data-bib="efron1975"></cite>.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><em>Dane ilustracyjne.</em> Obserwujemy wypełnienie hali (w punktach procentowych) w meczach domowych czterech klubów. Przyjmujemy \(\sigma = 15\) p.p. (rozrzut wypełnienia między meczami tego samego klubu), \(\tau = 8\) p.p. (rozrzut prawdziwych średnich klubów) oraz średnią ligową \(\mu = 60\%\) oszacowaną z wielu klubów. Wtedy \(\sigma^2 = 225\), \(\tau^2 = 64\).</p>
+<table class="ml-table">
+<thead><tr><th>Klub</th><th>\(n_j\)</th><th>\(\bar y_j\) [%]</th></tr></thead>
+<tbody>
+<tr><td>A</td><td>2</td><td>85</td></tr>
+<tr><td>B</td><td>10</td><td>72</td></tr>
+<tr><td>C</td><td>40</td><td>50</td></tr>
+<tr><td>D</td><td>5</td><td>40</td></tr>
+</tbody>
+</table>
+<ol class="ml-steps">
+<li><strong>Wariancja średniej grupy</strong> \(\sigma^2/n_j\): A: \(225/2 = 112{,}5\); B: \(225/10 = 22{,}5\); C: \(225/40 = 5{,}625\); D: \(225/5 = 45\).</li>
+<li><strong>Współczynniki ściągania</strong> \(B_j = (\sigma^2/n_j)/(\sigma^2/n_j + 64)\):
+A: \(112{,}5/176{,}5 = 0{,}6374\); B: \(22{,}5/86{,}5 = 0{,}2601\); C: \(5{,}625/69{,}625 = 0{,}0808\); D: \(45/109 = 0{,}4128\).</li>
+<li><strong>Średnie posterior</strong> \(\hat\theta_j = \mu + (1-B_j)(\bar y_j - \mu)\):
+<ul>
+<li>A: \(60 + 0{,}3626 \cdot 25 = 60 + 9{,}07 = 69{,}07\);</li>
+<li>B: \(60 + 0{,}7399 \cdot 12 = 60 + 8{,}88 = 68{,}88\);</li>
+<li>C: \(60 + 0{,}9192 \cdot (-10) = 60 - 9{,}19 = 50{,}81\);</li>
+<li>D: \(60 + 0{,}5872 \cdot (-20) = 60 - 11{,}74 = 48{,}26\).</li>
+</ul></li>
+<li><strong>Odchylenia standardowe posterior</strong> \(\sqrt{v_j} = \sqrt{(1-B_j)\sigma^2/n_j}\): A: \(\sqrt{0{,}3626 \cdot 112{,}5} = \sqrt{40{,}79} = 6{,}39\); B: \(\sqrt{0{,}7399\cdot 22{,}5} = 4{,}08\); C: \(\sqrt{0{,}9192 \cdot 5{,}625} = 2{,}27\); D: \(\sqrt{0{,}5872 \cdot 45} = 5{,}14\). Dla porównania błędy standardowe bez łączenia \(\sigma/\sqrt{n_j}\) wynoszą 10,61; 4,74; 2,37; 6,71.</li>
+<li><strong>Pełne łączenie</strong>: \(\bar y = (2\cdot 85 + 10\cdot 72 + 40\cdot 50 + 5 \cdot 40)/57 = 3090/57 = 54{,}21\) — jedna liczba dla wszystkich klubów, zdominowana przez klub C.</li>
+</ol>
+<table class="ml-table">
+<thead><tr><th>Klub</th><th>Brak łączenia</th><th>Pełne łączenie</th><th>Częściowe łączenie</th><th>\(B_j\)</th></tr></thead>
+<tbody>
+<tr><td>A (\(n=2\))</td><td>85,0</td><td>54,2</td><td>69,1</td><td>0,64</td></tr>
+<tr><td>B (\(n=10\))</td><td>72,0</td><td>54,2</td><td>68,9</td><td>0,26</td></tr>
+<tr><td>C (\(n=40\))</td><td>50,0</td><td>54,2</td><td>50,8</td><td>0,08</td></tr>
+<tr><td>D (\(n=5\))</td><td>40,0</td><td>54,2</td><td>48,3</td><td>0,41</td></tr>
+</tbody>
+</table>
+<p>Ranking się zmienia: bez łączenia A (85%) wyraźnie wyprzedza B (72%), po częściowym łączeniu oba kluby mają praktycznie równe oszacowania (69,1 vs 68,9), a niepewność A (\(\pm 6{,}4\)) jest dużo większa niż B (\(\pm 4{,}1\)).</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li><strong>\(B_j\) to udział „zaufania do populacji”.</strong> \(B_j = 0{,}64\) oznacza, że w oszacowaniu klubu A 64% wagi ma średnia ligowa, a tylko 36% jego własne dwa mecze. Równoważnie: grupa ma „wartość informacyjną” \(n_j\) obserwacji, a prior — \(\sigma^2/\tau^2\) obserwacji (tu \(225/64 \approx 3{,}5\) meczu); \(B_j = (\sigma^2/\tau^2)/(n_j + \sigma^2/\tau^2)\).</li>
+<li><strong>Ściąganie nie jest karą za mały klub</strong>, tylko za mało informacji. Klub z dwoma meczami i średnią 85% może naprawdę być atrakcyjny — model mówi jedynie, że dwa mecze tego nie dowodzą, i wyraża to szerokim przedziałem wiarygodności.</li>
+<li><strong>Kierunek ściągania</strong> zależy od położenia względem \(\mu\): skrajnie wysokie średnie maleją, skrajnie niskie rosną. Ranking po częściowym łączeniu jest bardziej odporny na „regresję do średniej” w kolejnym sezonie.</li>
+<li><strong>Siła ściągania jest estymowana</strong>. Jeśli dane pokazują duże różnice między klubami (duże \(\hat\tau\)), ściąganie jest słabe; jeśli kluby są podobne, silne. Model „uczy się”, ile pożyczać informacji od innych grup.</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">Modelu Atrakcyjności Frekwencyjnej</a> wszystkie efekty losowe — gospodarza \(H_h\), rywala \(R_r\), interakcji z sezonem \(HS_{h,s}\), \(RS_{r,s}\), sezonu \(S_s\) i rozgrywek \(L_l\) — są parametrami częściowo łączonymi. Przykładowo efekt rywala ma rozkład \(R_j = \sigma_R z_j\), \(z_j \sim N(0,1)\), czyli \(R_j \sim N(0, \sigma_R^2)\) ze średnią populacji równą zero (poziom ogólny przejmuje wyraz wolny \(\alpha\)). Hiperparametr \(\sigma_R\) odgrywa rolę \(\tau\): jest estymowany z danych z hiperpriorem Half-Normal(0, 1).</p>
+<ul>
+<li><strong>Indeks IAF</strong>. Klub, który jako gość rozegrał tylko kilka meczów (beniaminek, drużyna z europejskich pucharów z pojedynczym wyjazdem do Polski), dostaje efekt \(R_j\) silnie ściągnięty do zera, więc jego IAF jest bliski 100, a przedział wiarygodności — szeroki. Kluby z setkami meczów mają IAF określony głównie przez własne dane.</li>
+<li><strong>Interakcje z sezonem</strong> \(HS\) i \(RS\) mają po kilkanaście meczów na komórkę, więc ściąganie jest tam znacznie silniejsze niż dla efektów głównych. Dzięki temu jednorazowy „dobry sezon” nie jest automatycznie przypisywany trwałej zmianie atrakcyjności.</li>
+<li><strong>Skala logitowa</strong>. W wariancie beta-dwumianowym efekty działają na skali \(\operatorname{logit}\mu_i\), a obserwacje nie są normalne; wzór <a class="ml-eqref" href="#eq-partial-pooling"></a> obowiązuje wtedy w przybliżeniu (przybliżenie Laplace’a), z „efektywną” wariancją obserwacji zależną od \(\mu_i\), \(\phi\) i pojemności \(C_i\). Jakościowo mechanizm jest identyczny, a dokładny posterior uzyskujemy samplerem NUTS (<a data-concept="mcmc">MCMC</a>).</li>
+<li><strong>Parametryzacja niecentrowana</strong> \(R_j = \sigma_R z_j\) jest stosowana właśnie dlatego, że przy silnym ściąganiu (małe \(\sigma_R\), mało danych na grupę) posterior w parametryzacji centrowanej ma kształt „lejka”, trudny dla samplera <cite data-bib="papaspiliopoulos2007"></cite> <cite data-bib="betancourt2015hier"></cite>.</li>
+</ul>
+<p>Ten sam mechanizm stoi za prostymi wygładzeniami stosowanymi w innych raportach serwisu (np. średnia rywala z pseudo-meczami ligowymi): wzór \((n\,\bar y + k\,\mu)/(n+k)\) to dokładnie <a class="ml-eqref" href="#eq-partial-pooling"></a> z \(k = \sigma^2/\tau^2\), tyle że z ustalonym, a nie estymowanym \(k\).</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Wymienialność może być fałszywa.</strong> Jeśli małe kluby (mało meczów w danych) są systematycznie inne niż duże — np. beniaminki mają mniejsze hale i niższą frekwencję — ściąganie do wspólnej średniej je przeszacuje. Rozwiązaniem jest dodanie predyktorów poziomu grupy (np. poziom rozgrywek), tak by ściągać do średniej warunkowej.</li>
+<li><strong>Normalność efektów.</strong> Rozkład normalny populacji grup silnie ściąga wartości odstające. Wyjątkowy klub (np. z halą 12 tys. miejsc i stałym kompletem) może zostać „przyciągnięty” za mocno; alternatywą są rozkłady o cięższych ogonach (np. t-Studenta).</li>
+<li><strong>Mała liczba grup.</strong> Przy kilku grupach \(\tau\) jest słabo identyfikowalne, a wynik zależy od hiperpriora <cite data-bib="gelman2006prior"></cite>. Twierdzenie Jamesa–Steina wymaga co najmniej trzech grup, a korzyść rośnie z ich liczbą.</li>
+<li><strong>Łączny, nie indywidualny zysk.</strong> Twierdzenie Steina gwarantuje mniejszy <em>łączny</em> błąd kwadratowy; dla pojedynczej, nietypowej grupy błąd po ściągnięciu może być większy niż bez niego.</li>
+<li><strong>Empiryczne Bayes zaniża niepewność.</strong> Wstawienie \(\hat\tau\) zamiast całkowania po \(\tau\) pomija niepewność hiperparametru; w MAF stosujemy pełne podejście bayesowskie.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="modele-hierarchiczne">Modele hierarchiczne</a> — ogólna struktura, z której wynika częściowe łączenie.</li>
+<li><a data-concept="efekty-stale-i-losowe">Efekty stałe i losowe</a> — perspektywa regresyjna: efekty stałe to brak łączenia, efekty losowe to częściowe łączenie.</li>
+<li><a data-concept="hiperpriory">Hiperpriory</a> — rozkłady a priori dla \(\tau\) (w MAF: Half-Normal).</li>
+<li><a data-concept="regresja-hierarchiczna">Regresja hierarchiczna</a> — częściowe łączenie współczynników regresji.</li>
+<li><a data-concept="srednia-wazona">Średnia ważona</a> — postać estymatora <a class="ml-eqref" href="#eq-partial-pooling"></a>.</li>
+<li><a data-concept="rozklad-posterior">Rozkład posterior</a> i <a data-concept="przedzial-wiarygodnosci">przedział wiarygodności</a> — opis niepewności oszacowań grup.</li>
+<li><a data-concept="atrakcyjnosc-frekwencyjna">MAF i indeks IAF</a> — zastosowanie do efektów klubów.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelmanhill2007"></li>
+<li data-bib="efron1975"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="gelman2006prior"></li>
+<li data-bib="papaspiliopoulos2007"></li>
+<li data-bib="betancourt2015hier"></li>
+<li data-bib="mcelreath2020"></li>
+</ul>
+</section>

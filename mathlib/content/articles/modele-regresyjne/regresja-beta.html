@@ -1,0 +1,169 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Gdy zmienną objaśnianą jest udział — wypełnienie hali, odsetek obronionych rzutów, procent biletów sprzedanych w przedsprzedaży — naturalnym rozkładem jest <a data-concept="rozklad-beta">rozkład beta</a>: żyje na \( (0,1) \), może być symetryczny lub skośny, skupiony lub rozlany. Regresja beta (ang. <em>beta regression</em>) łączy go z predyktorem liniowym tak jak <a data-concept="uogolnione-modele-liniowe">GLM</a>: średnia rozkładu zależy od zmiennych objaśniających przez funkcję łączącą, najczęściej <a data-concept="funkcja-logit">logit</a>.</p>
+<p>Klasyczna parametryzacja rozkładu beta przez dwa parametry kształtu \( (a,b) \) jest niewygodna w regresji — żaden z nich nie jest średnią. Ferrari i Cribari-Neto <cite data-bib="ferrari2004"></cite> zaproponowali parametryzację <em>średnia–precyzja</em> \( (\mu,\phi) \): \( \mu \) to wartość oczekiwana, a \( \phi \) mówi, jak ciasno obserwacje skupiają się wokół niej. Wtedy regresja dotyczy bezpośrednio \( \mu \), a \( \phi \) pełni rolę odwrotności dyspersji.</p>
+<p>Ograniczeniem jest otwarty nośnik: rozkład beta przypisuje zerowe prawdopodobieństwo wartościom dokładnie 0 i 1. Mecz przy komplecie widzów (\( W=1 \)) lub bez publiczności (\( W=0 \)) jest dla niego „niemożliwy”. Właśnie dlatego model frekwencji MAF używa krewnego regresji beta — modelu beta-dwumianowego.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-beta-srednia-precyzja"><p class="ml-box-title">Definicja</p>
+<p>Zmienna \( W \) ma <strong>rozkład beta w parametryzacji średnia–precyzja</strong>, \( W\sim\mathrm{Beta}(\mu\phi,(1-\mu)\phi) \), \( \mu\in(0,1) \), \( \phi\gt0 \), jeśli jej gęstość na \( (0,1) \) wynosi</p>
+<div class="ml-eq" id="eq-regresja-beta-gestosc">\[ f(w;\mu,\phi) = \frac{\Gamma(\phi)}{\Gamma(\mu\phi)\,\Gamma\bigl((1-\mu)\phi\bigr)}\; w^{\mu\phi-1}(1-w)^{(1-\mu)\phi-1}, \qquad 0\lt w\lt 1. \]</div>
+<p>Związek z parametrami kształtu: \( a = \mu\phi \), \( b = (1-\mu)\phi \), \( \mu = a/(a+b) \), \( \phi = a+b \).</p>
+</div>
+<div class="ml-box ml-def" id="def-regresja-beta"><p class="ml-box-title">Definicja</p>
+<p><strong>Modelem regresji beta</strong> nazywamy model, w którym \( W_1,\dots,W_n \) są warunkowo niezależne przy danych \( x_i\in\mathbb{R}^p \) i</p>
+<div class="ml-eq" id="eq-regresja-beta">\[ W_i \sim \mathrm{Beta}\bigl(\mu_i\phi,\ (1-\mu_i)\phi\bigr), \qquad g(\mu_i) = \operatorname{logit}\mu_i = x_i^\top\beta, \]</div>
+<p>gdzie \( \beta\in\mathbb{R}^p \), \( \phi\gt0 \) są nieznane, a \( g \) — ściśle monotoniczną, dwukrotnie różniczkowalną funkcją łączącą \( (0,1)\to\mathbb{R} \) (domyślnie logit). W wersji ze zmienną precyzją dodatkowo \( \ln\phi_i = z_i^\top\gamma \).</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( W_i \)</td><td>udział (wypełnienie) w obserwacji \( i \), wartość w \( (0,1) \)</td></tr>
+<tr><td>\( \mu_i \)</td><td>wartość oczekiwana \( W_i \)</td></tr>
+<tr><td>\( \phi \)</td><td>parametr precyzji (im większy, tym mniejsza wariancja)</td></tr>
+<tr><td>\( a,\ b \)</td><td>parametry kształtu rozkładu beta</td></tr>
+<tr><td>\( \Gamma(\cdot),\ \psi(\cdot) \)</td><td>funkcja gamma i digamma \( \psi = \Gamma'/\Gamma \)</td></tr>
+<tr><td>\( x_i,\ \beta \)</td><td>wektor predyktorów i współczynników</td></tr>
+<tr><td>\( g \)</td><td>funkcja łącząca (logit)</td></tr>
+<tr><td>\( w_i^*,\ \mu_i^* \)</td><td>\( \operatorname{logit} w_i \) i jego wartość oczekiwana \( \psi(\mu_i\phi)-\psi((1-\mu_i)\phi) \)</td></tr>
+<tr><td>\( \ell(\beta,\phi) \)</td><td>log-wiarygodność</td></tr>
+<tr><td>\( A_i,\ C_i \)</td><td>liczba widzów i pojemność hali</td></tr>
+<tr><td>\( n \)</td><td>liczba obserwacji (w transformacji Smithsona–Verkuilena — wielkość próby)</td></tr>
+<tr><td>\( p_0,\ p_1 \)</td><td>masy prawdopodobieństwa w 0 i 1 w modelu ZOIB</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li><strong>Nośnik:</strong> \( W_i\in(0,1) \) ściśle. Wartości 0 lub 1 dają \( \ln 0 \) w log-wiarygodności — model nie jest określony.</li>
+<li><strong>Ciągłość:</strong> \( W_i \) jest zmienną ciągłą; wypełnienie \( A_i/C_i \) jest w istocie ilorazem liczb całkowitych, co przy małych halach ma znaczenie.</li>
+<li><strong>Warunkowa niezależność</strong> obserwacji przy danych predyktorach (lub efektach losowych).</li>
+<li><strong>Liniowość na skali łącza:</strong> \( g(\mu_i) \) jest liniową funkcją predyktorów.</li>
+<li><strong>Stała precyzja</strong> \( \phi \) (lub jawnie modelowana \( \phi_i \)). Uwaga: przy stałym \( \phi \) wariancja \( \mu(1-\mu)/(1+\phi) \) i tak zależy od średniej.</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p><strong>Momenty</strong>:</p>
+<div class="ml-eq" id="eq-regresja-beta-momenty">\[ \mathbb{E}(W_i) = \mu_i, \qquad \operatorname{Var}(W_i) = \frac{\mu_i(1-\mu_i)}{1+\phi}. \]</div>
+<p><strong>Log-wiarygodność</strong> \( n \) obserwacji:</p>
+<div class="ml-eq" id="eq-regresja-beta-loglik">\[ \ell(\beta,\phi) = \sum_{i=1}^n \Bigl[\ln\Gamma(\phi) - \ln\Gamma(\mu_i\phi) - \ln\Gamma\bigl((1-\mu_i)\phi\bigr) + (\mu_i\phi-1)\ln w_i + \bigl((1-\mu_i)\phi-1\bigr)\ln(1-w_i)\Bigr], \quad \mu_i = g^{-1}(x_i^\top\beta). \]</div>
+<p><strong>Funkcja wynikowa</strong> względem \( \beta \):</p>
+<div class="ml-eq" id="eq-regresja-beta-score">\[ \frac{\partial\ell}{\partial\beta} = \phi\sum_{i=1}^n \frac{w_i^* - \mu_i^*}{g'(\mu_i)}\,x_i, \qquad w_i^* = \ln\frac{w_i}{1-w_i},\quad \mu_i^* = \psi(\mu_i\phi) - \psi\bigl((1-\mu_i)\phi\bigr). \]</div>
+<p><strong>Transformacja Smithsona–Verkuilena</strong> <cite data-bib="smithson2006"></cite> dla danych zawierających 0 lub 1:</p>
+<div class="ml-eq" id="eq-regresja-beta-sv">\[ w_i' = \frac{w_i(n-1) + \tfrac12}{n}, \]</div>
+<p>która ściska \( [0,1] \) do \( \bigl[\frac{1}{2n},\ 1-\frac{1}{2n}\bigr] \).</p>
+<p><strong>Model beta-dwumianowy</strong> (dla zliczeń \( A_i \) przy znanej pojemności \( C_i \)): \( A_i\mid p_i\sim\mathrm{Bin}(C_i,p_i) \), \( p_i\sim\mathrm{Beta}(\mu_i\phi,(1-\mu_i)\phi) \), skąd</p>
+<div class="ml-eq" id="eq-regresja-beta-bb">\[ \mathbb{E}\Bigl(\frac{A_i}{C_i}\Bigr) = \mu_i, \qquad \operatorname{Var}\Bigl(\frac{A_i}{C_i}\Bigr) = \frac{\mu_i(1-\mu_i)}{1+\phi}\cdot\frac{C_i+\phi}{C_i}. \]</div>
+<p><strong>Model ZOIB</strong> (ang. <em>zero-or-one inflated beta</em>) <cite data-bib="ospina2012"></cite>: \( P(W=0) = p_0 \), \( P(W=1) = p_1 \), a z prawdopodobieństwem \( 1-p_0-p_1 \) \( W\sim\mathrm{Beta}(\mu\phi,(1-\mu)\phi) \); każdy z \( p_0,p_1,\mu \) może mieć własny predyktor.</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-beta-momenty"><p class="ml-box-title">Twierdzenie (momenty w parametryzacji średnia–precyzja)</p>
+<p>Dla \( W\sim\mathrm{Beta}(\mu\phi,(1-\mu)\phi) \) zachodzi <a class="ml-eqref" href="#eq-regresja-beta-momenty"></a>. Przy ustalonym \( \mu \) wariancja maleje monotonicznie do 0, gdy \( \phi\to\infty \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-beta-score"><p class="ml-box-title">Twierdzenie (nieobciążoność funkcji wynikowej)</p>
+<p>\( \mathbb{E}\bigl[\ln\frac{W}{1-W}\bigr] = \psi(a)-\psi(b) \) dla \( W\sim\mathrm{Beta}(a,b) \); w konsekwencji funkcja wynikowa <a class="ml-eqref" href="#eq-regresja-beta-score"></a> ma wartość oczekiwaną 0 w prawdziwym punkcie parametrów.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-bb-granica"><p class="ml-box-title">Twierdzenie (beta-dwumianowy jako uogólnienie regresji beta)</p>
+<p>W modelu beta-dwumianowym wariancja wypełnienia jest dana wzorem <a class="ml-eqref" href="#eq-regresja-beta-bb"></a> i dąży do wariancji regresji beta <a class="ml-eqref" href="#eq-regresja-beta-momenty"></a>, gdy \( C_i\to\infty \); co więcej, \( A_i/C_i\to p_i \) prawie na pewno, więc rozkład wypełnienia zbiega do \( \mathrm{Beta}(\mu_i\phi,(1-\mu_i)\phi) \). Jednocześnie \( P(A_i=0)\gt0 \) i \( P(A_i=C_i)\gt0 \) dla każdego skończonego \( C_i \).</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="wyprowadzenie-momenty">Momenty</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla \( \mathrm{Beta}(a,b) \): \( \mathbb{E}W = \frac{B(a+1,b)}{B(a,b)} = \frac{a}{a+b} \) i \( \mathbb{E}W^2 = \frac{a(a+1)}{(a+b)(a+b+1)} \), więc \( \operatorname{Var}W = \frac{ab}{(a+b)^2(a+b+1)} \). Podstawiając \( a=\mu\phi \), \( b=(1-\mu)\phi \), \( a+b=\phi \): \( \mathbb{E}W = \mu \), \( \operatorname{Var}W = \frac{\mu(1-\mu)\phi^2}{\phi^2(\phi+1)} = \frac{\mu(1-\mu)}{1+\phi} \).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-score">Funkcja wynikowa</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<ol>
+<li>Pochodna składnika \( i \) log-wiarygodności <a class="ml-eqref" href="#eq-regresja-beta-loglik"></a> po \( \mu_i \): \( \frac{\partial\ell_i}{\partial\mu_i} = -\phi\psi(\mu_i\phi) + \phi\psi((1-\mu_i)\phi) + \phi\ln w_i - \phi\ln(1-w_i) = \phi(w_i^*-\mu_i^*) \).</li>
+<li>Reguła łańcuchowa: \( \frac{\partial\mu_i}{\partial\beta} = \frac{1}{g'(\mu_i)}x_i \); sumowanie daje <a class="ml-eqref" href="#eq-regresja-beta-score"></a>. Dla łącza logit \( 1/g'(\mu) = \mu(1-\mu) \).</li>
+<li>Wartość oczekiwana \( \ln W \): różniczkując \( \int_0^1 w^{a-1}(1-w)^{b-1}dw = B(a,b) \) po \( a \) dostajemy \( \mathbb{E}\ln W = \partial_a\ln B(a,b) = \psi(a)-\psi(a+b) \); analogicznie \( \mathbb{E}\ln(1-W) = \psi(b)-\psi(a+b) \). Odejmując: \( \mathbb{E}W^* = \psi(a)-\psi(b) = \mu^* \), więc \( \mathbb{E}(W^*-\mu^*)=0 \).</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-bb">Wariancja modelu beta-dwumianowego</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z <a data-concept="prawo-calkowitej-wariancji">prawa całkowitej wariancji</a>: \( \operatorname{Var}(A) = \mathbb{E}[\operatorname{Var}(A\mid p)] + \operatorname{Var}[\mathbb{E}(A\mid p)] = \mathbb{E}[Cp(1-p)] + C^2\operatorname{Var}(p) \). Mamy \( \mathbb{E}[p(1-p)] = \mu - \mathbb{E}p^2 = \mu - \mu^2 - \operatorname{Var}p = \mu(1-\mu)\bigl(1-\frac{1}{1+\phi}\bigr) = \mu(1-\mu)\frac{\phi}{1+\phi} \). Stąd \( \operatorname{Var}(A) = C\mu(1-\mu)\frac{\phi}{1+\phi} + C^2\frac{\mu(1-\mu)}{1+\phi} = C\mu(1-\mu)\frac{\phi+C}{1+\phi} \), a dzieląc przez \( C^2 \) dostajemy <a class="ml-eqref" href="#eq-regresja-beta-bb"></a>. Czynnik \( (C+\phi)/C\to1 \) przy \( C\to\infty \). Zbieżność p.n. \( A/C\to p \) wynika z mocnego prawa wielkich liczb warunkowo na \( p \). Masa w 0: \( P(A=0) = \mathbb{E}[(1-p)^C] \gt 0 \), bo \( (1-p)^C\gt0 \) dla \( p\lt1 \); analogicznie \( P(A=C) = \mathbb{E}[p^C]\gt0 \).</p>
+<p class="ml-qed">∎</p></div>
+<h3 id="wyprowadzenie-sv">Własności transformacji Smithsona–Verkuilena</h3>
+<p>Transformacja <a class="ml-eqref" href="#eq-regresja-beta-sv"></a> jest afiniczna: \( w' = w\frac{n-1}{n} + \frac{1}{2n} \), więc zachowuje porządek i średnią przesuwa ku \( 1/2 \) o czynnik \( (n-1)/n \). Jej wpływ na wnioski nie jest jednak zaniedbywalny: po transformacji obserwacja \( w=1 \) przy \( n=1000 \) staje się \( 0{,}9995 \), czyli \( \operatorname{logit}w' \approx 7{,}6 \) — punkt bardzo daleko na skali, w której pracuje funkcja wynikowa <a class="ml-eqref" href="#eq-regresja-beta-score"></a>. Wynik zależy więc od arbitralnego \( n \) (wielkości próby), a nie od danych meczu.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong> Mecz z oczekiwanym wypełnieniem \( \mu = 0{,}70 \) i precyzją \( \phi = 20 \); hala na \( C = 2000 \) miejsc; obserwowane wypełnienie \( w = 0{,}75 \) (1500 widzów).</p>
+<ol class="ml-steps">
+<li>Parametry kształtu: \( a = 0{,}7\cdot20 = 14 \), \( b = 0{,}3\cdot20 = 6 \).</li>
+<li>Wariancja: \( 0{,}7\cdot0{,}3/(1+20) = 0{,}21/21 = 0{,}01 \); odchylenie standardowe 0,10 (±10 p.p., czyli ±200 widzów).</li>
+<li>Log-gęstość w \( w=0{,}75 \): \( \ln\Gamma(20) - \ln\Gamma(14) - \ln\Gamma(6) + 13\ln0{,}75 + 5\ln0{,}25 \approx 39{,}3399 - 22{,}5522 - 4{,}7875 - 3{,}7399 - 6{,}9315 = 1{,}3289 \); gęstość \( e^{1{,}3289}\approx 3{,}777 \).</li>
+<li>Składnik funkcji wynikowej (łącze logit): \( w^* = \ln(0{,}75/0{,}25) = \ln3 \approx 1{,}0986 \); \( \mu^* = \psi(14)-\psi(6) = \sum_{k=6}^{13}\frac1k \approx 0{,}8968 \); \( \partial\ell/\partial\eta = \phi(w^*-\mu^*)\mu(1-\mu) = 20\cdot0{,}2018\cdot0{,}21 \approx 0{,}848 \gt 0 \) — obserwacja „ciągnie” predyktor w górę.</li>
+<li>Model beta-dwumianowy z tymi samymi \( \mu,\phi \) i \( C=2000 \): \( \operatorname{Var}(A/C) = 0{,}01\cdot(2000+20)/2000 = 0{,}0101 \); odchylenie ≈ 0,1005 — praktycznie jak w regresji beta, bo \( C\gg\phi \).</li>
+<li>Mecz z kompletem: \( w=1 \). Regresja beta: \( \ln(1-w) = -\infty \), wiarygodność 0. Po transformacji SV z \( n=1000 \): \( w' = (999+0{,}5)/1000 = 0{,}9995 \). Beta-dwumianowy: \( P(A=2000) = \mathbb{E}[p^{2000}] \gt 0 \) — obserwacja dozwolona bez korekt.</li>
+</ol>
+<div class="ml-plot" data-plot="beta-mean" data-params='{"mu": 0.7, "phi": 20}'></div>
+<p>Gęstość \( \mathrm{Beta}(0{,}7\cdot20,\ 0{,}3\cdot20) \). Zwiększ \( \phi \) i zauważ, że rozkład zwęża się wokół tej samej średniej; przesuń \( \mu \) blisko 1 — masa tłoczy się przy prawym brzegu, ale nigdy nie osiąga punktu 1.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>W regresji beta z łączem logit współczynniki interpretuje się tak samo jak w <a data-concept="funkcja-logit">modelu logistycznym</a>: \( e^{\beta_k} \) to mnożnik „szans” średniego wypełnienia \( \mu/(1-\mu) \), a zmiana samego \( \mu \) wynosi w przybliżeniu \( \beta_k\mu(1-\mu) \). Parametr \( \phi \) przekłada się na niepewność pojedynczego meczu: \( \phi=20 \) przy \( \mu=0{,}7 \) daje ±10 p.p. odchylenia, \( \phi=80 \) — ok. ±5 p.p.</p>
+<p>Porównanie modeli dla wypełnienia:</p>
+<table class="ml-table">
+<thead><tr><th>Cecha</th><th>Regresja beta</th><th>Beta-dwumianowy</th><th>ZOIB</th></tr></thead>
+<tbody>
+<tr><td>Dane</td><td>udział \( W\in(0,1) \)</td><td>zliczenie \( A\in\{0,\dots,C\} \)</td><td>udział \( W\in[0,1] \)</td></tr>
+<tr><td>Wartości 0 i 1</td><td>niedozwolone (wymaga korekty SV)</td><td>dozwolone naturalnie</td><td>dozwolone, osobne procesy</td></tr>
+<tr><td>Wymaga pojemności \( C \)</td><td>pośrednio (do obliczenia \( W \))</td><td>tak, jawnie</td><td>pośrednio</td></tr>
+<tr><td>Wariancja</td><td>\( \frac{\mu(1-\mu)}{1+\phi} \)</td><td>\( \frac{\mu(1-\mu)}{1+\phi}\cdot\frac{C+\phi}{C} \)</td><td>mieszanina</td></tr>
+<tr><td>Dyskretność widzów</td><td>pomijana</td><td>uwzględniona</td><td>pomijana</td></tr>
+<tr><td>Liczba parametrów</td><td>\( \beta,\phi \)</td><td>\( \beta,\phi \)</td><td>\( \beta,\phi \) + predyktory \( p_0,p_1 \)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W modelu <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> regresja beta była naturalnym kandydatem dla wariantu „wypełnienie”, ale wybrano model <a data-concept="rozklad-beta-dwumianowy">beta-dwumianowy</a>: \( A_i\sim\text{BetaBinomial}(C_i,\mu_i\phi,(1-\mu_i)\phi) \), \( \operatorname{logit}\mu_i=\eta_i \). Uzasadnienie wynika z porównania powyżej:</p>
+<ul>
+<li>W polskich ligach zdarzają się mecze z kompletem widzów (\( A_i=C_i \)) i mecze bez publiczności (\( A_i=0 \), np. kary lub ograniczenia sanitarne). Regresja beta musiałaby je usuwać albo przekształcać transformacją SV, której wynik zależy od arbitralnego \( n \).</li>
+<li>Model beta-dwumianowy ma tę samą parametryzację \( (\mu,\phi) \) i to samo łącze logit, więc interpretacja współczynników i <a data-concept="atrakcyjnosc-frekwencyjna">indeksu IAF</a> jest identyczna jak w regresji beta; dla dużych hal oba modele są praktycznie równoważne (twierdzenie o granicy).</li>
+<li>Model ZOIB wymagałby dodatkowych predyktorów dla \( p_0 \) i \( p_1 \), a komplet widzów nie jest odrębnym procesem — to po prostu wysoki popyt ograniczony pojemnością.</li>
+</ul>
+<p>Regresja beta pozostaje użyteczna jako model odniesienia i w analizach udziałów bez naturalnego mianownika (np. odsetek interwencji bramkarza, gdy nie modelujemy liczby rzutów).</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Otwarty nośnik</strong> \( (0,1) \) — wartości brzegowe wymagają korekty (SV) albo innego modelu (beta-dwumianowy, ZOIB).</li>
+<li><strong>Wrażliwość na obserwacje bliskie brzegom:</strong> \( w^* = \operatorname{logit}w \) rośnie bez ograniczeń, więc pojedyncze wypełnienia 0,999 mogą silnie wpływać na estymację.</li>
+<li><strong>Utrata informacji o skali:</strong> wypełnienie 50% w hali na 200 i na 10 000 miejsc niesie różną ilość informacji; regresja beta traktuje je tak samo, a beta-dwumianowy — nie.</li>
+<li><strong>Jednomodalność ze stałym \( \phi \)</strong> — mieszanina meczów „zwykłych” i „wyjątkowych” może wymagać zmiennej precyzji lub efektów losowych.</li>
+<li><strong>Brak przyczynowości</strong> — jak w każdej regresji (zob. <a data-concept="interpretacja-wspolczynnikow">interpretacja współczynników</a>).</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="rozklad-beta">Rozkład beta</a> — rozkład obserwacji.</li>
+<li><a data-concept="funkcja-logit">Funkcja logit</a> — łącze dla średniej.</li>
+<li><a data-concept="rozklady-z-masa-na-granicach">Rozkłady z masą na granicach</a> — ZOIB i pokrewne.</li>
+<li><a data-concept="rozklad-beta-dwumianowy">Rozkład beta-dwumianowy</a> — model używany w MAF.</li>
+<li><a data-concept="uogolnione-modele-liniowe">Uogólnione modele liniowe</a>.</li>
+<li><a data-concept="prawo-calkowitej-wariancji">Prawo całkowitej wariancji</a> — w wyprowadzeniu wariancji beta-dwumianowej.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="ferrari2004"></li>
+<li data-bib="smithson2006"></li>
+<li data-bib="ospina2012"></li>
+<li data-bib="johnson1995continuous"></li>
+<li data-bib="doc-pymc-beta"></li>
+</ul>
+</section>

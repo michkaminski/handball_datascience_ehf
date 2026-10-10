@@ -1,0 +1,188 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Średnia arytmetyczna traktuje każdą obserwację jednakowo. Często jednak obserwacje nie są „równoważne”: mecz w hali na 3000 miejsc i mecz w sali na 800 miejsc nie powinny mieć tego samego udziału w ocenie, jak bardzo zapełnione były hale ligi. Średnia ważona (ang. <em>weighted mean</em>) pozwala przypisać każdej obserwacji wagę określającą jej udział w wyniku.</p>
+<p>Klasyczny przykład: wypełnienie ligi w sezonie. Jeżeli policzymy średnią arytmetyczną wypełnień poszczególnych meczów, każdy mecz liczy się tak samo — także ten w małej sali. Jeżeli natomiast podzielimy łączną widownię przez łączną pojemność, otrzymamy inną liczbę. Okazuje się, że ta druga wielkość jest dokładnie średnią ważoną wypełnień, w której wagami są pojemności hal. Obie liczby są poprawne, ale odpowiadają na różne pytania: „jak zapełniony był typowy mecz?” oraz „jaka część wszystkich dostępnych miejsc została zajęta?”.</p>
+<p>Średnia ważona pełni też głębszą rolę teoretyczną. Wartość oczekiwana zmiennej losowej jest średnią ważoną jej wartości z wagami równymi prawdopodobieństwom; <a data-concept="prawo-calkowitej-wartosci-oczekiwanej">prawo całkowitej wartości oczekiwanej</a> to średnia ważona średnich warunkowych; a bayesowskie <a data-concept="partial-pooling">częściowe łączenie</a> (ang. <em>partial pooling</em>) jest średnią ważoną średniej grupy i średniej ogólnej z wagami równymi precyzjom.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-srednia-wazona"><p class="ml-box-title">Definicja</p>
+<p>Niech \(x_1,\dots,x_n\in\mathbb{R}\) i niech \(w_1,\dots,w_n\) będą wagami spełniającymi \(w_i\ge 0\) oraz \(\sum_{i=1}^n w_i\gt 0\). <strong>Średnią ważoną</strong> nazywamy</p>
+<div class="ml-eq" id="eq-srednia-wazona">\[ \bar{x}_w = \frac{\sum_{i=1}^{n} w_i x_i}{\sum_{i=1}^{n} w_i} . \]</div>
+</div>
+<p>Równoważnie, definiując <em>wagi znormalizowane</em> \(\pi_i = w_i/\sum_j w_j\), mamy \(\pi_i\ge 0\), \(\sum_i\pi_i=1\) oraz \(\bar x_w=\sum_i \pi_i x_i\). Średnia ważona jest więc <em>kombinacją wypukłą</em> obserwacji. Średnia arytmetyczna to przypadek szczególny \(w_i\equiv \text{const}\).</p>
+<p>Wagi mogą mieć różną naturę: <em>wagi częstości</em> (ile razy wartość wystąpiła), <em>wagi ekspozycji</em> (pojemność hali, liczba meczów), <em>wagi precyzji</em> (odwrotność wariancji pomiaru) lub <em>wagi prawdopodobieństwa</em> (np. udział warunków w populacji referencyjnej). Rodzaj wag decyduje o interpretacji wyniku i o wzorze na jego niepewność.</p>
+<div class="ml-box ml-def" id="def-srednia-wazona-estymator"><p class="ml-box-title">Definicja (estymator ważony)</p>
+<p>Dla zmiennych losowych \(X_1,\dots,X_n\) i <em>ustalonych</em> (nielosowych) wag \(w_i\) zmienną losową \(\bar X_w=\sum_i w_iX_i/\sum_i w_i\) nazywamy ważonym estymatorem średniej.</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(x_i\)</td><td>\(i\)-ta obserwacja (np. wypełnienie hali w meczu \(i\))</td></tr>
+<tr><td>\(w_i\)</td><td>nieujemna waga obserwacji \(i\)</td></tr>
+<tr><td>\(\pi_i\)</td><td>waga znormalizowana, \(\pi_i=w_i/\sum_j w_j\)</td></tr>
+<tr><td>\(\bar x_w\)</td><td>średnia ważona</td></tr>
+<tr><td>\(A_i,\ C_i,\ W_i\)</td><td>liczba widzów, pojemność hali, wypełnienie \(W_i=A_i/C_i\)</td></tr>
+<tr><td>\(\sigma_i^2\)</td><td>wariancja obserwacji (pomiaru) \(i\)</td></tr>
+<tr><td>\(n_{\mathrm{eff}}\)</td><td>efektywna liczba obserwacji (Kisha)</td></tr>
+<tr><td>\(\bar y_j,\ n_j\)</td><td>średnia i liczba obserwacji w grupie \(j\) (np. mecze danego klubu)</td></tr>
+<tr><td>\(\mu,\ \tau^2\)</td><td>średnia ogólna i wariancja między grupami</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Wagi są nieujemne, a ich suma dodatnia; wagi ujemne zrywają interpretację „udziału” i mogą wyprowadzić wynik poza zakres danych.</li>
+<li>Obserwacje są na skali co najmniej przedziałowej (sumowanie \(w_ix_i\) musi mieć sens).</li>
+<li>Do wnioskowania (nieobciążoność, wariancja) wagi traktujemy jako znane i niezależne od wartości \(x_i\). Gdy wagi są estymowane z tych samych danych (np. wariancje \(\sigma_i^2\) oszacowane z próby), wzory poniżej są przybliżeniami.</li>
+<li>W wagach odwrotnie proporcjonalnych do wariancji zakładamy, że obserwacje są niezależne i mają wspólną wartość oczekiwaną \(\mu\).</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Postać znormalizowana i ograniczenie przez skrajne wartości:</p>
+<div class="ml-eq" id="eq-srednia-wazona-wypukla">\[ \bar x_w = \sum_{i=1}^n \pi_i x_i, \qquad \min_i x_i \le \bar x_w \le \max_i x_i . \]</div>
+<p>Wypełnienie zagregowane jako średnia ważona wypełnień (wagi = pojemności):</p>
+<div class="ml-eq" id="eq-srednia-wazona-wypelnienie">\[ \frac{\sum_{i} A_i}{\sum_{i} C_i} = \frac{\sum_i C_i W_i}{\sum_i C_i} = \bar W_C . \]</div>
+<p>Wartość oczekiwana i wariancja estymatora ważonego przy niezależnych obserwacjach o \(E(X_i)=\mu\), \(\operatorname{Var}(X_i)=\sigma_i^2\):</p>
+<div class="ml-eq" id="eq-srednia-wazona-wariancja">\[ E(\bar X_w)=\mu, \qquad \operatorname{Var}(\bar X_w) = \frac{\sum_i w_i^2\sigma_i^2}{\big(\sum_i w_i\big)^2} = \sum_i \pi_i^2\sigma_i^2 . \]</div>
+<p>Wagi odwrotności wariancji (optymalne) i wariancja wynikowa:</p>
+<div class="ml-eq" id="eq-srednia-wazona-precyzja">\[ w_i = \frac{1}{\sigma_i^2}, \qquad \operatorname{Var}(\bar X_w) = \Big(\sum_{i=1}^n \frac{1}{\sigma_i^2}\Big)^{-1} . \]</div>
+<p>Efektywna liczba obserwacji Kisha (dla wspólnej wariancji \(\sigma^2\) mamy \(\operatorname{Var}(\bar X_w)=\sigma^2/n_{\mathrm{eff}}\)):</p>
+<div class="ml-eq" id="eq-srednia-wazona-neff">\[ n_{\mathrm{eff}} = \frac{\big(\sum_i w_i\big)^2}{\sum_i w_i^2}, \qquad 1\le n_{\mathrm{eff}}\le n . \]</div>
+<p>Ściąganie (ang. <em>shrinkage</em>) średniej grupy do średniej ogólnej w modelu normalnym z wariancją wewnątrzgrupową \(\sigma^2\) i międzygrupową \(\tau^2\):</p>
+<div class="ml-eq" id="eq-srednia-wazona-shrinkage">\[ \hat\theta_j = \lambda_j \bar y_j + (1-\lambda_j)\mu, \qquad \lambda_j = \frac{n_j/\sigma^2}{n_j/\sigma^2 + 1/\tau^2} . \]</div>
+<p>Prawo całkowitej wartości oczekiwanej jako średnia ważona (podział \(B_1,\dots,B_K\) przestrzeni zdarzeń):</p>
+<div class="ml-eq" id="eq-srednia-wazona-calkowita">\[ E(X) = \sum_{k=1}^{K} P(B_k)\,E(X\mid B_k) . \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-wazone-kwadraty"><p class="ml-box-title">Twierdzenie (ważone najmniejsze kwadraty)</p>
+<p>Funkcja \(Q_w(c)=\sum_i w_i(x_i-c)^2\) osiąga jedyne minimum w \(c=\bar x_w\), oraz \(Q_w(c)=Q_w(\bar x_w)+\big(\sum_i w_i\big)(\bar x_w-c)^2\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-wazona-wypukla"><p class="ml-box-title">Twierdzenie (położenie średniej ważonej)</p>
+<p>\(\min_i x_i\le \bar x_w\le\max_i x_i\), przy czym równość zachodzi tylko wtedy, gdy wszystkie obserwacje o dodatniej wadze są równe skrajnej wartości.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-wagi-optymalne"><p class="ml-box-title">Twierdzenie (optymalność wag odwrotności wariancji)</p>
+<p>Niech \(X_1,\dots,X_n\) będą niezależne, \(E(X_i)=\mu\), \(0\lt\operatorname{Var}(X_i)=\sigma_i^2\lt\infty\). Wśród estymatorów postaci \(\sum_i \pi_iX_i\) z \(\sum_i\pi_i=1\) (liniowych i nieobciążonych) najmniejszą wariancję ma estymator z \(\pi_i\propto 1/\sigma_i^2\), a jego wariancja wynosi \(\big(\sum_i\sigma_i^{-2}\big)^{-1}\). W szczególności przy równych wariancjach optymalna jest średnia arytmetyczna.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-kish"><p class="ml-box-title">Twierdzenie (ograniczenie efektywnej liczby obserwacji)</p>
+<p>Dla wag nieujemnych o dodatniej sumie \(n_{\mathrm{eff}}\le n\), z równością wtedy i tylko wtedy, gdy wszystkie wagi są równe.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-wazone-kwadraty">Ważone najmniejsze kwadraty</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Niech \(S=\sum_iw_i\). Zauważmy, że \(\sum_i w_i(x_i-\bar x_w)=\sum_iw_ix_i - S\bar x_w=0\). Wtedy</p>
+\[ \begin{aligned}
+Q_w(c) &amp;= \sum_i w_i\big((x_i-\bar x_w)+(\bar x_w-c)\big)^2 \\
+&amp;= \sum_i w_i(x_i-\bar x_w)^2 + 2(\bar x_w-c)\sum_i w_i(x_i-\bar x_w) + S(\bar x_w-c)^2 \\
+&amp;= Q_w(\bar x_w) + S(\bar x_w - c)^2 .
+\end{aligned} \]
+<p>Ponieważ \(S\gt0\), drugi składnik jest dodatni dla \(c\ne\bar x_w\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-wypukla">Położenie między minimum a maksimum</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Ponieważ \(\pi_i\ge0\) i \(\sum_i\pi_i=1\): \(\bar x_w=\sum_i\pi_ix_i\le\sum_i\pi_i\max_jx_j=\max_jx_j\); analogicznie dla minimum. Równość \(\sum_i\pi_i(\max_j x_j - x_i)=0\) przy nieujemnych składnikach wymaga \(x_i=\max_jx_j\) dla każdego \(i\) z \(\pi_i\gt0\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-wypelnienie">Wypełnienie zagregowane</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z definicji \(W_i=A_i/C_i\), więc \(C_iW_i=A_i\). Podstawiając do <a class="ml-eqref" href="#eq-srednia-wazona"></a> z \(w_i=C_i\): \(\sum_iC_iW_i/\sum_iC_i=\sum_iA_i/\sum_iC_i\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-wagi-optymalne">Optymalność wag odwrotności wariancji</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Nieobciążoność: \(E(\sum_i\pi_iX_i)=\mu\sum_i\pi_i=\mu\). Z niezależności \(\operatorname{Var}(\sum_i\pi_iX_i)=\sum_i\pi_i^2\sigma_i^2\). Z nierówności Cauchy’ego–Schwarza dla wektorów \((\pi_i\sigma_i)_i\) i \((1/\sigma_i)_i\):</p>
+\[ 1=\Big(\sum_i\pi_i\Big)^2=\Big(\sum_i (\pi_i\sigma_i)\cdot\frac{1}{\sigma_i}\Big)^2 \le \Big(\sum_i\pi_i^2\sigma_i^2\Big)\Big(\sum_i\frac{1}{\sigma_i^2}\Big). \]
+<p>Stąd \(\operatorname{Var}\ge(\sum_i\sigma_i^{-2})^{-1}\). Równość w nierówności Cauchy’ego–Schwarza zachodzi wtedy i tylko wtedy, gdy wektory są proporcjonalne: \(\pi_i\sigma_i = k/\sigma_i\), czyli \(\pi_i\propto\sigma_i^{-2}\). Normalizacja daje \(\pi_i=\sigma_i^{-2}/\sum_j\sigma_j^{-2}\) i wariancję \(\sum_i\pi_i^2\sigma_i^2=\sum_i\sigma_i^{-2}/(\sum_j\sigma_j^{-2})^2=(\sum_j\sigma_j^{-2})^{-1}\). Gdy \(\sigma_i\equiv\sigma\), wagi są równe i dostajemy średnią arytmetyczną o wariancji \(\sigma^2/n\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-kish">Efektywna liczba obserwacji</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Przy wspólnej wariancji \(\sigma^2\) wzór <a class="ml-eqref" href="#eq-srednia-wazona-wariancja"></a> daje \(\operatorname{Var}(\bar X_w)=\sigma^2\sum_iw_i^2/(\sum_iw_i)^2=\sigma^2/n_{\mathrm{eff}}\) — stąd nazwa: estymator ważony jest tak precyzyjny jak średnia arytmetyczna z \(n_{\mathrm{eff}}\) obserwacji. Z nierówności Cauchy’ego–Schwarza dla \((w_i)_i\) i \((1)_i\): \((\sum_iw_i\cdot1)^2\le n\sum_iw_i^2\), więc \(n_{\mathrm{eff}}\le n\), z równością wtedy i tylko wtedy, gdy \(w_i\) są stałe. Ponadto \((\sum_i w_i)^2\ge\sum_i w_i^2\) dla wag nieujemnych, więc \(n_{\mathrm{eff}}\ge1\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-shrinkage">Ściąganie jako średnia ważona precyzjami</h3>
+<p>Niech \(\bar y_j\mid\theta_j\sim N(\theta_j,\sigma^2/n_j)\) i \(\theta_j\sim N(\mu,\tau^2)\). Rozkład a posteriori \(\theta_j\) jest normalny, a jego średnia jest średnią ważoną dwóch „pomiarów” \(\theta_j\): danych \(\bar y_j\) o precyzji \(n_j/\sigma^2\) i rozkładu a priori \(\mu\) o precyzji \(1/\tau^2\). Na mocy twierdzenia o wagach optymalnych wagi są proporcjonalne do precyzji, co daje <a class="ml-eqref" href="#eq-srednia-wazona-shrinkage"></a>, a wariancja a posteriori równa się \((n_j/\sigma^2+1/\tau^2)^{-1}\) <cite data-bib="gelman2013bda"></cite>. Im więcej meczów \(n_j\), tym \(\lambda_j\) bliższe 1 i tym mniejsze ściąganie.</p>
+<div class="ml-plot" data-plot="shrinkage" data-params='{"tau": 0.1, "sigma": 0.15}'></div>
+<p>Zwróć uwagę, że grupy z małą liczbą meczów są silnie przyciągane do średniej ogólnej, a przy dużym \(n_j\) średnia grupy prawie się nie zmienia; zwiększenie \(\tau\) (większe zróżnicowanie klubów) osłabia ściąganie.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p>Cztery mecze kolejki ligowej (dane ilustracyjne):</p>
+<table class="ml-table">
+<thead><tr><th>Mecz</th><th>Pojemność \(C_i\)</th><th>Widzowie \(A_i\)</th><th>Wypełnienie \(W_i\)</th><th>\(C_iW_i\)</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>3000</td><td>2400</td><td>0,80</td><td>2400</td></tr>
+<tr><td>2</td><td>1500</td><td>1350</td><td>0,90</td><td>1350</td></tr>
+<tr><td>3</td><td>2000</td><td>1100</td><td>0,55</td><td>1100</td></tr>
+<tr><td>4</td><td>800</td><td>760</td><td>0,95</td><td>760</td></tr>
+<tr><td>Suma</td><td>7300</td><td>5610</td><td>3,20</td><td>5610</td></tr>
+</tbody>
+</table>
+<ol class="ml-steps">
+<li>Średnia arytmetyczna wypełnień: \(\bar W=(0{,}80+0{,}90+0{,}55+0{,}95)/4=3{,}20/4=0{,}800\).</li>
+<li>Średnia ważona pojemnościami: \(\bar W_C=5610/7300\approx0{,}7685\). Zgodnie z <a class="ml-eqref" href="#eq-srednia-wazona-wypelnienie"></a> jest to dokładnie łączna widownia podzielona przez łączną pojemność.</li>
+<li>Wagi znormalizowane: \(\pi=(3000; 1500; 2000; 800)/7300\approx(0{,}411;\ 0{,}205;\ 0{,}274;\ 0{,}110)\). Duża hala o wypełnieniu 0,55 (mecz 3) ma ponad dwukrotnie większy udział niż mała, pełna sala (mecz 4), dlatego \(\bar W_C\lt\bar W\).</li>
+<li>Efektywna liczba obserwacji: \(\sum w_i^2=9\,000\,000+2\,250\,000+4\,000\,000+640\,000=15\,890\,000\), \((\sum w_i)^2=7300^2=53\,290\,000\), więc \(n_{\mathrm{eff}}=53\,290\,000/15\,890\,000\approx3{,}35\). Nierówne wagi „kosztują” ok. 0,65 obserwacji.</li>
+<li>Ściąganie (dane ilustracyjne): klub ma tylko \(n_j=4\) mecze ze średnim wypełnieniem \(\bar y_j=0{,}90\); średnia ligi \(\mu=0{,}70\), \(\sigma=0{,}15\), \(\tau=0{,}10\). Precyzja danych: \(n_j/\sigma^2=4/0{,}0225\approx177{,}8\); precyzja a priori: \(1/\tau^2=100\).</li>
+<li>Waga danych: \(\lambda_j=177{,}8/(177{,}8+100)=177{,}8/277{,}8\approx0{,}64\).</li>
+<li>Oszacowanie po ściągnięciu: \(\hat\theta_j=0{,}64\cdot0{,}90+0{,}36\cdot0{,}70=0{,}576+0{,}252=0{,}828\); odchylenie standardowe a posteriori \(\sqrt{1/277{,}8}\approx0{,}060\).</li>
+</ol>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li>\(\bar W=0{,}80\) odpowiada na pytanie „jak zapełniony był przeciętny mecz kolejki?”, a \(\bar W_C\approx0{,}77\) — „jaki odsetek wszystkich miejsc w kolejce zajęto?”. Raport musi jasno wskazywać, którą wielkość podaje.</li>
+<li>Różnica między nimi jest sygnałem zależności między wagą a wartością: tu duże hale były słabiej wypełnione. Gdyby wypełnienie nie zależało od pojemności, obie średnie byłyby (w oczekiwaniu) równe.</li>
+<li>\(n_{\mathrm{eff}}\approx3{,}35\) mówi, że wnioskowanie o średnim wypełnieniu na podstawie \(\bar W_C\) ma precyzję zbliżoną do średniej z 3–4 równoważnych meczów, a nie z 4.</li>
+<li>Oszacowanie 0,828 zamiast surowego 0,90 nie jest „karą” dla klubu, lecz uwzględnieniem tego, że cztery mecze to mało informacji; przy 40 meczach waga danych wynosiłaby \(1777{,}8/1877{,}8\approx0{,}95\).</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<ul>
+<li><strong>Raporty ligowe.</strong> Wypełnienie ligi lub klubu w sezonie liczymy jako \(\sum A_i/\sum C_i\), czyli średnią ważoną pojemnościami, wyłącznie po meczach ze znaną pojemnością (ok. 55% meczów w danych ZPRP). Średnia arytmetyczna wypełnień jest raportowana osobno jako „przeciętny mecz”.</li>
+<li><strong>Częściowe łączenie w MAF.</strong> W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> efekty gospodarza \(H\), rywala \(R\) i ich interakcje z sezonem są efektami losowymi. Choć model jest nieliniowy (logit, rozkład beta-dwumianowy), mechanizm działa jak w <a class="ml-eqref" href="#eq-srednia-wazona-shrinkage"></a>: klub z kilkoma meczami w danych dostaje oszacowanie przyciągnięte do zera (średniej ligi), a klub z setkami meczów — oszacowanie bliskie własnym danym. Zob. <a data-concept="modele-hierarchiczne">modele hierarchiczne</a>.</li>
+<li><strong>Indeks IAF.</strong> Średnia po populacji referencyjnej \(X_{ref}\) w definicji IAF jest średnią arytmetyczną po meczach, ale można ją zapisać jako średnią ważoną po typach warunków (weekend/dzień roboczy, faza rozgrywek) z wagami równymi częstościom tych warunków w \(X_{ref}\). Zmiana populacji referencyjnej zmienia wagi, a więc i wartość indeksu.</li>
+<li><strong>Prawo całkowitej wartości oczekiwanej.</strong> Oczekiwana frekwencja klubu w sezonie to średnia ważona oczekiwanych frekwencji w poszczególnych warunkach z wagami równymi prawdopodobieństwom tych warunków <a class="ml-eqref" href="#eq-srednia-wazona-calkowita"></a>.</li>
+<li><strong>Łączenie oszacowań.</strong> Gdy ten sam efekt (np. przewaga weekendu) jest oszacowany niezależnie w kilku rozgrywkach, wspólne oszacowanie z wagami \(1/\mathrm{SE}^2\) ma najmniejszą wariancję — pod warunkiem, że efekt jest rzeczywiście wspólny.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Wybór wag jest decyzją merytoryczną.</strong> Różne wagi dają różne, równie „poprawne” liczby; wynik bez opisu wag jest niejednoznaczny.</li>
+<li><strong>Dominacja pojedynczych obserwacji.</strong> Bardzo duża waga (np. mecz w hali na 12 000 miejsc) może zdominować wynik; kontroluje to \(n_{\mathrm{eff}}\).</li>
+<li><strong>Wagi zależne od wyniku.</strong> Jeżeli wagi korelują z mierzoną wielkością (duże hale — niższe wypełnienie), średnia ważona i arytmetyczna estymują różne parametry; nie należy ich porównywać między ligami o różnej strukturze hal.</li>
+<li><strong>Estymowane wagi precyzji.</strong> Wagi \(1/\hat\sigma_i^2\) oszacowane z małych prób są zaszumione; obserwacja z przypadkowo małym \(\hat\sigma_i\) dostaje nieproporcjonalnie dużą wagę.</li>
+<li><strong>Wspólny parametr.</strong> Optymalność wag odwrotności wariancji wymaga wspólnej wartości oczekiwanej; przy heterogeniczności efektów potrzebny jest model z wariancją międzygrupową (\(\tau^2\)), jak w modelu hierarchicznym.</li>
+<li><strong>Wrażliwość na wartości odstające</strong> — jak w przypadku średniej arytmetycznej wystarczy zmienić jedną obserwację o dodatniej wadze, by przesunąć wynik dowolnie daleko (punkt załamania \(1/n\)). Odporne alternatywy to np. ważona <a data-concept="mediana">mediana</a>.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="srednia-arytmetyczna">Średnia arytmetyczna</a> — przypadek równych wag.</li>
+<li><a data-concept="prawo-calkowitej-wartosci-oczekiwanej">Prawo całkowitej wartości oczekiwanej</a> — średnia ważona średnich warunkowych.</li>
+<li><a data-concept="partial-pooling">Partial pooling</a> i <a data-concept="modele-hierarchiczne">modele hierarchiczne</a> — ściąganie jako ważenie precyzjami.</li>
+<li><a data-concept="wartosc-oczekiwana">Wartość oczekiwana</a> — średnia ważona prawdopodobieństwami.</li>
+<li><a data-concept="atrakcyjnosc-frekwencyjna">MAF i indeks IAF</a> — uśrednianie po populacji referencyjnej.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="openintro2019"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="gelmanhill2007"></li>
+<li data-bib="efron1975"></li>
+</ul>
+</section>

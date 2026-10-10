@@ -1,0 +1,174 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Rozkład beta (ang. <em>beta distribution</em>) jest podstawowym modelem dla wielkości, które są ułamkami lub proporcjami: odsetka wypełnienia hali, skuteczności rzutów, udziału meczów wyprzedanych. Żyje na odcinku \((0,1)\) i — w zależności od dwóch parametrów kształtu — może być płaski, dzwonowaty, skośny w lewo lub w prawo, a nawet mieć kształt litery U z masą skupioną przy obu krańcach.</p>
+<p>Wygodnie jest myśleć o nim przez dwa pytania: <em>gdzie leży typowa wartość?</em> (średnia \(\mu\)) i <em>jak bardzo wartości są skupione wokół niej?</em> (precyzja \(\phi\)). Ta parametryzacja średnia–precyzja jest podstawą <a data-concept="regresja-beta">regresji beta</a> <cite data-bib="ferrari2004"></cite> i wariantu „wypełnienie” modelu MAF. Rozkład beta pełni też drugą rolę: jest naturalnym <a data-concept="rozklad-a-priori">rozkładem a priori</a> dla prawdopodobieństwa sukcesu w <a data-concept="rozklad-dwumianowy">rozkładzie dwumianowym</a>, a mieszanina obu daje <a data-concept="rozklad-beta-dwumianowy">rozkład beta-dwumianowy</a>.</p>
+<div class="ml-plot" data-plot="beta-mean" data-params='{"mu": 0.6, "phi": 20}'></div>
+<p>Przesuwając \(\mu\), zmieniasz położenie rozkładu; zwiększając \(\phi\), zawężasz go wokół \(\mu\). Dla małych \(\phi\) (poniżej ok. 2) masa ucieka ku krańcom 0 i 1.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-rozklad-beta"><p class="ml-box-title">Definicja</p>
+<p>Zmienna losowa \(X\) o wartościach w \((0,1)\) ma rozkład beta z parametrami kształtu \(a\gt 0\), \(b\gt 0\), co zapisujemy \(X\sim\text{Beta}(a,b)\), jeśli jej rozkład ma względem miary Lebesgue’a na \((0,1)\) gęstość</p>
+<div class="ml-eq" id="eq-rozklad-beta">\[ f(x\mid a,b)=\frac{x^{a-1}(1-x)^{b-1}}{B(a,b)},\qquad 0\lt x\lt 1, \]</div>
+<p>gdzie funkcja beta Eulera</p>
+<div class="ml-eq" id="eq-rozklad-beta-funkcja">\[ B(a,b)=\int_0^1 t^{a-1}(1-t)^{b-1}\,dt=\frac{\Gamma(a)\,\Gamma(b)}{\Gamma(a+b)},\qquad \Gamma(s)=\int_0^\infty t^{s-1}e^{-t}\,dt. \]</div>
+</div>
+<div class="ml-box ml-def" id="def-srednia-precyzja"><p class="ml-box-title">Definicja (parametryzacja średnia–precyzja)</p>
+<p>Dla \(\mu\in(0,1)\) i \(\phi\gt 0\) piszemy \(X\sim\text{Beta}(\mu,\phi)\) w parametryzacji średnia–precyzja, jeśli \(X\sim\text{Beta}(a,b)\) z</p>
+<div class="ml-eq" id="eq-rozklad-beta-mu-phi">\[ a=\mu\phi,\qquad b=(1-\mu)\phi\qquad\Longleftrightarrow\qquad \mu=\frac{a}{a+b},\qquad \phi=a+b. \]</div>
+<p>Odwzorowanie \((a,b)\mapsto(\mu,\phi)\) jest bijekcją \((0,\infty)^2\to(0,1)\times(0,\infty)\), więc obie parametryzacje opisują tę samą rodzinę rozkładów.</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(X\), \(W\)</td><td>zmienna losowa o wartościach w \((0,1)\); w MAF \(W=A/C\) — wypełnienie hali</td></tr>
+<tr><td>\(a,\ b\)</td><td>parametry kształtu, \(a,b\gt 0\)</td></tr>
+<tr><td>\(\mu\)</td><td>średnia rozkładu, \(\mu=a/(a+b)\)</td></tr>
+<tr><td>\(\phi\)</td><td>precyzja, \(\phi=a+b\); im większa, tym mniejsza wariancja</td></tr>
+<tr><td>\(B(a,b)\)</td><td>funkcja beta Eulera (stała normująca)</td></tr>
+<tr><td>\(\Gamma(s)\)</td><td>funkcja gamma; \(\Gamma(s+1)=s\Gamma(s)\), \(\Gamma(n)=(n-1)!\)</td></tr>
+<tr><td>\(\eta_i\)</td><td>predyktor liniowy meczu \(i\) w MAF, \(\operatorname{logit}\mu_i=\eta_i\)</td></tr>
+<tr><td>\(I_x(a,b)\)</td><td>regularyzowana niepełna funkcja beta — dystrybuanta \(\text{Beta}(a,b)\) w punkcie \(x\)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Modelowana wielkość przyjmuje wartości ściśle wewnątrz \((0,1)\). Wartości dokładnie 0 lub 1 mają w rozkładzie beta prawdopodobieństwo zero — jeśli w danych występują (komplet widzów, mecz bez publiczności), potrzebny jest inny model, zob. <a data-concept="rozklady-z-masa-na-granicach">rozkłady z masą na granicach</a>.</li>
+<li>Wielkość jest traktowana jako ciągła. Dla proporcji typu \(A/C\) z całkowitym \(A\) jest to przybliżenie, dobre przy dużym \(C\).</li>
+<li>Wariancja jest funkcją średniej: przy ustalonej precyzji jest największa dla \(\mu=0{,}5\) i maleje ku krańcom. Model zakłada, że ta zależność jest adekwatna dla danych.</li>
+<li>W regresji beta zakładamy warunkową niezależność obserwacji przy danych parametrach i (zwykle) wspólną precyzję \(\phi\).</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Momenty dowolnego rzędu \(r\gt -a\):</p>
+<div class="ml-eq" id="eq-rozklad-beta-momenty">\[ E X^r=\frac{B(a+r,b)}{B(a,b)}=\frac{\Gamma(a+r)\,\Gamma(a+b)}{\Gamma(a)\,\Gamma(a+b+r)}. \]</div>
+<p>Średnia i wariancja w obu parametryzacjach:</p>
+<div class="ml-eq" id="eq-rozklad-beta-srednia">\[ E X=\frac{a}{a+b}=\mu, \]</div>
+<div class="ml-eq" id="eq-rozklad-beta-wariancja">\[ \operatorname{Var}X=\frac{ab}{(a+b)^2(a+b+1)}=\frac{\mu(1-\mu)}{1+\phi}. \]</div>
+<p>Dominanta (dla \(a\gt1,\ b\gt1\)):</p>
+<div class="ml-eq" id="eq-rozklad-beta-dominanta">\[ \operatorname{mode}X=\frac{a-1}{a+b-2}. \]</div>
+<p>Estymator metodą momentów precyzji, gdy znana jest średnia \(m\) i wariancja \(s^2\) proporcji (\(0\lt s^2\lt m(1-m)\)):</p>
+<div class="ml-eq" id="eq-rozklad-beta-mm">\[ \hat\phi=\frac{m(1-m)}{s^2}-1,\qquad \hat a=m\hat\phi,\qquad \hat b=(1-m)\hat\phi. \]</div>
+<p>Dla całkowitych \(a,b\) dystrybuanta wyraża się przez rozkład dwumianowy:</p>
+<div class="ml-eq" id="eq-rozklad-beta-cdf">\[ P(X\le x)=I_x(a,b)=\sum_{j=a}^{a+b-1}\binom{a+b-1}{j}x^j(1-x)^{a+b-1-j}. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-momenty"><p class="ml-box-title">Twierdzenie (momenty rozkładu beta)</p>
+<p>Jeśli \(X\sim\text{Beta}(a,b)\), to zachodzą wzory <a class="ml-eqref" href="#eq-rozklad-beta-momenty"></a>–<a class="ml-eqref" href="#eq-rozklad-beta-wariancja"></a>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-ksztalty"><p class="ml-box-title">Twierdzenie (kształty gęstości)</p>
+<ul>
+<li>\(a=b=1\): rozkład jednostajny na \((0,1)\).</li>
+<li>\(a\gt1,\ b\gt1\): gęstość jednomodalna z dominantą <a class="ml-eqref" href="#eq-rozklad-beta-dominanta"></a>, zerująca się na krańcach.</li>
+<li>\(a\lt1\) (odpowiednio \(b\lt1\)): gęstość dąży do \(+\infty\) przy \(x\to0^+\) (odpowiednio \(x\to1^-\)); dla \(a,b\lt1\) kształt U.</li>
+<li>\(a=b\): rozkład symetryczny względem \(1/2\).</li>
+</ul>
+</div>
+<div class="ml-box ml-thm" id="thm-granice-phi"><p class="ml-box-title">Twierdzenie (zachowanie graniczne względem precyzji)</p>
+<p>Przy ustalonym \(\mu\in(0,1)\): (i) dla \(\phi\to\infty\) mamy \(X\to\mu\) według prawdopodobieństwa; (ii) dla \(\phi\to0^+\) rozkład \(X\) zbiega słabo do rozkładu dwupunktowego \(P(X=1)=\mu,\ P(X=0)=1-\mu\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-sprzezonosc"><p class="ml-box-title">Twierdzenie (sprzężoność z rozkładem dwumianowym)</p>
+<p>Jeśli \(p\sim\text{Beta}(a,b)\) i \(Y\mid p\sim\text{Bin}(n,p)\), to \(p\mid Y=k\sim\text{Beta}(a+k,\ b+n-k)\). Dowód: zob. <a data-concept="rozklad-posterior" data-anchor="wyprowadzenie">rozkład posterior</a>.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="momenty-wyprowadzenie">Momenty</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z definicji wartości oczekiwanej i gęstości <a class="ml-eqref" href="#eq-rozklad-beta"></a>:</p>
+\[ EX^r=\frac{1}{B(a,b)}\int_0^1x^{r}\,x^{a-1}(1-x)^{b-1}\,dx=\frac{1}{B(a,b)}\int_0^1x^{(a+r)-1}(1-x)^{b-1}\,dx=\frac{B(a+r,b)}{B(a,b)}, \]
+<p>bo całka jest z definicji \(B(a+r,b)\) (skończona dla \(a+r\gt0\)). Podstawiając \(B=\Gamma\Gamma/\Gamma\) i stosując \(\Gamma(s+1)=s\,\Gamma(s)\):</p>
+\[ EX=\frac{\Gamma(a+1)\Gamma(a+b)}{\Gamma(a)\Gamma(a+b+1)}=\frac{a\,\Gamma(a)\,\Gamma(a+b)}{\Gamma(a)\,(a+b)\,\Gamma(a+b)}=\frac{a}{a+b}, \]
+\[ EX^2=\frac{\Gamma(a+2)\Gamma(a+b)}{\Gamma(a)\Gamma(a+b+2)}=\frac{a(a+1)}{(a+b)(a+b+1)}. \]
+<p>Stąd</p>
+\[ \begin{aligned} \operatorname{Var}X&amp;=\frac{a(a+1)}{(a+b)(a+b+1)}-\frac{a^2}{(a+b)^2}=\frac{a\big[(a+1)(a+b)-a(a+b+1)\big]}{(a+b)^2(a+b+1)}\\ &amp;=\frac{a\,b}{(a+b)^2(a+b+1)}. \end{aligned} \]
+<p class="ml-qed">∎</p></div>
+
+<h3 id="srednia-precyzja-wyprowadzenie">Wariancja w parametryzacji średnia–precyzja</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Podstawiamy \(a=\mu\phi\), \(b=(1-\mu)\phi\), \(a+b=\phi\):</p>
+\[ \operatorname{Var}X=\frac{\mu\phi\,(1-\mu)\phi}{\phi^2(\phi+1)}=\frac{\mu(1-\mu)}{1+\phi}. \]
+<p>Wariancja jest więc iloczynem „wariancji Bernoulliego” \(\mu(1-\mu)\) i czynnika \(1/(1+\phi)\in(0,1)\). Rozwiązując ten wzór względem \(\phi\) przy \(\mu=m\), \(\operatorname{Var}X=s^2\), dostajemy estymator <a class="ml-eqref" href="#eq-rozklad-beta-mm"></a>.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dominanta-wyprowadzenie">Dominanta</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla \(a,b\gt1\) maksymalizujemy \(\ell(x)=(a-1)\log x+(b-1)\log(1-x)\). Warunek \(\ell'(x)=\frac{a-1}{x}-\frac{b-1}{1-x}=0\) daje \((a-1)(1-x)=(b-1)x\), czyli \(x=\frac{a-1}{a+b-2}\). Ponieważ \(\ell''(x)=-\frac{a-1}{x^2}-\frac{b-1}{(1-x)^2}\lt0\), jest to jedyne maksimum.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="granice-wyprowadzenie">Zachowanie graniczne</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>(i) Z nierówności Czebyszewa \(P(|X-\mu|\ge\varepsilon)\le\frac{\mu(1-\mu)}{(1+\phi)\varepsilon^2}\to0\). (ii) Mamy \(E[X(1-X)]=EX-EX^2=\mu-(\operatorname{Var}X+\mu^2)=\mu(1-\mu)\frac{\phi}{1+\phi}\to0\) przy \(\phi\to0^+\). Nieujemna zmienna \(X(1-X)\) zbiega więc do 0 w \(L^1\), a zatem według prawdopodobieństwa; oznacza to, że dla każdego \(\varepsilon\gt0\) \(P(\varepsilon\lt X\lt1-\varepsilon)\to0\) — masa skupia się przy \(\{0,1\}\). Niech \(D=\mathbf 1\{X\gt1/2\}\). Wtedy \(|X-D|\to0\) według prawdopodobieństwa i \(|X-D|\le1\), więc \(E D-EX\to0\), tj. \(P(X\gt1/2)\to\mu\). Granicą słabą jest zatem rozkład dwupunktowy z \(P(X=1)=\mu\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="cdf-wyprowadzenie">Dystrybuanta dla całkowitych parametrów</h3>
+<p>Dla całkowitych \(a,b\) zmienna \(\text{Beta}(a,b)\) jest rozkładem \(a\)-tej statystyki pozycyjnej z \(a+b-1\) niezależnych zmiennych \(U(0,1)\). Zdarzenie \(\{X\le x\}\) oznacza, że co najmniej \(a\) spośród \(a+b-1\) zmiennych jednostajnych nie przekracza \(x\); liczba takich zmiennych ma rozkład \(\text{Bin}(a+b-1,x)\), co daje <a class="ml-eqref" href="#eq-rozklad-beta-cdf"></a>.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong> Wypełnienie hali o pojemności ok. 2000 miejsc w meczach pewnego klubu modelujemy rozkładem beta o średniej \(\mu=0{,}6\) i precyzji \(\phi=20\).</p>
+<ol class="ml-steps">
+<li><strong>Parametry kształtu.</strong> \(a=\mu\phi=0{,}6\cdot20=12\), \(b=(1-\mu)\phi=0{,}4\cdot20=8\).</li>
+<li><strong>Drugi moment.</strong> \(EX^2=\frac{12\cdot13}{20\cdot21}=\frac{156}{420}=0{,}371429\).</li>
+<li><strong>Wariancja dwiema drogami.</strong> \(0{,}371429-0{,}6^2=0{,}011429\); ze wzoru średnia–precyzja: \(\frac{0{,}6\cdot0{,}4}{1+20}=\frac{0{,}24}{21}=0{,}011429\). Odchylenie standardowe \(\sqrt{0{,}011429}=0{,}1069\), czyli ok. 10,7 punktu procentowego wypełnienia (ok. 214 miejsc).</li>
+<li><strong>Dominanta.</strong> \(\frac{12-1}{20-2}=\frac{11}{18}=0{,}6111\); mediana (numerycznie) \(\approx0{,}6034\). Ponieważ \(\mu\gt0{,}5\), rozkład jest lekko lewoskośny: średnia \(\lt\) mediana \(\lt\) dominanta.</li>
+<li><strong>Prawdopodobieństwa.</strong> Ze wzoru <a class="ml-eqref" href="#eq-rozklad-beta-cdf"></a> z \(a+b-1=19\): \(P(W\lt0{,}5)=\sum_{j=12}^{19}\binom{19}{j}0{,}5^{19}=0{,}1796\) oraz \(P(W\ge0{,}75)=1-I_{0{,}75}(12,8)=0{,}0775\).</li>
+<li><strong>Przedział centralny 95%.</strong> Kwantyle (numerycznie, bisekcja na dystrybuancie): \(q_{0{,}025}=0{,}3836\), \(q_{0{,}975}=0{,}7975\).</li>
+<li><strong>Metoda momentów w drugą stronę.</strong> Gdyby z danych wyszło \(m=0{,}6\) i \(s=0{,}1069\), to \(\hat\phi=\frac{0{,}24}{0{,}011429}-1=21{,}0-1=20{,}0\) — odzyskujemy wyjściową precyzję.</li>
+</ol>
+<div class="ml-plot" data-plot="beta" data-params='{"a": 12, "b": 8}'></div>
+<p>Zwróć uwagę, że gęstość \(\text{Beta}(12,8)\) jest praktycznie zerowa przy \(x=1\): rozkład beta nie potrafi przypisać dodatniego prawdopodobieństwa kompletowi widzów.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Przy \(\mu=0{,}6\) i \(\phi=20\) typowy mecz zapełnia 60% hali, ale rozrzut między meczami jest duży: w 95% meczów wypełnienie mieści się między ok. 38% a 80%. Tylko ok. 8% meczów przekracza 75% wypełnienia, a ok. 18% nie dochodzi do połowy.</p>
+<p>Precyzję \(\phi\) można czytać jako „liczbę pseudoobserwacji”: przy \(\phi=20\) wariancja jest 21 razy mniejsza niż maksymalnie możliwa dla danej średniej (\(\mu(1-\mu)\), osiągana w granicy, gdy każdy mecz to albo pusta, albo pełna hala). Gdy \(\phi\) rośnie, mecze stają się coraz bardziej podobne do siebie.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<ul>
+<li><strong>Warstwa „wypełnienie” MAF.</strong> W <a data-concept="atrakcyjnosc-frekwencyjna">Modelu Atrakcyjności Frekwencyjnej</a> średnie wypełnienie meczu \(i\) wiąże się z predyktorem liniowym przez <a data-concept="funkcja-logit">funkcję logit</a>: \(\operatorname{logit}\mu_i=\eta_i\), a wspólna precyzja \(\phi\) opisuje zmienność wypełnienia wokół \(\mu_i\). Rozkład beta z \(a_i=\mu_i\phi\), \(b_i=(1-\mu_i)\phi\) jest następnie mieszany z rozkładem dwumianowym, co daje model <a data-concept="rozklad-beta-dwumianowy">beta-dwumianowy</a> \(A_i\sim\text{BetaBinomial}(C_i,\mu_i\phi,(1-\mu_i)\phi)\).</li>
+<li><strong>Dlaczego nie czysta regresja beta?</strong> <a data-concept="regresja-beta">Regresja beta</a> <cite data-bib="ferrari2004"></cite> wymaga \(W_i\in(0,1)\), a w danych ZPRP występują mecze z kompletem widzów (\(W=1\)). Model beta-dwumianowy obsługuje je naturalnie.</li>
+<li><strong>Indeks IAF.</strong> Wielkość \(E(W\mid\eta)\) w definicji IAF jest średnią rozkładu wypełnienia — w wariancie beta(-dwumianowym) równa \(\operatorname{logit}^{-1}(\eta)\).</li>
+<li><strong>Priory dla proporcji.</strong> Rozkład beta służy też jako prior dla skuteczności (np. rzutów karnych) w prostych analizach sprzężonych — zob. <a data-concept="rozklad-posterior">rozkład posterior</a>.</li>
+<li><strong>Implementacja.</strong> PyMC udostępnia rozkład beta w parametryzacji \((\alpha,\beta)\) lub \((\mu,\sigma)\), gdzie \(\sigma\) jest odchyleniem standardowym, więc \(\sigma^2=\mu(1-\mu)/(1+\phi)\) <cite data-bib="doc-pymc-beta"></cite>.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li>Brak masy w 0 i 1: dane z kompletami widzów lub zerami wymagają modelu beta-dwumianowego, modeli z inflacją (ZOIB, <cite data-bib="ospina2012"></cite>) albo przekształcenia ściskającego \(y'=(y(N-1)+0{,}5)/N\) <cite data-bib="smithson2006"></cite>, które jest jednak arbitralne.</li>
+<li>Związek wariancji ze średnią jest sztywny (przy stałym \(\phi\)); gdy rozrzut zależy od innych czynników, potrzebna jest regresja także dla \(\phi\).</li>
+<li>Rozkład beta jest jednomodalny lub U-kształtny — nie odda np. dwóch wyraźnych „trybów” frekwencji (zwykłe mecze vs. derby) bez mieszaniny lub predyktorów.</li>
+<li>Traktowanie \(A/C\) jako ciągłego ignoruje dyskretność i fakt, że niepewność ułamka zależy od \(C\) (mała hala daje „grubsze” ułamki).</li>
+<li>Przy \(a\lt1\) lub \(b\lt1\) gęstość jest nieograniczona przy krańcach, co utrudnia obliczenia numeryczne i interpretację.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="regresja-beta">Regresja beta</a> — model regresji dla \(\mu_i\) z łączem logit.</li>
+<li><a data-concept="rozklad-beta-dwumianowy">Rozkład beta-dwumianowy</a> — mieszanina dwumianowo-beta.</li>
+<li><a data-concept="funkcja-logit">Funkcja logit</a>.</li>
+<li><a data-concept="rozklady-z-masa-na-granicach">Rozkłady z masą na granicach</a> (ZOIB).</li>
+<li><a data-concept="rozklad-posterior">Rozkład posterior</a> — sprzężoność beta–dwumian.</li>
+<li><a data-concept="rozklad-dwumianowy">Rozkład dwumianowy</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="johnson1995continuous"></li>
+<li data-bib="ferrari2004"></li>
+<li data-bib="doc-pymc-beta"></li>
+<li data-bib="smithson2006"></li>
+<li data-bib="ospina2012"></li>
+<li data-bib="casellaberger2002"></li>
+</ul>
+</section>

@@ -1,0 +1,184 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Pierwiastek błędu średniokwadratowego (ang. <em>root mean squared error</em>, RMSE) to druga, obok <a data-concept="mae">MAE</a>, podstawowa miara dokładności prognoz punktowych. Zamiast uśredniać wartości bezwzględne błędów, uśredniamy ich kwadraty, a na końcu wyciągamy pierwiastek, by wrócić do jednostek danych (widzów, punktów procentowych wypełnienia).</p>
+<p>Podniesienie do kwadratu zmienia charakter miary: błąd o 1000 widzów „kosztuje” tyle co sto błędów po 100, a nie dziesięć. RMSE jest więc szczególnie wrażliwy na duże pomyłki — co bywa zaletą (gdy duże błędy są naprawdę kosztowne, np. przy planowaniu ochrony meczu wysokiego ryzyka) albo wadą (gdy jeden nietypowy mecz zniekształca obraz całego sezonu).</p>
+<p>RMSE ma też bardzo elegancką strukturę matematyczną: jego kwadrat (MSE) rozkłada się dokładnie na <em>obciążenie</em> (systematyczne przesunięcie prognoz) i <em>wariancję</em> (rozrzut błędów wokół tego przesunięcia). Ten rozkład pozwala zdiagnozować, czy model myli się „w jedną stronę”, czy po prostu jest nieprecyzyjny. Prognozą punktową minimalizującą oczekiwany błąd kwadratowy jest <a data-concept="wartosc-oczekiwana-prognozy">wartość oczekiwana</a> rozkładu predykcyjnego <cite data-bib="hyndman2021fpp3"></cite>.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \( y_1,\dots,y_n\in\mathbb{R} \) będą obserwacjami, \( \hat y_1,\dots,\hat y_n \in\mathbb{R} \) — prognozami punktowymi wyznaczonymi przed poznaniem obserwacji, \( e_i = y_i - \hat y_i \) — błędami.</p>
+<div class="ml-box ml-def" id="def-rmse"><p class="ml-box-title">Definicja (MSE i RMSE)</p>
+<div class="ml-eq" id="eq-rmse">\[ \text{RMSE} \;=\; \sqrt{\text{MSE}} \;=\; \sqrt{\frac1n\sum_{i=1}^n (y_i - \hat y_i)^2} \;=\; \sqrt{\frac1n\sum_{i=1}^n e_i^2}. \]</div>
+<p>Wersja populacyjna: dla zmiennej losowej \( Y \) z \( \mathbb{E}Y^2 \lt \infty \) i prognozy \( c \) oczekiwana strata kwadratowa to \( \text{MSE}(c) = \mathbb{E}(Y-c)^2 \).</p>
+</div>
+<div class="ml-box ml-def" id="def-mse-estymatora"><p class="ml-box-title">Definicja (błąd średniokwadratowy estymatora)</p>
+<p>Dla estymatora \( \hat\theta \) (zmiennej losowej zależnej od danych) wielkości \( \theta \in \mathbb{R} \) z \( \mathbb{E}\hat\theta^2 \lt\infty \): \( \text{MSE}(\hat\theta) = \mathbb{E}(\hat\theta - \theta)^2 \), obciążenie \( \operatorname{bias}(\hat\theta) = \mathbb{E}\hat\theta - \theta \).</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( n \)</td><td>liczba prognoz</td></tr>
+<tr><td>\( y_i,\ \hat y_i \)</td><td>obserwacja i prognoza punktowa</td></tr>
+<tr><td>\( e_i \)</td><td>błąd prognozy \( y_i - \hat y_i \)</td></tr>
+<tr><td>\( \bar e \)</td><td>średni błąd (empiryczne obciążenie)</td></tr>
+<tr><td>\( s_e^2 \)</td><td>wariancja empiryczna błędów z dzielnikiem \( n \): \( \frac1n\sum(e_i-\bar e)^2 \)</td></tr>
+<tr><td>\( \text{MSE},\ \text{RMSE} \)</td><td>błąd średniokwadratowy i jego pierwiastek</td></tr>
+<tr><td>\( \text{MAE} \)</td><td>średni błąd bezwzględny</td></tr>
+<tr><td>\( \theta,\ \hat\theta \)</td><td>wielkość estymowana i jej estymator</td></tr>
+<tr><td>\( Y,\ \hat Y \)</td><td>przyszła obserwacja i prognoza traktowana jako zmienna losowa</td></tr>
+<tr><td>\( \sigma^2 \)</td><td>wariancja szumu (nieredukowalna część błędu)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li><strong>Prognozy ex ante</strong> — jak przy MAE: RMSE liczymy na danych niewidzianych przez model (<a data-concept="backtesting">walidacja chronologiczna</a>).</li>
+<li><strong>Skończony drugi moment.</strong> Wersje populacyjne wymagają \( \mathbb{E}Y^2 \lt\infty \). Przy rozkładach o bardzo ciężkich ogonach empiryczny RMSE jest niestabilny — zdominowany przez kilka obserwacji.</li>
+<li><strong>Kwadratowa funkcja straty.</strong> RMSE jest właściwą miarą, gdy koszt pomyłki rośnie kwadratowo i symetrycznie. Wtedy optymalną prognozą punktową jest średnia rozkładu predykcyjnego.</li>
+<li><strong>Wspólna skala</strong> wszystkich obserwacji (te same uwagi co dla MAE).</li>
+<li><strong>Niezależność prognozy od nowej obserwacji</strong> (w dekompozycji błędu prognozy): \( \hat Y \) zależy tylko od danych treningowych, a \( Y \) jest nową, niezależną realizacją.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Empiryczna dekompozycja MSE na obciążenie i wariancję błędów:</p>
+<div class="ml-eq" id="eq-rmse-dekompozycja">\[ \text{MSE} \;=\; \frac1n\sum_{i=1}^n e_i^2 \;=\; \bar e^{\,2} + s_e^2, \qquad \bar e = \frac1n\sum_{i=1}^n e_i,\quad s_e^2 = \frac1n\sum_{i=1}^n (e_i-\bar e)^2. \]</div>
+<p>Dekompozycja błędu estymatora:</p>
+<div class="ml-eq" id="eq-rmse-bias-var">\[ \text{MSE}(\hat\theta) \;=\; \operatorname{bias}(\hat\theta)^2 + \operatorname{Var}(\hat\theta). \]</div>
+<p>Dekompozycja oczekiwanego błędu prognozy (szum + obciążenie² + wariancja), gdy \( \hat Y \) i \( Y \) są niezależne, \( \operatorname{Var}Y = \sigma^2 \):</p>
+<div class="ml-eq" id="eq-rmse-prognoza">\[ \mathbb{E}\big(Y - \hat Y\big)^2 \;=\; \underbrace{\sigma^2}_{\text{szum}} \;+\; \underbrace{\big(\mathbb{E}Y - \mathbb{E}\hat Y\big)^2}_{\text{obciążenie}^2} \;+\; \underbrace{\operatorname{Var}\hat Y}_{\text{wariancja}}. \]</div>
+<p>Optymalna prognoza stała przy stracie kwadratowej:</p>
+<div class="ml-eq" id="eq-rmse-srednia">\[ \mathbb{E}(Y-c)^2 \;=\; \operatorname{Var}Y + (\mathbb{E}Y - c)^2, \qquad \arg\min_c \mathbb{E}(Y-c)^2 = \mathbb{E}Y. \]</div>
+<p>Relacja z MAE:</p>
+<div class="ml-eq" id="eq-rmse-mae">\[ \text{MAE} \;\le\; \text{RMSE} \;\le\; \sqrt{n}\;\text{MAE}. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-rmse-bias-var"><p class="ml-box-title">Twierdzenie (dekompozycja obciążenie–wariancja)</p>
+<p>(a) Dla dowolnych liczb \( e_1,\dots,e_n \) zachodzi <a class="ml-eqref" href="#eq-rmse-dekompozycja"></a>. (b) Dla estymatora z \( \mathbb{E}\hat\theta^2 \lt \infty \) zachodzi <a class="ml-eqref" href="#eq-rmse-bias-var"></a>. (c) Jeśli \( Y \) i \( \hat Y \) są niezależne i mają skończone drugie momenty, zachodzi <a class="ml-eqref" href="#eq-rmse-prognoza"></a>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-rmse-srednia"><p class="ml-box-title">Twierdzenie (optymalność średniej)</p>
+<p>Jeśli \( \mathbb{E}Y^2 \lt \infty \), to \( c^\ast = \mathbb{E}Y \) jest jedynym minimum \( c \mapsto \mathbb{E}(Y-c)^2 \), a minimalna wartość to \( \operatorname{Var}Y \). Wersja empiryczna: \( \sum_i (y_i - c)^2 \) minimalizuje średnia arytmetyczna \( \bar y \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-rmse-mae"><p class="ml-box-title">Twierdzenie (MAE ≤ RMSE ≤ √n·MAE)</p>
+<p>Dla dowolnych \( e_1,\dots,e_n \) zachodzi <a class="ml-eqref" href="#eq-rmse-mae"></a>. Lewa nierówność jest równością wtedy i tylko wtedy, gdy wszystkie \( |e_i| \) są równe; prawa — wtedy i tylko wtedy, gdy co najwyżej jeden błąd jest niezerowy.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<div class="ml-proof"><p class="ml-box-title">Dowód (a) — dekompozycja empiryczna</p>
+<ol>
+<li>Zapisujemy \( e_i = \bar e + (e_i - \bar e) \) i podnosimy do kwadratu: \( e_i^2 = \bar e^{\,2} + 2\bar e\,(e_i-\bar e) + (e_i-\bar e)^2 \).</li>
+<li>Uśredniamy po \( i \): \( \frac1n\sum e_i^2 = \bar e^{\,2} + 2\bar e\cdot\frac1n\sum(e_i - \bar e) + \frac1n\sum(e_i-\bar e)^2 \).</li>
+<li>Środkowy składnik znika, bo \( \sum_i (e_i - \bar e) = n\bar e - n\bar e = 0 \). Zostaje \( \text{MSE} = \bar e^{\,2} + s_e^2 \).</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (b) — obciążenie i wariancja estymatora</p>
+<ol>
+<li>Niech \( \mu_{\hat\theta} = \mathbb{E}\hat\theta \). Wtedy \( \hat\theta - \theta = (\hat\theta - \mu_{\hat\theta}) + (\mu_{\hat\theta} - \theta) \).</li>
+<li>\( (\hat\theta-\theta)^2 = (\hat\theta - \mu_{\hat\theta})^2 + 2(\hat\theta-\mu_{\hat\theta})(\mu_{\hat\theta}-\theta) + (\mu_{\hat\theta}-\theta)^2 \).</li>
+<li>Bierzemy wartość oczekiwaną. Składnik \( (\mu_{\hat\theta}-\theta) \) jest stałą, a \( \mathbb{E}(\hat\theta - \mu_{\hat\theta}) = 0 \), więc środkowy wyraz ma wartość oczekiwaną 0.</li>
+<li>Zostaje \( \mathbb{E}(\hat\theta-\theta)^2 = \operatorname{Var}\hat\theta + (\mathbb{E}\hat\theta - \theta)^2 = \operatorname{Var}\hat\theta + \operatorname{bias}(\hat\theta)^2 \).</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (c) — szum, obciążenie, wariancja prognozy</p>
+<ol>
+<li>Zmienna \( D = Y - \hat Y \) ma \( \mathbb{E}D = \mathbb{E}Y - \mathbb{E}\hat Y \) oraz — z niezależności \( Y \) i \( \hat Y \) — \( \operatorname{Var}D = \operatorname{Var}Y + \operatorname{Var}\hat Y = \sigma^2 + \operatorname{Var}\hat Y \).</li>
+<li>Dla dowolnej zmiennej z drugim momentem \( \mathbb{E}D^2 = \operatorname{Var}D + (\mathbb{E}D)^2 \) (to część (b) z \( \theta = 0 \)).</li>
+<li>Podstawiając: \( \mathbb{E}(Y-\hat Y)^2 = \sigma^2 + \operatorname{Var}\hat Y + (\mathbb{E}Y - \mathbb{E}\hat Y)^2 \).</li>
+</ol>
+<p>Składnika \( \sigma^2 \) nie usunie żaden model: nawet znając dokładnie rozkład frekwencji meczu, nie przewidzimy jej realizacji. Model prosty ma zwykle duże obciążenie i małą wariancję; model bardzo złożony — odwrotnie. Hierarchiczne ściąganie (<a data-concept="partial-pooling">partial pooling</a>) celowo dodaje niewielkie obciążenie, by silnie zredukować wariancję efektów klubów z małą liczbą meczów.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (optymalność średniej)</p>
+<ol>
+<li>Z (b) dla „estymatora” \( Y \) i stałej \( c \): \( \mathbb{E}(Y-c)^2 = \operatorname{Var}Y + (\mathbb{E}Y - c)^2 \) — to wzór <a class="ml-eqref" href="#eq-rmse-srednia"></a>.</li>
+<li>Pierwszy składnik nie zależy od \( c \), drugi jest nieujemny i równy zeru wtedy i tylko wtedy, gdy \( c = \mathbb{E}Y \).</li>
+<li>Wersja empiryczna — to samo dla rozkładu empirycznego (masa \( 1/n \) w każdym \( y_i \)), którego średnią jest \( \bar y \).</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (MAE ≤ RMSE ≤ √n·MAE)</p>
+<ol>
+<li><strong>Lewa nierówność.</strong> Z nierówności \( \frac1n\sum (|e_i| - \text{MAE})^2 \ge 0 \): rozwijając, \( \frac1n\sum e_i^2 - 2\,\text{MAE}\cdot\frac1n\sum|e_i| + \text{MAE}^2 \ge 0 \), czyli \( \text{MSE} - \text{MAE}^2 \ge 0 \). Pierwiastkując (obie strony nieujemne): \( \text{MAE} \le \text{RMSE} \). Równość zachodzi wtedy i tylko wtedy, gdy wszystkie \( |e_i| = \text{MAE} \). (Jest to też szczególny przypadek nierówności Jensena dla funkcji wypukłej \( x\mapsto x^2 \) lub nierówności Cauchy’ego–Schwarza.)</li>
+<li><strong>Prawa nierówność.</strong> Dla liczb nieujemnych \( \sum_i |e_i|^2 \le \big(\sum_i |e_i|\big)^2 \), bo prawa strona to lewa plus nieujemne iloczyny mieszane \( 2\sum_{i\lt k}|e_i||e_k| \). Stąd \( \text{MSE} = \frac1n\sum e_i^2 \le \frac1n(n\,\text{MAE})^2 = n\,\text{MAE}^2 \) i \( \text{RMSE} \le \sqrt n\,\text{MAE} \). Równość wtedy i tylko wtedy, gdy wszystkie iloczyny mieszane są zerowe, czyli najwyżej jeden błąd jest niezerowy.</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+<h3 id="porownanie-z-mae">Porównanie z MAE</h3>
+<table class="ml-table">
+<thead><tr><th>Cecha</th><th>MAE</th><th>RMSE</th></tr></thead>
+<tbody>
+<tr><td>Funkcja straty</td><td>liniowa \( |e| \)</td><td>kwadratowa \( e^2 \)</td></tr>
+<tr><td>Optymalna prognoza punktowa</td><td>mediana</td><td>średnia (wartość oczekiwana)</td></tr>
+<tr><td>Wrażliwość na duże błędy</td><td>umiarkowana</td><td>wysoka</td></tr>
+<tr><td>Dekompozycja</td><td>brak prostej</td><td>obciążenie² + wariancja</td></tr>
+<tr><td>Błędy normalne \( N(0,\sigma^2) \)</td><td>\( \approx 0{,}80\,\sigma \)</td><td>\( \sigma \)</td></tr>
+</tbody>
+</table>
+<p>Stosunek \( \text{MAE}/\text{RMSE} \in (0, 1] \) jest użyteczną diagnostyką kształtu rozkładu błędów: blisko 0,8 — błędy „normalne”; wyraźnie mniej — ciężkie ogony, kilka bardzo dużych pomyłek.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne</strong> — te same 8 meczów co w artykule o <a data-concept="mae" data-anchor="przyklad">MAE</a>. Błędy \( e_i = y_i - \hat y_i \): \( 150,\ -70,\ 200,\ -50,\ -140,\ 150,\ 1300,\ -50 \).</p>
+<ol class="ml-steps">
+<li><strong>Kwadraty błędów:</strong> \( 22\,500;\ 4\,900;\ 40\,000;\ 2\,500;\ 19\,600;\ 22\,500;\ 1\,690\,000;\ 2\,500 \). Suma: \( 1\,804\,500 \).</li>
+<li><strong>MSE i RMSE:</strong> \( \text{MSE} = 1\,804\,500/8 = 225\,562{,}5 \); \( \text{RMSE} = \sqrt{225\,562{,}5} \approx 474{,}9 \) widza.</li>
+<li><strong>Obciążenie:</strong> \( \bar e = (150-70+200-50-140+150+1300-50)/8 = 1490/8 = 186{,}25 \); \( \bar e^{\,2} \approx 34\,689{,}1 \).</li>
+<li><strong>Wariancja błędów</strong> (z dekompozycji): \( s_e^2 = 225\,562{,}5 - 34\,689{,}1 = 190\,873{,}4 \), \( s_e \approx 436{,}9 \). Obciążenie odpowiada za \( 34\,689{,}1/225\,562{,}5 \approx 15{,}4\% \) MSE, a rozrzut — za 84,6%.</li>
+<li><strong>Sprawdzenie nierówności:</strong> \( \text{MAE} = 263{,}75 \le \text{RMSE} = 474{,}9 \le \sqrt8\cdot263{,}75 \approx 746{,}0 \). Stosunek \( \text{MAE}/\text{RMSE} \approx 0{,}555 \) — znacznie poniżej 0,8: rozkład błędów ma ciężki ogon (mecz derbowy).</li>
+<li><strong>Wpływ jednej obserwacji:</strong> bez meczu 7 suma kwadratów to \( 114\,500 \), MSE \( = 114\,500/7 \approx 16\,357{,}1 \), RMSE \( \approx 127{,}9 \). Derby zwiększają RMSE 3,7-krotnie (127,9 → 474,9), a MAE 2,3-krotnie (115,7 → 263,75).</li>
+<li><strong>Optymalność średniej — prognoza stała.</strong> Dla \( c = \bar y = 1642{,}5 \): RMSE \( \approx 938{,}8 \). Dla mediany \( c = 1325 \): RMSE \( \approx 991{,}0 \). Przy MAE kolejność była odwrotna (632,5 dla mediany vs 680,6 dla średniej) — każda miara „nagradza” inną prognozę punktową.</li>
+</ol>
+<div class="ml-plot" data-plot="normal" data-params='{"mu": 186, "sigma": 437}'></div>
+<p>Wykres pokazuje rozkład błędów o obciążeniu \( \mu = 186 \) i rozrzucie \( \sigma = 437 \) z przykładu. Zauważ, że przesunięcie \( \mu \) od zera zwiększa MSE o \( \mu^2 \), niezależnie od \( \sigma \) — przy obecnych wartościach wkład obciążenia jest mały w porównaniu z wkładem rozrzutu.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li><strong>Jednostki.</strong> RMSE jest w jednostkach danych, ale nie jest „przeciętnym błędem” — to raczej typowa wielkość błędu z dużą wagą błędów dużych. Przy tych samych danych RMSE ≥ MAE zawsze.</li>
+<li><strong>Diagnoza przez dekompozycję.</strong> Duży udział \( \bar e^{\,2} \) oznacza systematyczny błąd (np. model nie uwzględnia wzrostu popularności ligi w sezonie testowym) — można go usunąć korektą poziomu. Duży udział \( s_e^2 \) oznacza brak informacji lub szum nieredukowalny.</li>
+<li><strong>Ostrożnie z pojedynczym sezonem.</strong> RMSE na kilkuset meczach może zmienić się znacznie po dodaniu lub usunięciu kilku meczów z rekordową frekwencją; warto podawać RMSE z wyłączeniem 1% największych błędów jako analizę wrażliwości.</li>
+<li><strong>Średnia jako prognoza.</strong> Model oceniany przez RMSE powinien podawać średnią rozkładu predykcyjnego. Dla rozkładów prawostronnie skośnych (liczba widzów) średnia jest większa od mediany.</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W walidacji chronologicznej <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> raportujemy RMSE obok MAE, osobno dla każdych rozgrywek i w dwóch skalach (liczba widzów, wypełnienie).</p>
+<ul>
+<li><strong>Mecze wyjątkowe.</strong> Derby, mecze przeniesione do większej hali, finały i mecze Ligi Mistrzów z frekwencją kilkunastotysięczną dają największe kwadraty błędów. Rozbieżność RMSE i MAE (stosunek MAE/RMSE wyraźnie poniżej 0,8) jest sygnałem, by przejrzeć te mecze w <a data-concept="diagnostyka-reszt">diagnostyce reszt</a> — często brakuje zmiennej objaśniającej (np. zmiany hali).</li>
+<li><strong>Obciążenie sezonowe.</strong> Walidacja na ostatnim sezonie wymaga prognozy efektu sezonu \( S_{s} \), którego model nie widział; obciążenie \( \bar e \) w dekompozycji <a class="ml-eqref" href="#eq-rmse-dekompozycja"></a> mierzy, na ile średni poziom frekwencji nowego sezonu odbiegł od oczekiwań.</li>
+<li><strong>Bias–variance w hierarchii.</strong> Efekty klubów estymowane bez ściągania (osobna średnia dla każdego klubu) mają małe obciążenie, ale dużą wariancję dla klubów z kilkoma meczami; MAF ściąga je do średniej ligi, co zgodnie z <a class="ml-eqref" href="#eq-rmse-prognoza"></a> zmniejsza oczekiwany błąd kwadratowy (por. <a data-concept="partial-pooling">partial pooling</a>).</li>
+<li><strong>Prognoza punktowa w raporcie.</strong> Domyślnie raportujemy medianę (zgodnie z MAE); przy liczeniu RMSE wykorzystujemy średnią rozkładu predykcyjnego, aby każdą miarę oceniać na jej optymalnej prognozie.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Wrażliwość na wartości odstające.</strong> Jeden mecz może zdominować RMSE całego sezonu (w przykładzie z jednego meczu pochodzi \( 1\,690\,000/1\,804\,500 \approx 0{,}937 \), czyli ponad 93% sumy kwadratów błędów).</li>
+<li><strong>Zależność od skali</strong> — jak przy MAE; porównania między rozgrywkami wymagają normalizacji <cite data-bib="hyndman2006"></cite>.</li>
+<li><strong>Tylko prognoza punktowa.</strong> RMSE nie ocenia kalibracji przedziałów ani rozkładu predykcyjnego; do tego służą <a data-concept="pokrycie-przedzialow-predykcyjnych">pokrycie przedziałów</a> i reguły punktacji <cite data-bib="gneiting2007scoring"></cite>.</li>
+<li><strong>Heteroskedastyczność.</strong> Błędy w dużych halach są naturalnie większe w liczbach bezwzględnych; RMSE z całej ligi odzwierciedla głównie jakość prognoz dla dużych hal. Pomaga liczenie RMSE na wypełnieniu lub na resztach standaryzowanych.</li>
+<li><strong>Niepewność próbkowa.</strong> RMSE z jednego sezonu jest estymatą z dużym błędem; różnice między modelami oceniamy na różnicach sparowanych kwadratów błędów.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="mae">MAE</a> — liniowa miara błędu, optymalna dla mediany.</li>
+<li><a data-concept="wartosc-oczekiwana-prognozy">Wartość oczekiwana prognozy</a> — prognoza optymalna w sensie RMSE.</li>
+<li><a data-concept="wariancja-zmiennej-losowej">Wariancja zmiennej losowej</a> — składnik dekompozycji.</li>
+<li><a data-concept="partial-pooling">Partial pooling</a> — praktyczny przykład kompromisu obciążenie–wariancja.</li>
+<li><a data-concept="backtesting">Backtesting</a> i <a data-concept="diagnostyka-reszt">diagnostyka reszt</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="hyndman2006"></li>
+<li data-bib="hyndman2021fpp3"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="wasserman2004"></li>
+<li data-bib="gneiting2007scoring"></li>
+</ul>
+</section>

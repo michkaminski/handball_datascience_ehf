@@ -26,6 +26,15 @@ from ehf.infrastructure.team_list_reader import PsycopgTeamListReader
 from ehf.infrastructure.venue_detail_reader import PsycopgVenueDetailReader
 from ehf.infrastructure.venue_list_reader import PsycopgVenueListReader
 from ehf.interface.attendance_analytics_views import AttendanceAnalyticsView
+from ehf.interface.attendance_appeal_views import (
+    AppealClubView,
+    AppealCompareView,
+    AppealExportView,
+    AppealForecastView,
+    AppealHostView,
+    AppealPanelView,
+)
+from ehf.interface.mathematics_views import MathArticleView, MathCategoryView, MathIndexView
 from ehf.interface.competition_views import CompetitionListView
 from ehf.interface.database_stats_views import DatabaseStatsView
 from ehf.interface.goal_distribution_views import (
@@ -50,6 +59,8 @@ from ehf.interface.team_views import TeamDetailView, TeamListView
 from ehf.interface.venue_views import VenueDetailView, VenueListView
 from ehf.interface.views import utworz_blueprint
 from ehf.services.attendance_analytics import AttendanceAnalyticsService
+from ehf.services.attendance_appeal import AttendanceAppealService, model_store_path
+from ehf.services.mathematics import MathLibraryService
 from ehf.services.competition_list import CompetitionListService
 from ehf.services.database_stats import DatabaseStatsService
 from ehf.services.goal_distribution import GoalDistributionService
@@ -70,6 +81,8 @@ from ehf.services.team_list import TeamListService
 from ehf.services.venue_detail import VenueDetailService
 from ehf.services.venue_list import VenueListService
 from ehf.settings import Settings
+from maf.artifacts import ArtifactStore
+from mathlib.registry import default_registry
 
 INTERFACE_DIR = Path(__file__).resolve().parent
 
@@ -113,6 +126,8 @@ def create_app() -> Flask:
     database_stats_service = DatabaseStatsService(PsycopgDatabaseStatsReader(connect))
     goal_distribution_service = GoalDistributionService(PsycopgGoalDistributionReader(connect))
     attendance_service = AttendanceAnalyticsService(PsycopgAttendanceAnalyticsReader(connect))
+    math_service = MathLibraryService(default_registry())
+    appeal_service = AttendanceAppealService(ArtifactStore(model_store_path()), math_service)
     blueprint.add_url_rule(
         "/",
         view_func=StartView.as_view("start", service=news_service),
@@ -224,8 +239,28 @@ def create_app() -> Flask:
     blueprint.add_url_rule(
         "/raporty/frekwencja",
         view_func=AttendanceAnalyticsView.as_view(
-            "attendance_analytics", service=attendance_service
+            "attendance_analytics", service=attendance_service, appeal_service=appeal_service
         ),
+    )
+    for path, view, endpoint in (
+        ("/raporty/frekwencja/maf/data", AppealPanelView, "appeal_data"),
+        ("/raporty/frekwencja/maf/club/<int:club_id>", AppealClubView, "appeal_club"),
+        ("/raporty/frekwencja/maf/host/<int:club_id>", AppealHostView, "appeal_host"),
+        ("/raporty/frekwencja/maf/compare", AppealCompareView, "appeal_compare"),
+        ("/raporty/frekwencja/maf/forecast", AppealForecastView, "appeal_forecast"),
+        ("/raporty/frekwencja/maf/export.csv", AppealExportView, "appeal_export"),
+    ):
+        blueprint.add_url_rule(path, view_func=view.as_view(endpoint, service=appeal_service))
+    blueprint.add_url_rule(
+        "/matematyka/", view_func=MathIndexView.as_view("math_index", service=math_service)
+    )
+    blueprint.add_url_rule(
+        "/matematyka/<category>/",
+        view_func=MathCategoryView.as_view("math_category", service=math_service),
+    )
+    blueprint.add_url_rule(
+        "/matematyka/<category>/<slug>/",
+        view_func=MathArticleView.as_view("math_article", service=math_service),
     )
     app.register_blueprint(blueprint)
     return app

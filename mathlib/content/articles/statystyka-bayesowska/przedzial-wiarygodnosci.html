@@ -1,0 +1,180 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Po dopasowaniu modelu bayesowskiego nie otrzymujemy jednej liczby, tylko cały <a data-concept="rozklad-posterior">rozkład posterior</a> parametru — opis tego, które wartości są wiarygodne w świetle danych i założeń. Rozkład trudno jednak zmieścić w tabeli rankingowej. Potrzebujemy zwięzłego podsumowania: wartości centralnej (mediany lub średniej) oraz zakresu, w którym parametr leży „z dużym prawdopodobieństwem”.</p>
+<p>Tym zakresem jest <strong>przedział wiarygodności</strong> (<em>credible interval</em>): przedział, któremu rozkład posterior przypisuje zadane prawdopodobieństwo, np. 95%. Zdanie „z prawdopodobieństwem 95% indeks IAF klubu leży między 96 a 121” jest w podejściu bayesowskim dosłownie poprawne — w odróżnieniu od klasycznego przedziału ufności, dla którego takie sformułowanie jest częstym, ale błędnym skrótem myślowym.</p>
+<p>Przedziałów o tym samym prawdopodobieństwie jest nieskończenie wiele. W praktyce używa się dwóch konstrukcji: przedziału <strong>kwantylowego</strong> (równoogonowego, <em>equal-tailed interval</em>, ETI), który odcina po \(\alpha/2\) prawdopodobieństwa z każdej strony, oraz przedziału <strong>najwyższej gęstości</strong> (<em>highest posterior density</em>, HPD), który jest najkrótszy. Dla rozkładów symetrycznych pokrywają się; dla skośnych — różnią.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \(\theta \in \Theta \subseteq \mathbb{R}\) będzie parametrem o rozkładzie posterior z gęstością \(p(\theta \mid y)\) i dystrybuantą \(F(\theta \mid y)\), a \(\alpha \in (0,1)\) — ustalonym poziomem.</p>
+<div class="ml-box ml-def" id="def-przedzial-wiarygodnosci"><p class="ml-box-title">Definicja (przedział wiarygodności)</p>
+<p>Zbiór \(C_\alpha(y) \subseteq \Theta\) nazywamy \(100(1-\alpha)\)% <strong>zbiorem wiarygodności</strong> (przedziałem, gdy jest przedziałem), jeśli</p>
+\[ P\big(\theta \in C_\alpha(y) \mid y\big) = \int_{C_\alpha(y)} p(\theta \mid y)\, d\theta = 1 - \alpha. \]
+<p>Dla rozkładów dyskretnych żąda się \(P(\theta \in C_\alpha \mid y) \ge 1-\alpha\).</p>
+</div>
+<div class="ml-box ml-def" id="def-eti"><p class="ml-box-title">Definicja (przedział kwantylowy, ETI)</p>
+<p>Przedziałem kwantylowym (równoogonowym) nazywamy</p>
+\[ C^{\text{ETI}}_\alpha = \big[\,q_{\alpha/2},\ q_{1-\alpha/2}\,\big], \qquad q_u = F^{-1}(u \mid y) = \inf\{\theta : F(\theta \mid y) \ge u\}. \]
+</div>
+<div class="ml-box ml-def" id="def-hpd"><p class="ml-box-title">Definicja (zbiór najwyższej gęstości, HPD)</p>
+<p>Zbiorem HPD na poziomie \(1-\alpha\) nazywamy \(C^{\text{HPD}}_\alpha = \{\theta : p(\theta \mid y) \ge k_\alpha\}\), gdzie \(k_\alpha\) jest największą stałą, dla której \(P(\theta \in C^{\text{HPD}}_\alpha \mid y) \ge 1-\alpha\). Dla posteriorów jednomodalnych zbiór HPD jest przedziałem \([l, u]\) spełniającym \(p(l \mid y) = p(u\mid y)\).</p>
+</div>
+<p>Kluczowa różnica względem przedziału ufności (<em>confidence interval</em>): w przedziale wiarygodności <strong>losowy jest parametr</strong> (w sensie stanu wiedzy), a przedział jest ustaloną funkcją zaobserwowanych danych. W przedziale ufności parametr jest stały, a losowy jest przedział — gwarancja dotyczy częstości pokrycia w hipotetycznych powtórzeniach eksperymentu, a nie konkretnego, obliczonego przedziału.</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(\theta\)</td><td>parametr (np. efekt rywala, IAF, odsetek kompletów)</td></tr>
+<tr><td>\(y\)</td><td>zaobserwowane dane</td></tr>
+<tr><td>\(p(\theta\mid y)\), \(F(\theta \mid y)\)</td><td>gęstość i dystrybuanta rozkładu posterior</td></tr>
+<tr><td>\(\alpha\)</td><td>prawdopodobieństwo poza przedziałem (np. 0,05)</td></tr>
+<tr><td>\(q_u\)</td><td>kwantyl rzędu \(u\) rozkładu posterior</td></tr>
+<tr><td>\(C_\alpha\)</td><td>zbiór (przedział) wiarygodności</td></tr>
+<tr><td>\(k_\alpha\)</td><td>próg gęstości w definicji HPD</td></tr>
+<tr><td>\(S\)</td><td>liczba próbek posterior</td></tr>
+<tr><td>\(\theta^{(s)}\), \(\theta_{(s)}\)</td><td>\(s\)-ta próbka i \(s\)-ta statystyka pozycyjna (po posortowaniu)</td></tr>
+<tr><td>\(g\)</td><td>ściśle monotoniczne przekształcenie parametru</td></tr>
+<tr><td>\(\Phi\), \(z_{u}\)</td><td>dystrybuanta i kwantyl rzędu \(u\) standardowego rozkładu normalnego</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li>Rozkład posterior jest właściwy (całkuje się do 1) — wymaga to właściwego priora lub dostatecznie informatywnych danych.</li>
+<li>Przedział dotyczy parametru skalarnego (lub skalarnej funkcji parametrów, np. IAF). Dla wektorów definiuje się zbiory wiarygodności, ale ich raportowanie jest trudniejsze.</li>
+<li>Interpretacja jest warunkowa względem modelu: „95%” oznacza 95% przy założeniu, że model (prior i wiarygodność) jest poprawny. Przedział nie uwzględnia błędu specyfikacji modelu.</li>
+<li>Przy obliczeniach z próbek MCMC zakładamy zbieżność łańcuchów (<a data-concept="r-hat">R-hat</a> bliskie 1) i wystarczającą liczbę efektywnych próbek w ogonach (tail-ESS, <a data-concept="effective-sample-size">ESS</a>), bo końce przedziału to kwantyle ogonowe.</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Warunek definiujący przedział wiarygodności:</p>
+<div class="ml-eq" id="eq-przedzial-wiarygodnosci">\[ P\big(\theta \in [l, u] \mid y\big) = \int_l^u p(\theta \mid y)\, d\theta = 1 - \alpha. \]</div>
+<p>Przedział kwantylowy:</p>
+<div class="ml-eq" id="eq-przedzial-wiarygodnosci-eti">\[ C^{\text{ETI}}_\alpha = \big[F^{-1}(\alpha/2 \mid y),\ F^{-1}(1-\alpha/2 \mid y)\big]. \]</div>
+<p>Przedział HPD dla posterioru jednomodalnego — rozwiązanie zadania optymalizacji:</p>
+<div class="ml-eq" id="eq-przedzial-wiarygodnosci-hpd">\[ \min_{l \lt u}\ (u - l) \quad \text{przy warunku} \quad F(u \mid y) - F(l \mid y) = 1 - \alpha, \qquad \text{rozwiązanie spełnia } p(l\mid y) = p(u \mid y). \]</div>
+<p>Wersje próbkowe: dla posortowanych próbek \(\theta_{(1)} \le \dots \le \theta_{(S)}\) i \(m = \lceil (1-\alpha) S \rceil\):</p>
+<div class="ml-eq" id="eq-przedzial-wiarygodnosci-probki">\[ \widehat{C}^{\text{ETI}} = \big[\hat q_{\alpha/2},\ \hat q_{1-\alpha/2}\big], \qquad \widehat{C}^{\text{HPD}} = \big[\theta_{(i^*)},\ \theta_{(i^*+m-1)}\big], \quad i^* = \arg\min_{1 \le i \le S-m+1} \big(\theta_{(i+m-1)} - \theta_{(i)}\big), \]</div>
+<p>gdzie \(\hat q_u\) to kwantyl empiryczny (np. z interpolacją liniową, definicja 7 według Hyndmana i Fana <cite data-bib="hyndmanfan1996"></cite>).</p>
+<p>Przypadek normalny: jeśli \(\theta \mid y \sim N(m, s^2)\), to oba przedziały są równe:</p>
+<div class="ml-eq" id="eq-przedzial-wiarygodnosci-normalny">\[ C_\alpha = \big[m - z_{1-\alpha/2}\, s,\ m + z_{1-\alpha/2}\, s\big], \qquad z_{0{,}975} \approx 1{,}96. \]</div>
+<div class="ml-plot" data-plot="beta-update" data-params='{"a": 1, "b": 1, "k": 3, "n": 20}'></div>
+<p>Posterior Beta(4, 18) po 3 kompletach w 20 meczach jest wyraźnie prawoskośny: przedział HPD przesuwa się w stronę mody (lewo), a przedział kwantylowy rozciąga się dalej w długi prawy ogon. Zwiększając \(n\) przy stałym odsetku, zobaczysz, że posterior staje się symetryczny i oba przedziały się zbliżają.</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-hpd-najkrotszy"><p class="ml-box-title">Twierdzenie (HPD jest najkrótszy)</p>
+<p>Niech gęstość posterior \(p(\cdot \mid y)\) będzie ciągła i jednomodalna. Spośród wszystkich przedziałów \([l,u]\) o prawdopodobieństwie posterior \(1-\alpha\) najkrótszy jest przedział, dla którego \(p(l \mid y) = p(u \mid y)\) i który zawiera modę — czyli przedział HPD.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-eti-niezmienniczosc"><p class="ml-box-title">Twierdzenie (niezmienniczość przedziału kwantylowego)</p>
+<p>Jeśli \(g\) jest ściśle rosnąca i ciągła, a \([q_{\alpha/2}, q_{1-\alpha/2}]\) jest przedziałem ETI dla \(\theta\), to \([g(q_{\alpha/2}), g(q_{1-\alpha/2})]\) jest przedziałem ETI dla \(g(\theta)\). Przedział HPD na ogół nie ma tej własności.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-bvm"><p class="ml-box-title">Twierdzenie (Bernsteina–von Misesa, sformułowanie nieformalne)</p>
+<p>W regularnych modelach parametrycznych o skończonym wymiarze, przy priorze o dodatniej i ciągłej gęstości w otoczeniu prawdziwej wartości \(\theta_0\), rozkład posterior wraz ze wzrostem liczby obserwacji \(n\) zbliża się (w normie całkowitej zmienności) do rozkładu normalnego wyśrodkowanego w estymatorze największej wiarygodności, z kowariancją równą odwrotności informacji Fishera podzielonej przez \(n\). W konsekwencji przedziały wiarygodności mają asymptotycznie frekwentystyczne pokrycie \(1-\alpha\) <cite data-bib="gelman2013bda"></cite>.</p>
+</div>
+<p>Twierdzenie Bernsteina–von Misesa wyjaśnia, dlaczego przy dużej ilości danych liczbowo przedziały wiarygodności i ufności są zbliżone. Nie usuwa różnicy interpretacyjnej i nie obowiązuje automatycznie dla efektów losowych, których liczba rośnie razem z danymi (np. efekt każdego klubu w MAF).</p>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-hpd">Dowód, że HPD jest najkrótszy</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Ustalmy \(l\); warunek \(F(u) - F(l) = 1-\alpha\) wyznacza \(u = u(l)\) jednoznacznie (bo \(F\) jest ściśle rosnąca na nośniku). Różniczkując warunek po \(l\): \(p(u)\,u'(l) - p(l) = 0\), więc \(u'(l) = p(l)/p(u)\). Długość przedziału \(L(l) = u(l) - l\) ma pochodną</p>
+\[ L'(l) = \frac{p(l)}{p(u)} - 1 = \frac{p(l) - p(u)}{p(u)}. \]
+<p>Punkt stacjonarny wymaga \(p(l) = p(u)\). Dla gęstości jednomodalnej: gdy \(p(l) \lt p(u)\) (lewy koniec „za nisko” na zboczu), \(L'(l) \lt 0\) i przesunięcie \(l\) w prawo skraca przedział; gdy \(p(l) \gt p(u)\), \(L'(l) \gt 0\) i opłaca się przesunąć \(l\) w lewo. Zatem \(L\) maleje, dopóki \(p(l) \lt p(u)\), i rośnie, gdy \(p(l) \gt p(u)\) — punkt \(p(l)=p(u)\) jest globalnym minimum. Przy jednomodalności zbiór \(\{\theta: p(\theta) \ge k\}\) jest przedziałem, którego końce mają równą gęstość \(k\); jest to więc przedział HPD.</p>
+<p>Ogólniejszy argument (bez jednomodalności, dla zbiorów): jeśli \(A\) ma prawdopodobieństwo \(1-\alpha\), a \(H = \{p \ge k\}\) również, to \(P(A \setminus H) = P(H \setminus A)\). Na \(H\setminus A\) gęstość jest \(\ge k\), na \(A \setminus H\) — \(\lt k\), więc \(k\,|A \setminus H| \ge P(A\setminus H) = P(H \setminus A) \ge k\,|H \setminus A|\), skąd \(|A| \ge |H|\) (miara Lebesgue’a).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-niezmienniczosc">Dowód niezmienniczości ETI</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Niech \(\psi = g(\theta)\) z \(g\) ściśle rosnącą. Wtedy \(P(\psi \le g(q) \mid y) = P(\theta \le q \mid y)\), więc \(F_\psi(g(q_u)) = u\), czyli \(g(q_u)\) jest kwantylem rzędu \(u\) dla \(\psi\). Oba końce przechodzą na kwantyle tych samych rzędów, co dowodzi tezy. Dla HPD: gęstość \(\psi\) to \(p_\psi(\psi) = p_\theta(g^{-1}(\psi))\,\big|(g^{-1})'(\psi)\big|\); czynnik jakobianu zmienia relację „równej gęstości na końcach”, więc obraz HPD dla \(\theta\) na ogół nie jest HPD dla \(\psi\).</p>
+<p class="ml-qed">∎</p></div>
+<p>Konsekwencja praktyczna: przedział kwantylowy efektu \(R_j\) na skali logitowej przekształca się bezpośrednio na przedział dla skali wypełnienia i dla IAF (o ile IAF jest monotoniczną funkcją \(R_j\) przy ustalonych pozostałych parametrach). Dlatego w MAF raportujemy przedziały kwantylowe.</p>
+
+<h3 id="wyprowadzenie-ufnosc-vs-wiarygodnosc">Przedział ufności a przedział wiarygodności — przypadek normalny</h3>
+<p>Niech \(y_1,\dots,y_n \overset{\text{iid}}{\sim} N(\theta, \sigma^2)\) ze znanym \(\sigma\). Przedział ufności to \(\bar y \pm z_{1-\alpha/2}\sigma/\sqrt n\); jego własność to \(P_\theta(\theta \in [\bar Y \pm z\sigma/\sqrt n]) = 1-\alpha\) dla każdego \(\theta\), gdzie losowe jest \(\bar Y\). Przy płaskim (niewłaściwym) priorze posterior to \(\theta \mid y \sim N(\bar y, \sigma^2/n)\) i przedział wiarygodności jest liczbowo identyczny, ale prawdopodobieństwo dotyczy \(\theta\) przy ustalonym \(\bar y\). Przy priorze właściwym \(N(\mu_0, \tau_0^2)\) posterior jest \(N(m, s^2)\) z \(s^{-2} = n/\sigma^2 + 1/\tau_0^2\) i \(m = s^2(n\bar y/\sigma^2 + \mu_0/\tau_0^2)\) — przedział przesuwa się w stronę \(\mu_0\) i zwęża (por. <a data-concept="partial-pooling" data-anchor="wyprowadzenie">wyprowadzenie w artykule o partial pooling</a>).</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<h3 id="przyklad-beta">Przedziały dla odsetka kompletów widzów</h3>
+<p><em>Dane ilustracyjne.</em> Klub rozegrał 20 meczów domowych, w 3 z nich hala była wypełniona do ostatniego miejsca. Szukamy 95% przedziałów wiarygodności dla prawdopodobieństwa kompletu \(\theta\).</p>
+<ol class="ml-steps">
+<li><strong>Posterior.</strong> Prior jednostajny Beta(1, 1) i <a data-concept="rozklad-dwumianowy">wiarygodność dwumianowa</a> dają posterior Beta(1+3, 1+17) = Beta(4, 18). Średnia \(4/22 = 0{,}182\), moda \(3/20 = 0{,}150\), mediana \(\approx 0{,}172\), odchylenie standardowe \(\approx 0{,}080\).</li>
+<li><strong>ETI.</strong> Kwantyle Beta(4, 18): \(q_{0{,}025} \approx 0{,}054\), \(q_{0{,}975} \approx 0{,}363\). Przedział \([0{,}054;\ 0{,}363]\), długość \(0{,}309\).</li>
+<li><strong>HPD.</strong> Numeryczne rozwiązanie <a class="ml-eqref" href="#eq-przedzial-wiarygodnosci-hpd"></a>: \([0{,}041;\ 0{,}340]\), długość \(0{,}299\). Kontrola: gęstość na obu końcach \(\approx 0{,}804\); poza przedziałem zostaje \(\approx 0{,}010\) z lewej i \(\approx 0{,}040\) z prawej (razem 0,05).</li>
+<li><strong>Porównanie.</strong> HPD jest o ok. 3% krótszy i przesunięty w lewo, bo odcina prawie całe 5% z długiego prawego ogona. W ETI gęstość na końcach jest różna (\(\approx 1{,}49\) z lewej, \(\approx 0{,}53\) z prawej), czyli ETI zawiera mniej wiarygodne wartości z prawego ogona, a wyklucza bardziej wiarygodne z lewego.</li>
+</ol>
+
+<h3 id="przyklad-probki">Przedziały z próbek posterior</h3>
+<p><em>Dane ilustracyjne.</em> Dla czytelności zamiast tysięcy próbek bierzemy \(S = 20\) posortowanych próbek indeksu IAF i liczymy przedziały 80% (\(\alpha = 0{,}2\), \(m = 16\)):</p>
+<p>88, 93, 96, 98, 99, 101, 102, 103, 104, 105, 106, 108, 109, 111, 113, 115, 118, 122, 129, 141.</p>
+<ol class="ml-steps">
+<li><strong>Mediana</strong>: średnia 10. i 11. wartości, \((105 + 106)/2 = 105{,}5\).</li>
+<li><strong>ETI 80%</strong> (prosta reguła statystyk pozycyjnych: odrzucamy po \(0{,}1 \cdot 20 = 2\) próbki z każdego końca): \([\theta_{(3)}, \theta_{(18)}] = [96, 122]\), długość 26.</li>
+<li><strong>HPD 80%</strong>: szerokości okien 16 kolejnych próbek: \(i=1\): \(115-88=27\); \(i=2\): \(118-93=25\); \(i=3\): \(122-96=26\); \(i=4\): \(129-98=31\); \(i=5\): \(141-99=42\). Minimum dla \(i^*=2\): \([93, 118]\), długość 25.</li>
+<li><strong>Wniosek</strong>: przy prawoskośnym rozkładzie HPD przesuwa się w stronę skupienia próbek (lewo). Przy \(S = 20\) wynik HPD jest bardzo niestabilny — zmiana jednej próbki zmienia \(i^*\); w praktyce potrzeba tysięcy efektywnych próbek.</li>
+</ol>
+
+<h3 id="przyklad-ufnosc">Przedział ufności a wiarygodności</h3>
+<p><em>Dane ilustracyjne.</em> 25 meczów, średnia frekwencja \(\bar y = 1180\) widzów, \(\sigma = 300\), więc \(\sigma/\sqrt{n} = 60\).</p>
+<ol class="ml-steps">
+<li>Przedział ufności 95%: \(1180 \pm 1{,}96 \cdot 60 = 1180 \pm 117{,}6 = [1062{,}4;\ 1297{,}6]\).</li>
+<li>Prior \(N(1000, 100^2)\) (średnia ligowa i rozrzut klubów): precyzja posterior \(1/3600 + 1/10\,000 = 0{,}000\,377\,8\), czyli \(s^2 = 2647{,}1\), \(s = 51{,}45\); średnia \(m = 2647{,}1\cdot(1180/3600 + 1000/10\,000) = 2647{,}1 \cdot 0{,}427\,78 = 1132{,}4\).</li>
+<li>Przedział wiarygodności 95%: \(1132{,}4 \pm 1{,}96\cdot 51{,}45 = [1031{,}5;\ 1233{,}2]\) — przesunięty o ok. 48 widzów w stronę średniej ligowej (współczynnik ściągania \(3600/13\,600 = 0{,}265\)) i węższy.</li>
+</ol>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li><strong>Poprawne zdanie bayesowskie</strong>: „Przy przyjętym modelu i danych prawdopodobieństwo, że prawdopodobieństwo kompletu dla tego klubu leży między 5,4% a 36,3%, wynosi 95%”.</li>
+<li><strong>Poprawne zdanie frekwentystyczne</strong>: „Procedura, która wygenerowała przedział [1062; 1298], w 95% powtórzeń eksperymentu obejmuje prawdziwą średnią”. Nie wolno mówić, że prawdziwa średnia leży w tym konkretnym przedziale z prawdopodobieństwem 95%.</li>
+<li><strong>Szerokość przedziału</strong> mierzy niepewność, nie zmienność zjawiska. Przedział dla średniego wypełnienia klubu zwęża się wraz z liczbą meczów; przedział dla wypełnienia w <em>przyszłym</em> meczu (<a data-concept="przedzialy-predykcyjne">przedział predykcyjny</a>) — nie, bo zawiera szum pojedynczego meczu.</li>
+<li><strong>Przedział zawierający wartość referencyjną</strong> (np. IAF = 100) nie oznacza „braku efektu”. Pełniejszą odpowiedź daje <a data-concept="probabilistyczne-porownanie-parametrow">prawdopodobieństwo</a> \(P(\mathrm{IAF} \gt 100 \mid y)\).</li>
+<li><strong>Który przedział wybrać?</strong> ETI: niezmienniczy względem przekształceń, stabilny numerycznie, łatwy do wyjaśnienia (2,5% szans poniżej, 2,5% powyżej). HPD: najkrótszy, zawiera najbardziej wiarygodne wartości, lepszy dla mocno skośnych lub ograniczonych rozkładów (np. wariancji przy zerze), ale wrażliwy na parametryzację i szum próbkowania.</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> przedziały wiarygodności raportujemy w trzech miejscach:</p>
+<ul>
+<li><strong>Indeks IAF klubu</strong>: mediana posterior i 95% przedział kwantylowy, liczone z próbek IAF obliczonych dla każdej próbki parametrów (4 łańcuchy NUTS). Ponieważ IAF jest nieliniową funkcją \(R_j\) i pozostałych parametrów, nie liczymy przedziału z przybliżenia normalnego, tylko bezpośrednio z próbek — przekształcenie kwantyli jest dokładne dzięki <a href="#thm-eti-niezmienniczosc">niezmienniczości ETI</a>.</li>
+<li><strong>Hiperparametry</strong> (\(\sigma_R, \sigma_H\), precyzja \(\phi\), dyspersja \(\kappa\)): rozkłady są ograniczone przy zerze i skośne; tu przedziały kwantylowe bywają mylące (lewy koniec odsunięty od zera, choć zero jest wiarygodne), więc w diagnostyce pomocniczo patrzymy na HPD.</li>
+<li><strong>Współczynniki \(\beta\)</strong> warunków meczu (weekend, godzina, forma): 95% przedział mówi, na ile pewny jest kierunek i wielkość efektu na skali logitu lub logarytmu.</li>
+</ul>
+<p>Przedziały wiarygodności dla <em>parametrów</em> są różne od <a data-concept="przedzialy-predykcyjne">przedziałów predykcyjnych</a> 50/80/95% dla liczby widzów w przyszłym meczu — te drugie dodatkowo zawierają losowość beta-dwumianową lub ujemną dwumianową. Poprawność kwantyli w ogonach wymaga tail-ESS ≥ 400, co sprawdzamy w diagnostyce.</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Zależność od priora.</strong> Przy małej ilości danych przedział jest w dużej części odbiciem priora. Warto sprawdzać wrażliwość na rozsądne alternatywne priory.</li>
+<li><strong>Brak gwarancji pokrycia frekwentystycznego</strong> w skończonych próbach; przy błędnym modelu pokrycie może być znacznie niższe od nominalnego — dlatego w walidacji sprawdzamy <a data-concept="pokrycie-przedzialow-predykcyjnych">pokrycie przedziałów predykcyjnych</a>.</li>
+<li><strong>Błąd Monte Carlo końców.</strong> Kwantyl 2,5% z 4000 próbek opiera się na ok. 100 próbkach w ogonie; przy silnej autokorelacji efektywnie mniej. Końce przedziału obarczone są błędem, który należy podawać lub kontrolować przez tail-ESS.</li>
+<li><strong>HPD nie jest niezmienniczy</strong> i dla rozkładów wielomodalnych może być sumą rozłącznych przedziałów, co utrudnia komunikację.</li>
+<li><strong>Jeden przedział nie opisuje kształtu.</strong> Dwa parametry o tym samym przedziale mogą mieć różne rozkłady; w raportach warto pokazywać gęstość lub kilka poziomów (50%, 80%, 95%).</li>
+<li><strong>Przedziały brzegowe a łączne.</strong> Przedziały 95% dla kilku klubów osobno nie tworzą łącznego 95% zbioru dla wszystkich naraz; do porównań między klubami używa się łącznych próbek (<a data-concept="probabilistyczne-porownanie-parametrow">porównanie probabilistyczne</a>).</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="rozklad-posterior">Rozkład posterior</a> — obiekt, który przedział podsumowuje.</li>
+<li><a data-concept="estymacja-posterior">Estymacja posterior</a> — podsumowania punktowe (średnia, mediana, moda).</li>
+<li><a data-concept="przedzialy-predykcyjne">Przedziały predykcyjne</a> — przedziały dla przyszłych obserwacji.</li>
+<li><a data-concept="probabilistyczne-porownanie-parametrow">Probabilistyczne porównanie parametrów</a> — \(P(\theta \gt c \mid y)\).</li>
+<li><a data-concept="percentyle">Percentyle</a> i <a data-concept="kwartyle">kwartyle</a> — kwantyle empiryczne używane w ETI.</li>
+<li><a data-concept="effective-sample-size">ESS</a> — wiarygodność kwantyli liczonych z próbek MCMC.</li>
+<li><a data-concept="atrakcyjnosc-frekwencyjna">MAF i indeks IAF</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="gelman2013bda"></li>
+<li data-bib="kruschke2015"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="wasserman2004"></li>
+<li data-bib="hyndmanfan1996"></li>
+</ul>
+</section>

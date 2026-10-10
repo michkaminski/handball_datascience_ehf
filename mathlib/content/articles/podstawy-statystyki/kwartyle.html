@@ -1,0 +1,162 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Mediana dzieli uporządkowane dane na dwie połowy. Kwartyle (ang. <em>quartiles</em>) idą krok dalej: trzy wartości \(Q_1\), \(Q_2\), \(Q_3\) dzielą dane na cztery części o (w przybliżeniu) równej liczności. Pierwszy kwartyl \(Q_1\) to wartość, poniżej której leży ok. 25% obserwacji; \(Q_2\) to <a data-concept="mediana">mediana</a>; poniżej trzeciego kwartyla \(Q_3\) leży ok. 75% obserwacji.</p>
+<p>Odległość \(Q_3-Q_1\), nazywana rozstępem międzykwartylowym (ang. <em>interquartile range</em>, IQR), to szerokość przedziału zawierającego „środkową połowę” danych. W odróżnieniu od <a data-concept="odchylenie-standardowe">odchylenia standardowego</a> IQR nie reaguje na pojedyncze skrajne mecze: dopóki rekord frekwencji leży powyżej \(Q_3\), jego wielkość nie ma znaczenia. Dlatego IQR jest podstawą najpopularniejszej reguły wykrywania wartości odstających — reguły Tukeya — oraz wykresu pudełkowego (ang. <em>box plot</em>) <cite data-bib="tukey1977"></cite>.</p>
+<p>Kwartyle mają jedną nieoczywistą cechę: dla skończonej próby nie istnieje jedna „prawdziwa” definicja. Gdy 25% z 12 obserwacji to 3 obserwacje, nie jest jasne, czy \(Q_1\) to trzecia wartość, czwarta, czy coś pomiędzy. Hyndman i Fan opisali dziewięć definicji stosowanych w pakietach statystycznych <cite data-bib="hyndmanfan1996"></cite>; w tym artykule jako domyślną przyjmujemy typ 7 (domyślny w R i w NumPy), a pozostałe omawiamy dla porównania.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-kwartyle-rozkladu"><p class="ml-box-title">Definicja (kwartyle rozkładu)</p>
+<p>Niech \(X\) ma dystrybuantę \(F\). Funkcją kwantylową nazywamy \(Q(p)=F^{-1}(p)=\inf\{x\in\mathbb{R}: F(x)\ge p\}\), \(p\in(0,1)\). <strong>Kwartylami</strong> rozkładu nazywamy \(Q_1=Q(1/4)\), \(Q_2=Q(1/2)\), \(Q_3=Q(3/4)\), a <strong>rozstępem międzykwartylowym</strong> \(\mathrm{IQR}=Q_3-Q_1\).</p>
+</div>
+<div class="ml-box ml-def" id="def-kwartyle-proby"><p class="ml-box-title">Definicja (kwartyle z próby, typ 7 Hyndmana–Fana)</p>
+<p>Niech \(x_{(1)}\le\dots\le x_{(n)}\) będą statystykami pozycyjnymi, \(n\ge2\). Dla \(p\in[0,1]\) kładziemy \(h=(n-1)p+1\), \(j=\lfloor h\rfloor\), \(g=h-j\) i definiujemy</p>
+<div class="ml-eq" id="eq-kwartyle">\[ \hat Q(p)=x_{(j)}+g\,\big(x_{(j+1)}-x_{(j)}\big), \qquad \hat Q_1=\hat Q(\tfrac14),\ \ \hat Q_2=\hat Q(\tfrac12),\ \ \hat Q_3=\hat Q(\tfrac34), \]</div>
+<p>przy umowie \(x_{(n+1)}=x_{(n)}\) (potrzebnej tylko dla \(p=1\)). Próbkowy rozstęp międzykwartylowy to \(\widehat{\mathrm{IQR}}=\hat Q_3-\hat Q_1\).</p>
+</div>
+<p>Typ 7 to liniowa interpolacja punktów \(\big(p_k, x_{(k)}\big)\), gdzie \(p_k=\frac{k-1}{n-1}\): najmniejsza obserwacja odpowiada \(p=0\), największa \(p=1\). Inne popularne warianty:</p>
+<ul>
+<li><strong>typ 6</strong> (m.in. SPSS, Minitab): \(h=(n+1)p\), tj. \(p_k=\frac{k}{n+1}\);</li>
+<li><strong>typ 8</strong> (zalecany przez Hyndmana i Fana jako w przybliżeniu medianowo nieobciążony niezależnie od rozkładu): \(p_k=\frac{k-1/3}{n+1/3}\);</li>
+<li><strong>zawiasy Tukeya</strong> (ang. <em>hinges</em>): mediany dolnej i górnej połowy danych (dla \(n\) nieparzystego obie połowy zawierają medianę) <cite data-bib="tukey1977"></cite>;</li>
+<li><strong>typy 1–3</strong>: definicje nieciągłe (bez interpolacji), zwracające jedną z obserwacji lub średnią dwóch.</li>
+</ul>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(F,\ Q(p)\)</td><td>dystrybuanta i funkcja kwantylowa rozkładu</td></tr>
+<tr><td>\(Q_1,\ Q_2,\ Q_3\)</td><td>pierwszy, drugi (mediana) i trzeci kwartyl</td></tr>
+<tr><td>\(\hat Q(p)\)</td><td>kwantyl empiryczny (typ 7)</td></tr>
+<tr><td>\(x_{(k)}\)</td><td>\(k\)-ta statystyka pozycyjna</td></tr>
+<tr><td>\(h,\ j,\ g\)</td><td>pozycja ułamkowa, jej część całkowita i ułamkowa</td></tr>
+<tr><td>\(\mathrm{IQR}\)</td><td>rozstęp międzykwartylowy \(Q_3-Q_1\)</td></tr>
+<tr><td>\(L_k,\ U_k\)</td><td>dolne i górne ogrodzenie Tukeya z mnożnikiem \(k\)</td></tr>
+<tr><td>\(z_{0{,}75}\)</td><td>kwantyl rzędu 0,75 standardowego rozkładu normalnego (\(\approx0{,}6745\))</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Dane co najmniej porządkowe; interpolacja w typie 7 (i IQR) wymaga skali przedziałowej.</li>
+<li>Kwartyle rozkładu istnieją zawsze (bez założeń o momentach) — to przewaga nad wariancją.</li>
+<li>Reguła Tukeya nie jest testem statystycznym; jej „poziom fałszywych alarmów” (0,7%) jest obliczony przy założeniu rozkładu normalnego. Dla rozkładów skośnych (frekwencja) oznacza ona inny odsetek obserwacji.</li>
+<li>Do wnioskowania o kwartylach populacji zakładamy obserwacje i.i.d. z rozkładu o dodatniej gęstości w otoczeniu kwartyli.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Ogrodzenia Tukeya (wewnętrzne dla \(k=1{,}5\), zewnętrzne dla \(k=3\)):</p>
+<div class="ml-eq" id="eq-kwartyle-tukey">\[ L_k=Q_1-k\cdot\mathrm{IQR}, \qquad U_k=Q_3+k\cdot\mathrm{IQR} . \]</div>
+<p>Obserwacja poza \([L_{1{,}5};\,U_{1{,}5}]\) jest <em>odstająca</em> (ang. <em>outside</em>), poza \([L_3;\,U_3]\) — <em>daleko odstająca</em> (ang. <em>far out</em>). Wąsy wykresu pudełkowego sięgają do najbardziej skrajnych obserwacji leżących wewnątrz ogrodzeń wewnętrznych.</p>
+<p>Kwartyle i IQR rozkładu normalnego \(N(\mu,\sigma^2)\):</p>
+<div class="ml-eq" id="eq-kwartyle-normalny">\[ Q_{1,3}=\mu\mp z_{0{,}75}\,\sigma\approx\mu\mp0{,}6745\,\sigma, \qquad \mathrm{IQR}=2z_{0{,}75}\,\sigma\approx1{,}349\,\sigma . \]</div>
+<p>Odporny estymator odchylenia standardowego (zgodny przy normalności):</p>
+<div class="ml-eq" id="eq-kwartyle-sigma">\[ \hat\sigma_{\mathrm{IQR}}=\frac{\widehat{\mathrm{IQR}}}{1{,}349} . \]</div>
+<p>Położenie ogrodzeń przy normalności i odsetek obserwacji poza nimi:</p>
+<div class="ml-eq" id="eq-kwartyle-odsetek">\[ U_{1{,}5}=\mu+4z_{0{,}75}\sigma\approx\mu+2{,}698\sigma, \qquad P\big(X\notin[L_{1{,}5};U_{1{,}5}]\big)=2\big(1-\Phi(4z_{0{,}75})\big)\approx0{,}0070 . \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-typ7"><p class="ml-box-title">Twierdzenie (własności kwantyla typu 7)</p>
+<p>Funkcja \(p\mapsto\hat Q(p)\) z <a class="ml-eqref" href="#eq-kwartyle"></a> jest ciągła, niemalejąca i kawałkami liniowa na \([0,1]\), \(\hat Q(0)=x_{(1)}\), \(\hat Q(1)=x_{(n)}\) oraz \(\hat Q(p_k)=x_{(k)}\) dla \(p_k=\frac{k-1}{n-1}\). Ponadto \(\hat Q\) jest ekwiwariantna względem przekształceń afinicznych: dla \(y_i=a+bx_i\), \(b\gt0\), \(\hat Q_y(p)=a+b\hat Q_x(p)\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-iqr-normalny"><p class="ml-box-title">Twierdzenie (reguła Tukeya przy rozkładzie normalnym)</p>
+<p>Dla \(X\sim N(\mu,\sigma^2)\): \(\mathrm{IQR}=2z_{0{,}75}\sigma\), ogrodzenia wewnętrzne leżą w odległości \(4z_{0{,}75}\sigma\approx2{,}698\sigma\), a zewnętrzne \(7z_{0{,}75}\sigma\approx4{,}721\sigma\) od \(\mu\). Prawdopodobieństwo wypadnięcia poza ogrodzenia wynosi odpowiednio ok. \(0{,}70\%\) i \(2{,}3\cdot10^{-6}\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-iqr-odpornosc"><p class="ml-box-title">Twierdzenie (odporność IQR)</p>
+<p>Próbkowy IQR ma asymptotyczny punkt załamania 25%: pozostaje ograniczony, dopóki zmieniamy mniej niż ok. jedną czwartą obserwacji. Odchylenie standardowe ma punkt załamania \(1/n\).</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-typ7">Własności typu 7</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla \(p=p_k=\frac{k-1}{n-1}\) mamy \(h=(n-1)\frac{k-1}{n-1}+1=k\), więc \(j=k\), \(g=0\) i \(\hat Q(p_k)=x_{(k)}\). Dla \(p\in[p_k,p_{k+1}]\) mamy \(h\in[k,k+1]\), a \(g=h-k=(n-1)(p-p_k)\) rośnie liniowo od 0 do 1; \(\hat Q\) jest więc odcinkiem łączącym punkty \((p_k,x_{(k)})\) i \((p_{k+1},x_{(k+1)})\). Ponieważ \(x_{(k)}\le x_{(k+1)}\), każdy odcinek jest niemalejący, a sąsiednie odcinki stykają się w węzłach — stąd ciągłość i monotoniczność. Wartości brzegowe: \(p=0\Rightarrow h=1\Rightarrow\hat Q=x_{(1)}\); \(p=1\Rightarrow h=n\Rightarrow\hat Q=x_{(n)}\). Ekwiwariancja afiniczna: przy \(b\gt0\) porządek się nie zmienia, \(y_{(k)}=a+bx_{(k)}\), a interpolacja liniowa przenosi się przez funkcję afiniczną.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-box ml-note"><p>Ekwiwariancja względem <em>nieliniowych</em> przekształceń monotonicznych (np. logitu) zachodzi dokładnie tylko w węzłach \(p_k\); między węzłami \(\hat Q_{g(x)}(p)\ne g\big(\hat Q_x(p)\big)\) na ogół, bo interpolacja liniowa nie komutuje z \(g\). Kwantyle rozkładu (populacyjne) są ekwiwariantne dokładnie — zob. <a data-concept="percentyle" data-anchor="twierdzenia">percentyle</a>.</p></div>
+
+<h3 id="dowod-tukey-normalny">Reguła Tukeya przy rozkładzie normalnym</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Standaryzując \(Z=(X-\mu)/\sigma\sim N(0,1)\): \(P(X\le\mu+c\sigma)=\Phi(c)\), więc \(Q(p)=\mu+\sigma\Phi^{-1}(p)\). Z symetrii \(\Phi^{-1}(1/4)=-\Phi^{-1}(3/4)=-z_{0{,}75}\), gdzie \(z_{0{,}75}\approx0{,}6745\). Zatem \(\mathrm{IQR}=2z_{0{,}75}\sigma\approx1{,}349\sigma\) i</p>
+\[ \begin{aligned}
+U_{1{,}5} &amp;= \mu+z_{0{,}75}\sigma+1{,}5\cdot2z_{0{,}75}\sigma=\mu+4z_{0{,}75}\sigma\approx\mu+2{,}698\sigma ,\\
+U_3 &amp;= \mu+z_{0{,}75}\sigma+3\cdot2z_{0{,}75}\sigma=\mu+7z_{0{,}75}\sigma\approx\mu+4{,}721\sigma .
+\end{aligned} \]
+<p>Z symetrii \(P(X\notin[L_k;U_k])=2\big(1-\Phi(c_k)\big)\), co dla \(c_{1{,}5}=2{,}698\) daje \(\approx0{,}00698\), a dla \(c_3=4{,}721\) — \(\approx2{,}34\cdot10^{-6}\). Odwracając: \(\sigma=\mathrm{IQR}/(2z_{0{,}75})\), a ponieważ \(\widehat{\mathrm{IQR}}\to\mathrm{IQR}\) przy \(n\to\infty\) (zgodność kwantyli empirycznych przy dodatniej gęstości), \(\hat\sigma_{\mathrm{IQR}}\) jest zgodny.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-iqr-odpornosc">Odporność IQR — szkic</h3>
+<p>\(\hat Q_1\) i \(\hat Q_3\) zależą tylko od statystyk pozycyjnych w okolicy pozycji \(n/4\) i \(3n/4\). Jeżeli przesuniemy do \(+\infty\) mniej niż ok. \(n/4\) obserwacji, staną się one największymi statystykami pozycyjnymi, ale pozycja \(\approx3n/4\) nadal będzie zajęta przez obserwację niezmienioną — \(\hat Q_3\) pozostaje ograniczony. Analogicznie dla \(\hat Q_1\) i przesunięć do \(-\infty\). Zmiana ok. 25% obserwacji wystarcza, by „przejąć” pozycję \(\hat Q_3\).</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p>Frekwencja w 12 meczach domowych klubu Superligi, uporządkowana (dane ilustracyjne):</p>
+<table class="ml-table">
+<thead><tr><th>\(k\)</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th></tr></thead>
+<tbody><tr><td>\(x_{(k)}\)</td><td>860</td><td>940</td><td>1010</td><td>1050</td><td>1100</td><td>1130</td><td>1170</td><td>1220</td><td>1260</td><td>1310</td><td>1450</td><td>2350</td></tr></tbody>
+</table>
+<ol class="ml-steps">
+<li>\(\hat Q_1\) (typ 7): \(h=11\cdot0{,}25+1=3{,}75\), \(j=3\), \(g=0{,}75\): \(\hat Q_1=1010+0{,}75\cdot(1050-1010)=1010+30=1040\).</li>
+<li>\(\hat Q_2\): \(h=11\cdot0{,}5+1=6{,}5\): \(\hat Q_2=1130+0{,}5\cdot40=1150\) (zgodnie z medianą).</li>
+<li>\(\hat Q_3\): \(h=11\cdot0{,}75+1=9{,}25\), \(j=9\), \(g=0{,}25\): \(\hat Q_3=1260+0{,}25\cdot(1310-1260)=1272{,}5\).</li>
+<li>\(\widehat{\mathrm{IQR}}=1272{,}5-1040=232{,}5\) widza.</li>
+<li>Ogrodzenia wewnętrzne: \(L_{1{,}5}=1040-1{,}5\cdot232{,}5=1040-348{,}75=691{,}25\); \(U_{1{,}5}=1272{,}5+348{,}75=1621{,}25\).</li>
+<li>Ogrodzenia zewnętrzne: \(L_3=1040-697{,}5=342{,}5\); \(U_3=1272{,}5+697{,}5=1970\).</li>
+<li>Klasyfikacja: mecz z 2350 widzami leży powyżej \(U_3=1970\) — jest <em>daleko odstający</em>; pozostałe mecze mieszczą się w ogrodzeniach. Górny wąs wykresu pudełkowego sięga do 1450, dolny do 860.</li>
+<li>Porównanie definicji: typ 6 daje \(h=13\cdot0{,}25=3{,}25\Rightarrow\hat Q_1=1010+0{,}25\cdot40=1020\) i \(h=9{,}75\Rightarrow\hat Q_3=1260+0{,}75\cdot50=1297{,}5\) (IQR = 277,5); zawiasy Tukeya: mediana dolnej szóstki \((1010+1050)/2=1030\), górnej \((1260+1310)/2=1285\) (IQR = 255). Wszystkie warianty wskazują 2350 jako odstający, ale ogrodzenia różnią się o kilkadziesiąt widzów.</li>
+<li>Odporny estymator rozrzutu: \(\hat\sigma_{\mathrm{IQR}}=232{,}5/1{,}349\approx172{,}4\). Klasyczne odchylenie standardowe tych 12 meczów, zawyżone przez 2350, wynosi ok. 386 widzów (przy średniej 1237,5).</li>
+</ol>
+<div class="ml-plot" data-plot="normal" data-params='{"mu": 0, "sigma": 1}'></div>
+<p>Dla rozkładu \(N(0,1)\) kwartyle leżą w \(\pm0{,}674\), a ogrodzenia Tukeya w \(\pm2{,}698\) — prawie cała masa gęstości mieści się między nimi. Zmieniając \(\sigma\), zauważ, że kwartyle i ogrodzenia skalują się proporcjonalnie do \(\sigma\).</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li>„Środkowa połowa” meczów klubu przyciągała od ok. 1040 do ok. 1270 widzów; IQR = 232,5 to szerokość tego pasma.</li>
+<li>Status „odstający” jest sygnałem do weryfikacji, nie wyrokiem. Mecz z 2350 widzami mógł być derbami, meczem w większej hali albo błędem wpisu (np. 2350 zamiast 1350). Decyzję podejmuje się na podstawie źródeł, nie samej reguły.</li>
+<li>Nawet przy idealnie normalnych danych reguła oznacza ok. 0,7% obserwacji: w 300 meczach spodziewamy się ok. 2 „odstających” bez żadnej anomalii. Przy skośnej frekwencji odsetek oznaczeń w górnym ogonie jest wyższy.</li>
+<li>Różnice między definicjami kwartyli maleją z liczbą obserwacji; przy kilkunastu meczach trzeba podawać, który typ zastosowano.</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<ul>
+<li><strong>Kontrola jakości danych.</strong> Przed estymacją <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> frekwencje i wypełnienia są przeglądane regułą Tukeya w obrębie klubu i sezonu; mecze odstające (np. wypełnienie powyżej 100% albo frekwencja kilkakrotnie wyższa niż zwykle) trafiają do weryfikacji. Brak danych (NULL) nie jest zerem widzów i nie bierze udziału w obliczaniu kwartyli.</li>
+<li><strong>50% przedziały predykcyjne.</strong> Przedział predykcyjny 50% w prognozie frekwencji to \([\hat Q_1;\hat Q_3]\) próbek z rozkładu predykcyjnego — „środkowa połowa” możliwych wyników meczu. Zob. <a data-concept="przedzialy-predykcyjne">przedziały predykcyjne</a>.</li>
+<li><strong>Podsumowania posterior.</strong> Mediana i kwartyle próbek posterior (np. indeksu IAF) są odpornym opisem rozkładu a posteriori, uzupełniającym 95% <a data-concept="przedzial-wiarygodnosci">przedział wiarygodności</a>.</li>
+<li><strong>Wykresy pudełkowe</strong> frekwencji klubów w sezonie pozwalają porównać jednocześnie typowy poziom (mediana), stabilność (IQR) i mecze wyjątkowe (punkty poza wąsami).</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Wielość definicji</strong>: dla małych prób wyniki zależą od wybranego typu — zawsze go raportuj.</li>
+<li><strong>Reguła Tukeya zakłada symetrię</strong>: przy prawostronnie skośnej frekwencji oznacza wiele „wysokich” meczów, które są naturalną częścią rozkładu. Rozwiązaniem bywa stosowanie reguły na skali logarytmicznej lub dla reszt z modelu.</li>
+<li><strong>Dane z masą w punkcie</strong> (np. wiele meczów z kompletem, \(W=1\)): kwartyle mogą się pokrywać (\(Q_3=Q_2=1\)), a IQR może wynosić zero — wtedy każda inna wartość jest „odstająca”.</li>
+<li><strong>Mała efektywność</strong>: przy danych normalnych \(\hat\sigma_{\mathrm{IQR}}\) ma znacznie większą wariancję niż \(s\) (asymptotyczna efektywność względna ok. 37%); odporność kosztuje precyzję. MAD ma przy rozkładzie normalnym podobną efektywność, ale wyższy punkt załamania (50%), a estymatory \(S_n\) i \(Q_n\) łączą punkt załamania 50% z wyraźnie wyższą efektywnością <cite data-bib="rousseeuw1993"></cite>.</li>
+<li><strong>Brak addytywności</strong>: kwartyle połączonych grup nie wynikają z kwartyli grup.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="mediana">Mediana</a> — drugi kwartyl.</li>
+<li><a data-concept="percentyle">Percentyle</a> — uogólnienie na dowolny rząd \(p\); pełny przegląd definicji Hyndmana–Fana.</li>
+<li><a data-concept="odchylenie-standardowe">Odchylenie standardowe</a> — nieodporna miara rozproszenia.</li>
+<li><a data-concept="standaryzacja">Standaryzacja</a> — odporny z-score.</li>
+<li><a data-concept="przedzialy-predykcyjne">Przedziały predykcyjne</a> — przedział 50% jako rozstęp międzykwartylowy rozkładu predykcyjnego.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="hyndmanfan1996"></li>
+<li data-bib="tukey1977"></li>
+<li data-bib="openintro2019"></li>
+<li data-bib="rousseeuw1993"></li>
+<li data-bib="leys2013"></li>
+</ul>
+</section>

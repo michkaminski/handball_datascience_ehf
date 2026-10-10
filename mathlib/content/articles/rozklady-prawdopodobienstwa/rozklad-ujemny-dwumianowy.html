@@ -1,0 +1,167 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Rozkład ujemny dwumianowy (ang. <em>negative binomial distribution</em>) jest podstawowym modelem dla zliczeń, które są bardziej rozproszone, niż przewiduje rozkład Poissona. Rozkład Poissona ma wariancję równą średniej; dla frekwencji to absurdalnie mało — przy średniej 1200 widzów dawałby odchylenie standardowe ok. 35 widzów, podczas gdy rzeczywiste mecze tego samego klubu różnią się o setki widzów.</p>
+<p>Najprostsza droga do rozkładu ujemnego dwumianowego to mieszanina: każdy mecz ma własną, nieobserwowaną „intensywność” \(\lambda\) (zależną od pogody, rywala, stawki, promocji biletowych), która zmienia się między meczami według rozkładu gamma, a przy danym \(\lambda\) liczba widzów ma rozkład Poissona. Uśrednienie po \(\lambda\) daje rozkład o średniej \(\mu\) i wariancji \(\mu+\mu^2/\kappa\), gdzie \(\kappa\) mierzy, jak bardzo mecze są do siebie podobne.</p>
+<div class="ml-plot" data-plot="negbinomial" data-params='{"mu": 1200, "kappa": 8}'></div>
+<p>Zmniejszając \(\kappa\), zobaczysz, jak rozkład staje się coraz szerszy i bardziej prawoskośny przy niezmienionej średniej; dla bardzo dużego \(\kappa\) zbliża się do wąskiego rozkładu Poissona.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-rozklad-ujemny-dwumianowy"><p class="ml-box-title">Definicja (parametryzacja średnia–dyspersja)</p>
+<p>Niech \(\mu\gt0\) i \(\kappa\gt0\). Zmienna losowa \(Y\) o wartościach w \(\{0,1,2,\dots\}\) ma rozkład ujemny dwumianowy, \(Y\sim\text{NegBin}(\mu,\kappa)\), jeśli</p>
+<div class="ml-eq" id="eq-rozklad-ujemny-dwumianowy">\[ P(Y=y)=\frac{\Gamma(y+\kappa)}{\Gamma(\kappa)\,y!}\Big(\frac{\kappa}{\kappa+\mu}\Big)^{\kappa}\Big(\frac{\mu}{\kappa+\mu}\Big)^{y},\qquad y=0,1,2,\dots \]</div>
+<p>Parametr \(\mu\) jest średnią, a \(\kappa\) — parametrem kształtu (odwrotnością dyspersji).</p>
+</div>
+<div class="ml-box ml-def" id="def-nb-klasyczna"><p class="ml-box-title">Definicja (parametryzacja klasyczna)</p>
+<p>Dla \(r\gt0\) i \(q\in(0,1)\) rozkład \(\text{NB}(r,q)\) ma funkcję prawdopodobieństwa \(P(Y=y)=\frac{\Gamma(y+r)}{\Gamma(r)\,y!}q^r(1-q)^y\). Dla całkowitego \(r\) jest to rozkład liczby porażek przed \(r\)-tym sukcesem w schemacie Bernoulliego z prawdopodobieństwem sukcesu \(q\). Obie parametryzacje łączą wzory</p>
+<div class="ml-eq" id="eq-rozklad-ujemny-dwumianowy-parametryzacje">\[ r=\kappa,\qquad q=\frac{\kappa}{\kappa+\mu}\qquad\Longleftrightarrow\qquad \mu=\frac{r(1-q)}{q}. \]</div>
+</div>
+<p>W literaturze regresyjnej <cite data-bib="hilbe2011"></cite> używa się też parametru dyspersji \(\alpha=1/\kappa\) (model NB2: \(\operatorname{Var}Y=\mu+\alpha\mu^2\)); w Stanie jest to <code>neg_binomial_2(mu, phi)</code> z \(\phi=\kappa\) <cite data-bib="doc-stan-functions"></cite>.</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(Y\)</td><td>zliczenie (np. liczba widzów \(A_i\))</td></tr>
+<tr><td>\(\mu\)</td><td>średnia, \(\mu=EY\gt0\)</td></tr>
+<tr><td>\(\kappa\)</td><td>parametr kształtu; im większy, tym mniejsza nadmierna dyspersja</td></tr>
+<tr><td>\(\alpha\)</td><td>parametr dyspersji, \(\alpha=1/\kappa\)</td></tr>
+<tr><td>\(\lambda\)</td><td>nieobserwowana intensywność Poissona</td></tr>
+<tr><td>\(\text{Gamma}(\kappa,\beta)\)</td><td>rozkład gamma o kształcie \(\kappa\) i tempie \(\beta\): gęstość \(\frac{\beta^\kappa}{\Gamma(\kappa)}\lambda^{\kappa-1}e^{-\beta\lambda}\)</td></tr>
+<tr><td>\(r,\ q\)</td><td>parametry klasyczne: liczba sukcesów i prawdopodobieństwo sukcesu</td></tr>
+<tr><td>\(G_Y(s)\)</td><td>funkcja tworząca prawdopodobieństwa, \(G_Y(s)=E\,s^Y\)</td></tr>
+<tr><td>\(\eta_i\)</td><td>predyktor liniowy MAF, \(\log\mu_i=\eta_i\)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Zmienna jest zliczeniem bez znanego górnego ograniczenia (lub ograniczenie jest odległe i nieznane — np. brak informacji o pojemności hali).</li>
+<li>Wariancja rośnie kwadratowo ze średnią: \(\operatorname{Var}Y=\mu+\mu^2/\kappa\). Dla dużych \(\mu\) oznacza to w przybliżeniu stały współczynnik zmienności \(1/\sqrt\kappa\).</li>
+<li>W interpretacji mieszaninowej: heterogeniczność nieobserwowana ma rozkład gamma, a przy danym \(\lambda\) zliczenie jest poissonowskie.</li>
+<li>W regresji: obserwacje warunkowo niezależne przy danych \(\mu_i\), wspólne \(\kappa\).</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Reprezentacja Poisson–Gamma:</p>
+<div class="ml-eq" id="eq-rozklad-ujemny-dwumianowy-mieszanina">\[ \lambda\sim\text{Gamma}\Big(\kappa,\ \frac{\kappa}{\mu}\Big),\qquad Y\mid\lambda\sim\text{Poisson}(\lambda)\quad\Longrightarrow\quad Y\sim\text{NegBin}(\mu,\kappa). \]</div>
+<p>Momenty:</p>
+<div class="ml-eq" id="eq-rozklad-ujemny-dwumianowy-momenty">\[ EY=\mu,\qquad \operatorname{Var}Y=\mu+\frac{\mu^2}{\kappa},\qquad \frac{\operatorname{Var}Y}{EY}=1+\frac{\mu}{\kappa},\qquad \operatorname{CV}^2=\frac1\mu+\frac1\kappa. \]</div>
+<p>Funkcja tworząca prawdopodobieństwa:</p>
+<div class="ml-eq" id="eq-rozklad-ujemny-dwumianowy-pgf">\[ G_Y(s)=\Big(1+\frac{\mu(1-s)}{\kappa}\Big)^{-\kappa},\qquad |s|\le1. \]</div>
+<p>Rekurencja:</p>
+<div class="ml-eq" id="eq-rozklad-ujemny-dwumianowy-rekurencja">\[ P(Y=0)=\Big(\frac{\kappa}{\kappa+\mu}\Big)^\kappa,\qquad \frac{P(Y=y+1)}{P(Y=y)}=\frac{y+\kappa}{y+1}\cdot\frac{\mu}{\kappa+\mu}. \]</div>
+<p>Regresja ujemna dwumianowa z łączem logarytmicznym:</p>
+<div class="ml-eq" id="eq-rozklad-ujemny-dwumianowy-regresja">\[ Y_i\sim\text{NegBin}(\mu_i,\kappa),\qquad \log\mu_i=\eta_i=x_i^\top\beta\quad\Longrightarrow\quad \frac{\mu_i(x_{ik}+1)}{\mu_i(x_{ik})}=e^{\beta_k}. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-poisson-gamma"><p class="ml-box-title">Twierdzenie (mieszanina Poisson–Gamma)</p>
+<p>Jeśli \(\lambda\sim\text{Gamma}(\kappa,\kappa/\mu)\) i \(Y\mid\lambda\sim\text{Poisson}(\lambda)\), to \(Y\) ma rozkład <a class="ml-eqref" href="#eq-rozklad-ujemny-dwumianowy"></a>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-momenty-nb"><p class="ml-box-title">Twierdzenie (momenty)</p>
+<p>Dla \(Y\sim\text{NegBin}(\mu,\kappa)\) zachodzą wzory <a class="ml-eqref" href="#eq-rozklad-ujemny-dwumianowy-momenty"></a>. W szczególności \(\operatorname{Var}Y\gt EY\) dla każdego skończonego \(\kappa\) — rozkład ma zawsze nadmierną dyspersję względem Poissona.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-granica-poisson"><p class="ml-box-title">Twierdzenie (granica Poissona)</p>
+<p>Przy ustalonym \(\mu\) i \(\kappa\to\infty\): \(\text{NegBin}(\mu,\kappa)\xrightarrow{d}\text{Poisson}(\mu)\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-porazki"><p class="ml-box-title">Twierdzenie (interpretacja przez próby Bernoulliego)</p>
+<p>Dla całkowitego \(r\ge1\) liczba porażek przed \(r\)-tym sukcesem w niezależnych próbach z prawdopodobieństwem sukcesu \(q\) ma rozkład \(\text{NB}(r,q)\), tj. <a class="ml-eqref" href="#eq-rozklad-ujemny-dwumianowy"></a> z \(\kappa=r\), \(\mu=r(1-q)/q\). Nazwa „ujemny dwumianowy” pochodzi od rozwinięcia \(q^r(1-(1-q))^{-r}\) w szereg dwumianowy z wykładnikiem ujemnym.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="poisson-gamma-wyprowadzenie">Mieszanina Poisson–Gamma</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Oznaczmy \(\beta=\kappa/\mu\). Z prawa całkowitego prawdopodobieństwa:</p>
+\[ \begin{aligned} P(Y=y)&amp;=\int_0^\infty\frac{e^{-\lambda}\lambda^y}{y!}\cdot\frac{\beta^\kappa}{\Gamma(\kappa)}\lambda^{\kappa-1}e^{-\beta\lambda}\,d\lambda=\frac{\beta^\kappa}{y!\,\Gamma(\kappa)}\int_0^\infty\lambda^{y+\kappa-1}e^{-(1+\beta)\lambda}\,d\lambda\\ &amp;=\frac{\beta^\kappa}{y!\,\Gamma(\kappa)}\cdot\frac{\Gamma(y+\kappa)}{(1+\beta)^{y+\kappa}}. \end{aligned} \]
+<p>W ostatnim kroku użyliśmy \(\int_0^\infty\lambda^{s-1}e^{-c\lambda}d\lambda=\Gamma(s)/c^s\). Teraz \(1+\beta=\frac{\mu+\kappa}{\mu}\), więc</p>
+\[ \frac{\beta^\kappa}{(1+\beta)^{y+\kappa}}=\Big(\frac\kappa\mu\Big)^\kappa\Big(\frac{\mu}{\kappa+\mu}\Big)^{y+\kappa}=\Big(\frac{\kappa}{\kappa+\mu}\Big)^\kappa\Big(\frac{\mu}{\kappa+\mu}\Big)^y, \]
+<p>co daje <a class="ml-eqref" href="#eq-rozklad-ujemny-dwumianowy"></a>.</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="momenty-nb-wyprowadzenie">Średnia i wariancja</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla \(\lambda\sim\text{Gamma}(\kappa,\beta)\): \(E\lambda=\kappa/\beta=\mu\), \(\operatorname{Var}\lambda=\kappa/\beta^2=\mu^2/\kappa\). Dla rozkładu Poissona \(E(Y\mid\lambda)=\operatorname{Var}(Y\mid\lambda)=\lambda\). Z <a data-concept="prawo-calkowitej-wartosci-oczekiwanej">prawa całkowitej wartości oczekiwanej</a> \(EY=E\lambda=\mu\), a z <a data-concept="prawo-calkowitej-wariancji">prawa całkowitej wariancji</a></p>
+\[ \operatorname{Var}Y=E[\operatorname{Var}(Y\mid\lambda)]+\operatorname{Var}(E[Y\mid\lambda])=E\lambda+\operatorname{Var}\lambda=\mu+\frac{\mu^2}{\kappa}. \]
+<p>Pierwszy składnik to szum Poissona, drugi — heterogeniczność między meczami. Dzieląc przez \(\mu^2\), dostajemy \(\operatorname{CV}^2=1/\mu+1/\kappa\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="pgf-wyprowadzenie">Funkcja tworząca i granica Poissona</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Dla Poissona \(E(s^Y\mid\lambda)=e^{-\lambda(1-s)}\), a dla gamma \(Ee^{-t\lambda}=(1+t/\beta)^{-\kappa}\). Zatem \(G_Y(s)=Ee^{-\lambda(1-s)}=\big(1+\mu(1-s)/\kappa\big)^{-\kappa}\). Dla \(\kappa\to\infty\), ponieważ \((1+x/\kappa)^{-\kappa}\to e^{-x}\), mamy \(G_Y(s)\to e^{-\mu(1-s)}\) — funkcję tworzącą \(\text{Poisson}(\mu)\). Zbieżność funkcji tworzących prawdopodobieństwa na \([0,1]\) pociąga zbieżność rozkładów na \(\{0,1,\dots\}\).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="porazki-wyprowadzenie">Liczba porażek przed \(r\)-tym sukcesem</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Zdarzenie \(\{Y=y\}\) oznacza, że w pierwszych \(y+r-1\) próbach było dokładnie \(r-1\) sukcesów i \(y\) porażek, a próba \(y+r\) jest sukcesem. Z niezależności \(P(Y=y)=\binom{y+r-1}{y}q^{r-1}(1-q)^y\cdot q=\frac{\Gamma(y+r)}{\Gamma(r)\,y!}q^r(1-q)^y\). Podstawiając \(r=\kappa\), \(q=\kappa/(\kappa+\mu)\), \(1-q=\mu/(\kappa+\mu)\), dostajemy <a class="ml-eqref" href="#eq-rozklad-ujemny-dwumianowy"></a>; średnia \(r(1-q)/q=\kappa\cdot\frac{\mu}{\kappa+\mu}\cdot\frac{\kappa+\mu}{\kappa}=\mu\).</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<h3 id="przyklad-maly-nb">Mały przykład: \(\mu=4,\ \kappa=2\)</h3>
+<ol class="ml-steps">
+<li>\(q=\frac{2}{2+4}=\frac13\), \(\frac{\mu}{\kappa+\mu}=\frac23\). \(P(Y=0)=(1/3)^2=0{,}1111\).</li>
+<li>Rekurencja: \(P(Y=1)=0{,}1111\cdot\frac{0+2}{1}\cdot\frac23=0{,}1481\); \(P(Y=2)=0{,}1481\cdot\frac{3}{2}\cdot\frac23=0{,}1481\); \(P(Y=3)=0{,}1481\cdot\frac43\cdot\frac23=0{,}1317\).</li>
+<li>Porównanie z \(\text{Poisson}(4)\): \(0{,}0183;\ 0{,}0733;\ 0{,}1465;\ 0{,}1954\). Rozkład ujemny dwumianowy ma sześciokrotnie większe prawdopodobieństwo zera i grubszy prawy ogon.</li>
+<li>Wariancja: \(4+16/2=12\) wobec 4 dla Poissona.</li>
+</ol>
+<h3 id="przyklad-frekwencja-nb">Frekwencja przy nieznanej pojemności (dane ilustracyjne)</h3>
+<ol class="ml-steps">
+<li>Klub Superligi, \(\mu=1200\), \(\kappa=8\).</li>
+<li>Wariancja: \(1200+\frac{1200^2}{8}=1200+180\,000=181\,200\); odchylenie standardowe \(\sqrt{181\,200}=425{,}7\).</li>
+<li>Współczynnik zmienności: \(425{,}7/1200=0{,}3547\); przybliżenie \(1/\sqrt8=0{,}3536\) — szum Poissona (\(1/\mu\)) jest pomijalny wobec heterogeniczności (\(1/\kappa\)).</li>
+<li>Indeks dyspersji: \(\operatorname{Var}/\mu=1+1200/8=151\). Rozkład Poissona (indeks 1, odchylenie 34,6) byłby całkowicie nieadekwatny.</li>
+<li>Kwantyle (sumowanie pmf przez \(\log\Gamma\)): \(q_{0{,}025}=516\), \(q_{0{,}10}=697\), mediana 1150, \(q_{0{,}90}=1768\), \(q_{0{,}975}=2167\). Mediana \(\lt\) średnia — prawostronna skośność.</li>
+<li>\(P(A\le500)=0{,}021\), \(P(A\ge2000)=0{,}046\).</li>
+<li>Efekt multiplikatywny: współczynnik \(\beta_k=0{,}10\) przy standaryzowanej zmiennej oznacza \(e^{0{,}10}=1{,}105\), czyli ok. \(+10{,}5\%\) oczekiwanej frekwencji na jedno odchylenie standardowe zmiennej.</li>
+</ol>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Przy \(\kappa=8\) typowe mecze klubu mieszczą się w przedziale ok. 700–1770 widzów (80%), a 95% meczów — w przedziale 516–2167. Rozkład jest wyraźnie prawoskośny: rzadkie, ale realne mecze z frekwencją dwukrotnie wyższą od średniej (derby, mecz o mistrzostwo) mają prawdopodobieństwo kilku procent. Parametr \(\kappa\) najlepiej czytać przez współczynnik zmienności: \(\kappa=8\) to ok. 35% względnego rozrzutu, \(\kappa=25\) — ok. 20%.</p>
+<p>W porównaniu z rozkładem beta-dwumianowym o tej samej średniej (odchylenie ok. 215 dla \(\phi=20\), \(C=2000\)) model ujemny dwumianowy nie zna górnego ograniczenia i nie „wie”, że hala może się zapełnić — dlatego jest stosowany tylko wtedy, gdy pojemność nie jest znana.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>Wariant „liczba widzów” <a data-concept="atrakcyjnosc-frekwencyjna">Modelu Atrakcyjności Frekwencyjnej</a> stosuje się, gdy pojemność hali jest nieznana — dla ok. 45% meczów ZPRP i dla wszystkich ok. 2,8 tys. meczów pucharów EHF w danych:</p>
+<div class="ml-eq" id="eq-rozklad-ujemny-dwumianowy-maf">\[ A_i\sim\text{NegBin}(\mu_i,\kappa),\qquad \log\mu_i=\eta_i=\alpha+H_{h(i)}+HS_{h(i),s(i)}+R_{r(i)}+RS_{r(i),s(i)}+S_{s(i)}+L_{l(i)}+x_i^\top\beta. \]</div>
+<ul>
+<li><strong>Interpretacja efektów.</strong> Dzięki łączu logarytmicznemu efekt rywala \(R_j\) jest mnożnikiem frekwencji \(e^{R_j}\); np. \(R_j=0{,}45\) oznacza ok. 57% więcej widzów niż przy przeciętnym rywalu. To typowa konstrukcja <a data-concept="uogolnione-modele-liniowe">uogólnionego modelu liniowego</a> <cite data-bib="hilbe2011"></cite>.</li>
+<li><strong>Heterogeniczność.</strong> \(\kappa\) pochłania zmienność niewyjaśnioną przez predyktor: pogodę, konkurencyjne wydarzenia, akcje biletowe. Hierarchiczne efekty losowe zmniejszają tę niewyjaśnioną część, więc \(\kappa\) w pełnym modelu jest zwykle znacznie większe niż w modelu bez predyktorów.</li>
+<li><strong>Zera.</strong> NULL frekwencji to brak danych, a nie zero widzów — takie mecze są pomijane w wiarygodności.</li>
+<li><strong>Prognoza.</strong> Przedziały predykcyjne powstają przez losowanie \(A\sim\text{NegBin}(\mu_i^{(s)},\kappa^{(s)})\) dla próbek posterior — zob. <a data-concept="rozklad-predykcyjny">rozkład predykcyjny</a>.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li>Brak górnego ograniczenia: model może przewidywać frekwencję większą niż pojemność hali; gdy pojemność jest znana, lepszy jest <a data-concept="rozklad-beta-dwumianowy">rozkład beta-dwumianowy</a>.</li>
+<li>Kwadratowa funkcja wariancji (NB2) jest założeniem; dane mogą wymagać innej zależności (np. NB1: \(\operatorname{Var}=\mu(1+\alpha)\)) lub \(\kappa\) zależnego od grup.</li>
+<li>Wspólne \(\kappa\) dla rozgrywek o bardzo różnej skali (III liga vs Liga Mistrzów EHF) może być zbyt sztywne.</li>
+<li>Nadmiar zer (np. mecze przy zamkniętych drzwiach) wymaga modelu z inflacją zer.</li>
+<li>Parametr \(\kappa\) jest słabo identyfikowalny przy małej liczbie obserwacji — potrzebny jest rozsądny prior.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="uogolnione-modele-liniowe">Uogólnione modele liniowe (GLM)</a> — regresja z łączem log.</li>
+<li><a data-concept="rozklad-dwumianowy">Rozkład dwumianowy</a> — interpretacja przez próby Bernoulliego.</li>
+<li><a data-concept="rozklad-beta-dwumianowy">Rozkład beta-dwumianowy</a> — odpowiednik przy znanej pojemności.</li>
+<li><a data-concept="prawo-calkowitej-wariancji">Prawo całkowitej wariancji</a>.</li>
+<li><a data-concept="interpretacja-wspolczynnikow">Interpretacja współczynników</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="hilbe2011"></li>
+<li data-bib="johnson2005discrete"></li>
+<li data-bib="casellaberger2002"></li>
+<li data-bib="doc-stan-functions"></li>
+<li data-bib="gelman2013bda"></li>
+</ul>
+</section>

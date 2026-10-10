@@ -1,0 +1,164 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Obserwacje uporządkowane w czasie rzadko są od siebie niezależne. Frekwencja na kolejnych meczach domowych klubu „pamięta” poprzednie mecze: dobra passa przyciąga kibiców przez kilka tygodni, a spadek zainteresowania po serii porażek też nie mija od razu. Podobnie kolejne próbki z łańcucha Markowa w <a data-concept="mcmc">MCMC</a> są do siebie podobne, bo każda powstaje przez niewielką modyfikację poprzedniej. <strong>Autokorelacja</strong> (ang. <em>autocorrelation</em>) mierzy tę pamięć: jest to korelacja szeregu z jego własną kopią przesuniętą o \( h \) kroków.</p>
+<p>Funkcja, która każdemu opóźnieniu (ang. <em>lag</em>) \( h = 0,1,2,\dots \) przypisuje tę korelację, to <strong>funkcja autokorelacji</strong> (ang. <em>autocorrelation function</em>, ACF). Dla szumu białego ACF jest równa 1 w zerze i 0 dla \( h\ge1 \); dla szeregów o silnej pamięci maleje powoli.</p>
+<p>Autokorelacja ma bardzo praktyczną konsekwencję: <em>skorelowane obserwacje niosą mniej informacji niż niezależne</em>. Jeżeli 4000 próbek z łańcucha MCMC jest silnie skorelowanych, to średnia z nich jest tak dokładna, jak średnia z — powiedzmy — 500 niezależnych próbek. Tę „równoważną liczbę niezależnych próbek” nazywamy efektywną liczebnością próby, <a data-concept="effective-sample-size">ESS</a>, a jej wyznaczenie sprowadza się do zsumowania autokorelacji: \( \mathrm{ESS} = N/\tau \), gdzie \( \tau = 1 + 2\sum_{k\ge1}\rho_k \). Klasyczną teorię ACF wykłada <cite data-bib="boxjenkins2015"></cite>, zastosowanie do MCMC — <cite data-bib="geyer1992"></cite>.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-stacjonarnosc"><p class="ml-box-title">Definicja (stacjonarność w szerokim sensie)</p>
+<p>Szereg czasowy \( (y_t)_{t\in\mathbb{Z}} \) zmiennych losowych o skończonych drugich momentach, określonych na wspólnej przestrzeni probabilistycznej, nazywamy <strong>stacjonarnym w szerokim sensie</strong> (słabo stacjonarnym), jeżeli \( \mathbb{E}y_t = \mu \) nie zależy od \( t \), a \( \operatorname{Cov}(y_t, y_{t+h}) \) zależy tylko od opóźnienia \( h\in\mathbb{Z} \), nie od \( t \).</p>
+</div>
+<div class="ml-box ml-def" id="def-acf"><p class="ml-box-title">Definicja (autokowariancja i autokorelacja)</p>
+<p>Dla szeregu słabo stacjonarnego <strong>funkcją autokowariancji</strong> nazywamy \( \gamma(h) = \operatorname{Cov}(y_t, y_{t+h}) \), a <strong>funkcją autokorelacji</strong> (ACF) — przy \( \gamma(0)=\sigma^2\gt 0 \):</p>
+<div class="ml-eq" id="eq-autokorelacja">\[ \rho(h) \;=\; \frac{\gamma(h)}{\gamma(0)} \;=\; \frac{\operatorname{Cov}(y_t,\,y_{t+h})}{\operatorname{Var}(y_t)}, \qquad h\in\mathbb{Z}. \]</div>
+<p>Zamiennie piszemy \( \rho_h \equiv \rho(h) \).</p>
+</div>
+<div class="ml-box ml-def" id="def-acf-estymator"><p class="ml-box-title">Definicja (estymator ACF)</p>
+<p>Dla obserwacji \( y_1,\dots,y_n \) i średniej \( \bar y = \frac1n\sum_{t=1}^n y_t \) <strong>próbkową autokowariancję</strong> i <strong>próbkową autokorelację</strong> definiujemy dla \( 0\le h\le n-1 \) jako</p>
+<div class="ml-eq" id="eq-autokorelacja-estymator">\[ \hat\gamma(h) = \frac1n\sum_{t=1}^{n-h}(y_t-\bar y)(y_{t+h}-\bar y), \qquad \hat\rho(h) = \frac{\hat\gamma(h)}{\hat\gamma(0)} . \]</div>
+</div>
+<p>Dzielnik \( n \) (a nie \( n-h \)) jest standardem <cite data-bib="boxjenkins2015"></cite>: daje estymator nieco obciążony, ale gwarantujący, że macierz \( [\hat\gamma(|i-j|)]_{i,j} \) jest dodatnio półokreślona — jak każda prawdziwa macierz kowariancji — i ma mniejszy błąd średniokwadratowy dla dużych \( h \).</p>
+<div class="ml-box ml-def" id="def-tau"><p class="ml-box-title">Definicja (całkowity czas autokorelacji i ESS)</p>
+<p>Jeżeli \( \sum_{h\ge1}|\rho_h|\lt\infty \), to <strong>całkowitym czasem autokorelacji</strong> (ang. <em>integrated autocorrelation time</em>) nazywamy</p>
+<div class="ml-eq" id="eq-autokorelacja-tau">\[ \tau \;=\; 1 + 2\sum_{k=1}^{\infty}\rho_k \;=\; \sum_{k=-\infty}^{\infty}\rho_k , \]</div>
+<p>a <strong>efektywną liczebnością próby</strong> dla \( N \) obserwacji — \( \mathrm{ESS} = N/\tau \).</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( y_t \)</td><td>obserwacja szeregu w chwili \( t \) (mecz, iteracja łańcucha)</td></tr>
+<tr><td>\( h,\ k \)</td><td>opóźnienie (lag), liczba całkowita</td></tr>
+<tr><td>\( \mu,\ \sigma^2 \)</td><td>średnia i wariancja szeregu stacjonarnego</td></tr>
+<tr><td>\( \gamma(h) \)</td><td>autokowariancja na opóźnieniu \( h \)</td></tr>
+<tr><td>\( \rho(h),\ \rho_h \)</td><td>autokorelacja na opóźnieniu \( h \)</td></tr>
+<tr><td>\( \hat\gamma(h),\ \hat\rho(h) \)</td><td>estymatory próbkowe</td></tr>
+<tr><td>\( n,\ N \)</td><td>długość szeregu; łączna liczba próbek MCMC</td></tr>
+<tr><td>\( \tau \)</td><td>całkowity czas autokorelacji</td></tr>
+<tr><td>\( \mathrm{ESS} \)</td><td>efektywna liczebność próby, \( N/\tau \)</td></tr>
+<tr><td>\( \Gamma_m \)</td><td>suma par autokorelacji \( \rho_{2m}+\rho_{2m+1} \) w estymatorze Geyera</td></tr>
+<tr><td>\( \phi \)</td><td>współczynnik procesu AR(1)</td></tr>
+<tr><td>\( \varepsilon_t \)</td><td>szum biały: nieskorelowane zmienne o średniej 0 i wariancji \( \sigma_\varepsilon^2 \)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ol>
+<li><strong>Słaba stacjonarność.</strong> ACF jest dobrze określona jako funkcja samego opóźnienia tylko dla szeregu stacjonarnego. Szereg z trendem (np. rosnąca frekwencja po awansie) ma próbkową ACF malejącą bardzo wolno, co odzwierciedla trend, a nie „pamięć” — przed analizą trend usuwamy (różnicowanie, reszty z modelu).</li>
+<li><strong>Sumowalność autokorelacji.</strong> Wzory na \( \tau \) i ESS wymagają \( \sum|\rho_h|\lt\infty \). Dla łańcuchów MCMC zachodzi to przy geometrycznej ergodyczności; w praktyce objawem naruszenia są ekstremalnie długie „ogony” ACF i niestabilne ESS.</li>
+<li><strong>Łańcuch po rozgrzewce.</strong> Dla MCMC zakładamy, że łańcuch jest już w rozkładzie stacjonarnym (posterior), tj. odrzucono fazę rozgrzewki (ang. <em>warm-up</em>). Zbieżność weryfikuje <a data-concept="r-hat">R-hat</a>.</li>
+<li><strong>Odwracalność (dla estymatora Geyera).</strong> Własności ciągu \( \Gamma_m \) wykorzystywane w estymatorze Geyera (dodatniość, monotoniczność, wypukłość) są udowodnione dla odwracalnych łańcuchów Markowa <cite data-bib="geyer1992"></cite>.</li>
+</ol>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p><strong>Wariancja średniej z szeregu stacjonarnego.</strong></p>
+<div class="ml-eq" id="eq-autokorelacja-wariancja-sredniej">\[ \operatorname{Var}(\bar y_n) = \frac{\sigma^2}{n}\Bigl[1 + 2\sum_{h=1}^{n-1}\Bigl(1-\frac hn\Bigr)\rho_h\Bigr] \;\xrightarrow{\;n\to\infty\;}\; \frac{\sigma^2\,\tau}{n}\ \text{(asymptotycznie)} . \]</div>
+<p><strong>Proces AR(1).</strong> Dla \( y_t = \mu + \phi(y_{t-1}-\mu) + \varepsilon_t \), \( |\phi|\lt1 \):</p>
+<div class="ml-eq" id="eq-autokorelacja-ar1">\[ \rho_h = \phi^{|h|}, \qquad \tau = \frac{1+\phi}{1-\phi}, \qquad \mathrm{ESS} = N\,\frac{1-\phi}{1+\phi}. \]</div>
+<p><strong>Pasma istotności dla szumu białego</strong> (przybliżenie Bartletta): jeżeli \( y_t \) są i.i.d., to dla ustalonego \( h\ge1 \) i dużego \( n \) \( \hat\rho(h) \approx N(0, 1/n) \), więc pasmo \( \pm 1{,}96/\sqrt n \) zawiera \( \hat\rho(h) \) z prawdopodobieństwem około 95% <cite data-bib="boxjenkins2015"></cite>.</p>
+<p><strong>Estymator Geyera (początkowy ciąg dodatni).</strong> Niech \( \hat\Gamma_m = \hat\rho_{2m} + \hat\rho_{2m+1} \), \( m=0,1,2,\dots \), i niech \( M \) będzie największą liczbą taką, że \( \hat\Gamma_m\gt0 \) dla wszystkich \( m\le M \). Wtedy</p>
+<div class="ml-eq" id="eq-autokorelacja-geyer">\[ \hat\tau = -1 + 2\sum_{m=0}^{M}\hat\Gamma_m, \qquad \widehat{\mathrm{ESS}} = \frac{N}{\hat\tau}. \]</div>
+<p>Ponieważ \( \hat\rho_0 = 1 \), wzór ten jest równoważny \( \hat\tau = 1 + 2\sum_{k=1}^{2M+1}\hat\rho_k \) — tzn. jest to <a class="ml-eqref" href="#eq-autokorelacja-tau"></a> z sumą obciętą w punkcie wyznaczonym z danych. Wariant <em>monotoniczny</em> (ang. <em>initial monotone sequence</em>) dodatkowo zastępuje \( \hat\Gamma_m \) przez \( \min(\hat\Gamma_0,\dots,\hat\Gamma_m) \), a <em>wypukły</em> — przez największą wypukłą minorantę.</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-wlasnosci-acf"><p class="ml-box-title">Twierdzenie (własności ACF)</p>
+<p>Dla szeregu słabo stacjonarnego: (i) \( \rho(0)=1 \); (ii) \( \rho(-h)=\rho(h) \); (iii) \( |\rho(h)|\le1 \); (iv) dla dowolnych \( n \) i \( a\in\mathbb{R}^n \): \( \sum_{i,j}a_ia_j\gamma(i-j)\ge0 \) (dodatnia półokreśloność).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-ess"><p class="ml-box-title">Twierdzenie (wariancja średniej i ESS)</p>
+<p>Dla szeregu słabo stacjonarnego zachodzi równość skończona w <a class="ml-eqref" href="#eq-autokorelacja-wariancja-sredniej"></a>. Jeżeli \( \sum_h|\rho_h|\lt\infty \), to \( n\operatorname{Var}(\bar y_n)\to\sigma^2\tau \). Zatem dla dużych \( n \) średnia z \( n \) skorelowanych obserwacji ma tę samą wariancję co średnia z \( n/\tau \) niezależnych obserwacji o wariancji \( \sigma^2 \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-geyer"><p class="ml-box-title">Twierdzenie (Geyer, 1992)</p>
+<p>Dla stacjonarnego, odwracalnego łańcucha Markowa i funkcji o skończonej wariancji ciąg \( \Gamma_m = \gamma_{2m}+\gamma_{2m+1} \) (a więc także \( \rho_{2m}+\rho_{2m+1} = \Gamma_m/\gamma_0 \)) jest dodatni, malejący i wypukły jako funkcja \( m \) <cite data-bib="geyer1992"></cite>.</p>
+</div>
+<p>Twierdzenie Geyera uzasadnia regułę obcięcia: skoro prawdziwe \( \Gamma_m \) są dodatnie, to pierwsza niedodatnia wartość \( \hat\Gamma_m \) świadczy, że dalsze składniki są już zdominowane przez szum estymacji i sumowanie ich tylko zwiększałoby wariancję \( \hat\tau \). Pojedyncze \( \rho_k \) mogą być ujemne (np. w łańcuchach antytetycznych), ale sumy par — nie.</p>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<h3 id="dowod-wlasnosci">Własności ACF</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>(i) \( \gamma(0)=\operatorname{Var}y_t \). (ii) Ze stacjonarności \( \gamma(-h)=\operatorname{Cov}(y_t,y_{t-h})=\operatorname{Cov}(y_{t-h},y_t)=\gamma(h) \). (iii) Z nierówności Cauchy’ego–Schwarza \( |\operatorname{Cov}(y_t,y_{t+h})|\le\sqrt{\operatorname{Var}y_t\operatorname{Var}y_{t+h}}=\gamma(0) \). (iv) \( \sum_{i,j}a_ia_j\gamma(i-j)=\operatorname{Var}\bigl(\sum_i a_iy_i\bigr)\ge0 \).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-wariancji-sredniej">Wariancja średniej</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Z dwuliniowości kowariancji:</p>
+\[ \begin{aligned} \operatorname{Var}(\bar y_n) &amp;= \frac{1}{n^2}\sum_{s=1}^n\sum_{t=1}^n \gamma(t-s) = \frac{1}{n^2}\sum_{h=-(n-1)}^{n-1}(n-|h|)\,\gamma(h) \\ &amp;= \frac{\gamma(0)}{n}\Bigl[1 + 2\sum_{h=1}^{n-1}\Bigl(1-\frac hn\Bigr)\rho_h\Bigr], \end{aligned} \]
+<p>bo par \( (s,t) \) z różnicą \( t-s=h \) jest dokładnie \( n-|h| \), a \( \gamma(-h)=\gamma(h) \). Przy \( \sum|\rho_h|\lt\infty \) wyrazy \( (1-h/n)\rho_h\,\mathbf 1\{h\le n-1\} \) zbiegają do \( \rho_h \) i są ograniczone przez \( |\rho_h| \), więc z twierdzenia o zbieżności zmajoryzowanej (dla szeregów) nawias dąży do \( 1+2\sum_{h\ge1}\rho_h=\tau \).</p>
+<p class="ml-qed">∎</p></div>
+
+<h3 id="dowod-ar1">ACF i czas autokorelacji procesu AR(1)</h3>
+<div class="ml-proof"><p class="ml-box-title">Dowód</p>
+<p>Niech \( x_t=y_t-\mu \), \( x_t=\phi x_{t-1}+\varepsilon_t \), gdzie \( \varepsilon_t \) jest nieskorelowane z \( x_{t-1},x_{t-2},\dots \). Mnożąc przez \( x_{t-h} \) (\( h\ge1 \)) i biorąc wartość oczekiwaną: \( \gamma(h)=\phi\gamma(h-1) \), więc \( \gamma(h)=\phi^h\gamma(0) \) i \( \rho_h=\phi^h \). Stąd</p>
+\[ \tau = 1 + 2\sum_{k=1}^\infty\phi^k = 1 + \frac{2\phi}{1-\phi} = \frac{1+\phi}{1-\phi}. \]
+<p class="ml-qed">∎</p></div>
+
+<h3 id="wyprowadzenie-geyer">Skąd postać estymatora Geyera</h3>
+<p>Naiwny estymator \( 1+2\sum_{k=1}^{n-1}\hat\rho_k \) jest bezużyteczny: dla dużych \( k \) każdy \( \hat\rho_k \) ma wariancję rzędu \( 1/n \), a suma \( n \) takich szumów ma wariancję, która nie maleje do zera. Trzeba obciąć sumę w punkcie, gdzie prawdziwe \( \rho_k \) są już pomijalne. Twierdzenie Geyera daje kryterium bez dodatkowych parametrów: sumujemy pary, dopóki są dodatnie. Rozpisując</p>
+\[ -1 + 2\sum_{m=0}^{M}(\hat\rho_{2m}+\hat\rho_{2m+1}) = -1 + 2\hat\rho_0 + 2\sum_{k=1}^{2M+1}\hat\rho_k = 1 + 2\sum_{k=1}^{2M+1}\hat\rho_k, \]
+<p>widzimy zgodność z <a class="ml-eqref" href="#eq-autokorelacja-tau"></a>. Współczesne implementacje (Stan, ArviZ) stosują ten estymator do wielu łańcuchów naraz, łącząc autokorelacje wewnątrz łańcuchów z wariancją między łańcuchami, a dla bulk-ESS i tail-ESS — do próbek po rang-normalizacji i do wskaźników kwantyli <cite data-bib="vehtari2021rhat"></cite>. Ponieważ NUTS potrafi generować ujemne autokorelacje na nieparzystych opóźnieniach, oszacowane ESS może przekroczyć \( N \).</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><em>Dane ilustracyjne.</em> Dziesięć kolejnych próbek parametru \( \sigma_H \) (odchylenie efektów gospodarzy) z jednego łańcucha: 1,2; 1,5; 1,4; 0,9; 0,7; 1,0; 1,3; 1,6; 1,1; 0,8. (Realny łańcuch ma tysiące próbek; krótki ciąg pozwala policzyć wszystko ręcznie.)</p>
+<ol class="ml-steps">
+<li><strong>Średnia</strong>: suma = 11,5, więc \( \bar y = 1{,}15 \). Odchylenia \( d_t = y_t-\bar y \): 0,05; 0,35; 0,25; −0,25; −0,45; −0,15; 0,15; 0,45; −0,05; −0,35.</li>
+<li><strong>\( \hat\gamma(0) \)</strong>: suma kwadratów \( 0{,}0025+0{,}1225+0{,}0625+0{,}0625+0{,}2025+0{,}0225+0{,}0225+0{,}2025+0{,}0025+0{,}1225 = 0{,}825 \); \( \hat\gamma(0)=0{,}825/10=0{,}0825 \).</li>
+<li><strong>\( \hat\gamma(1) \)</strong>: iloczyny \( d_td_{t+1} \): 0,0175; 0,0875; −0,0625; 0,1125; 0,0675; −0,0225; 0,0675; −0,0225; 0,0175; suma 0,2625; \( \hat\gamma(1)=0{,}02625 \), \( \hat\rho_1 = 0{,}02625/0{,}0825 = 0{,}3182 \).</li>
+<li><strong>\( \hat\gamma(2) \)</strong>: iloczyny \( d_td_{t+2} \): 0,0125; −0,0875; −0,1125; 0,0375; −0,0675; −0,0675; −0,0075; −0,1575; suma −0,45; \( \hat\rho_2 = -0{,}045/0{,}0825 = -0{,}5455 \).</li>
+<li><strong>\( \hat\gamma(3) \)</strong>: suma iloczynów \( d_td_{t+3} \) wynosi −0,4925; \( \hat\rho_3 = -0{,}04925/0{,}0825 = -0{,}5970 \).</li>
+<li><strong>Pary Geyera</strong>: \( \hat\Gamma_0 = \hat\rho_0+\hat\rho_1 = 1{,}3182\gt0 \); \( \hat\Gamma_1 = \hat\rho_2+\hat\rho_3 = -1{,}1424\le0 \) — zatrzymujemy się, \( M=0 \).</li>
+<li><strong>Czas autokorelacji i ESS</strong>: \( \hat\tau = -1 + 2\cdot1{,}3182 = 1{,}6364 \) (równoważnie \( 1+2\cdot0{,}3182 \)); \( \widehat{\mathrm{ESS}} = 10/1{,}6364 \approx 6{,}1 \).</li>
+<li><strong>Pasmo Bartletta</strong>: \( \pm1{,}96/\sqrt{10} = \pm0{,}62 \). Żadna z \( |\hat\rho_h| \) nie przekracza 0,62, więc dziesięć obserwacji nie wystarcza nawet do stwierdzenia, że autokorelacja istnieje — dlatego diagnostykę ESS wykonuje się na tysiącach próbek.</li>
+<li><strong>Skala realna (AR(1))</strong>: 4 łańcuchy × 1000 próbek, \( N=4000 \). Przy \( \phi=0{,}6 \): \( \tau=1{,}6/0{,}4=4 \), \( \mathrm{ESS}=1000 \) — powyżej progu 400. Przy \( \phi=0{,}9 \): \( \tau=1{,}9/0{,}1=19 \), \( \mathrm{ESS}=4000/19\approx 211 \) — poniżej progu; trzeba wydłużyć łańcuchy lub poprawić parametryzację.</li>
+</ol>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>\( \hat\rho_1 = 0{,}32 \) oznacza, że wartość w danej iteracji „przenosi” około jednej trzeciej swojego odchylenia od średniej na następną. Czas autokorelacji \( \hat\tau\approx1{,}64 \) mówi, że potrzeba średnio 1,64 kolejnych próbek, aby uzyskać tyle informacji o średniej, ile daje jedna próbka niezależna. ESS ≈ 6 z 10 próbek oznacza, że błąd Monte Carlo średniej jest taki jak przy 6 niezależnych próbkach: \( \mathrm{MCSE}=\hat\sigma/\sqrt{\mathrm{ESS}} \).</p>
+<p>W analizie szeregu frekwencji dodatnie \( \rho_1 \) reszt modelu oznacza, że model systematycznie „nie nadąża” — po meczu z frekwencją wyższą niż przewidywana następny też zwykle ją przewyższa. To sygnał, że w modelu brakuje zmiennej o wolnej dynamice (formy, trendu klubu w sezonie). Ujemne \( \rho_1 \) sugeruje naprzemienność (np. przeplatanie meczów w różnych halach lub o różnych porach).</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> autokorelacja pracuje w dwóch miejscach.</p>
+<p><strong>Diagnostyka MCMC.</strong> Parametry modelu (efekty gospodarzy \( H \), rywali \( R \), sezonów \( S \), odchylenia \( \sigma \), precyzja \( \phi \) lub \( \kappa \)) szacujemy algorytmem NUTS na 4 łańcuchach. Dla każdego parametru i dla każdej pochodnej wielkości (np. indeksu IAF klubu) liczymy bulk-ESS i tail-ESS, które muszą wynosić co najmniej 400, obok warunku R-hat &lt; 1,01 i braku dywergencji. Oba ESS są wyznaczane estymatorem Geyera <a class="ml-eqref" href="#eq-autokorelacja-geyer"></a> w wersji wielołańcuchowej. Najwyższą autokorelację mają zwykle odchylenia efektów losowych (np. \( \sigma_{RS} \) dla rywal×sezon, gdzie na jedną kombinację przypada kilka meczów); właśnie dlatego efekty są zapisane w parametryzacji niecentrowanej \( R_j = \sigma_R z_j \), która osłabia zależność między \( \sigma_R \) a \( R_j \) i skraca czas autokorelacji <cite data-bib="betancourt2015hier"></cite>.</p>
+<p><strong>Diagnostyka reszt.</strong> Po dopasowaniu modelu porządkujemy mecze domowe każdego klubu chronologicznie i liczymy ACF reszt standaryzowanych (zob. <a data-concept="diagnostyka-reszt">diagnostyka reszt</a>). Istotna autokorelacja dodatnia na niskich opóźnieniach wskazuje, że efekty klubu w sezonie (\( HS \)) i forma nie oddają całej dynamiki; przedziały predykcyjne mogą wtedy być zbyt wąskie dla meczów następujących po sobie, a ocena modelu na zbiorze testowym — zbyt optymistyczna, jeżeli testujemy na meczach przeplatanych z treningowymi (stąd walidacja chronologiczna, zob. <a data-concept="backtesting">backtesting</a>).</p>
+<p>Także <a data-concept="srednia-ruchoma">forma</a> drużyny jest z konstrukcji silnie autokorelowana: dwie kolejne wartości średniej z pięciu meczów dzielą cztery mecze, więc przy niezależnych wynikach \( \rho_1 = 4/5 \).</p>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Tylko zależność liniowa.</strong> ACF mierzy korelację liniową; szereg może mieć \( \rho_h=0 \) przy silnej zależności nieliniowej (np. w wariancji).</li>
+<li><strong>Niestacjonarność.</strong> Trend lub zmiana poziomu (np. przeprowadzka klubu do większej hali) daje pozorną, powoli malejącą ACF. Interpretację poprzedza usunięcie trendu.</li>
+<li><strong>Nieregularne odstępy.</strong> Mecze nie są rozmieszczone równomiernie w czasie (przerwy reprezentacyjne, przerwa letnia). ACF po indeksie meczu ignoruje te różnice.</li>
+<li><strong>Krótkie szeregi.</strong> Przy kilkunastu meczach domowych w sezonie błąd standardowy \( \hat\rho_h \) wynosi ok. \( 1/\sqrt n\approx 0{,}25 \) — wykryć można tylko bardzo silną autokorelację.</li>
+<li><strong>Obciążenie estymatora.</strong> \( \hat\gamma(h) \) z dzielnikiem \( n \) jest obciążony w stronę zera, a centrowanie średnią próbkową dodaje obciążenie ujemne rzędu \( -1/n \).</li>
+<li><strong>ESS przy złej zbieżności.</strong> Estymator ESS zakłada, że łańcuch eksploruje cały rozkład. Łańcuch „utknięty” w jednym trybie może mieć niską autokorelację i duże ESS, a mimo to być błędny; dlatego ESS interpretuje się zawsze razem z R-hat i liczbą dywergencji.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="effective-sample-size">Effective Sample Size (ESS)</a> — bezpośrednie zastosowanie \( \tau \).</li>
+<li><a data-concept="r-hat">R-hat</a> — druga podstawowa diagnostyka MCMC.</li>
+<li><a data-concept="mcmc">MCMC i Hamiltonian Monte Carlo</a> — źródło autokorelowanych próbek.</li>
+<li><a data-concept="srednia-ruchoma">Średnia ruchoma</a> — wygładzanie, które samo wprowadza autokorelację.</li>
+<li><a data-concept="diagnostyka-reszt">Diagnostyka reszt</a> — ACF reszt jako test dopasowania.</li>
+<li><a data-concept="wariancja-zmiennej-losowej">Wariancja zmiennej losowej</a> — wariancja sumy zmiennych skorelowanych.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="boxjenkins2015"></li>
+<li data-bib="geyer1992"></li>
+<li data-bib="hyndman2021fpp3"></li>
+<li data-bib="vehtari2021rhat"></li>
+<li data-bib="betancourt2015hier"></li>
+<li data-bib="doc-arviz-ess"></li>
+</ul>
+</section>

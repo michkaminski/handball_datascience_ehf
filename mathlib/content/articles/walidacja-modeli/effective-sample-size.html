@@ -1,0 +1,170 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Gdy losujemy niezależne próbki z rozkładu, każda kolejna wnosi „pełną porcję” nowej informacji, a błąd średniej maleje jak \( \sigma/\sqrt{N} \). Próbki z łańcucha <a data-concept="mcmc">MCMC</a> są jednak skorelowane: kolejny stan łańcucha powstaje z poprzedniego, więc w dużej mierze go powtarza. 4000 próbek z łańcucha o silnej <a data-concept="autokorelacja">autokorelacji</a> może nieść tyle informacji o średniej a posteriori, co zaledwie kilkaset próbek niezależnych.</p>
+<p>Efektywna liczebność próby (ang. <em>effective sample size</em>, ESS) to właśnie ta „równoważna” liczba niezależnych próbek: taka liczba \( N_{\text{eff}} \), że średnia z \( N_{\text{eff}} \) niezależnych losowań miałaby taką samą wariancję jak średnia z całego skorelowanego łańcucha. ESS bezpośrednio przekłada się na błąd Monte Carlo (ang. <em>Monte Carlo standard error</em>, MCSE) raportowanych wielkości: \( \text{MCSE} \approx \sigma/\sqrt{\text{ESS}} \).</p>
+<p>Współczesne oprogramowanie (Stan, PyMC, ArviZ) raportuje dwie wersje ESS <cite data-bib="vehtari2021rhat"></cite>: <strong>bulk-ESS</strong>, mierzącą jakość estymacji „środka” rozkładu (średniej, mediany), oraz <strong>tail-ESS</strong>, mierzącą jakość estymacji ogonów (kwantyli 5% i 95%, czyli końców przedziałów wiarygodności). Obie muszą być wystarczająco duże, zanim wyniki trafią do raportu.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<p>Niech \( (\theta_t)_{t \ge 1} \) będzie ściśle stacjonarnym ciągiem rzeczywistym (np. łańcuchem Markowa startującym z rozkładu stacjonarnego \( \pi \)) o średniej \( \mu = \mathbb{E}_\pi\theta \), wariancji \( 0 \lt \sigma^2 \lt \infty \) i funkcji autokorelacji \( \rho_t = \operatorname{Corr}(\theta_s, \theta_{s+t}) \).</p>
+<div class="ml-box ml-def" id="def-czas-autokorelacji"><p class="ml-box-title">Definicja (scałkowany czas autokorelacji)</p>
+<p>Jeżeli \( \sum_{t=1}^\infty |\rho_t| \lt \infty \), to scałkowanym czasem autokorelacji (ang. <em>integrated autocorrelation time</em>) nazywamy</p>
+<div class="ml-eq" id="eq-effective-sample-size-tau">\[ \tau \;=\; 1 + 2\sum_{t=1}^{\infty}\rho_t. \]</div>
+</div>
+<div class="ml-box ml-def" id="def-ess"><p class="ml-box-title">Definicja (efektywna liczebność próby)</p>
+<p>Dla \( m \) łańcuchów po \( n \) próbek (łącznie \( S = mn \)) efektywną liczebnością próby nazywamy</p>
+<div class="ml-eq" id="eq-effective-sample-size">\[ \text{ESS} \;=\; \frac{S}{\tau} \;=\; \frac{mn}{1 + 2\sum_{t=1}^{\infty}\rho_t}. \]</div>
+<p>Uzasadnieniem definicji jest twierdzenie graniczne <a class="ml-eqref" href="#eq-effective-sample-size-clt"></a>: \( \operatorname{Var}(\bar\theta) \approx \sigma^2/\text{ESS} \).</p>
+</div>
+<div class="ml-box ml-def" id="def-bulk-tail"><p class="ml-box-title">Definicja (bulk-ESS i tail-ESS)</p>
+<p><strong>Bulk-ESS</strong> to ESS <a class="ml-eqref" href="#eq-effective-sample-size"></a> obliczona dla rank-normalizowanych wartości z łańcuchów podzielonych na połowy (te same przekształcenia co w <a data-concept="r-hat" data-anchor="definicja">rank-normalizowanym R-hat</a>). <strong>Tail-ESS</strong> to minimum ESS obliczonych dla dwóch ciągów wskaźnikowych \( I(\theta_t \le \hat q_{0{,}05}) \) i \( I(\theta_t \le \hat q_{0{,}95}) \), gdzie \( \hat q_\alpha \) jest empirycznym kwantylem rzędu \( \alpha \) połączonej próbki:</p>
+<div class="ml-eq" id="eq-effective-sample-size-tail">\[ \text{ESS}_{\text{tail}} \;=\; \min\Big\{ \text{ESS}\big[I(\theta \le \hat q_{0{,}05})\big],\ \text{ESS}\big[I(\theta \le \hat q_{0{,}95})\big] \Big\}. \]</div>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\( m,\ n,\ S \)</td><td>liczba łańcuchów, długość łańcucha, łączna liczba próbek \( S = mn \)</td></tr>
+<tr><td>\( \theta_t,\ \theta_{tj} \)</td><td>wartość badanej wielkości w iteracji \( t \) (łańcucha \( j \))</td></tr>
+<tr><td>\( \mu,\ \sigma^2 \)</td><td>średnia i wariancja \( \theta \) w rozkładzie docelowym</td></tr>
+<tr><td>\( \rho_t \)</td><td>autokorelacja rzędu (opóźnienia) \( t \)</td></tr>
+<tr><td>\( \gamma_t \)</td><td>autokowariancja rzędu \( t \); \( \rho_t = \gamma_t/\gamma_0 \)</td></tr>
+<tr><td>\( \tau \)</td><td>scałkowany czas autokorelacji</td></tr>
+<tr><td>\( \hat\rho_t,\ \hat\rho_{t,j} \)</td><td>estymator wielołańcuchowy i estymator w łańcuchu \( j \)</td></tr>
+<tr><td>\( W,\ \widehat{\operatorname{var}}^{+} \)</td><td>wariancja wewnątrzłańcuchowa i estymator wariancji brzegowej (jak w R-hat)</td></tr>
+<tr><td>\( \hat P_k \)</td><td>suma sąsiednich autokorelacji \( \hat\rho_{2k} + \hat\rho_{2k+1} \) (pary Geyera)</td></tr>
+<tr><td>\( \hat q_\alpha \)</td><td>empiryczny kwantyl rzędu \( \alpha \)</td></tr>
+<tr><td>\( \text{ESS},\ \text{ESS}_{\text{bulk}},\ \text{ESS}_{\text{tail}} \)</td><td>efektywna liczebność próby i jej wersje</td></tr>
+<tr><td>\( \text{MCSE} \)</td><td>błąd standardowy Monte Carlo estymatora</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li><strong>Stacjonarność.</strong> Definicja dotyczy łańcucha w stanie stacjonarnym; próbki z fazy rozgrzewania należy odrzucić. ESS nie wykrywa braku zbieżności — od tego jest <a data-concept="r-hat">R-hat</a>.</li>
+<li><strong>Skończona wariancja i sumowalność autokorelacji.</strong> Dla wersji klasycznej potrzebne jest \( \sigma^2 \lt \infty \) i \( \sum|\rho_t| \lt \infty \) (geometryczna ergodyczność łańcucha jest warunkiem wystarczającym w typowych zastosowaniach). Wersja rank-normalizowana omija problem nieskończonej wariancji.</li>
+<li><strong>Odwracalność</strong> (dla estymatora Geyera). Twierdzenie o dodatniości i monotoniczności par autokorelacji, na którym opiera się obcięcie sumy, dotyczy łańcuchów odwracalnych. NUTS jest konstrukcją odwracalną w odpowiednim sensie, a w praktyce estymator działa dobrze.</li>
+<li><strong>Wielkość skalarna.</strong> ESS liczy się osobno dla każdego parametru i każdej funkcji parametrów; ESS średniej, kwantyla i prawdopodobieństwa zdarzenia mogą się znacznie różnić.</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Wariancja średniej z \( N \) kolejnych wartości ciągu stacjonarnego:</p>
+<div class="ml-eq" id="eq-effective-sample-size-varmean">\[ \operatorname{Var}(\bar\theta_N) \;=\; \frac{\sigma^2}{N}\left[1 + 2\sum_{t=1}^{N-1}\Big(1 - \frac{t}{N}\Big)\rho_t\right]. \]</div>
+<p>Centralne twierdzenie graniczne dla łańcuchów Markowa:</p>
+<div class="ml-eq" id="eq-effective-sample-size-clt">\[ \sqrt{N}\,(\bar\theta_N - \mu) \xrightarrow{d} N\big(0,\ \sigma^2\tau\big), \qquad \operatorname{Var}(\bar\theta_N) \approx \frac{\sigma^2\tau}{N} = \frac{\sigma^2}{\text{ESS}}. \]</div>
+<p>Estymator wielołańcuchowy autokorelacji <cite data-bib="vehtari2021rhat"></cite>, <cite data-bib="gelman2013bda"></cite> — łączy autokorelacje w łańcuchach \( \hat\rho_{t,j} \) z informacją o różnicach między łańcuchami zawartą w \( \widehat{\operatorname{var}}^{+} \):</p>
+<div class="ml-eq" id="eq-effective-sample-size-rho">\[ \hat\rho_t \;=\; 1 - \frac{W - \frac1m\sum_{j=1}^m s_j^2\,\hat\rho_{t,j}}{\widehat{\operatorname{var}}^{+}}. \]</div>
+<p>Obcięcie sumy metodą początkowego ciągu dodatniego Geyera <cite data-bib="geyer1992"></cite>: tworzymy pary \( \hat P_k = \hat\rho_{2k} + \hat\rho_{2k+1} \) (\( \hat\rho_0 = 1 \)) i sumujemy do ostatniego \( K \), dla którego wszystkie \( \hat P_0,\dots,\hat P_K \) są dodatnie (w wersji „monotonicznej” dodatkowo wymuszamy \( \hat P_k \le \hat P_{k-1} \)):</p>
+<div class="ml-eq" id="eq-effective-sample-size-geyer">\[ \hat\tau \;=\; -1 + 2\sum_{k=0}^{K}\hat P_k, \qquad \widehat{\text{ESS}} = \frac{S}{\hat\tau}. \]</div>
+<p>Błędy Monte Carlo (dla średniej, dla prawdopodobieństwa zdarzenia \( p = P(\theta \in A) \)):</p>
+<div class="ml-eq" id="eq-effective-sample-size-mcse">\[ \text{MCSE}(\bar\theta) \;=\; \frac{\hat\sigma}{\sqrt{\text{ESS}_{\text{bulk}}}}, \qquad \text{MCSE}(\hat p) \;=\; \sqrt{\frac{\hat p(1-\hat p)}{\text{ESS}\big[I(\theta\in A)\big]}}. \]</div>
+<p>Dla łańcucha autoregresyjnego rzędu 1 (AR(1)) z \( \rho_t = \rho^t \), \( |\rho| \lt 1 \):</p>
+<div class="ml-eq" id="eq-effective-sample-size-ar1">\[ \tau \;=\; \frac{1+\rho}{1-\rho}, \qquad \text{ESS} = S\,\frac{1-\rho}{1+\rho}. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-ess-wariancja"><p class="ml-box-title">Twierdzenie (wariancja średniej ciągu stacjonarnego)</p>
+<p>Dla ciągu stacjonarnego w szerokim sensie o wariancji \( \sigma^2 \) zachodzi <a class="ml-eqref" href="#eq-effective-sample-size-varmean"></a>. Jeśli \( \sum_{t\ge1}|\rho_t| \lt \infty \), to \( N\operatorname{Var}(\bar\theta_N) \to \sigma^2\tau \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-ess-ar1"><p class="ml-box-title">Twierdzenie (ESS dla AR(1))</p>
+<p>Jeżeli \( \rho_t = \rho^t \) z \( |\rho| \lt 1 \), to \( \tau = (1+\rho)/(1-\rho) \). W szczególności dla \( \rho > 0 \) jest \( \text{ESS} \lt S \), a dla \( \rho \lt 0 \) (próbki antytetyczne) \( \text{ESS} > S \).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-ess-geyer"><p class="ml-box-title">Twierdzenie (Geyer 1992)</p>
+<p>Dla stacjonarnego, odwracalnego łańcucha Markowa ciąg \( \Gamma_k = \gamma_{2k} + \gamma_{2k+1} \) jest ściśle dodatni, malejący i wypukły w \( k \) <cite data-bib="geyer1992"></cite>. Uzasadnia to obcięcie sumy w <a class="ml-eqref" href="#eq-effective-sample-size-geyer"></a> w miejscu, gdzie estymowane \( \hat P_k \) po raz pierwszy staje się ujemne — dalsze wyrazy są zdominowane przez szum estymacji.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<div class="ml-proof"><p class="ml-box-title">Dowód (wariancja średniej)</p>
+<ol>
+<li>\( \operatorname{Var}(\bar\theta_N) = \frac{1}{N^2}\sum_{s=1}^N\sum_{u=1}^N \operatorname{Cov}(\theta_s,\theta_u) = \frac{1}{N^2}\sum_{s,u}\gamma_{|s-u|} \) ze stacjonarności.</li>
+<li>Grupujemy pary według opóźnienia \( t = |s-u| \): opóźnienie \( 0 \) występuje \( N \) razy, a każde \( t = 1,\dots,N-1 \) — \( 2(N-t) \) razy (pary uporządkowane w obu kierunkach).</li>
+<li>Stąd \( \operatorname{Var}(\bar\theta_N) = \frac{1}{N^2}\Big[N\gamma_0 + 2\sum_{t=1}^{N-1}(N-t)\gamma_t\Big] = \frac{\gamma_0}{N}\Big[1 + 2\sum_{t=1}^{N-1}\big(1-\tfrac tN\big)\rho_t\Big] \), co jest wzorem <a class="ml-eqref" href="#eq-effective-sample-size-varmean"></a> (\( \gamma_0 = \sigma^2 \)).</li>
+<li>Gdy \( \sum|\rho_t| \lt \infty \): wyrazy \( (1-t/N)\rho_t\,I(t \lt N) \) są ograniczone przez \( |\rho_t| \) i dążą do \( \rho_t \); z twierdzenia o zbieżności zmajoryzowanej (dla szeregów) \( \sum_{t=1}^{N-1}(1-t/N)\rho_t \to \sum_{t\ge1}\rho_t \). Zatem \( N\operatorname{Var}(\bar\theta_N) \to \sigma^2\tau \).</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (ESS dla AR(1))</p>
+<ol>
+<li>\( \sum_{t=1}^\infty \rho^t = \dfrac{\rho}{1-\rho} \) (szereg geometryczny, \( |\rho| \lt 1 \)).</li>
+<li>\( \tau = 1 + \dfrac{2\rho}{1-\rho} = \dfrac{1-\rho+2\rho}{1-\rho} = \dfrac{1+\rho}{1-\rho} \).</li>
+<li>Dla \( \rho > 0 \) licznik jest większy od mianownika, więc \( \tau > 1 \) i \( \text{ESS} = S/\tau \lt S \); dla \( \rho \lt 0 \) odwrotnie.</li>
+</ol>
+<p class="ml-qed">∎</p></div>
+<h3 id="skad-estymator-wielolancuchowy">Skąd estymator wielołańcuchowy</h3>
+<p>Gdyby liczyć autokorelację tylko wewnątrz łańcuchów, łańcuchy, które utknęły w różnych obszarach, wyglądałyby na „dobrze mieszające się” lokalnie, a ESS byłoby zawyżone. We wzorze <a class="ml-eqref" href="#eq-effective-sample-size-rho"></a> mianownik \( \widehat{\operatorname{var}}^{+} \) zawiera wariancję międzyłańcuchową \( B \). Dla \( t = 0 \) (\( \hat\rho_{0,j} = 1 \)) dostajemy \( \hat\rho_0 = 1 - (W-W)/\widehat{\operatorname{var}}^{+} = 1 \), a dla \( t \ge 1 \), gdy \( B \gg W \), wartość \( \hat\rho_t \) pozostaje bliska 1 nawet przy szybko zanikających autokorelacjach wewnętrznych — ESS spada, sygnalizując problem. Gdy łańcuchy są zgodne, \( \widehat{\operatorname{var}}^{+} \approx W \) i \( \hat\rho_t \) jest średnią ważoną autokorelacji z łańcuchów.</p>
+<h3 id="dlaczego-tail-ess">Dlaczego osobno tail-ESS</h3>
+<p>Kwantyl \( q_\alpha \) jest wyznaczony przez zdarzenie \( \{\theta \le q_\alpha\} \). Błąd estymacji kwantyla zależy więc od tego, jak dobrze łańcuch estymuje prawdopodobieństwo \( P(\theta \le q_\alpha) \), czyli od ESS ciągu wskaźnikowego \( I(\theta_t \le q_\alpha) \). Łańcuch może bardzo sprawnie poruszać się w centrum rozkładu, a rzadko i powoli odwiedzać ogony (typowe dla parametrów wariancyjnych modeli hierarchicznych) — wtedy bulk-ESS jest duże, a tail-ESS małe. Wybór kwantyli 5% i 95% odpowiada końcom 90-procentowego przedziału; dla 95-procentowych przedziałów wiarygodności (2,5% i 97,5%) potrzeba w praktyce jeszcze większego zapasu.</p>
+<h3 id="prog-400">Skąd próg 400</h3>
+<p>Vehtari i in. <cite data-bib="vehtari2021rhat"></cite> zalecają, by przy 4 łańcuchach bulk- i tail-ESS przekraczały 400, czyli ok. 100 na łańcuch. Uzasadnienie jest dwojakie: (i) przy mniejszej ESS sama estymata autokorelacji, a więc i ESS oraz R-hat, jest niewiarygodna; (ii) przy ESS = 400 błąd MCSE średniej wynosi \( \sigma/20 = 0{,}05\sigma \), co jest zaniedbywalne wobec niepewności a posteriori \( \sigma \). Wymóg „100 na łańcuch” skaluje się z liczbą łańcuchów: przy 8 łańcuchach odpowiada mu 800.</p>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong> 4 łańcuchy NUTS po 1000 próbek (\( S = 4000 \)) dla parametru efektu rywala \( R_j \). Estymowane autokorelacje wielołańcuchowe:</p>
+<table class="ml-table">
+<thead><tr><th>\( t \)</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th></tr></thead>
+<tbody><tr><td>\( \hat\rho_t \)</td><td>1</td><td>0,62</td><td>0,40</td><td>0,25</td><td>0,15</td><td>0,08</td><td>0,03</td><td>−0,02</td><td>−0,05</td><td>−0,03</td></tr></tbody>
+</table>
+<ol class="ml-steps">
+<li><strong>Pary Geyera.</strong> \( \hat P_0 = 1 + 0{,}62 = 1{,}62 \); \( \hat P_1 = 0{,}40 + 0{,}25 = 0{,}65 \); \( \hat P_2 = 0{,}15 + 0{,}08 = 0{,}23 \); \( \hat P_3 = 0{,}03 - 0{,}02 = 0{,}01 \); \( \hat P_4 = -0{,}05 - 0{,}03 = -0{,}08 \lt 0 \) — obcinamy, \( K = 3 \). Ciąg \( 1{,}62 \ge 0{,}65 \ge 0{,}23 \ge 0{,}01 \) jest monotoniczny, więc korekta monotoniczności nic nie zmienia.</li>
+<li><strong>Czas autokorelacji.</strong> \( \hat\tau = -1 + 2(1{,}62 + 0{,}65 + 0{,}23 + 0{,}01) = -1 + 2\cdot 2{,}51 = 4{,}02 \). (Kontrola: \( 1 + 2(0{,}62+0{,}40+0{,}25+0{,}15+0{,}08+0{,}03-0{,}02) = 1 + 2\cdot1{,}51 = 4{,}02 \).)</li>
+<li><strong>ESS.</strong> \( \widehat{\text{ESS}} = 4000/4{,}02 \approx 995 \). Próg 400 jest spełniony z zapasem (ok. 249 na łańcuch).</li>
+<li><strong>Porównanie z AR(1).</strong> Autokorelacje są zbliżone do \( 0{,}6^t \) (\( 0{,}6;\ 0{,}36;\ 0{,}216;\dots \)); wzór <a class="ml-eqref" href="#eq-effective-sample-size-ar1"></a> daje \( \tau = 1{,}6/0{,}4 = 4 \) i ESS = 1000 — zgodnie z wynikiem estymatora.</li>
+<li><strong>MCSE średniej.</strong> Przy odchyleniu standardowym a posteriori \( \hat\sigma = 0{,}06 \): \( \text{MCSE} = 0{,}06/\sqrt{995} = 0{,}06/31{,}54 \approx 0{,}0019 \). Średnią a posteriori (np. 0,214) wolno więc raportować z dokładnością do dwóch miejsc po przecinku.</li>
+<li><strong>Tail-ESS.</strong> Dla ciągów wskaźnikowych \( I(\theta \le \hat q_{0{,}05}) \) i \( I(\theta \le \hat q_{0{,}95}) \) otrzymano ESS równe odpowiednio 420 i 380. Zatem \( \text{ESS}_{\text{tail}} = \min(420, 380) = 380 \lt 400 \): górny koniec przedziału jest estymowany zbyt mało precyzyjnie. Zakładając proporcjonalność ESS do \( S \), potrzeba \( S \approx 4000\cdot 400/380 \approx 4211 \) próbek; w praktyce wydłużamy łańcuchy np. do 1500 próbek każdy.</li>
+<li><strong>MCSE prawdopodobieństwa.</strong> Dla \( \hat p = P(\mathrm{IAF} > 100) = 0{,}85 \) i ESS ciągu wskaźnikowego 380: \( \text{MCSE} = \sqrt{0{,}85\cdot0{,}15/380} = \sqrt{0{,}0003355} \approx 0{,}018 \). Raportowanie „85,3%” byłoby więc złudnie precyzyjne; uczciwie: „ok. 85% (±4 pp. błędu Monte Carlo)”. Dla porównania: przy 4000 niezależnych próbkach MCSE wynosiłby \( \sqrt{0{,}1275/4000} \approx 0{,}0056 \).</li>
+</ol>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<ul>
+<li><strong>ESS jako budżet informacji.</strong> ESS = 995 przy \( S = 4000 \) oznacza, że łańcuch jest ok. 4 razy „mniej wydajny” od losowania niezależnego. Stosunek \( \text{ESS}/S \) (efektywność) jest dobrą miarą jakości próbnika dla danego parametru.</li>
+<li><strong>ESS większe od \( S \).</strong> Dla NUTS zdarza się \( \text{ESS} > S \) dla parametrów o prawie gaussowskim posteriorze — ujemne autokorelacje nieparzystych rzędów (próbki „przeskakują” na drugą stronę średniej). Nie jest to błąd.</li>
+<li><strong>Bulk vs tail.</strong> Duże bulk-ESS i małe tail-ESS: średnie i mediany są wiarygodne, ale końce przedziałów wiarygodności i prawdopodobieństwa zdarzeń rzadkich — nie. Odwrotna sytuacja jest rzadka.</li>
+<li><strong>Precyzja raportu.</strong> MCSE wyznacza liczbę cyfr znaczących: nie raportujemy wyników z dokładnością większą niż ok. 2·MCSE.</li>
+<li><strong>Niska ESS jako objaw.</strong> ESS rzędu kilkudziesięciu przy tysiącach próbek oznacza zwykle złą geometrię posteriora (lejki, silne korelacje parametrów, słabą identyfikowalność), a nie po prostu „za krótki łańcuch”.</li>
+</ul>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<p>W <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> próbkowanie NUTS w 4 łańcuchach jest akceptowane, gdy dla wszystkich parametrów bulk-ESS ≥ 400 i tail-ESS ≥ 400, \( \widehat{R} \lt 1{,}01 \) i nie wystąpiły dywergencje.</p>
+<ul>
+<li><strong>Wskaźniki raportowe.</strong> Indeks IAF raportujemy jako medianę a posteriori, 95% przedział wiarygodności i \( P(\mathrm{IAF} > 100) \). Mediana zależy od bulk-ESS, końce przedziału — od tail-ESS, a prawdopodobieństwo — od ESS odpowiedniego ciągu wskaźnikowego. W raportach klubowych zaokrąglamy IAF do liczb całkowitych, a \( P(\mathrm{IAF}>100) \) do pełnych punktów procentowych, co jest spójne z typowymi wartościami MCSE.</li>
+<li><strong>Parametry wariancyjne.</strong> Odchylenia efektów losowych \( \sigma_{HS} \) i \( \sigma_{RS} \) (interakcje z sezonem) mają zwykle najniższe tail-ESS: dane zawierają mało informacji o zmienności efektów sezonowych, posterior ma masę przy zerze, a parametryzacja niecentrowana poprawia, lecz nie zawsze usuwa problem.</li>
+<li><strong>Kluby z pucharów EHF.</strong> Dla przeciwników z europejskich pucharów, występujących w danych raz lub dwa razy, posterior efektu \( R_j \) jest prawie równy priorowi; ESS jest wtedy wysokie (posterior prawie gaussowski), ale sama wielkość jest mało informatywna — ESS mierzy jakość obliczeń, nie ilość informacji w danych.</li>
+<li><strong>Prognozy.</strong> Prawdopodobieństwa typu \( P(W \ge 95\%) \) w prognozie meczu to średnie z próbek; ich MCSE oblicza się wzorem <a class="ml-eqref" href="#eq-effective-sample-size-mcse"></a> i zwykle nie przekracza jednego punktu procentowego.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>ESS zakłada zbieżność.</strong> Wysoka ESS w łańcuchach, które utknęły w różnych modach, nie ma sensu; estymator wielołańcuchowy częściowo to wychwytuje, ale podstawową diagnostyką zbieżności pozostaje <a data-concept="r-hat">R-hat</a>.</li>
+<li><strong>ESS jest estymatą.</strong> Estymacja \( \tau \) z próby ma dużą wariancję, szczególnie przy wolno zanikających autokorelacjach; przy krótkich łańcuchach wynik bywa zbyt optymistyczny.</li>
+<li><strong>Zależność od funkcji.</strong> ESS dotyczy konkretnej wielkości (średniej, kwantyla, prawdopodobieństwa). Duża ESS dla średniej nie gwarantuje dużej ESS dla 99. percentyla.</li>
+<li><strong>Brak odpowiedzi na pytanie o model.</strong> ESS mówi, jak dokładnie obliczyliśmy wielkości a posteriori <em>danego modelu</em>; nie mówi nic o tym, czy model dobrze opisuje dane — to zadanie <a data-concept="posterior-predictive-checks">posterior predictive checks</a> i walidacji prognoz.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="r-hat">R-hat</a> — diagnostyka zbieżności, używająca tych samych przekształceń (split, rank-normalizacja).</li>
+<li><a data-concept="autokorelacja">Autokorelacja</a> — funkcja \( \rho_t \), z której liczy się \( \tau \).</li>
+<li><a data-concept="mcmc">MCMC i Hamiltonian Monte Carlo</a> — źródło skorelowanych próbek.</li>
+<li><a data-concept="metody-monte-carlo">Metody Monte Carlo</a> — błąd Monte Carlo przy próbkach niezależnych (\( \tau = 1 \)).</li>
+<li><a data-concept="przedzial-wiarygodnosci">Przedział wiarygodności</a> — jego końce wymagają dużej tail-ESS.</li>
+<li><a data-concept="percentyle">Percentyle</a> — kwantyle empiryczne używane w tail-ESS.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="vehtari2021rhat"></li>
+<li data-bib="geyer1992"></li>
+<li data-bib="doc-arviz-ess"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="robert2004"></li>
+<li data-bib="doc-stan-reference"></li>
+</ul>
+</section>

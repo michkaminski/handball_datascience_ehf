@@ -20,8 +20,8 @@ Spectators of played matches. Matches without known attendance are excluded from
   [Filter]  [Clear]
 
 [ Tabs ]  .match-tabs, role=tablist, data-attendance-tabs
-  Overview | Trends | Clubs | Cities | Records | Opponents | Calendar | Extended records | Data science
-  data-tab: overview trends clubs cities records opponents calendar extended science
+  Overview | Trends | Clubs | Cities | Records | Opponents | Calendar | Extended records | Data science | Opponent appeal (MAF)
+  data-tab: overview trends clubs cities records opponents calendar extended science maf
   panels: section#att-panel-<data-tab>[data-attendance-panel]; only the active panel is visible
   ?tab=<data-tab> selects a tab on load; switching a tab updates the URL with history.replaceState
   charts are drawn the first time their panel is shown (hidden panels have no size)
@@ -98,6 +98,9 @@ Spectators of played matches. Matches without known attendance are excluded from
   Opponent effect (home club filter only) opponent mean − host mean, best and worst 10
   Result correlation  Pearson r: spectators vs goal difference and vs total goals
   Forecast        OLS, chronological 80/20 split, MAE/RMSE against a baseline
+
+[ Opponent appeal (MAF) ]                                #att-panel-maf
+  → see attendance_appeal.md
 ```
 
 Rules:

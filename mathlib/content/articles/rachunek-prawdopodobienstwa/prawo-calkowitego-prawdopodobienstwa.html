@@ -1,0 +1,166 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Jak policzyć prawdopodobieństwo kompletu widzów w „losowym” meczu ligi, skoro wiemy, że w rundzie zasadniczej komplety są rzadkie, w play-off częstsze, a w finałach — typowe? Wystarczy rozbić wszystkie mecze na rozłączne grupy (fazy rozgrywek), w każdej grupie wziąć prawdopodobieństwo kompletu i uśrednić je z wagami równymi udziałom grup. To jest <strong>prawo całkowitego prawdopodobieństwa</strong> (ang. <em>law of total probability</em>).</p>
+<p>Ta prosta reguła „rozbij na przypadki i uśrednij” ma fundamentalne znaczenie w statystyce bayesowskiej. Jej wersja ciągła mówi, że <a data-concept="rozklad-predykcyjny">rozkład predykcyjny</a> przyszłej obserwacji to średnia rozkładów warunkowych przy wszystkich możliwych wartościach parametrów, ważona rozkładem a posteriori. Tak właśnie model MAF tworzy prognozy frekwencji.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-podzial"><p class="ml-box-title">Definicja (podział przestrzeni)</p>
+<p>Rodzinę zdarzeń \(\{A_j\}_{j\in J}\subseteq\mathcal F\), \(J\) skończony lub przeliczalny, nazywamy <strong>podziałem</strong> (rozbiciem) \(\Omega\), jeśli \(A_i\cap A_j=\varnothing\) dla \(i\neq j\) oraz \(\bigcup_{j\in J}A_j=\Omega\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-calkowite-prawdopodobienstwo"><p class="ml-box-title">Twierdzenie (prawo całkowitego prawdopodobieństwa)</p>
+<p>Niech \(\{A_j\}_{j\in J}\) będzie podziałem \(\Omega\) z \(P(A_j)\gt0\) dla każdego \(j\). Wtedy dla każdego \(B\in\mathcal F\):</p>
+<div class="ml-eq" id="eq-prawo-calkowitego-prawdopodobienstwa">\[ P(B)=\sum_{j\in J}P(B\mid A_j)\,P(A_j). \]</div>
+</div>
+<h3 id="wersja-ciagla">Wersja dla zmiennych losowych</h3>
+<p>Jeśli \(\Theta\) jest zmienną (wektorem) losową o gęstości \(p(\theta)\), a \(Y\) ma gęstość warunkową \(p(y\mid\theta)\), to</p>
+<div class="ml-eq" id="eq-prawo-calkowitego-prawdopodobienstwa-ciagle">\[ p(y)=\int p(y\mid\theta)\,p(\theta)\,d\theta, \qquad P(Y\in B)=\int P(Y\in B\mid\Theta=\theta)\,p(\theta)\,d\theta. \]</div>
+<p>W wersji dyskretnej całkę zastępuje suma. Rozkład \(p(y)\) nazywa się <strong>rozkładem brzegowym</strong> albo <strong>mieszaniną</strong> (ang. <em>mixture</em>) rozkładów \(p(y\mid\theta)\) z rozkładem mieszającym \(p(\theta)\).</p>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(\{A_j\}\)</td><td>podział \(\Omega\) (przypadki, scenariusze, grupy)</td></tr>
+<tr><td>\(B\)</td><td>zdarzenie, którego prawdopodobieństwo liczymy</td></tr>
+<tr><td>\(P(B\mid A_j)\)</td><td>prawdopodobieństwo \(B\) w przypadku \(j\)</td></tr>
+<tr><td>\(P(A_j)\)</td><td>waga przypadku \(j\)</td></tr>
+<tr><td>\(\theta\), \(\Theta\)</td><td>parametr (realizacja i zmienna losowa)</td></tr>
+<tr><td>\(p(y\mid\theta)\)</td><td>rozkład warunkowy obserwacji przy parametrze</td></tr>
+<tr><td>\(p(y)\)</td><td>rozkład brzegowy (mieszanina)</td></tr>
+<tr><td>\(\tilde y\)</td><td>przyszła obserwacja</td></tr>
+<tr><td>\(\theta^{(s)}\)</td><td>\(s\)-ta próbka z rozkładu a posteriori, \(s=1,\ldots,S\)</td></tr>
+<tr><td>\(K\)</td><td>w przykładzie: komplet widzów</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>Zdarzenia \(A_j\) są <strong>parami rozłączne</strong> i <strong>wyczerpujące</strong>; podział musi być co najwyżej przeliczalny (dla nieprzeliczalnych „podziałów” stosujemy wersję całkową).</li>
+<li>\(P(A_j)\gt0\), aby \(P(B\mid A_j)\) było zdefiniowane. Przypadki o prawdopodobieństwie zero można pominąć, bo \(P(B\cap A_j)=0\).</li>
+<li>W wersji całkowej: istnieje łączna gęstość \(p(y,\theta)=p(y\mid\theta)p(\theta)\) i funkcja podcałkowa jest całkowalna (twierdzenie Fubiniego–Tonellego; dla funkcji nieujemnych zawsze wolno zamieniać kolejność całkowania).</li>
+<li>W zastosowaniu predykcyjnym: przyszła obserwacja jest warunkowo niezależna od danych historycznych przy danych parametrach, \(p(\tilde y\mid\theta,y)=p(\tilde y\mid\theta)\).</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Przypadek dwóch zdarzeń (\(A\), \(A^c\)):</p>
+<div class="ml-eq" id="eq-prawo-calkowitego-prawdopodobienstwa-dwa">\[ P(B)=P(B\mid A)\,P(A)+P(B\mid A^c)\,\big(1-P(A)\big). \]</div>
+<p>Wersja warunkowa (całe rozumowanie przy dodatkowej informacji \(C\)):</p>
+<div class="ml-eq" id="eq-prawo-calkowitego-prawdopodobienstwa-warunkowe">\[ P(B\mid C)=\sum_jP(B\mid A_j\cap C)\,P(A_j\mid C). \]</div>
+<p>Rozkład predykcyjny a posteriori:</p>
+<div class="ml-eq" id="eq-prawo-calkowitego-prawdopodobienstwa-predykcja">\[ p(\tilde y\mid y)=\int p(\tilde y\mid\theta)\,p(\theta\mid y)\,d\theta\ \approx\ \frac1S\sum_{s=1}^{S}p\big(\tilde y\mid\theta^{(s)}\big). \]</div>
+<p>Rozkład beta-dwumianowy jako mieszanina:</p>
+<div class="ml-eq" id="eq-prawo-calkowitego-prawdopodobienstwa-betabin">\[ P(A=k)=\int_0^1\binom Ck p^k(1-p)^{C-k}\,\frac{p^{a-1}(1-p)^{b-1}}{B(a,b)}\,dp=\binom Ck\frac{B(k+a,\,C-k+b)}{B(a,b)}. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<p>Główne twierdzenie sformułowano w sekcji <a href="#definicja">Definicja formalna</a>. Dodatkowo:</p>
+<div class="ml-box ml-thm" id="thm-wypuklosc"><p class="ml-box-title">Twierdzenie (ograniczenie przez przypadki skrajne)</p>
+<p>Przy założeniach prawa całkowitego prawdopodobieństwa \(\min_jP(B\mid A_j)\le P(B)\le\max_jP(B\mid A_j)\): prawdopodobieństwo całkowite leży w otoczce wypukłej prawdopodobieństw warunkowych.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-predykcja-poprawna"><p class="ml-box-title">Twierdzenie (poprawność rozkładu predykcyjnego)</p>
+<p>Jeśli \(\tilde y\) i \(y\) są warunkowo niezależne przy \(\theta\), to \(p(\tilde y\mid y)=\int p(\tilde y\mid\theta)\,p(\theta\mid y)\,d\theta\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-zgodnosc-mc"><p class="ml-box-title">Twierdzenie (zbieżność przybliżenia Monte Carlo)</p>
+<p>Jeśli \(\theta^{(1)},\theta^{(2)},\ldots\) są niezależnymi próbkami z \(p(\theta\mid y)\), to \(\frac1S\sum_sP(\tilde y\in B\mid\theta^{(s)})\to P(\tilde y\in B\mid y)\) prawie na pewno (mocne prawo wielkich liczb, bo składniki są ograniczone przez 1). Dla łańcuchów MCMC analogiczny wynik daje ergodyczne prawo wielkich liczb <cite data-bib="robert2004"></cite>.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<div class="ml-proof"><p class="ml-box-title">Dowód prawa całkowitego prawdopodobieństwa</p>
+<p>Ponieważ \(\{A_j\}\) jest podziałem, zdarzenie \(B\) rozkłada się na sumę rozłączną:</p>
+<div class="ml-eq" id="eq-prawo-calkowitego-prawdopodobienstwa-dowod">\[ \begin{aligned} B &amp;= B\cap\Omega=B\cap\bigcup_jA_j=\bigcup_j(B\cap A_j),\\ P(B) &amp;= \sum_jP(B\cap A_j) &amp;&amp; \text{(przeliczalna addytywność, zbiory rozłączne)}\\ &amp;= \sum_jP(B\mid A_j)\,P(A_j) &amp;&amp; \text{(reguła mnożenia).} \end{aligned} \]</div>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód wersji ciągłej</p>
+<p>Gęstość brzegowa to całka gęstości łącznej po zmiennej, której się „pozbywamy”: \(p(y)=\int p(y,\theta)\,d\theta\). Z definicji gęstości warunkowej \(p(y,\theta)=p(y\mid\theta)p(\theta)\), co daje pierwszy wzór <a class="ml-eqref" href="#eq-prawo-calkowitego-prawdopodobienstwa-ciagle"></a>. Całkując po \(y\in B\) i zamieniając kolejność całkowania (Tonelli — funkcja nieujemna):</p>
+<div class="ml-eq" id="eq-prawo-calkowitego-prawdopodobienstwa-dowod-ciagle">\[ P(Y\in B)=\int_B\int p(y\mid\theta)p(\theta)\,d\theta\,dy=\int\Big(\int_Bp(y\mid\theta)\,dy\Big)p(\theta)\,d\theta=\int P(Y\in B\mid\theta)\,p(\theta)\,d\theta. \]</div>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód ograniczenia przez przypadki skrajne</p>
+<p>Wagi \(P(A_j)\) są nieujemne i sumują się do 1, więc \(P(B)\) jest średnią ważoną liczb \(P(B\mid A_j)\); średnia ważona leży między najmniejszą a największą z uśrednianych wartości: \(\sum_jP(B\mid A_j)P(A_j)\le\max_jP(B\mid A_j)\sum_jP(A_j)=\max_jP(B\mid A_j)\), analogicznie dla minimum.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód poprawności rozkładu predykcyjnego</p>
+<p>Stosujemy wersję ciągłą przy dodatkowym warunku \(y\) (analog <a class="ml-eqref" href="#eq-prawo-calkowitego-prawdopodobienstwa-warunkowe"></a>): \(p(\tilde y\mid y)=\int p(\tilde y,\theta\mid y)\,d\theta=\int p(\tilde y\mid\theta,y)\,p(\theta\mid y)\,d\theta\). Z warunkowej niezależności \(p(\tilde y\mid\theta,y)=p(\tilde y\mid\theta)\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Wyprowadzenie wzoru beta-dwumianowego <a class="ml-eqref" href="#eq-prawo-calkowitego-prawdopodobienstwa-betabin"></a></p>
+<p>Łącząc potęgi pod całką: \(\binom Ck\frac1{B(a,b)}\int_0^1p^{k+a-1}(1-p)^{C-k+b-1}dp\). Całka to z definicji funkcja beta \(B(k+a,\,C-k+b)\).</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<h3 id="przyklad-fazy">Komplet widzów a faza rozgrywek</h3>
+<p><strong>Dane ilustracyjne.</strong> Mecze Superligi dzielimy na trzy rozłączne fazy:</p>
+<table class="ml-table">
+<thead><tr><th>Faza \(A_j\)</th><th>Udział \(P(A_j)\)</th><th>\(P(K\mid A_j)\)</th><th>Iloczyn</th></tr></thead>
+<tbody>
+<tr><td>Runda zasadnicza</td><td>0,80</td><td>0,08</td><td>0,064</td></tr>
+<tr><td>Play-off (bez finału)</td><td>0,15</td><td>0,30</td><td>0,045</td></tr>
+<tr><td>Finał</td><td>0,05</td><td>0,60</td><td>0,030</td></tr>
+<tr><td>Razem</td><td>1,00</td><td></td><td>0,139</td></tr>
+</tbody>
+</table>
+<ol class="ml-steps">
+<li><strong>Kontrola podziału.</strong> \(0{,}80+0{,}15+0{,}05=1{,}00\). ✓</li>
+<li><strong>Iloczyny.</strong> \(0{,}80\cdot0{,}08=0{,}064\); \(0{,}15\cdot0{,}30=0{,}045\); \(0{,}05\cdot0{,}60=0{,}030\).</li>
+<li><strong>Suma.</strong> \(P(K)=0{,}064+0{,}045+0{,}030=0{,}139\). Leży między 0,08 a 0,60, zgodnie z twierdzeniem o przypadkach skrajnych.</li>
+<li><strong>Odwrócenie (Bayes).</strong> Jaka część kompletów to finały? \(P(\text{finał}\mid K)=0{,}030/0{,}139\approx0{,}216\); play-off: \(0{,}045/0{,}139\approx0{,}324\); runda zasadnicza: \(0{,}064/0{,}139\approx0{,}460\). Suma: \(1{,}000\). ✓ Choć finały to 5% meczów, dają ponad jedną piątą kompletów.</li>
+</ol>
+<h3 id="przyklad-predykcja">Predykcja z niepewnym parametrem</h3>
+<p><strong>Dane ilustracyjne.</strong> Odsetek kompletów klubu \(p\) ma rozkład a posteriori \(\mathrm{Beta}(8,17)\) (średnia 0,32; zob. przykład w <a data-concept="twierdzenie-bayesa" data-anchor="przyklad">twierdzeniu Bayesa</a>). Pytamy o prawdopodobieństwo co najmniej jednego kompletu w dwóch najbliższych meczach (warunkowo niezależnych przy \(p\)).</p>
+<ol class="ml-steps">
+<li><strong>Warunkowo na \(p\):</strong> \(P(B\mid p)=1-(1-p)^2\).</li>
+<li><strong>Prawo całkowitego prawdopodobieństwa:</strong> \(P(B)=1-\mathbb E[(1-p)^2]\). Dla \(1-p\sim\mathrm{Beta}(17,8)\): \(\mathbb E[(1-p)^2]=\frac{17\cdot18}{25\cdot26}=\frac{306}{650}\approx0{,}4708\). Zatem \(P(B)\approx0{,}5292\).</li>
+<li><strong>Porównanie z „wstawieniem średniej”:</strong> \(1-(1-0{,}32)^2=1-0{,}4624=0{,}5376\). Różnica 0,008 wynika z tego, że \(\mathbb E[(1-p)^2]\neq(1-\mathbb Ep)^2\) — niepewność parametru zmienia prognozę.</li>
+<li><strong>Monte Carlo.</strong> W praktyce: wylosuj \(p^{(s)}\sim\mathrm{Beta}(8,17)\), \(s=1,\ldots,S\), oblicz \(1-(1-p^{(s)})^2\) i uśrednij — wynik zbiega do 0,5292.</li>
+</ol>
+<div class="ml-plot" data-plot="betabinomial" data-params='{"n": 10, "a": 8, "b": 17}'></div>
+<p>Rozkład liczby kompletów w 10 meczach jako mieszanina dwumianowych po niepewnym \(p\sim\mathrm{Beta}(a,b)\). Porównaj go z rozkładem dwumianowym poniżej przy \(p=a/(a+b)=0{,}32\): mieszanina ma tę samą średnią, ale grubsze ogony.</p>
+<div class="ml-plot" data-plot="binomial" data-params='{"n": 10, "p": 0.32}'></div>
+<p>Rozkład dwumianowy przy ustalonym \(p\) — „prognoza bez niepewności parametru”. Jest węższy od mieszaniny powyżej.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>\(P(K)=0{,}139\) to częstość kompletów w losowo wybranym meczu sezonu, uwzględniająca strukturę rozgrywek. Gdyby proporcje faz się zmieniły (np. rozszerzenie play-off), \(P(K)\) zmieniłoby się nawet przy niezmienionych prawdopodobieństwach warunkowych — dlatego porównując sezony lub ligi, warto patrzeć na prawdopodobieństwa warunkowe, a nie tylko na zagregowane.</p>
+<p>W przykładzie predykcyjnym prawo całkowitego prawdopodobieństwa „przenosi” niepewność parametru do prognozy. Prognoza z wstawioną średnią parametru (plug-in) jest zbyt pewna siebie: ignoruje fakt, że nie znamy \(p\) dokładnie. Przy małej liczbie danych różnica bywa znacząca, zwłaszcza w ogonach rozkładu.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<ul>
+<li><strong>Rozkład predykcyjny MAF.</strong> Prognoza frekwencji meczu to \(p(\tilde A_i\mid y)=\int p(\tilde A_i\mid\theta)\,p(\theta\mid y)\,d\theta\), liczona przez Monte Carlo <a class="ml-eqref" href="#eq-prawo-calkowitego-prawdopodobienstwa-predykcja"></a>: dla każdej próbki posterior \(\theta^{(s)}\) (z 4 łańcuchów NUTS) oblicza się \(\eta_i^{(s)}\), \(\mu_i^{(s)}\), a następnie losuje \(\tilde A_i^{(s)}\sim\mathrm{BetaBinomial}(C_i,\mu_i^{(s)}\phi^{(s)},(1-\mu_i^{(s)})\phi^{(s)})\). Zbiór \(\{\tilde A_i^{(s)}\}\) to próbka z rozkładu predykcyjnego (zob. <a data-concept="rozklad-predykcyjny">rozkład predykcyjny</a>, <a data-concept="przedzialy-predykcyjne">przedziały predykcyjne</a>).</li>
+<li><strong>Prawdopodobieństwa progowe.</strong> \(P(W_i\ge0{,}9\mid y)\approx\frac1S\sum_sP(A_i\ge0{,}9C_i\mid\theta^{(s)})\) lub — prościej — odsetek próbek predykcyjnych z \(\tilde A_i^{(s)}\ge0{,}9C_i\). Oba estymatory zbiegają do tej samej wartości.</li>
+<li><strong>Rozkład beta-dwumianowy sam w sobie</strong> jest mieszaniną <a class="ml-eqref" href="#eq-prawo-calkowitego-prawdopodobienstwa-betabin"></a>: frekwencja jest dwumianowa przy „skłonności do przyjścia” \(p\), która zmienia się od meczu do meczu zgodnie z rozkładem beta. Analogicznie rozkład ujemny dwumianowy jest mieszaniną Poissona z rozkładem gamma (zob. <a data-concept="rozklad-beta-dwumianowy">rozkład beta-dwumianowy</a>, <a data-concept="rozklad-ujemny-dwumianowy">rozkład ujemny dwumianowy</a>).</li>
+<li><strong>Nowy rywal.</strong> Dla klubu bez historii w danej lidze efekt \(R_j\) nie jest oszacowany; prognozę uzyskuje się, całkując po rozkładzie populacyjnym \(R_j\sim N(0,\sigma_R^2)\) — znowu prawo całkowitego prawdopodobieństwa, tym razem po poziomie hierarchii (zob. <a data-concept="modele-hierarchiczne">modele hierarchiczne</a>).</li>
+<li><strong>Agregaty raportowe</strong> (np. odsetek kompletów w lidze) można rozkładać na fazy, dni tygodnia czy rozgrywki zgodnie z <a class="ml-eqref" href="#eq-prawo-calkowitego-prawdopodobienstwa"></a>, co ułatwia interpretację zmian między sezonami.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Wymóg podziału.</strong> Nakładające się kategorie (np. „mecz derbowy” i „mecz weekendowy”) nie tworzą podziału; trzeba użyć ich iloczynów (4 komórki) albo modelu regresyjnego.</li>
+<li><strong>Stabilność wag.</strong> Wynik zależy od \(P(A_j)\); przeniesienie prawdopodobieństw warunkowych na sezon o innej strukturze wymaga przeliczenia wag.</li>
+<li><strong>Błąd Monte Carlo.</strong> Całki predykcyjne liczone z próbek mają błąd rzędu \(1/\sqrt{\mathrm{ESS}}\); dla prawdopodobieństw rzadkich zdarzeń (np. \(P(W\ge1)\) bliskie 0,01) potrzeba wielu próbek (zob. <a data-concept="effective-sample-size">efektywna liczność próby</a>).</li>
+<li><strong>Warunkowa niezależność.</strong> Wzór predykcyjny zakłada, że przyszły mecz zależy od przeszłości tylko przez parametry; trendy nieuchwycone w modelu (np. nowa hala) łamią to założenie.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="prawdopodobienstwo-warunkowe">Prawdopodobieństwo warunkowe</a>.</li>
+<li><a data-concept="twierdzenie-bayesa">Twierdzenie Bayesa</a> — mianownik to prawo całkowitego prawdopodobieństwa.</li>
+<li><a data-concept="rozklad-predykcyjny">Rozkład predykcyjny</a>, <a data-concept="przedzialy-predykcyjne">przedziały predykcyjne</a>.</li>
+<li><a data-concept="prawo-calkowitej-wartosci-oczekiwanej">Prawo całkowitej wartości oczekiwanej</a> i <a data-concept="prawo-calkowitej-wariancji">prawo całkowitej wariancji</a>.</li>
+<li><a data-concept="rozklad-beta-dwumianowy">Rozkład beta-dwumianowy</a>.</li>
+<li><a data-concept="metody-monte-carlo">Metody Monte Carlo</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="casellaberger2002"></li>
+<li data-bib="pishronik2014"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="robert2004"></li>
+<li data-bib="johnson2005discrete"></li>
+</ul>
+</section>

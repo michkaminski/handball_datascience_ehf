@@ -1,0 +1,150 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Pytanie „jakie jest prawdopodobieństwo kompletu widzów?” ma inną odpowiedź w poniedziałek wieczorem, a inną w sobotę po południu. <strong>Prawdopodobieństwo warunkowe</strong> (ang. <em>conditional probability</em>) formalizuje aktualizację prawdopodobieństwa po uzyskaniu informacji: skoro wiemy, że zaszło zdarzenie \(B\) („mecz jest w weekend”), ograniczamy uwagę do tej części przestrzeni wyników, w której \(B\) zachodzi, i pytamy, jaki ułamek jej „masy” przypada na \(A\) („komplet”).</p>
+<p>Geometrycznie: \(B\) staje się nową, mniejszą przestrzenią wyników, a prawdopodobieństwa zdarzeń wewnątrz niej są przeskalowane tak, by całość znów sumowała się do 1. Cała statystyka bayesowska — w tym model MAF — jest systematycznym stosowaniem tej idei: rozkład a posteriori to rozkład parametrów <em>warunkowo</em> na zaobserwowanych danych.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-prawdopodobienstwo-warunkowe"><p class="ml-box-title">Definicja (prawdopodobieństwo warunkowe)</p>
+<p>Niech \((\Omega,\mathcal F,P)\) będzie przestrzenią probabilistyczną, a \(B\in\mathcal F\) zdarzeniem z \(P(B)\gt0\). <strong>Prawdopodobieństwem warunkowym</strong> zdarzenia \(A\in\mathcal F\) pod warunkiem \(B\) nazywamy</p>
+<div class="ml-eq" id="eq-prawdopodobienstwo-warunkowe">\[ P(A\mid B)=\frac{P(A\cap B)}{P(B)}. \]</div>
+</div>
+<div class="ml-box ml-def" id="def-niezaleznosc"><p class="ml-box-title">Definicja (niezależność zdarzeń)</p>
+<p>Zdarzenia \(A,B\) są <strong>niezależne</strong>, jeśli \(P(A\cap B)=P(A)P(B)\). Gdy \(P(B)\gt0\), jest to równoważne \(P(A\mid B)=P(A)\). Rodzina \(A_1,\ldots,A_n\) jest niezależna, jeśli \(P\big(\bigcap_{i\in S}A_i\big)=\prod_{i\in S}P(A_i)\) dla <em>każdego</em> podzbioru indeksów \(S\). Zdarzenia \(A\) i \(B\) są <strong>warunkowo niezależne</strong> przy danym \(C\) (\(P(C)\gt0\)), jeśli \(P(A\cap B\mid C)=P(A\mid C)\,P(B\mid C)\).</p>
+</div>
+<div class="ml-box ml-def" id="def-rozklad-warunkowy"><p class="ml-box-title">Definicja (rozkład warunkowy zmiennych)</p>
+<p>Dla zmiennych dyskretnych: \(p_{X\mid Y}(x\mid y)=\dfrac{p_{X,Y}(x,y)}{p_Y(y)}\), gdy \(p_Y(y)\gt0\). Dla zmiennych o łącznej gęstości: \(f_{X\mid Y}(x\mid y)=\dfrac{f_{X,Y}(x,y)}{f_Y(y)}\), gdy \(f_Y(y)\gt0\). Druga definicja obchodzi problem \(P(Y=y)=0\) dla zmiennych ciągłych; ściśle uzasadnia ją teoria warunkowych wartości oczekiwanych względem σ-ciał <cite data-bib="billingsley1995"></cite>.</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(P(A\mid B)\)</td><td>prawdopodobieństwo \(A\) pod warunkiem \(B\)</td></tr>
+<tr><td>\(A\cap B\)</td><td>zdarzenie „zachodzą oba”</td></tr>
+<tr><td>\(P_B(\cdot)\)</td><td>miara warunkowa \(A\mapsto P(A\mid B)\)</td></tr>
+<tr><td>\(A\perp B\)</td><td>niezależność zdarzeń</td></tr>
+<tr><td>\(A\perp B\mid C\)</td><td>warunkowa niezależność przy danym \(C\)</td></tr>
+<tr><td>\(p_{X\mid Y}, f_{X\mid Y}\)</td><td>warunkowa funkcja prawdopodobieństwa / gęstość</td></tr>
+<tr><td>\(p_{X,Y}, f_{X,Y}\)</td><td>łączna funkcja prawdopodobieństwa / gęstość</td></tr>
+<tr><td>\(K\)</td><td>w przykładzie: zdarzenie „komplet widzów”</td></tr>
+<tr><td>\(T\)</td><td>w przykładzie: zdarzenie „mecz w weekend”</td></tr>
+<tr><td>\(\theta, y\)</td><td>parametry modelu i dane (w kontekście bayesowskim)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>\(P(B)\gt0\). Warunkowanie na zdarzeniach miary zero (np. „wypełnienie wynosi dokładnie 0,8” w modelu ciągłym) wymaga definicji przez gęstości lub σ-ciała i nie wynika z <a class="ml-eqref" href="#eq-prawdopodobienstwo-warunkowe"></a>.</li>
+<li>Zdarzenia \(A\) i \(B\) należą do tej samej przestrzeni probabilistycznej.</li>
+<li>Warunek \(B\) musi być <em>całą</em> posiadaną informacją istotną dla \(A\); pominięcie części informacji zmienia wynik (zob. paradoks Simpsona w sekcji ograniczeń).</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<div class="ml-eq" id="eq-prawdopodobienstwo-warunkowe-mnozenie">\[ P(A\cap B)=P(A\mid B)\,P(B)=P(B\mid A)\,P(A) \]</div>
+<div class="ml-eq" id="eq-prawdopodobienstwo-warunkowe-lancuch">\[ P(A_1\cap A_2\cap\ldots\cap A_n)=P(A_1)\,P(A_2\mid A_1)\,P(A_3\mid A_1\cap A_2)\cdots P(A_n\mid A_1\cap\ldots\cap A_{n-1}) \]</div>
+<div class="ml-eq" id="eq-prawdopodobienstwo-warunkowe-dopelnienie">\[ P(A^c\mid B)=1-P(A\mid B) \]</div>
+<div class="ml-eq" id="eq-prawdopodobienstwo-warunkowe-gestosc">\[ f_{X,Y}(x,y)=f_{X\mid Y}(x\mid y)\,f_Y(y), \qquad p(\theta,y)=p(y\mid\theta)\,p(\theta) \]</div>
+<p>Wzór <a class="ml-eqref" href="#eq-prawdopodobienstwo-warunkowe-gestosc"></a> to podstawa specyfikacji modelu bayesowskiego: łączny rozkład parametrów i danych zapisujemy jako iloczyn rozkładu a priori i <a data-concept="funkcja-wiarygodnosci">wiarygodności</a>.</p>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<div class="ml-box ml-thm" id="thm-miara-warunkowa"><p class="ml-box-title">Twierdzenie (prawdopodobieństwo warunkowe jest miarą prawdopodobieństwa)</p>
+<p>Jeśli \(P(B)\gt0\), to funkcja \(P_B(A)=P(A\mid B)\), \(A\in\mathcal F\), spełnia aksjomaty Kołmogorowa. W konsekwencji wszystkie reguły rachunku prawdopodobieństwa (dopełnienie, włączenia i wyłączenia, ciągłość) obowiązują dla \(P(\cdot\mid B)\). Ponadto \(P_B(B)=1\) i \(P_B(B^c)=0\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-lancuchowa"><p class="ml-box-title">Twierdzenie (reguła łańcuchowa)</p>
+<p>Jeśli \(P(A_1\cap\ldots\cap A_{n-1})\gt0\), to zachodzi <a class="ml-eqref" href="#eq-prawdopodobienstwo-warunkowe-lancuch"></a>.</p>
+</div>
+<div class="ml-box ml-thm" id="thm-niezaleznosc-dopelnien"><p class="ml-box-title">Twierdzenie (niezależność a dopełnienia)</p>
+<p>Jeśli \(A\perp B\), to także \(A\perp B^c\), \(A^c\perp B\) i \(A^c\perp B^c\).</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<div class="ml-proof"><p class="ml-box-title">Dowód, że \(P(\cdot\mid B)\) jest miarą prawdopodobieństwa</p>
+<p>(A1): \(P(A\mid B)=P(A\cap B)/P(B)\ge0\), bo licznik jest nieujemny, a mianownik dodatni. (A2): \(P(\Omega\mid B)=P(B)/P(B)=1\). (A3): jeśli \(A_1,A_2,\ldots\) są parami rozłączne, to zbiory \(A_n\cap B\) też są parami rozłączne i \(\big(\bigcup_nA_n\big)\cap B=\bigcup_n(A_n\cap B)\). Zatem</p>
+<div class="ml-eq" id="eq-prawdopodobienstwo-warunkowe-dowod-miara">\[ P\Big(\bigcup_nA_n\,\Big|\,B\Big)=\frac{P\big(\bigcup_n(A_n\cap B)\big)}{P(B)}=\sum_n\frac{P(A_n\cap B)}{P(B)}=\sum_nP(A_n\mid B). \]</div>
+<p>Wreszcie \(P(B\mid B)=1\), \(P(B^c\mid B)=P(\varnothing)/P(B)=0\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód reguły łańcuchowej (indukcja)</p>
+<p>Dla \(n=2\) to przekształcona definicja: \(P(A_1\cap A_2)=P(A_1)P(A_2\mid A_1)\). Załóżmy prawdziwość dla \(n\). Oznaczmy \(D_n=A_1\cap\ldots\cap A_n\); z monotoniczności \(P(D_n)\ge P(D_n\cap A_{n+1})\), a z założenia \(P(D_n)\gt0\). Wtedy \(P(D_{n+1})=P(D_n\cap A_{n+1})=P(D_n)\,P(A_{n+1}\mid D_n)\), a \(P(D_n)\) rozpisujemy z założenia indukcyjnego.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód niezależności dopełnień</p>
+<p>\(A\) jest sumą rozłączną \((A\cap B)\cup(A\cap B^c)\), więc \(P(A\cap B^c)=P(A)-P(A\cap B)=P(A)-P(A)P(B)=P(A)\big(1-P(B)\big)=P(A)P(B^c)\). Pozostałe przypadki — przez symetrię i ponowne zastosowanie.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Wyprowadzenie: warunkowa gęstość jako granica</p>
+<p>Dla zmiennych o ciągłej łącznej gęstości i \(f_Y(y)\gt0\) rozważmy zdarzenie \(B_h=\{y\le Y\le y+h\}\) z \(P(B_h)\gt0\). Wtedy</p>
+<div class="ml-eq" id="eq-prawdopodobienstwo-warunkowe-granica">\[ P(X\le x\mid B_h)=\frac{\int_{-\infty}^{x}\int_y^{y+h}f_{X,Y}(s,t)\,dt\,ds}{\int_y^{y+h}f_Y(t)\,dt}\ \xrightarrow{h\to0}\ \frac{\int_{-\infty}^{x}f_{X,Y}(s,y)\,ds}{f_Y(y)}=\int_{-\infty}^{x}f_{X\mid Y}(s\mid y)\,ds, \]</div>
+<p>co uzasadnia definicję \(f_{X\mid Y}=f_{X,Y}/f_Y\) jako granicę warunkowania na coraz węższych przedziałach.</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<p><strong>Dane ilustracyjne.</strong> W bazie 200 meczów klubu z halą na 2000 miejsc: 120 rozegrano w weekend (\(T\)), z czego 30 z kompletem (\(K\)); 80 w dni powszednie, z czego 8 z kompletem.</p>
+<table class="ml-table">
+<thead><tr><th></th><th>Komplet \(K\)</th><th>Bez kompletu \(K^c\)</th><th>Razem</th></tr></thead>
+<tbody>
+<tr><td>Weekend \(T\)</td><td>30</td><td>90</td><td>120</td></tr>
+<tr><td>Dzień powszedni \(T^c\)</td><td>8</td><td>72</td><td>80</td></tr>
+<tr><td>Razem</td><td>38</td><td>162</td><td>200</td></tr>
+</tbody>
+</table>
+<ol class="ml-steps">
+<li><strong>Prawdopodobieństwa bezwarunkowe</strong> (częstości): \(P(K)=38/200=0{,}19\), \(P(T)=120/200=0{,}60\), \(P(K\cap T)=30/200=0{,}15\).</li>
+<li><strong>Komplet w weekend.</strong> \(P(K\mid T)=0{,}15/0{,}60=0{,}25\) (bezpośrednio: \(30/120\)).</li>
+<li><strong>Komplet w tygodniu.</strong> \(P(K\mid T^c)=(8/200)/(80/200)=8/80=0{,}10\).</li>
+<li><strong>Odwrócenie warunku.</strong> \(P(T\mid K)=0{,}15/0{,}19=30/38\approx0{,}789\): prawie 79% kompletów to mecze weekendowe. Uwaga: \(P(T\mid K)\neq P(K\mid T)\).</li>
+<li><strong>Test niezależności.</strong> \(P(K)P(T)=0{,}19\cdot0{,}60=0{,}114\neq0{,}15=P(K\cap T)\) — zdarzenia są zależne; weekend zwiększa szansę kompletu 2,5-krotnie (\(0{,}25/0{,}10\)).</li>
+<li><strong>Dopełnienie w mierze warunkowej.</strong> \(P(K^c\mid T)=1-0{,}25=0{,}75=90/120\). ✓</li>
+<li><strong>Reguła łańcuchowa.</strong> Seria trzech meczów domowych: \(P(K_1)=0{,}19\); po komplecie w meczu 1 (np. passa zwycięstw) \(P(K_2\mid K_1)=0{,}50\); po dwóch kompletach \(P(K_3\mid K_1\cap K_2)=0{,}60\). Zatem \(P(K_1\cap K_2\cap K_3)=0{,}19\cdot0{,}50\cdot0{,}60=0{,}057\). Przy (błędnym) założeniu niezależności: \(0{,}19^3\approx0{,}0069\) — ponad 8 razy mniej.</li>
+</ol>
+<div class="ml-plot" data-plot="beta-update" data-params='{"a": 1, "b": 1, "k": 30, "n": 120}'></div>
+<p>Wykres pokazuje <em>rozkład warunkowy</em> nieznanego prawdopodobieństwa kompletu w weekend, przy jednostajnym rozkładzie a priori Beta(1, 1) i danych „30 kompletów w 120 meczach”: posterior Beta(31, 91) ma średnią \(31/122\approx0{,}254\). Zwróć uwagę, jak warunkowanie na danych zawęża rozkład — zmniejsz \(n\) (przy proporcjonalnym \(k\)), by zobaczyć, że mniej informacji daje szerszy rozkład.</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>Wynik \(P(K\mid T)=0{,}25\) czytamy: wśród meczów weekendowych komplet zdarza się w co czwartym. Asymetria \(P(T\mid K)=0{,}79\) vs. \(P(K\mid T)=0{,}25\) pokazuje najczęstszy błąd w rozumowaniu warunkowym („błąd prokuratora”, ang. <em>prosecutor’s fallacy</em>): to, że większość kompletów przypada na weekendy, nie znaczy, że większość weekendowych meczów kończy się kompletem. Związek między tymi wielkościami opisuje <a data-concept="twierdzenie-bayesa">twierdzenie Bayesa</a>.</p>
+<p>Reguła łańcuchowa ilustruje, że zależność między meczami (passa, „efekt mody”) może zmienić prawdopodobieństwo serii o rząd wielkości. Modele zakładające niezależność obserwacji warunkowo na parametrach nie twierdzą, że mecze są niezależne bezwarunkowo — zależność przenoszą wspólne parametry (np. efekt gospodarza w sezonie).</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<ul>
+<li><strong>Struktura MAF.</strong> Model <a data-concept="atrakcyjnosc-frekwencyjna">MAF</a> zakłada, że frekwencje meczów są <em>warunkowo niezależne</em> przy danych parametrach: \(p(A_1,\ldots,A_N\mid\theta)=\prod_ip(A_i\mid\eta_i,\phi)\). Bezwarunkowo mecze tego samego gospodarza są skorelowane, bo dzielą efekty \(H_{h}\) i \(HS_{h,s}\) — to istota <a data-concept="modele-hierarchiczne">modelu hierarchicznego</a>.</li>
+<li><strong>Rozkład a posteriori</strong> \(p(\theta\mid y)\) jest rozkładem warunkowym parametrów na danych; uzyskuje się go z <a class="ml-eqref" href="#eq-prawdopodobienstwo-warunkowe-gestosc"></a> i twierdzenia Bayesa (zob. <a data-concept="rozklad-posterior">rozkład a posteriori</a>).</li>
+<li><strong>Warunki meczu.</strong> Predyktory \(x_i\) (weekend, godzina, faza, forma) to dokładnie zmienne, na których warunkujemy rozkład frekwencji: \(\mathbb E[W_i\mid x_i,\theta]=\operatorname{logit}^{-1}(\eta_i)\).</li>
+<li><strong>Prognozy prawdopodobieństw.</strong> Wartości \(P(W_i\ge0{,}9\mid\text{dane})\) raportowane w prognozach są prawdopodobieństwami warunkowymi na danych historycznych i znanych warunkach meczu; ich <a data-concept="kalibracja-prawdopodobienstw">kalibrację</a> sprawdza się, porównując je z częstościami warunkowymi w zbiorze testowym.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Zdarzenia miary zero.</strong> Wzór <a class="ml-eqref" href="#eq-prawdopodobienstwo-warunkowe"></a> nie działa dla \(P(B)=0\); dla zmiennych ciągłych wynik może zależeć od sposobu przejścia do granicy (paradoks Borela–Kołmogorowa).</li>
+<li><strong>Paradoks Simpsona.</strong> Zależność warunkowa w każdej podgrupie może mieć przeciwny kierunek niż w danych połączonych — np. weekend może zwiększać szansę kompletu w każdej lidze z osobna, a w połączonych danych pozornie ją zmniejszać, jeśli niższe ligi grają częściej w weekendy. Wybór zmiennych warunkujących jest decyzją merytoryczną <cite data-bib="pearl2009"></cite>.</li>
+<li><strong>Warunkowanie to nie przyczynowość.</strong> \(P(K\mid T)\gt P(K\mid T^c)\) nie dowodzi, że przeniesienie meczu na weekend wywoła wzrost frekwencji; do tego potrzebna jest analiza przyczynowa <cite data-bib="hernan2020"></cite>.</li>
+<li><strong>Małe liczności.</strong> Częstości warunkowe z małych podgrup (np. 3 mecze w środę o 12:00) są bardzo niestabilne; model hierarchiczny stabilizuje je przez <a data-concept="partial-pooling">partial pooling</a>.</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="twierdzenie-bayesa">Twierdzenie Bayesa</a>.</li>
+<li><a data-concept="prawo-calkowitego-prawdopodobienstwa">Prawo całkowitego prawdopodobieństwa</a>.</li>
+<li><a data-concept="przestrzen-probabilistyczna">Przestrzeń probabilistyczna</a>.</li>
+<li><a data-concept="prawo-calkowitej-wartosci-oczekiwanej">Prawo całkowitej wartości oczekiwanej</a> — warunkowa wartość oczekiwana.</li>
+<li><a data-concept="rozklad-posterior">Rozkład a posteriori</a>, <a data-concept="funkcja-wiarygodnosci">funkcja wiarygodności</a>.</li>
+<li><a data-concept="modele-hierarchiczne">Modele hierarchiczne</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="casellaberger2002"></li>
+<li data-bib="pishronik2014"></li>
+<li data-bib="billingsley1995"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="pearl2009"></li>
+<li data-bib="hernan2020"></li>
+</ul>
+</section>

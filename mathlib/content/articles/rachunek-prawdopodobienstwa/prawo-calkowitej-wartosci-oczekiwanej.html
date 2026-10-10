@@ -1,0 +1,166 @@
+<section id="intuicja"><h2>Intuicyjne wprowadzenie</h2>
+<p>Średnia frekwencja w sezonie to średnia ze średnich: osobno dla meczów weekendowych, osobno dla meczów w tygodniu, ważona udziałem każdej grupy. Ta oczywista arytmetyka ma ogólną postać probabilistyczną — <strong>prawo całkowitej wartości oczekiwanej</strong> (ang. <em>law of total expectation</em>, także <em>law of iterated expectations</em>, <em>tower property</em>):</p>
+<p style="text-align:center">\(\mathbb E[X]=\mathbb E\big[\mathbb E[X\mid Y]\big]\).</p>
+<p>Najpierw liczymy wartość oczekiwaną <em>przy ustalonej</em> informacji \(Y\) (np. dniu tygodnia, wartościach parametrów modelu), a potem uśredniamy wynik po rozkładzie \(Y\). Kluczowe jest to, że \(\mathbb E[X\mid Y]\) nie jest liczbą, lecz <em>zmienną losową</em> — funkcją \(Y\). W modelu MAF to prawo uzasadnia, dlaczego prognoza punktowa frekwencji jest średnią z oczekiwanych frekwencji policzonych dla każdej próbki z rozkładu a posteriori.</p>
+</section>
+
+<section id="definicja"><h2>Definicja formalna</h2>
+<div class="ml-box ml-def" id="def-warunkowa-wartosc-oczekiwana"><p class="ml-box-title">Definicja (warunkowa wartość oczekiwana — przypadki elementarne)</p>
+<p>Niech \(X\) będzie całkowalna. Dla zmiennych dyskretnych i \(P(Y=y)\gt0\): \(\mathbb E[X\mid Y=y]=\sum_xx\,p_{X\mid Y}(x\mid y)\). Dla zmiennych o łącznej gęstości i \(f_Y(y)\gt0\): \(\mathbb E[X\mid Y=y]=\int x\,f_{X\mid Y}(x\mid y)\,dx\). Oznaczając tę funkcję przez \(g(y)\), definiujemy zmienną losową \(\mathbb E[X\mid Y]=g(Y)\).</p>
+</div>
+<div class="ml-box ml-def" id="def-warunkowa-ogolna"><p class="ml-box-title">Definicja (warunkowa wartość oczekiwana względem σ-ciała, Kołmogorow)</p>
+<p>Niech \(X\) będzie całkowalna, a \(\mathcal G\subseteq\mathcal F\) pod-σ-ciałem. <strong>Warunkową wartością oczekiwaną</strong> \(\mathbb E[X\mid\mathcal G]\) nazywamy każdą zmienną losową \(Z\) taką, że (a) \(Z\) jest \(\mathcal G\)-mierzalna, (b) \(\int_GZ\,dP=\int_GX\,dP\) dla każdego \(G\in\mathcal G\). Taka \(Z\) istnieje (twierdzenie Radona–Nikodyma) i jest jednoznaczna prawie na pewno <cite data-bib="billingsley1995"></cite>. Przyjmujemy \(\mathbb E[X\mid Y]=\mathbb E[X\mid\sigma(Y)]\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-prawo-calkowitej-wartosci-oczekiwanej"><p class="ml-box-title">Twierdzenie (prawo całkowitej wartości oczekiwanej)</p>
+<p>Jeśli \(\mathbb E|X|\lt\infty\), to</p>
+<div class="ml-eq" id="eq-prawo-calkowitej-wartosci-oczekiwanej">\[ \mathbb E[X]=\mathbb E\big[\mathbb E[X\mid Y]\big]. \]</div>
+<p>Ogólniej, dla \(\mathcal H\subseteq\mathcal G\subseteq\mathcal F\): \(\mathbb E\big[\mathbb E[X\mid\mathcal G]\,\big|\,\mathcal H\big]=\mathbb E[X\mid\mathcal H]\) (własność wieżowa).</p>
+</div>
+</section>
+
+<section id="symbole"><h2>Wykaz symboli</h2>
+<table class="ml-symbols">
+<thead><tr><th>Symbol</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td>\(\mathbb E[X\mid Y=y]\)</td><td>warunkowa wartość oczekiwana przy ustalonej wartości \(y\) (liczba)</td></tr>
+<tr><td>\(\mathbb E[X\mid Y]\)</td><td>warunkowa wartość oczekiwana jako zmienna losowa \(g(Y)\)</td></tr>
+<tr><td>\(\mathcal G,\mathcal H\)</td><td>pod-σ-ciała \(\mathcal F\) (reprezentują posiadaną informację)</td></tr>
+<tr><td>\(\sigma(Y)\)</td><td>σ-ciało generowane przez \(Y\)</td></tr>
+<tr><td>\(p_{X\mid Y}, f_{X\mid Y}\)</td><td>warunkowa funkcja prawdopodobieństwa / gęstość</td></tr>
+<tr><td>\(\theta,\theta^{(s)}\)</td><td>parametry modelu; \(s\)-ta próbka z rozkładu a posteriori</td></tr>
+<tr><td>\(C\)</td><td>pojemność hali</td></tr>
+<tr><td>\(\mu\)</td><td>średnie wypełnienie \(\operatorname{logit}^{-1}(\eta)\)</td></tr>
+<tr><td>\(N\)</td><td>losowa liczba meczów (w tożsamości Walda)</td></tr>
+<tr><td>\(\Lambda\)</td><td>losowa intensywność (mieszanina Poissona–gamma)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="zalozenia"><h2>Założenia</h2>
+<ul>
+<li>\(\mathbb E|X|\lt\infty\). Bez całkowalności „średnia ze średnich” może być nieokreślona lub różna od średniej.</li>
+<li>Warunkowanie odbywa się na tej samej przestrzeni probabilistycznej; \(Y\) może być dowolną zmienną, wektorem lub σ-ciałem (np. „wszystkie parametry modelu”).</li>
+<li>W wersjach elementarnych potrzebne są \(P(Y=y)\gt0\) lub \(f_Y(y)\gt0\); wersja ogólna obchodzi ten wymóg.</li>
+<li>Tożsamość Walda wymaga, by liczba składników \(N\) była niezależna od wartości składników (lub była czasem zatrzymania).</li>
+</ul>
+</section>
+
+<section id="wzory"><h2>Wzory</h2>
+<p>Postacie rozpisane:</p>
+<div class="ml-eq" id="eq-prawo-calkowitej-wartosci-oczekiwanej-dyskretna">\[ \mathbb E[X]=\sum_y\mathbb E[X\mid Y=y]\,P(Y=y), \qquad \mathbb E[X]=\int\mathbb E[X\mid Y=y]\,f_Y(y)\,dy. \]</div>
+<p>Własności warunkowej wartości oczekiwanej (prawie na pewno):</p>
+<div class="ml-eq" id="eq-prawo-calkowitej-wartosci-oczekiwanej-wlasnosci">\[ \begin{aligned} &amp;\mathbb E[aX+bZ\mid Y]=a\,\mathbb E[X\mid Y]+b\,\mathbb E[Z\mid Y] &amp;&amp;\text{(liniowość)}\\ &amp;\mathbb E[h(Y)\,X\mid Y]=h(Y)\,\mathbb E[X\mid Y] &amp;&amp;\text{(wyłączanie znanego czynnika)}\\ &amp;X\perp Y\ \Rightarrow\ \mathbb E[X\mid Y]=\mathbb E[X] &amp;&amp;\text{(niezależność)} \end{aligned} \]</div>
+<p>Prognoza bayesowska (średnia predykcyjna) i jej przybliżenie Monte Carlo:</p>
+<div class="ml-eq" id="eq-prawo-calkowitej-wartosci-oczekiwanej-predykcja">\[ \mathbb E[\tilde A\mid y]=\mathbb E_{\theta\mid y}\big[\mathbb E[\tilde A\mid\theta]\big]\approx\frac1S\sum_{s=1}^{S}\mathbb E\big[\tilde A\mid\theta^{(s)}\big]. \]</div>
+<p>Tożsamość Walda dla sumy losowej liczby składników o wspólnej średniej:</p>
+<div class="ml-eq" id="eq-prawo-calkowitej-wartosci-oczekiwanej-wald">\[ \mathbb E\Big[\sum_{i=1}^{N}X_i\Big]=\mathbb E[N]\,\mathbb E[X_1]. \]</div>
+</section>
+
+<section id="twierdzenia"><h2>Twierdzenia</h2>
+<p>Główne twierdzenie sformułowano w sekcji <a href="#definicja">Definicja formalna</a>. Dodatkowo:</p>
+<div class="ml-box ml-thm" id="thm-najlepszy-predyktor"><p class="ml-box-title">Twierdzenie (warunkowa wartość oczekiwana jako najlepszy predyktor)</p>
+<p>Jeśli \(\mathbb E[X^2]\lt\infty\), to dla każdej funkcji borelowskiej \(h\) z \(\mathbb E[h(Y)^2]\lt\infty\):</p>
+<div class="ml-eq" id="eq-prawo-calkowitej-wartosci-oczekiwanej-mse">\[ \mathbb E\big[(X-h(Y))^2\big]=\mathbb E\big[(X-\mathbb E[X\mid Y])^2\big]+\mathbb E\big[(\mathbb E[X\mid Y]-h(Y))^2\big]\ \ge\ \mathbb E\big[(X-\mathbb E[X\mid Y])^2\big]. \]</div>
+<p>Spośród wszystkich prognoz opartych na informacji \(Y\) błąd średniokwadratowy minimalizuje \(\mathbb E[X\mid Y]\).</p>
+</div>
+<div class="ml-box ml-thm" id="thm-wald"><p class="ml-box-title">Twierdzenie (tożsamość Walda)</p>
+<p>Jeśli \(X_1,X_2,\ldots\) mają wspólną skończoną średnią, \(N\) przyjmuje wartości w \(\{0,1,2,\ldots\}\), \(\mathbb E[N]\lt\infty\) i \(N\) jest niezależna od \((X_i)\), to zachodzi <a class="ml-eqref" href="#eq-prawo-calkowitej-wartosci-oczekiwanej-wald"></a>.</p>
+</div>
+</section>
+
+<section id="wyprowadzenie"><h2>Dowody i wyprowadzenia</h2>
+<div class="ml-proof"><p class="ml-box-title">Dowód (przypadek dyskretny)</p>
+<div class="ml-eq" id="eq-prawo-calkowitej-wartosci-oczekiwanej-dowod-dyskretny">\[ \begin{aligned} \mathbb E\big[\mathbb E[X\mid Y]\big] &amp;= \sum_y\mathbb E[X\mid Y=y]\,p_Y(y)=\sum_y\Big(\sum_xx\,\frac{p_{X,Y}(x,y)}{p_Y(y)}\Big)p_Y(y)\\ &amp;= \sum_x x\sum_y p_{X,Y}(x,y)=\sum_x x\,p_X(x)=\mathbb E[X]. \end{aligned} \]</div>
+<p>Zamiana kolejności sumowania jest dozwolona dzięki bezwzględnej zbieżności (\(\mathbb E|X|\lt\infty\)).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (przypadek ciągły)</p>
+<div class="ml-eq" id="eq-prawo-calkowitej-wartosci-oczekiwanej-dowod-ciagly">\[ \int\Big(\int x\,\frac{f_{X,Y}(x,y)}{f_Y(y)}\,dx\Big)f_Y(y)\,dy=\int x\Big(\int f_{X,Y}(x,y)\,dy\Big)dx=\int x\,f_X(x)\,dx=\mathbb E[X], \]</div>
+<p>gdzie zamianę kolejności całkowania uzasadnia twierdzenie Fubiniego.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód (przypadek ogólny)</p>
+<p>W warunku (b) definicji Kołmogorowa weźmy \(G=\Omega\in\mathcal G\): \(\int_\Omega\mathbb E[X\mid\mathcal G]\,dP=\int_\Omega X\,dP\), czyli \(\mathbb E\big[\mathbb E[X\mid\mathcal G]\big]=\mathbb E[X]\). Dla własności wieżowej: \(Z=\mathbb E[X\mid\mathcal G]\); dla \(H\in\mathcal H\subseteq\mathcal G\) mamy \(\int_H\mathbb E[Z\mid\mathcal H]\,dP=\int_HZ\,dP=\int_HX\,dP\), bo \(H\in\mathcal G\). Zatem \(\mathbb E[Z\mid\mathcal H]\) spełnia definicję \(\mathbb E[X\mid\mathcal H]\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód twierdzenia o najlepszym predyktorze</p>
+<p>Oznaczmy \(m(Y)=\mathbb E[X\mid Y]\) i rozpiszmy \(X-h(Y)=(X-m(Y))+(m(Y)-h(Y))\). Wyraz mieszany znika:</p>
+<div class="ml-eq" id="eq-prawo-calkowitej-wartosci-oczekiwanej-dowod-ortogonalnosc">\[ \mathbb E\big[(X-m(Y))(m(Y)-h(Y))\big]=\mathbb E\Big[\mathbb E\big[(X-m(Y))(m(Y)-h(Y))\,\big|\,Y\big]\Big]=\mathbb E\Big[(m(Y)-h(Y))\,\underbrace{\mathbb E[X-m(Y)\mid Y]}_{=0}\Big]=0. \]</div>
+<p>Użyliśmy prawa całkowitej wartości oczekiwanej, wyłączenia znanego czynnika \(m(Y)-h(Y)\) i liniowości: \(\mathbb E[X-m(Y)\mid Y]=m(Y)-m(Y)=0\). Pozostają dwa kwadraty, z których drugi jest nieujemny.</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Dowód tożsamości Walda</p>
+<p>Warunkujemy na \(N\). Z niezależności \(N\) od \((X_i)\) i liniowości: \(\mathbb E\big[\sum_{i=1}^NX_i\,\big|\,N=n\big]=\sum_{i=1}^n\mathbb E[X_i]=n\,\mathbb E[X_1]\). Zatem \(\mathbb E\big[\sum_{i\le N}X_i\mid N\big]=N\,\mathbb E[X_1]\), a z prawa całkowitej wartości oczekiwanej \(\mathbb E\big[\sum_{i\le N}X_i\big]=\mathbb E[N]\,\mathbb E[X_1]\).</p>
+<p class="ml-qed">∎</p></div>
+<div class="ml-proof"><p class="ml-box-title">Wyprowadzenie: średnia rozkładu ujemnego dwumianowego</p>
+<p>Rozkład \(\mathrm{NegBin}(\mu,\kappa)\) to mieszanina: \(A\mid\Lambda\sim\mathrm{Poisson}(\Lambda)\), \(\Lambda\sim\mathrm{Gamma}(\kappa,\ \kappa/\mu)\) (kształt, tempo), więc \(\mathbb E[\Lambda]=\mu\). Stąd \(\mathbb E[A]=\mathbb E\big[\mathbb E[A\mid\Lambda]\big]=\mathbb E[\Lambda]=\mu\). Analogicznie dla rozkładu beta-dwumianowego: \(\mathbb E[A]=\mathbb E[Cp]=C\,\mathbb E[p]=C\mu\).</p>
+<p class="ml-qed">∎</p></div>
+</section>
+
+<section id="przyklad"><h2>Przykład liczbowy krok po kroku</h2>
+<h3 id="przyklad-grupy">Średnia ze średnich grupowych</h3>
+<p><strong>Dane ilustracyjne.</strong> Klub Superligi gra 60% meczów domowych w weekend (średnia frekwencja 1300) i 40% w tygodniu (średnia 900).</p>
+<ol class="ml-steps">
+<li>\(\mathbb E[A\mid\text{weekend}]=1300\), \(\mathbb E[A\mid\text{tydzień}]=900\). Zmienna \(\mathbb E[A\mid T]\) przyjmuje wartość 1300 z prawdopodobieństwem 0,6 i 900 z prawdopodobieństwem 0,4.</li>
+<li>\(\mathbb E[A]=0{,}6\cdot1300+0{,}4\cdot900=780+360=1140\).</li>
+<li><strong>Uwaga na średnią nieważoną:</strong> \((1300+900)/2=1100\neq1140\) — średnie grup trzeba ważyć ich prawdopodobieństwami.</li>
+</ol>
+<h3 id="przyklad-posterior">Prognoza z próbek a posteriori</h3>
+<p><strong>Dane ilustracyjne.</strong> Hala na \(C=2000\) miejsc; cztery próbki posterior średniego wypełnienia \(\mu^{(s)}\) dla zbliżającego się meczu: 0,55; 0,62; 0,48; 0,65 (w praktyce używa się tysięcy próbek).</p>
+<ol class="ml-steps">
+<li><strong>Warunkowe średnie</strong> \(\mathbb E[\tilde A\mid\mu^{(s)}]=C\mu^{(s)}\): 1100; 1240; 960; 1300.</li>
+<li><strong>Uśrednienie</strong> <a class="ml-eqref" href="#eq-prawo-calkowitej-wartosci-oczekiwanej-predykcja"></a>: \((1100+1240+960+1300)/4=4600/4=1150\).</li>
+<li><strong>Wypełnienie:</strong> \(1150/2000=0{,}575\) — równe średniej z \(\mu^{(s)}\), bo \(\mathbb E[\tilde A\mid\mu]=C\mu\) jest liniowa w \(\mu\).</li>
+<li><strong>Gdzie liniowość znika.</strong> Gdyby próbki dotyczyły \(\eta^{(s)}=\operatorname{logit}\mu^{(s)}\), średnia \(\bar\eta\) przekształcona przez \(\operatorname{logit}^{-1}\) nie dałaby 0,575: \(\operatorname{logit}(0{,}55)=0{,}2007\), \(\operatorname{logit}(0{,}62)=0{,}4895\), \(\operatorname{logit}(0{,}48)=-0{,}0800\), \(\operatorname{logit}(0{,}65)=0{,}6190\); \(\bar\eta=0{,}3073\), \(\operatorname{logit}^{-1}(0{,}3073)\approx0{,}5762\). Różnica jest tu mała (0,0012), bo próbki są skupione; rośnie z rozrzutem posterior (nierówność Jensena, zob. <a data-concept="wartosc-oczekiwana" data-anchor="jensen-logistyczna">wartość oczekiwana</a>).</li>
+</ol>
+<h3 id="przyklad-wald">Oczekiwana frekwencja łączna w sezonie</h3>
+<p><strong>Dane ilustracyjne.</strong> Liczba meczów domowych \(N\) zależy od awansu do play-off: 11, 13 lub 15 z prawdopodobieństwami 0,5; 0,3; 0,2. Średnia frekwencja meczu: 1140.</p>
+<ol class="ml-steps">
+<li>\(\mathbb E[N]=0{,}5\cdot11+0{,}3\cdot13+0{,}2\cdot15=5{,}5+3{,}9+3{,}0=12{,}4\).</li>
+<li>Z tożsamości Walda: \(\mathbb E[\text{suma}]=12{,}4\cdot1140=14\,136\) widzów (przy założeniu, że średnia frekwencja nie zależy od \(N\); w rzeczywistości mecze play-off mają wyższą frekwencję, co należałoby uwzględnić warunkowaniem na fazie).</li>
+</ol>
+<div class="ml-plot" data-plot="beta-mean" data-params='{"mu": 0.575, "phi": 60}'></div>
+<p>Wykres przedstawia przykładowy rozkład niepewności średniego wypełnienia \(\mu\) (średnia 0,575). Prognoza punktowa \(\mathbb E[\tilde A]=C\,\mathbb E[\mu]\) zależy tylko od środka tego rozkładu, a nie od jego szerokości — szerokość wpływa natomiast na wariancję prognozy (zob. <a data-concept="prawo-calkowitej-wariancji">prawo całkowitej wariancji</a>).</p>
+</section>
+
+<section id="interpretacja"><h2>Interpretacja wyniku</h2>
+<p>\(\mathbb E[A]=1140\) to średnia frekwencja w sezonie, zrekonstruowana ze średnich warunkowych. Prawo całkowitej wartości oczekiwanej mówi, że uśrednianie można prowadzić „etapami”: najpierw wewnątrz grup (lub przy ustalonych parametrach), potem między grupami (lub po rozkładzie parametrów) — bez utraty informacji o średniej.</p>
+<p>Prognoza 1150 widzów w przykładzie posterior to najlepsza (w sensie błędu średniokwadratowego) prognoza punktowa przy całej dostępnej informacji. Prawo nie mówi jednak nic o niepewności: cztery próbki o rozrzucie od 960 do 1300 i cztery próbki równe 1150 dają tę samą średnią. Tę różnicę ujmuje prawo całkowitej wariancji.</p>
+</section>
+
+<section id="pilka-reczna"><h2>Zastosowanie w piłce ręcznej</h2>
+<ul>
+<li><strong>Prognoza punktowa MAF.</strong> \(\mathbb E[\tilde A_i\mid y]=\frac1S\sum_sC_i\mu_i^{(s)}\) (wariant „wypełnienie”) lub \(\frac1S\sum_s\mu_i^{(s)}\) z \(\mu_i^{(s)}=e^{\eta_i^{(s)}}\) (wariant „liczba widzów”). Nie stosuje się \(C_i\operatorname{logit}^{-1}(\bar\eta_i)\) ani \(e^{\bar\eta_i}\) — obie wersje plug-in są obciążone przez nieliniowość (zob. <a data-concept="wartosc-oczekiwana-prognozy">wartość oczekiwana prognozy</a>).</li>
+<li><strong>Indeks IAF</strong> korzysta z warunkowych wartości oczekiwanych \(\mathbb E(W\mid\eta_i^{(0)}+R_j)\) przy ustalonych parametrach (dla każdej próbki posterior osobno), a następnie uśrednia je po populacji referencyjnej \(X_{ref}\) — to średnia ze średnich warunkowych po rozkładzie empirycznym warunków meczu. Rozkład posterior \(\mathrm{IAF}_j\) powstaje, bo cała konstrukcja jest powtarzana dla każdej próbki \(\theta^{(s)}\) (zob. <a data-concept="atrakcyjnosc-frekwencyjna">atrakcyjność frekwencyjna</a>).</li>
+<li><strong>Efekty losowe o średniej zero.</strong> Z \(R_j\sim N(0,\sigma_R^2)\) wynika \(\mathbb E[\eta_i]=\mathbb E\big[\mathbb E[\eta_i\mid\sigma_R]\big]=\alpha+\ldots\) — efekty losowe nie przesuwają średniej predyktora, choć (Jensen) przesuwają średnie wypełnienie.</li>
+<li><strong>Metryki walidacji.</strong> MAE i RMSE porównuje się z prognozą \(\mathbb E[\tilde A_i\mid y]\); twierdzenie o najlepszym predyktorze wyjaśnia, dlaczego właśnie średnia predykcyjna minimalizuje RMSE (dla MAE optymalna jest mediana predykcyjna) (zob. <a data-concept="rmse">RMSE</a>, <a data-concept="mae">MAE</a>).</li>
+<li><strong>Sumy sezonowe.</strong> Oczekiwana łączna frekwencja klubu z niepewną liczbą meczów play-off to zastosowanie tożsamości Walda lub (gdy frekwencja zależy od fazy) pełnego warunkowania na scenariuszach.</li>
+</ul>
+</section>
+
+<section id="ograniczenia"><h2>Ograniczenia metody</h2>
+<ul>
+<li><strong>Tylko średnia.</strong> Prawo nie przenosi się na medianę, kwantyle ani wariancję: mediana mieszaniny nie jest średnią median składników.</li>
+<li><strong>Nieliniowość.</strong> \(\mathbb E[f(X)\mid Y]\neq f(\mathbb E[X\mid Y])\) dla nieliniowych \(f\); prawo trzeba stosować do tej wielkości, której średnią chcemy poznać (np. do wypełnienia, a nie do \(\eta\)).</li>
+<li><strong>Wagi.</strong> Średnie grupowe trzeba ważyć prawdopodobieństwami grup właściwymi dla populacji docelowej; użycie wag z innego sezonu daje inną średnią.</li>
+<li><strong>Warunki tożsamości Walda.</strong> Jeśli liczba meczów jest skorelowana z frekwencją (np. awans do play-off zwiększa zainteresowanie), prosty iloczyn \(\mathbb E[N]\mathbb E[X]\) jest błędny.</li>
+<li><strong>Błąd Monte Carlo</strong> średniej z próbek posterior maleje jak \(1/\sqrt{\mathrm{ESS}}\).</li>
+</ul>
+</section>
+
+<section id="powiazane"><h2>Powiązane zagadnienia</h2>
+<ul>
+<li><a data-concept="wartosc-oczekiwana">Wartość oczekiwana</a>.</li>
+<li><a data-concept="prawo-calkowitej-wariancji">Prawo całkowitej wariancji</a>.</li>
+<li><a data-concept="prawo-calkowitego-prawdopodobienstwa">Prawo całkowitego prawdopodobieństwa</a> — szczególny przypadek dla \(X=\mathbf 1_B\).</li>
+<li><a data-concept="wartosc-oczekiwana-prognozy">Wartość oczekiwana prognozy</a>, <a data-concept="rozklad-predykcyjny">rozkład predykcyjny</a>.</li>
+<li><a data-concept="srednia-wazona">Średnia ważona</a>.</li>
+<li><a data-concept="monte-carlo">Monte Carlo</a>.</li>
+</ul>
+</section>
+
+<section id="bibliografia"><h2>Bibliografia</h2>
+<ul class="ml-bib">
+<li data-bib="casellaberger2002"></li>
+<li data-bib="wasserman2004"></li>
+<li data-bib="billingsley1995"></li>
+<li data-bib="gelman2013bda"></li>
+<li data-bib="hilbe2011"></li>
+</ul>
+</section>
