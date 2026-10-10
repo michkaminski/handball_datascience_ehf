@@ -40,6 +40,7 @@ Szkic tekstowy każdej listy: `docs/strony/`. Zmianę strony zacznij od szkicu, 
 | Match sheet | `/protokol` | A4 print (live) | [protokol.md](strony/protokol.md) |
 | Team report | `/raport-druzyny` | A4 print (live) | [raport_druzyny.md](strony/raport_druzyny.md) |
 | Season sheets | `/zestawienie-sezonu` | A4 landscape print (live) | [zestawienie_sezonu.md](strony/zestawienie_sezonu.md) |
+| Attendance | `/raporty/frekwencja` | dashboard (live) | [attendance_analytics.md](strony/attendance_analytics.md) |
 | Match summary | `/mecze/<id>/podsumowanie` (button on the match card) | A4 print (live) | [podsumowanie_meczu.md](strony/podsumowanie_meczu.md) |
 
 ## Karty (bez pozycji w menu)

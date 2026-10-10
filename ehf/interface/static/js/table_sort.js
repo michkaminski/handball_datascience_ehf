@@ -10,7 +10,7 @@
   }
 
   function parsePercent(text) {
-    const match = text.match(/^(-?\d+(?:[.,]\d+)?)%$/);
+    const match = text.match(/^([+-]?\d+(?:[.,]\d+)?)%$/);
     return match ? { n: Number(match[1].replace(",", ".")) } : null;
   }
 
@@ -20,7 +20,8 @@
   }
 
   function parseNumber(text) {
-    return /^-?\d+(?:[.,]\d+)?$/.test(text) ? { n: Number(text.replace(",", ".")) } : null;
+    const compact = text.replace(/(\d)[\s\u00a0](?=\d{3}\b)/g, "$1");
+    return /^-?\d+(?:[.,]\d+)?$/.test(compact) ? { n: Number(compact.replace(",", ".")) } : null;
   }
 
   function parseDate(text) {

@@ -1,0 +1,808 @@
+{% extends "base.html" %}
+
+{% macro change(value, label) %}
+<span class="att-change{% if value is not none and value > 0 %} att-up{% elif value is not none and value < 0 %} att-down{% endif %}">{{ label }}</span>
+{% endmacro %}
+
+{% macro records_table(items, empty_text) %}
+{% if items %}
+<div class="table-wrap att-table-wrap">
+<table class="att-table">
+<thead>
+<tr>
+<th scope="col" class="num">#</th>
+<th scope="col">Date</th>
+<th scope="col">Season</th>
+<th scope="col">Competition</th>
+<th scope="col">Home</th>
+<th scope="col" class="num">Score</th>
+<th scope="col">Away</th>
+<th scope="col">Venue</th>
+<th scope="col" class="num">Spectators</th>
+<th scope="col"><span class="sr-only">Details</span></th>
+</tr>
+</thead>
+<tbody>
+{% for match in items %}
+<tr>
+<td class="num">{{ loop.index }}</td>
+<td>{{ match.kickoff_label }}</td>
+<td>{{ match.season }}</td>
+<td>{{ match.competition }}</td>
+<td>{{ match.home }}</td>
+<td class="num"><b>{{ match.score_label }}</b></td>
+<td>{{ match.away }}</td>
+<td>{{ match.venue_label }}</td>
+<td class="num"><b>{{ match.spectators_label }}</b></td>
+<td><a class="icon-link" href="{{ url_for('panel.match_detail', match_id=match.match_id) }}">Details</a></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="note">{{ empty_text }}</p>
+{% endif %}
+{% endmacro %}
+
+{% macro bucket_table(buckets, heading) %}
+{% if buckets %}
+<div class="table-wrap att-table-wrap">
+<table class="att-table">
+<thead>
+<tr>
+<th scope="col">{{ heading }}</th>
+<th scope="col" class="num">Played</th>
+<th scope="col" class="num">Known</th>
+<th scope="col" class="num">Mean</th>
+<th scope="col" class="att-bar-col"><span class="sr-only">Relative mean</span></th>
+</tr>
+</thead>
+<tbody>
+{% for bucket in buckets %}
+<tr>
+<th scope="row">{{ bucket.label }}</th>
+<td class="num">{{ bucket.played_label }}</td>
+<td class="num">{{ bucket.known_label }}</td>
+<td class="num"><b>{{ bucket.mean_label }}</b></td>
+<td class="att-bar-col"><span class="att-meter"><span style="width: {{ bucket.bar_percent }}%"></span></span></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="note">No matches with this information for the selected filters.</p>
+{% endif %}
+{% endmacro %}
+
+{% macro small_flag(flag) %}{% if flag %} <span class="att-flag" title="Small sample">small n</span>{% endif %}{% endmacro %}
+
+{% macro choice_options(items, selected) %}
+<option value="">All</option>
+{% for item in items %}
+<option value="{{ item.value }}" {% if selected is not none and selected|string == item.value %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+{% endmacro %}
+
+{% block tytul %}Attendance — {{ nazwa_projektu }}{% endblock %}
+
+{% block tresc %}
+{% set summary = report.summary %}
+<section class="pagehead">
+<div class="crumb">Start › Reports › Attendance</div>
+<h1>Attendance</h1>
+<p>Spectators of played matches. Matches without known attendance are excluded from averages.</p>
+</section>
+
+<section class="panel">
+<h2>Filters</h2>
+<form id="attendance-filters" class="panel-body filters att-filters" method="get">
+<label>Season
+<select name="season">{{ choice_options(choices.seasons, filters.season_id) }}</select>
+</label>
+<label>Competition
+<select name="competition">{{ choice_options(choices.competitions, filters.competition_id) }}</select>
+</label>
+<label>Gender
+<select name="gender">
+<option value="">All</option>
+{% for item in genders %}
+<option value="{{ item.value }}" {% if filters.gender == item.value %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+</label>
+<label>Phase
+<select name="phase">
+<option value="">All</option>
+{% for item in choices.phases %}
+<option value="{{ item.value }}" {% if filters.phase == item.value %}selected{% endif %}>{{ item.label }}</option>
+{% endfor %}
+</select>
+</label>
+<label>Home club
+<select name="club">{{ choice_options(choices.clubs, filters.club_id) }}</select>
+</label>
+<label>Date from
+<input type="date" name="date_from" value="{{ filters.date_from.isoformat() if filters.date_from else '' }}">
+</label>
+<label>Date to
+<input type="date" name="date_to" value="{{ filters.date_to.isoformat() if filters.date_to else '' }}">
+</label>
+<label class="att-check"><span>Zero attendance</span>
+<span class="att-check-box"><input type="checkbox" name="exclude_zeros" value="1" {% if filters.exclude_zeros %}checked{% endif %}> Exclude zeros</span>
+</label>
+<div class="pole-przycisku"><button class="btn small" type="submit">Filter</button></div>
+<div class="pole-przycisku"><a class="btn secondary small" href="{{ url_for('panel.attendance_analytics') }}">Clear</a></div>
+</form>
+</section>
+
+<div data-attendance>
+<div class="match-tabs" role="tablist" aria-label="Attendance sections" data-attendance-tabs hidden>
+{% for key, label in [("overview", "Overview"), ("trends", "Trends"), ("clubs", "Clubs"), ("cities", "Cities"), ("records", "Records"), ("opponents", "Opponents"), ("calendar", "Calendar"), ("extended", "Extended records"), ("science", "Data science")] %}
+<button type="button" role="tab" id="att-tab-{{ key }}" data-tab="{{ key }}" aria-controls="att-panel-{{ key }}" aria-selected="{{ 'true' if loop.first else 'false' }}"{% if not loop.first %} tabindex="-1"{% endif %}>{{ label }}</button>
+{% endfor %}
+</div>
+
+<section class="panel" id="att-panel-overview" data-attendance-panel aria-labelledby="att-tab-overview">
+<h2>Summary</h2>
+<div class="panel-body">
+<div class="att-kpis">
+<div><span>Total spectators</span><b>{{ summary.total_label }}</b></div>
+<div class="att-kpi-good"><span>Matches with attendance</span><b>{{ summary.known_label }}</b></div>
+<div class="att-kpi-warn"><span>Played matches</span><b>{{ summary.played_label }}</b></div>
+<div><span>Coverage</span><b>{{ summary.coverage_label }}</b></div>
+<div class="att-kpi-good"><span>Mean per match</span><b>{{ summary.mean_label }}</b></div>
+<div class="att-kpi-warn"><span>Median per match</span><b>{{ summary.median_label }}</b></div>
+<div>
+<span>Record attendance</span>
+<b>{{ summary.maximum_label }}</b>
+{% if report.record %}
+<small><a class="detail-link" href="{{ url_for('panel.match_detail', match_id=report.record.match_id) }}">{{ report.record.home }} – {{ report.record.away }}</a></small>
+{% endif %}
+</div>
+<div class="att-kpi-good"><span>Mean YoY</span><b>{{ change(report.season_pair.change if report.season_pair else none, report.yoy_label) }}</b><small>{{ report.yoy_caption }}</small></div>
+</div>
+<ul class="att-notes">
+{% for note in report.completeness_notes %}
+<li>{{ note }}</li>
+{% endfor %}
+</ul>
+</div>
+</section>
+
+<section class="panel" id="att-panel-trends" data-attendance-panel aria-labelledby="att-tab-trends">
+<h2>Seasonal trends</h2>
+<div class="panel-body">
+<p class="note">All seasons for the other filters; the selected season is highlighted. Linear trend of the mean: <b>{{ report.trend.slope_label }}</b>.</p>
+{% if report.trend.points %}
+<div class="att-chart-grid">
+<div class="att-chart" data-chart="trend" aria-label="Mean attendance per season" role="img"></div>
+<div class="att-chart" data-chart="coverage" aria-label="Known matches and coverage per season" role="img"></div>
+</div>
+<div class="table-wrap att-table-wrap">
+<table class="att-table">
+<thead>
+<tr>
+<th scope="col">Season</th>
+<th scope="col" class="num">Played</th>
+<th scope="col" class="num">Known</th>
+<th scope="col" class="num">Sum</th>
+<th scope="col" class="num">Mean</th>
+<th scope="col" class="num">Median</th>
+<th scope="col" class="num">Q1</th>
+<th scope="col" class="num">Q3</th>
+<th scope="col" class="num">YoY</th>
+<th scope="col" class="num">3-season avg</th>
+</tr>
+</thead>
+<tbody>
+{% for point in report.trend.points %}
+{% set row = point.season.summary %}
+<tr{% if point.season.season_id == filters.season_id %} class="att-selected"{% endif %}>
+<th scope="row">{{ point.season.season_code }}</th>
+<td class="num">{{ row.played_label }}</td>
+<td class="num">{{ row.known_label }}</td>
+<td class="num">{{ row.total_label }}</td>
+<td class="num"><b>{{ row.mean_label }}</b></td>
+<td class="num">{{ row.median_label }}</td>
+<td class="num">{{ row.q1_label }}</td>
+<td class="num">{{ row.q3_label }}</td>
+<td class="num">{{ change(point.yoy, point.yoy_label) }}</td>
+<td class="num">{{ point.moving_average_label }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="note">No played matches for the selected filters.</p>
+{% endif %}
+</div>
+</section>
+
+<section class="panel" id="att-panel-clubs" data-attendance-panel aria-labelledby="att-tab-clubs">
+<h2>Home attendance by club</h2>
+<div class="panel-body">
+{% if report.ranking %}
+<div class="att-chart att-chart-tall" data-chart="clubs" aria-label="Mean home attendance by club" role="img"></div>
+{% endif %}
+<div class="toolbar">
+<div class="left">
+<input type="search" placeholder="Search club" aria-label="Search club" data-attendance-search="clubs">
+<span class="note">Home matches only, sorted by mean. Top {{ report.ranking|length }} clubs with known attendance.{% if report.season_pair %} YoY: {{ report.season_pair.caption }}.{% endif %}</span>
+</div>
+</div>
+{% if report.ranking %}
+<div class="table-wrap att-table-wrap">
+<table class="att-table" data-attendance-table="clubs">
+<thead>
+<tr>
+<th scope="col" class="num">#</th>
+<th scope="col">Club</th>
+<th scope="col" class="num">Home matches</th>
+<th scope="col" class="num">Known</th>
+<th scope="col" class="num">Sum</th>
+<th scope="col" class="num">Mean</th>
+<th scope="col" class="num">Median</th>
+<th scope="col" class="num">Min</th>
+<th scope="col" class="num">Max</th>
+<th scope="col" class="num">YoY</th>
+</tr>
+</thead>
+<tbody>
+{% for row in report.ranking %}
+{% set club = row.club.summary %}
+<tr data-search-text="{{ row.club.club_name|lower }}">
+<td class="num">{{ row.position }}</td>
+<td><a class="detail-link" href="{{ url_for('panel.team_detail', club_id=row.club.club_id) }}">{{ row.club.club_name }}</a></td>
+<td class="num">{{ club.played_label }}</td>
+<td class="num">{{ club.known_label }}</td>
+<td class="num">{{ club.total_label }}</td>
+<td class="num"><b>{{ club.mean_label }}</b></td>
+<td class="num">{{ club.median_label }}</td>
+<td class="num">{{ club.minimum_label }}</td>
+<td class="num">{{ club.maximum_label }}</td>
+<td class="num">{{ change(row.yoy, row.yoy_label) }}</td>
+</tr>
+{% endfor %}
+<tr class="att-empty" hidden><td colspan="10" class="note">No clubs match the search.</td></tr>
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="note">No home clubs with known attendance for the selected filters.</p>
+{% endif %}
+</div>
+</section>
+
+{% set cities = report.cities %}
+<section class="panel" id="att-panel-cities" data-attendance-panel aria-labelledby="att-tab-cities">
+<h2>Attendance by city</h2>
+<div class="panel-body">
+{% if cities is none %}
+<p class="note">City analysis is not available.</p>
+{% else %}
+<p class="note">{{ cities.source_note }}</p>
+<p class="note att-warning">{{ cities.missing_city_note }}</p>
+{% if cities.is_empty %}
+<p class="note">No matches with a venue city and known attendance for the selected filters.</p>
+{% else %}
+<p class="note">{{ cities.names_note }}</p>
+<div class="att-chart att-chart-tall" data-chart="cities" aria-label="Total spectators by city" role="img"></div>
+<h3 class="att-subtitle" id="city-detail-charts">City detail charts</h3>
+<div class="toolbar">
+<div class="left">
+<label for="att-city-select">City</label>
+<select id="att-city-select" data-city-select>
+{% for item in cities.chart_cities %}<option value="{{ loop.index0 }}">{{ item.city }}</option>{% endfor %}
+</select>
+<span class="note">Choose one of the top {{ cities.chart_cities|length }} cities by total spectators.</span>
+</div>
+</div>
+<h4 class="att-subtitle">Season trend</h4>
+<div class="att-chart" data-chart="cityTrend" data-city-chart aria-label="Total spectators by season in the selected city" role="img"></div>
+<h4 class="att-subtitle">Competitions</h4>
+<div class="att-chart" data-chart="cityCompetitions" data-city-chart aria-label="Total spectators by competition in the selected city" role="img"></div>
+<h4 class="att-subtitle">Venues</h4>
+<div class="att-chart" data-chart="cityVenues" data-city-chart aria-label="Total spectators by venue in the selected city" role="img"></div>
+<div class="toolbar">
+<div class="left">
+<input type="search" placeholder="Search city, club, competition, season or venue" aria-label="Search city, club, competition, season or venue" data-attendance-search="cities">
+<span class="note">{{ cities.ranking_note }}</span>
+</div>
+</div>
+<div class="table-wrap att-table-wrap">
+<table class="att-table" data-attendance-table="cities">
+<thead>
+<tr>
+<th scope="col" class="num">#</th>
+<th scope="col">City</th>
+<th scope="col" class="num">Matches</th>
+<th scope="col" class="num">Known</th>
+<th scope="col" class="num">Sum</th>
+<th scope="col" class="num">Mean</th>
+<th scope="col" class="num">Median</th>
+<th scope="col" class="num">Mode</th>
+<th scope="col" class="num">Max</th>
+<th scope="col" class="num">Clubs</th>
+<th scope="col" class="num">Competitions</th>
+</tr>
+</thead>
+<tbody>
+{% for item in cities.cities %}
+<tr data-search-text="{{ item.city|lower }}">
+<td class="num">{{ loop.index }}</td>
+<th scope="row">{{ item.city }}</th>
+<td class="num">{{ item.played_label }}</td>
+<td class="num">{{ item.known_label }}</td>
+<td class="num"><b>{{ item.total_label }}</b></td>
+<td class="num">{{ item.mean_label }}</td>
+<td class="num">{{ item.median_label }}</td>
+<td class="num">{{ item.mode_label }}</td>
+<td class="num">{{ item.maximum_label }}</td>
+<td class="num">{{ item.club_count_label }}</td>
+<td class="num">{{ item.competition_count_label }}</td>
+</tr>
+{% endfor %}
+<tr class="att-empty" hidden><td colspan="11" class="note">No cities match the search.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 class="att-subtitle" id="city-contributions">Clubs and competitions behind the city totals</h3>
+<p class="note">{{ cities.contributions_note }}</p>
+{% if cities.contributions %}
+<div class="table-wrap att-table-wrap">
+<table class="att-table" data-attendance-table="cities">
+<thead>
+<tr>
+<th scope="col">City</th>
+<th scope="col">Home club</th>
+<th scope="col">Competition</th>
+<th scope="col" class="num">Matches</th>
+<th scope="col" class="num">Known</th>
+<th scope="col" class="num">Sum</th>
+<th scope="col" class="num">Mean</th>
+<th scope="col" class="num">Max</th>
+</tr>
+</thead>
+<tbody>
+{% for item in cities.contributions %}
+<tr data-search-text="{{ (item.city ~ ' ' ~ item.club_name ~ ' ' ~ item.competition)|lower }}">
+<th scope="row">{{ item.city }}</th>
+<td>{% if item.club_id is not none %}<a class="detail-link" href="{{ url_for('panel.team_detail', club_id=item.club_id) }}">{{ item.club_name }}</a>{% else %}{{ item.club_name }}{% endif %}</td>
+<td>{{ item.competition }}</td>
+<td class="num">{{ item.played_label }}</td>
+<td class="num">{{ item.known_label }}</td>
+<td class="num"><b>{{ item.total_label }}</b></td>
+<td class="num">{{ item.mean_label }}</td>
+<td class="num">{{ item.maximum_label }}</td>
+</tr>
+{% endfor %}
+<tr class="att-empty" hidden><td colspan="8" class="note">No rows match the search.</td></tr>
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="note">No club and competition rows for the selected filters.</p>
+{% endif %}
+<h3 class="att-subtitle" id="city-seasons">Seasons in each city</h3>
+<p class="note">{{ cities.seasons_note }}</p>
+{% if cities.seasons %}
+<div class="table-wrap att-table-wrap">
+<table class="att-table" data-attendance-table="cities">
+<thead>
+<tr>
+<th scope="col">City</th>
+<th scope="col">Season</th>
+<th scope="col" class="num">Matches</th>
+<th scope="col" class="num">Known</th>
+<th scope="col" class="num">Sum</th>
+<th scope="col" class="num">Mean</th>
+<th scope="col" class="num">Median</th>
+<th scope="col" class="num">Max</th>
+</tr>
+</thead>
+<tbody>
+{% for item in cities.seasons %}
+<tr data-search-text="{{ (item.city ~ ' ' ~ item.season_code)|lower }}">
+<th scope="row">{{ item.city }}</th>
+<td>{{ item.season_code }}</td>
+<td class="num">{{ item.played_label }}</td>
+<td class="num">{{ item.known_label }}</td>
+<td class="num"><b>{{ item.total_label }}</b></td>
+<td class="num">{{ item.mean_label }}</td>
+<td class="num">{{ item.median_label }}</td>
+<td class="num">{{ item.maximum_label }}</td>
+</tr>
+{% endfor %}
+<tr class="att-empty" hidden><td colspan="8" class="note">No rows match the search.</td></tr>
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="note">No season rows for the selected filters.</p>
+{% endif %}
+<h3 class="att-subtitle" id="city-competitions">Competitions in each city</h3>
+<p class="note">{{ cities.competitions_note }}</p>
+{% if cities.competitions %}
+<div class="table-wrap att-table-wrap">
+<table class="att-table" data-attendance-table="cities">
+<thead>
+<tr>
+<th scope="col">City</th>
+<th scope="col">Competition</th>
+<th scope="col" class="num">Matches</th>
+<th scope="col" class="num">Known</th>
+<th scope="col" class="num">Sum</th>
+<th scope="col" class="num">Mean</th>
+<th scope="col" class="num">Median</th>
+<th scope="col" class="num">Max</th>
+</tr>
+</thead>
+<tbody>
+{% for item in cities.competitions %}
+<tr data-search-text="{{ (item.city ~ ' ' ~ item.competition)|lower }}">
+<th scope="row">{{ item.city }}</th>
+<td>{{ item.competition }}</td>
+<td class="num">{{ item.played_label }}</td>
+<td class="num">{{ item.known_label }}</td>
+<td class="num"><b>{{ item.total_label }}</b></td>
+<td class="num">{{ item.mean_label }}</td>
+<td class="num">{{ item.median_label }}</td>
+<td class="num">{{ item.maximum_label }}</td>
+</tr>
+{% endfor %}
+<tr class="att-empty" hidden><td colspan="8" class="note">No rows match the search.</td></tr>
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="note">No competition rows for the selected filters.</p>
+{% endif %}
+<h3 class="att-subtitle" id="city-venues">Venues in each city</h3>
+<p class="note">{{ cities.venues_note }}</p>
+{% if cities.venues %}
+<div class="table-wrap att-table-wrap">
+<table class="att-table" data-attendance-table="cities">
+<thead>
+<tr>
+<th scope="col">City</th>
+<th scope="col">Venue</th>
+<th scope="col" class="num">Matches</th>
+<th scope="col" class="num">Known</th>
+<th scope="col" class="num">Sum</th>
+<th scope="col" class="num">Mean</th>
+<th scope="col" class="num">Max</th>
+</tr>
+</thead>
+<tbody>
+{% for item in cities.venues %}
+<tr data-search-text="{{ (item.city ~ ' ' ~ item.venue_name)|lower }}">
+<th scope="row">{{ item.city }}</th>
+<td><a class="detail-link" href="{{ url_for('panel.venue_detail', venue_id=item.venue_id) }}">{{ item.venue_name }}</a></td>
+<td class="num">{{ item.played_label }}</td>
+<td class="num">{{ item.known_label }}</td>
+<td class="num"><b>{{ item.total_label }}</b></td>
+<td class="num">{{ item.mean_label }}</td>
+<td class="num">{{ item.maximum_label }}</td>
+</tr>
+{% endfor %}
+<tr class="att-empty" hidden><td colspan="7" class="note">No rows match the search.</td></tr>
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="note">No venue rows for the selected filters.</p>
+{% endif %}
+{% endif %}
+{% endif %}
+</div>
+</section>
+
+<section class="panel" id="att-panel-records" data-attendance-panel aria-labelledby="att-tab-records">
+<h2>Attendance records</h2>
+<div class="panel-body">
+<p class="note">Top {{ report.records|length }} matches by spectators for the selected filters.</p>
+{{ records_table(report.records, "No matches with known attendance for the selected filters.") }}
+</div>
+</section>
+
+{% set opponents = report.opponents %}
+<section class="panel" id="att-panel-opponents" data-attendance-panel aria-labelledby="att-tab-opponents">
+<h2>Opponents</h2>
+<div class="panel-body">
+{% if opponents is none or opponents.requires_club %}
+<p class="note">{{ opponents.note if opponents else "Select a home club in the filters to rank the opponents it hosted by mean home attendance." }}</p>
+{% else %}
+<p class="note">Opponents of the selected home club, ranked by mean attendance at its home matches. Home club overall mean: <b>{{ opponents.club_mean_label }}</b>. Difference is opponent mean minus that overall mean.</p>
+{% if opponents.rows %}
+<div class="att-chart att-chart-tall" data-chart="opponents" aria-label="Mean attendance by opponent" role="img"></div>
+<div class="table-wrap att-table-wrap">
+<table class="att-table">
+<thead>
+<tr>
+<th scope="col" class="num">#</th>
+<th scope="col">Opponent</th>
+<th scope="col" class="num">Matches</th>
+<th scope="col" class="num">Known</th>
+<th scope="col" class="num">Mean</th>
+<th scope="col" class="num">Max</th>
+<th scope="col" class="num">Diff vs club mean</th>
+<th scope="col" class="num">Coverage</th>
+</tr>
+</thead>
+<tbody>
+{% for row in opponents.rows %}
+<tr>
+<td class="num">{{ row.position }}</td>
+<td><a class="detail-link" href="{{ url_for('panel.team_detail', club_id=row.opponent.opponent_id) }}">{{ row.opponent.opponent_name }}</a></td>
+<td class="num">{{ row.played_label }}</td>
+<td class="num">{{ row.known_label }}</td>
+<td class="num"><b>{{ row.mean_label }}</b></td>
+<td class="num">{{ row.maximum_label }}</td>
+<td class="num">{{ change(row.difference, row.difference_label) }}</td>
+<td class="num">{{ row.coverage_label }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="note">{{ opponents.note }}</p>
+{% endif %}
+{% endif %}
+</div>
+</section>
+
+{% set calendar = report.calendar %}
+<section class="panel" id="att-panel-calendar" data-attendance-panel aria-labelledby="att-tab-calendar">
+<h2>Calendar</h2>
+<div class="panel-body">
+{% if calendar is none or calendar.is_empty %}
+<p class="note">No played matches with a kickoff time for the selected filters.</p>
+{% else %}
+<p class="note">Mean attendance by when the match was played. Played counts all matches in the bucket, known counts those with attendance.</p>
+<h3 class="att-subtitle">Weekday × kickoff hour</h3>
+{% if calendar.has_heatmap %}
+<div class="att-heatmap att-chart" data-chart="heatmap" aria-label="Mean attendance by weekday and kickoff hour" role="img"></div>
+{% else %}
+<p class="note">No known attendance with a kickoff time to draw the heatmap.</p>
+{% endif %}
+<div class="att-grid-2">
+<div>
+<h3 class="att-subtitle">Month</h3>
+{% if calendar.months %}<div class="att-chart att-chart-sm" data-chart="months" aria-label="Mean attendance by month" role="img"></div>{% endif %}
+{{ bucket_table(calendar.months, "Month") }}
+</div>
+<div>
+<h3 class="att-subtitle">Weekday</h3>
+{% if calendar.weekdays %}<div class="att-chart att-chart-sm" data-chart="weekdays" aria-label="Mean attendance by weekday" role="img"></div>{% endif %}
+{{ bucket_table(calendar.weekdays, "Weekday") }}
+</div>
+<div>
+<h3 class="att-subtitle">Kickoff hour</h3>
+{% if calendar.hours %}<div class="att-chart att-chart-sm" data-chart="hours" aria-label="Mean attendance by kickoff hour" role="img"></div>{% endif %}
+{{ bucket_table(calendar.hours, "Hour") }}
+</div>
+<div>
+<h3 class="att-subtitle">Weekend vs weekday</h3>
+{{ bucket_table(calendar.day_types, "Day type") }}
+</div>
+</div>
+<h3 class="att-subtitle">Phase</h3>
+{{ bucket_table(calendar.phases, "Phase") }}
+{% endif %}
+</div>
+</section>
+
+{% set extended = report.extended_records %}
+<section class="panel" id="att-panel-extended" data-attendance-panel aria-labelledby="att-tab-extended">
+<h2>Extended records</h2>
+<div class="panel-body">
+{% if extended is none or extended.is_empty %}
+<p class="note">No matches with known attendance for the selected filters.</p>
+{% else %}
+<h3 class="att-subtitle" id="season-records">Season records</h3>
+<p class="note">Highest attendance in each season; the season filter is ignored here.</p>
+{{ records_table(extended.seasons, "No season records for the selected filters.") }}
+<h3 class="att-subtitle" id="club-records">Club home records</h3>
+<p class="note">Highest home attendance per home club, top {{ extended.clubs|length }}.</p>
+{{ records_table(extended.clubs, "No club records for the selected filters.") }}
+<h3 class="att-subtitle" id="venue-records">Venue records</h3>
+<p class="note">Highest attendance per venue, top {{ extended.venues|length }}.</p>
+{{ records_table(extended.venues, "No venue records for the selected filters.") }}
+<h3 class="att-subtitle" id="finals-records">Finals-like matches</h3>
+<p class="note">Matches whose phase contains “final” (case insensitive), top {{ extended.finals|length }}.</p>
+{{ records_table(extended.finals, "No final-like matches for the selected filters.") }}
+<h3 class="att-subtitle" id="rivalry-records">Rivalry pairs</h3>
+<p class="note">Highest attendance per home–away pairing, top {{ extended.rivalries|length }}.</p>
+{{ records_table(extended.rivalries, "No rivalry pairs for the selected filters.") }}
+{% endif %}
+</div>
+</section>
+
+{% set science = report.science %}
+<section class="panel" id="att-panel-science" data-attendance-panel aria-labelledby="att-tab-science">
+<h2>Data science</h2>
+<div class="panel-body">
+{% if science is none %}
+<p class="note">Data science analysis is not available.</p>
+{% else %}
+<ul class="att-notes">
+{% for note in science.notes %}
+<li>{{ note }}</li>
+{% endfor %}
+</ul>
+{% if not science.is_empty %}
+{% set stability = science.stability %}
+<div class="att-kpis att-science-kpis">
+<div><span>Sample size</span><b>{{ science.sample_label }}</b></div>
+<div class="att-kpi-good"><span>Mean</span><b>{{ stability.mean_label }}</b></div>
+<div class="att-kpi-warn"><span>Std deviation</span><b>{{ stability.stdev_label }}</b></div>
+<div class="att-kpi-warn"><span>Variation (CV)</span><b>{{ stability.cv_label }}</b></div>
+{% if science.anomalies %}
+<div><span>IQR anomalies</span><b>{{ science.anomalies.count_label }}</b><small>{{ science.anomalies.high_count }} high, {{ science.anomalies.low_count }} low</small></div>
+{% endif %}
+{% if science.forecast.result %}
+<div class="att-kpi-good"><span>Forecast MAE</span><b>{{ science.forecast.result.mae_label }}</b><small>RMSE {{ science.forecast.result.rmse_label }}</small></div>
+{% endif %}
+</div>
+{% if stability.note %}<p class="note att-warning">{{ stability.note }}</p>{% endif %}
+
+<h3 class="att-subtitle" id="ds-distribution">Distribution</h3>
+{% if science.distribution %}
+<div class="att-chart att-chart-sm" data-chart="histogram" aria-label="Distribution of attendance" role="img"></div>
+{% endif %}
+<div class="att-grid-2">
+<div class="table-wrap att-table-wrap">
+<table class="att-table">
+<thead>
+<tr><th scope="col">Attendance range</th><th scope="col" class="num">Matches</th><th scope="col" class="num">Share</th><th scope="col" class="att-bar-col"><span class="sr-only">Histogram</span></th></tr>
+</thead>
+<tbody>
+{% for bin in science.distribution.histogram %}
+<tr>
+<th scope="row">{{ bin.label }}</th>
+<td class="num">{{ bin.count_label }}</td>
+<td class="num">{{ bin.share_label }}</td>
+<td class="att-bar-col"><span class="att-meter"><span style="width: {{ bin.bar_percent }}%"></span></span></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+<div class="table-wrap att-table-wrap">
+<table class="att-table">
+<thead>
+<tr><th scope="col">Percentile</th><th scope="col" class="num">Spectators</th></tr>
+</thead>
+<tbody>
+{% for point in science.distribution.percentiles %}
+<tr><th scope="row">{{ point.label }}</th><td class="num"><b>{{ point.value_label }}</b></td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+<h3 class="att-subtitle" id="ds-anomalies">Anomalies</h3>
+{% if science.anomalies %}
+{% set anomalies = science.anomalies %}
+<p class="note">IQR rule: outside Q1 − 1.5·IQR ({{ anomalies.lower_fence_label }}) and Q3 + 1.5·IQR ({{ anomalies.upper_fence_label }}). Top {{ anomalies.high|length }} high and {{ anomalies.low|length }} low are listed.</p>
+{% if anomalies.high or anomalies.low %}
+<div class="table-wrap att-table-wrap">
+<table class="att-table">
+<thead>
+<tr><th scope="col">Type</th><th scope="col">Date</th><th scope="col">Home</th><th scope="col">Away</th><th scope="col" class="num">Spectators</th><th scope="col" class="num">Beyond fence</th><th scope="col"><span class="sr-only">Details</span></th></tr>
+</thead>
+<tbody>
+{% for item in anomalies.high %}
+<tr><td>High</td><td>{{ item.kickoff_label }}</td><td>{{ item.home }}</td><td>{{ item.away }}</td><td class="num"><b>{{ item.spectators_label }}</b></td><td class="num">{{ item.deviation_label }}</td><td><a class="icon-link" href="{{ url_for('panel.match_detail', match_id=item.match_id) }}">Details</a></td></tr>
+{% endfor %}
+{% for item in anomalies.low %}
+<tr><td>Low</td><td>{{ item.kickoff_label }}</td><td>{{ item.home }}</td><td>{{ item.away }}</td><td class="num"><b>{{ item.spectators_label }}</b></td><td class="num">{{ item.deviation_label }}</td><td><a class="icon-link" href="{{ url_for('panel.match_detail', match_id=item.match_id) }}">Details</a></td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="note">No matches fall outside the IQR fences.</p>
+{% endif %}
+{% else %}
+<p class="note">Anomaly detection needs at least 4 matches with known attendance.</p>
+{% endif %}
+
+<h3 class="att-subtitle" id="ds-weekday">Weekday effect</h3>
+{% if science.weekdays %}
+<div class="att-chart att-chart-sm" data-chart="weekdayEffect" aria-label="Mean attendance by kickoff weekday" role="img"></div>
+<div class="table-wrap att-table-wrap">
+<table class="att-table">
+<thead>
+<tr><th scope="col">Weekday</th><th scope="col" class="num">Matches</th><th scope="col" class="num">Mean</th></tr>
+</thead>
+<tbody>
+{% for item in science.weekdays %}
+<tr><th scope="row">{{ item.label }}{{ small_flag(item.small_sample) }}</th><td class="num">{{ item.n }}</td><td class="num"><b>{{ item.mean_label }}</b></td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+<p class="note">Weekdays flagged “small n” have fewer than 5 matches; compare them with care.</p>
+{% else %}
+<p class="note">No matches with a kickoff time in the sample.</p>
+{% endif %}
+
+<h3 class="att-subtitle" id="ds-opponent-effect">Opponent effect</h3>
+{% set effect = science.opponent_effect %}
+{% if effect.note %}
+<p class="note">{{ effect.note }}</p>
+{% else %}
+<p class="note">Mean attendance against each opponent minus the host mean ({{ effect.host_mean_label }}). Strongest and weakest draws are shown.</p>
+<div class="table-wrap att-table-wrap">
+<table class="att-table">
+<thead>
+<tr><th scope="col">Opponent</th><th scope="col" class="num">Matches</th><th scope="col" class="num">Mean</th><th scope="col" class="num">Diff vs host mean</th></tr>
+</thead>
+<tbody>
+{% for row in effect.rows %}
+<tr><th scope="row">{{ row.opponent_name }}{{ small_flag(row.small_sample) }}</th><td class="num">{{ row.n }}</td><td class="num">{{ row.mean_label }}</td><td class="num">{{ change(row.difference, row.difference_label) }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endif %}
+
+<h3 class="att-subtitle" id="ds-correlation">Result correlation</h3>
+<p class="note att-warning">Association, not causation: scores are known only after the match, so a correlation here describes a pattern in the data and does not show that results change attendance.</p>
+<div class="table-wrap att-table-wrap">
+<table class="att-table">
+<thead>
+<tr><th scope="col">Pair</th><th scope="col" class="num">Matches</th><th scope="col" class="num">Pearson r</th><th scope="col">Strength</th><th scope="col">Warning</th></tr>
+</thead>
+<tbody>
+{% for item in science.correlations %}
+<tr><th scope="row">{{ item.label }}</th><td class="num">{{ item.n }}</td><td class="num"><b>{{ item.coefficient_label }}</b></td><td>{{ item.strength }}</td><td>{{ item.warning or "—" }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<h3 class="att-subtitle" id="ds-forecast">Forecast</h3>
+{% set forecast = science.forecast %}
+{% if forecast.result %}
+{% set result = forecast.result %}
+<p class="note">Linear regression (OLS) on information available at kickoff only. {{ result.split_label }}.</p>
+<div class="att-kpis">
+<div><span>Training matches</span><b>{{ result.train_label }}</b></div>
+<div><span>Test matches</span><b>{{ result.test_label }}</b><small>{{ result.share_label }} of rows, latest in time</small></div>
+<div class="att-kpi-good"><span>MAE</span><b>{{ result.mae_label }}</b><small>Baseline {{ result.baseline_mae_label }}</small></div>
+<div class="att-kpi-good"><span>RMSE</span><b>{{ result.rmse_label }}</b><small>Baseline {{ result.baseline_rmse_label }}</small></div>
+<div><span>MAE vs baseline</span><b>{{ change(result.improvement, result.improvement_label) }}</b><small>Baseline: home club mean of earlier matches</small></div>
+</div>
+<div class="table-wrap att-table-wrap">
+<table class="att-table">
+<thead>
+<tr><th scope="col">Feature</th><th scope="col" class="num">Effect per unit (spectators)</th></tr>
+</thead>
+<tbody>
+{% for item in result.coefficients %}
+<tr><th scope="row">{{ item.name }}</th><td class="num">{{ item.value_label }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="note att-warning">{{ forecast.warning }}</p>
+{% endif %}
+{% endif %}
+{% endif %}
+</div>
+</section>
+<script type="application/json" id="attendance-charts-data">{{ charts|tojson }}</script>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/attendance_analytics.js') }}"></script>
+{% endblock %}

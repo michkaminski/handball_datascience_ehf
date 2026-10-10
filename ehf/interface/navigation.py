@@ -48,6 +48,7 @@ SIDEBAR: tuple[tuple[str, tuple[PozycjaMenu, ...]], ...] = (
             PozycjaMenu("raport_druzyny", "Team report", "panel.team_report", "▦"),
             PozycjaMenu("zestawienie_sezonu", "Season sheets", "panel.season_sheets", "▤"),
             PozycjaMenu("rozkłady", "Distributions", "panel.lista_rozkladow", "▥"),
+            PozycjaMenu("attendance", "Attendance", "panel.attendance_analytics", "◔"),
         ),
     ),
     (

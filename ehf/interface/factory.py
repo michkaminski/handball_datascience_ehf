@@ -4,6 +4,7 @@ from pathlib import Path
 
 from flask import Flask
 
+from ehf.infrastructure.attendance_analytics_reader import PsycopgAttendanceAnalyticsReader
 from ehf.infrastructure.competition_list_reader import PsycopgCompetitionListReader
 from ehf.infrastructure.connection import open_connection
 from ehf.infrastructure.database_stats_reader import PsycopgDatabaseStatsReader
@@ -24,6 +25,7 @@ from ehf.infrastructure.team_report_reader import PsycopgTeamReportReader
 from ehf.infrastructure.team_list_reader import PsycopgTeamListReader
 from ehf.infrastructure.venue_detail_reader import PsycopgVenueDetailReader
 from ehf.infrastructure.venue_list_reader import PsycopgVenueListReader
+from ehf.interface.attendance_analytics_views import AttendanceAnalyticsView
 from ehf.interface.competition_views import CompetitionListView
 from ehf.interface.database_stats_views import DatabaseStatsView
 from ehf.interface.goal_distribution_views import (
@@ -47,6 +49,7 @@ from ehf.interface.team_report_views import SeasonSheetsPrintView, TeamReportFor
 from ehf.interface.team_views import TeamDetailView, TeamListView
 from ehf.interface.venue_views import VenueDetailView, VenueListView
 from ehf.interface.views import utworz_blueprint
+from ehf.services.attendance_analytics import AttendanceAnalyticsService
 from ehf.services.competition_list import CompetitionListService
 from ehf.services.database_stats import DatabaseStatsService
 from ehf.services.goal_distribution import GoalDistributionService
@@ -109,6 +112,7 @@ def create_app() -> Flask:
     news_service = NewsService(PsycopgNewsReader(connect))
     database_stats_service = DatabaseStatsService(PsycopgDatabaseStatsReader(connect))
     goal_distribution_service = GoalDistributionService(PsycopgGoalDistributionReader(connect))
+    attendance_service = AttendanceAnalyticsService(PsycopgAttendanceAnalyticsReader(connect))
     blueprint.add_url_rule(
         "/",
         view_func=StartView.as_view("start", service=news_service),
@@ -215,6 +219,12 @@ def create_app() -> Flask:
         "/rozklady/bramki/matches",
         view_func=GoalDistributionMatchesView.as_view(
             "goal_distribution_matches", service=goal_distribution_service
+        ),
+    )
+    blueprint.add_url_rule(
+        "/raporty/frekwencja",
+        view_func=AttendanceAnalyticsView.as_view(
+            "attendance_analytics", service=attendance_service
         ),
     )
     app.register_blueprint(blueprint)

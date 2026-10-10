@@ -155,6 +155,17 @@ STRONY: tuple[Strona, ...] = (
         uses_skeleton=False,
     ),
     Strona(
+        klucz="attendance",
+        endpoint="attendance_analytics",
+        sciezka="/raporty/frekwencja",
+        tytul="Attendance",
+        okruszek="Start › Reports › Attendance",
+        opis="Spectator numbers of played matches: seasonal trends, home club ranking and records.",
+        wzor="narzedzie",
+        filtry=("Season", "Competition", "Gender", "Phase", "Home club", "Date from", "Date to", "Zero attendance"),
+        uses_skeleton=False,
+    ),
+    Strona(
         klucz="tabele",
         endpoint="lista_tabel",
         sciezka="/tabele",
@@ -356,4 +367,6 @@ KLUCZE_DANYCH = frozenset(
     }
 )
 
-KLUCZE_RAPORTOW = frozenset({"protokol", "raport_druzyny", "zestawienie_sezonu", "rozkłady"})
+KLUCZE_RAPORTOW = frozenset(
+    {"protokol", "raport_druzyny", "zestawienie_sezonu", "rozkłady", "attendance"}
+)
