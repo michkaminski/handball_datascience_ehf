@@ -730,6 +730,8 @@ def test_dashboard_renders_stage_two_and_three_sections() -> None:
         "coverage",
         "clubs",
         "cities",
+        "citiesMean",
+        "citiesMedian",
         "heatmap",
         "months",
         "weekdays",
@@ -1551,6 +1553,11 @@ def test_dashboard_renders_cities_tab_panel_and_chart() -> None:
     assert page.index('data-tab="clubs"') < page.index('data-tab="cities"') < page.index('data-tab="records"')
     assert 'id="att-panel-cities"' in page
     assert 'data-chart="cities"' in page
+    assert 'data-chart="citiesMean"' in page
+    assert 'data-chart="citiesMedian"' in page
+    assert "Total spectators" in page
+    assert "Mean attendance" in page
+    assert "Median attendance" in page
     assert CITY_SOURCE_NOTE in page
     assert "4 played matches have no venue city" in page
     assert 'data-attendance-search="cities"' in page
@@ -1579,6 +1586,8 @@ def test_dashboard_renders_without_city_chart_when_no_city_has_attendance() -> N
     page = client.get("/raporty/frekwencja?tab=cities").get_data(as_text=True)
 
     assert 'data-chart="cities"' not in page
+    assert 'data-chart="citiesMean"' not in page
+    assert 'data-chart="citiesMedian"' not in page
     assert 'data-chart="cityTrend"' not in page and "data-city-select" not in page
     assert "No matches with a venue city and known attendance" in page
     assert CITY_SOURCE_NOTE in page

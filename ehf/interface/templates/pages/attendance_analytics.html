@@ -289,7 +289,20 @@
 <p class="note">No matches with a venue city and known attendance for the selected filters.</p>
 {% else %}
 <p class="note">{{ cities.names_note }}</p>
-<div class="att-chart att-chart-tall" data-chart="cities" aria-label="Total spectators by city" role="img"></div>
+<div class="att-city-rank-charts">
+<div>
+<h3 class="att-subtitle">Total spectators</h3>
+<div class="att-chart att-chart-cities" data-chart="cities" aria-label="Total spectators by city, highest to lowest" role="img"></div>
+</div>
+<div>
+<h3 class="att-subtitle">Mean attendance</h3>
+<div class="att-chart att-chart-cities" data-chart="citiesMean" aria-label="Mean attendance by city, highest to lowest" role="img"></div>
+</div>
+<div>
+<h3 class="att-subtitle">Median attendance</h3>
+<div class="att-chart att-chart-cities" data-chart="citiesMedian" aria-label="Median attendance by city, highest to lowest" role="img"></div>
+</div>
+</div>
 <h3 class="att-subtitle" id="city-detail-charts">City detail charts</h3>
 <div class="toolbar">
 <div class="left">

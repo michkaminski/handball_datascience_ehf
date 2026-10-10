@@ -49,8 +49,8 @@ Spectators of played matches. Matches without known attendance are excluded from
   source note: "City is taken from the match venue (clubs have no city in the archive). This shows where spectators attended."
   missing-city note: number of played matches (for the filters) without a venue city, excluded from the ranking
   names note: spellings differing only in case or spaces (Kielce / KIELCE) are one city; the most common spelling is shown
-  chart cities: horizontal bars, total spectators of the top 15 cities
-  City detail charts: select (top 15 cities, default the top one) drives three charts
+  charts cities / citiesMean / citiesMedian: side-by-side bars for the same top 30 cities; each chart sorted highest→lowest by its own metric
+  City detail charts: select (top 30 cities, default the top one) drives three charts
     cityTrend         total spectators per season (columns)
     cityCompetitions  total spectators per competition (horizontal bars)
     cityVenues        total spectators per venue (horizontal bars)
@@ -114,7 +114,7 @@ Rules:
 
 ## Charts payload
 
-`attendance_charts_payload(report)` (`attendance_analytics_chart.py`) builds one JSON object, rendered as `<script type="application/json" id="attendance-charts-data">` and read by `attendance_analytics.js`. Keys: `trend.points`, `heatmap`, `histogram` (`label`, `count`, `share`), `clubs` (top 15: `name`, `mean`, `known`), `months` / `weekdays` / `hours` (`label`, `mean`, `known`, `played`), `cities` (top 15: `name`, `total`, `mean`, `median`, `mode`, `known`), `cityDetails` (same top 15 cities: `name`, `seasons` [`season`, `total`, `mean`, `median`, `known`, `played`], `competitions` and `venues` [`name`, `total`, `mean`, `known`]), `opponents` (`name`, `mean`, `difference`; empty without a home club), `coverage` (`season`, `known`, `played`, `coverage` in %), `weekdayEffect` (`label`, `mean`, `n`).
+`attendance_charts_payload(report)` (`attendance_analytics_chart.py`) builds one JSON object, rendered as `<script type="application/json" id="attendance-charts-data">` and read by `attendance_analytics.js`. Keys: `trend.points`, `heatmap`, `histogram` (`label`, `count`, `share`), `clubs` (top 15: `name`, `mean`, `known`), `months` / `weekdays` / `hours` (`label`, `mean`, `known`, `played`), `cities` (top 30 by total: `name`, `total`, `mean`, `median`, `mode`, `known`; charts `cities`, `citiesMean`, `citiesMedian` reuse this list and each sort descending by its metric), `cityDetails` (same top 30 cities: `name`, `seasons` [`season`, `total`, `mean`, `median`, `known`, `played`], `competitions` and `venues` [`name`, `total`, `mean`, `known`]), `opponents` (`name`, `mean`, `difference`; empty without a home club), `coverage` (`season`, `known`, `played`, `coverage` in %), `weekdayEffect` (`label`, `mean`, `n`).
 
 Chart hosts are `div.att-chart[data-chart="trend|coverage|clubs|cities|heatmap|months|weekdays|hours|opponents|histogram|weekdayEffect"]`. Each is drawn by a renderer registered under the same name, so a new chart is a new renderer and a new key, not a change to existing ones.
 

@@ -174,36 +174,57 @@
   function renderRows(host, items, options) {
     const usable = items.filter((item) => item.value != null);
     if (!usable.length) return showMessage(host, options.empty || "No known attendance to chart.");
-    const rowHeight = 22;
-    const left = 170;
-    const right = 56;
-    const width = 960;
-    const height = 12 + rowHeight * usable.length + 28;
+    const rowHeight = options.rowHeight || 22;
+    const left = options.labelWidth || 170;
+    const right = options.valueWidth || 56;
+    const width = options.width || 960;
+    const labelChars = options.labelChars || 26;
+    const axisClass = options.axisClass || "att-axis";
+    const height = 16 + rowHeight * usable.length + 36;
     const top = niceMaximum(Math.max(...usable.map((item) => item.value)));
     const scale = (value) => ((width - left - right) * value) / top;
-    const svg = newSvg({ width, height });
+    const svg = newSvg({ width, height }, options.svgClass);
     for (let step = 0; step <= 4; step += 1) {
       const value = (top / 4) * step;
       const gx = left + scale(value);
       svg.append(
-        element("line", { x1: gx, x2: gx, y1: 6, y2: height - 24, class: "att-grid" }),
-        element("text", { x: gx, y: height - 8, class: "att-axis att-axis-x" }, formatNumber(value)),
+        element("line", { x1: gx, x2: gx, y1: 8, y2: height - 28, class: "att-grid" }),
+        element("text", { x: gx, y: height - 10, class: `${axisClass} att-axis-x` }, formatNumber(value)),
       );
     }
+    const barClass = options.barClass || "att-bar";
     usable.forEach((item, index) => {
-      const rowTop = 10 + rowHeight * index;
-      const group = element("g", { class: "att-bar" });
+      const rowTop = 12 + rowHeight * index;
+      const group = element("g", { class: barClass });
       group.append(
         element("title", {}, item.tip),
-        element("rect", { x: left, y: rowTop, width: Math.max(scale(item.value), 1), height: rowHeight - 6, rx: 2 }),
+        element("rect", { x: left, y: rowTop, width: Math.max(scale(item.value), 1), height: rowHeight - 8, rx: 2 }),
       );
+      const label = item.label.length > labelChars ? `${item.label.slice(0, labelChars - 1)}…` : item.label;
       svg.append(
-        element("text", { x: left - 8, y: rowTop + 11, class: "att-axis att-axis-y" }, item.label.length > 26 ? `${item.label.slice(0, 25)}…` : item.label),
+        element("text", { x: left - 10, y: rowTop + rowHeight / 2 + 1, class: `${axisClass} att-axis-y` }, label),
         group,
-        element("text", { x: left + scale(item.value) + 6, y: rowTop + 11, class: "att-axis att-axis-start" }, formatNumber(item.value)),
+        element("text", { x: left + scale(item.value) + 8, y: rowTop + rowHeight / 2 + 1, class: `${axisClass} att-axis-start` }, formatNumber(item.value)),
       );
     });
     finish(host, svg, options.legend);
+  }
+
+  const CITY_RANK_OPTS = {
+    width: 420,
+    rowHeight: 24,
+    labelWidth: 112,
+    valueWidth: 52,
+    labelChars: 16,
+    axisClass: "att-axis att-axis-lg",
+    svgClass: "att-svg-cities",
+  };
+
+  function cityRankItems(rows, valueKey) {
+    return [...(rows || [])]
+      .filter((row) => row[valueKey] != null)
+      .sort((a, b) => b[valueKey] - a[valueKey] || String(a.name).localeCompare(String(b.name)))
+      .map((row) => ({ label: row.name, value: row[valueKey], tip: cityTip(row) }));
   }
 
   function renderHeatmap(host, payload) {
@@ -277,11 +298,20 @@
     return details[index] || details[0] || null;
   }
 
+  function cityTip(row) {
+    return [
+      `${row.name}: ${formatNumber(row.total)} spectators`,
+      `mean ${row.mean == null ? "n/a" : formatNumber(row.mean)}`,
+      `median ${row.median == null ? "n/a" : formatNumber(row.median)}`,
+      `${row.known} matches known`,
+    ].join(", ");
+  }
+
   function cityRowItems(rows) {
     return rows.map((row) => ({
       label: row.name,
       value: row.total,
-      tip: `${row.name}: ${formatNumber(row.total)} spectators, mean ${row.mean == null ? "n/a" : formatNumber(row.mean)}, ${row.known} matches known`,
+      tip: cityTip(row),
     }));
   }
 
@@ -321,15 +351,25 @@
         { legend: "Mean home attendance of the top clubs.", empty: "No clubs with known attendance." },
       ),
     cities: (host, data) =>
-      renderRows(
-        host,
-        (data.cities || []).map((row) => ({
-          label: row.name,
-          value: row.total,
-          tip: `${row.name}: ${formatNumber(row.total)} spectators, mean ${row.mean == null ? "n/a" : formatNumber(row.mean)}, ${row.known} matches known`,
-        })),
-        { legend: "Total spectators by match venue city, top 15.", empty: "No cities with known attendance." },
-      ),
+      renderRows(host, cityRankItems(data.cities, "total"), {
+        ...CITY_RANK_OPTS,
+        legend: "Top 30 cities by total spectators, highest to lowest.",
+        empty: "No cities with known attendance.",
+      }),
+    citiesMean: (host, data) =>
+      renderRows(host, cityRankItems(data.cities, "mean"), {
+        ...CITY_RANK_OPTS,
+        legend: "Same top 30 cities, sorted by mean attendance.",
+        empty: "No cities with known mean attendance.",
+        barClass: "att-bar-alt",
+      }),
+    citiesMedian: (host, data) =>
+      renderRows(host, cityRankItems(data.cities, "median"), {
+        ...CITY_RANK_OPTS,
+        legend: "Same top 30 cities, sorted by median attendance.",
+        empty: "No cities with known median attendance.",
+        barClass: "att-bar-median",
+      }),
     cityTrend: renderCityTrend,
     cityCompetitions: renderCityCompetitions,
     cityVenues: renderCityVenues,

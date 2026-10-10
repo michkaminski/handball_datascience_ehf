@@ -640,10 +640,18 @@ repeating-linear-gradient(to top,transparent 0,transparent 24%,rgba(23,56,82,.08
 .att-down{color:var(--danger)}
 [data-attendance-panel][hidden]{display:none}
 .att-chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+.att-chart-grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.att-city-rank-charts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start;margin:0 0 16px}
+.att-city-rank-charts .att-subtitle{margin:0 0 6px;font-size:.9rem}
+.att-city-rank-charts .att-chart{margin:0}
 .att-chart-sm{min-height:220px}
 .att-chart-tall{min-height:320px}
-.att-chart-sm .att-svg,.att-chart-tall .att-svg{max-height:none}
+.att-chart-cities{min-height:0;padding:8px 10px}
+.att-chart-sm .att-svg,.att-chart-tall .att-svg,.att-chart-cities .att-svg,.att-svg-cities{max-height:none}
+.att-svg-cities{width:100%;height:auto}
+.att-axis-lg{font-size:12px}
 .att-bar-alt rect{fill:var(--good)}
+.att-bar-median rect{fill:var(--warn)}
 .att-line-dot{fill:var(--warn)}
 .att-subtitle{margin:16px 0 6px;color:var(--ink);font-size:.9rem}
 .att-subtitle:first-child{margin-top:0}
@@ -664,5 +672,7 @@ repeating-linear-gradient(to top,transparent 0,transparent 24%,rgba(23,56,82,.08
 .att-heat-cell:hover rect{stroke:var(--ink);stroke-width:1.5}
 .att-science-kpis{margin-top:10px}
 @media(max-width:1100px){.filters.att-filters{grid-template-columns:repeat(2,minmax(150px,1fr))}.att-kpis{grid-template-columns:repeat(2,minmax(150px,1fr))}}
-@media(max-width:1100px){.att-grid-2,.att-chart-grid{grid-template-columns:1fr}}
+@media(max-width:1200px){.att-chart-grid-3,.att-city-rank-charts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1100px){.att-grid-2,.att-chart-grid,.att-chart-grid-3,.att-city-rank-charts{grid-template-columns:1fr}}
+@media(max-width:700px){.att-axis-lg{font-size:11px}}
 @media(max-width:700px){.filters.att-filters,.att-kpis{grid-template-columns:1fr}}

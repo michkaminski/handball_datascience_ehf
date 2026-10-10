@@ -17,7 +17,7 @@ from ehf.domain.goal_distribution import format_int
 CITY_LIMIT = 100
 CONTRIBUTION_LIMIT = 300
 BREAKDOWN_LIMIT = 600
-CITY_CHART_LIMIT = 15
+CITY_CHART_LIMIT = 30
 UNKNOWN_CLUB_NAME = "—"
 CITY_SOURCE_NOTE = (
     "City is taken from the match venue (clubs have no city in the archive). "
