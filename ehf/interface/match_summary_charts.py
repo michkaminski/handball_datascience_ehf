@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ehf.domain.match_summary import REGULATION, Flow, MatchSummary, PlayerLine, ShotMap, WinCurve, clock
+from ehf.domain.match_summary import REGULATION, Flow, MatchSummary, PlayerLine, ShotMap, WinCurve, clock, lead_by_minute
 
 COLORS = {"home": "#4338ca", "away": "#eb6834"}
 TINTS = {"home": "#dcdcf5", "away": "#fbdccf"}
@@ -356,17 +356,8 @@ def lead_chart(summary: MatchSummary) -> LeadChart:
         return zero - margin * per_goal
 
     bars = []
-    margin = 0
-    index = 0
-    for minute in range(minutes):
-        # the biggest difference reached in the minute (the later one when two are equal), so a lead
-        # that lasted seconds still shows and the marked biggest leads sit on top of their bars
-        shown = margin
-        while index < len(flow.goals) and flow.goals[index].seconds <= (minute + 1) * 60:
-            margin = flow.goals[index].home - flow.goals[index].away
-            if abs(margin) >= abs(shown):
-                shown = margin
-            index += 1
+    for minute, lead in enumerate(lead_by_minute(flow)):
+        shown = lead.margin
         if shown:
             bars.append(
                 LeadBar(

@@ -737,6 +737,34 @@ def match_flow(events: MatchEvents) -> Flow:
     )
 
 
+@dataclass(frozen=True)
+class MinuteLead:
+    margin: int
+    score: str
+
+
+def lead_by_minute(flow: Flow) -> tuple[MinuteLead, ...]:
+    minutes = flow.end_seconds // 60
+    leads: list[MinuteLead] = []
+    margin = 0
+    score = "0:0"
+    index = 0
+    for minute in range(minutes):
+        shown = margin
+        shown_score = score
+        while index < len(flow.goals) and flow.goals[index].seconds <= (minute + 1) * 60:
+            goal = flow.goals[index]
+            margin = goal.home - goal.away
+            score = f"{goal.home}:{goal.away}"
+            if abs(margin) >= abs(shown):
+                shown, shown_score = margin, score
+            index += 1
+        leads.append(MinuteLead(shown, shown_score))
+    if leads:
+        leads[-1] = MinuteLead(margin, score)
+    return tuple(leads)
+
+
 def _state(margin: int) -> str:
     return "home" if margin > 0 else "away" if margin < 0 else "tie"
 

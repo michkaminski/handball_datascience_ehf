@@ -12,6 +12,7 @@ from ehf.domain.match_summary import (
     Flow,
     TickerAction,
     TickerActor,
+    lead_by_minute,
     match_events,
     match_flow,
 )
@@ -223,20 +224,8 @@ def _lead_chart(flow: Flow, half_time: str) -> LeadChart:
         return zero - margin * per_goal
 
     bars = []
-    margin = 0
-    index = 0
-    score = "0:0"
-    for minute in range(minutes):
-        # the biggest difference reached in the minute (the later one of equals): a lead of seconds still shows
-        shown = margin
-        shown_score = score
-        while index < len(flow.goals) and flow.goals[index].seconds <= (minute + 1) * 60:
-            goal = flow.goals[index]
-            margin = goal.home - goal.away
-            score = f"{goal.home}:{goal.away}"
-            if abs(margin) >= abs(shown):
-                shown, shown_score = margin, score
-            index += 1
+    for minute, lead in enumerate(lead_by_minute(flow)):
+        shown = lead.margin
         if shown:
             bars.append(
                 MinuteBar(
@@ -247,7 +236,7 @@ def _lead_chart(flow: Flow, half_time: str) -> LeadChart:
                     side="home" if shown > 0 else "away",
                     minute=minute + 1,
                     margin=abs(shown),
-                    score=shown_score,
+                    score=lead.score,
                 )
             )
         else:
@@ -260,7 +249,7 @@ def _lead_chart(flow: Flow, half_time: str) -> LeadChart:
                     side="tie",
                     minute=minute + 1,
                     margin=0,
-                    score=shown_score,
+                    score=lead.score,
                 )
             )
 
