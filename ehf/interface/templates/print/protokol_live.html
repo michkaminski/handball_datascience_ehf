@@ -131,6 +131,12 @@
   .sheet { background: #fff; width: min(900px, 100%); max-height: 96vh; max-height: 96dvh; display: flex; flex-direction: column;
            border-radius: 14px 14px 0 0; padding: 10px 14px 10px; }
   .sheet h3 { margin: 0 0 4px; font-size: 17px; flex: none; }
+  /* okno zgody na zapis do pliku JSON */
+  #gov { align-items: center; }
+  #gov .sheet { width: min(560px, 100%); border-radius: 14px; padding: 18px 20px 14px; }
+  #gov p { margin: 6px 0; color: var(--muted); }
+  #gov .fname { color: var(--ink); font-weight: 700; word-break: break-all; }
+  #gov .actions { flex-wrap: wrap; }
   .sbody { overflow: auto; flex: 1; min-height: 0; }
   .srow { display: flex; gap: 18px; flex-wrap: wrap; }
   .lbl { font-size: 12px; color: var(--muted); font-weight: 600; margin: 8px 0 3px; }
@@ -319,7 +325,7 @@
 </main>
 
 <footer>
-  <button id="connectBtn" class="dirty" hidden onclick="connectJson()">Zapisuj do pliku JSON</button>
+  <button id="connectBtn" class="dirty" hidden onclick="showGrant()">Zapisuj do pliku JSON</button>
   <button id="downloadBtn" onclick="downloadJson()">Pobierz JSON</button>
   <button onclick="openFile()">Otwórz inny mecz</button>
   <button id="endBtn" class="on" onclick="endMatch()">Koniec meczu</button>
@@ -336,6 +342,20 @@
   <div class="tchart" id="tChart"></div>
   <div class="thalves"><div id="tH1"></div><div id="tH2"></div></div>
   <div class="summary" id="tSummary"></div>
+</div>
+
+<div class="ov" id="gov">
+  <div class="sheet">
+    <h3>Zapis meczu do pliku</h3>
+    <p>Wskaż plik <span class="fname" id="gName"></span> — jest w tym samym katalogu co ten plik HTML.
+       Strona wczyta z niego zapisany stan meczu i będzie zapisywać do niego każdą zmianę.</p>
+    <p id="gNew">Nie masz tego pliku? Wybierz „Utwórz nowy plik”.</p>
+    <div class="actions">
+      <button onclick="closeGrant()">Bez zapisu do pliku</button>
+      <button id="gNewBtn" onclick="closeGrant();connectJson()">Utwórz nowy plik</button>
+      <button class="primary" onclick="grantJson()">Udzielam zgody na zapis do pliku</button>
+    </div>
+  </div>
 </div>
 
 <div class="ov" id="pov" onclick="if(event.target===this)closePlayer()">
@@ -569,7 +589,7 @@ function loadText(text, name) {
 // tworzy (albo nadpisuje) plik JSON z całym meczem i od tej chwili każda zmiana zapisuje się do niego
 async function connectJson() {
   try {
-    const h = await showSaveFilePicker({ suggestedName: fileName || EMBEDDED_FILE || 'protokol.json', types: JSON_TYPES });
+    const h = await showSaveFilePicker({ id: 'protokol', suggestedName: fileName || EMBEDDED_FILE || 'protokol.json', types: JSON_TYPES });
     fileHandle = h; fileName = h.name;
     setDirty(false); fileUi();
     save();
@@ -579,7 +599,7 @@ async function openFile() {
   if (dirty && !confirm('Są niezapisane zmiany. Otworzyć inny plik?')) return;
   if (!FS_OK) { $('fileInput').click(); return; }
   try {
-    const [h] = await showOpenFilePicker({ types: JSON_TYPES });
+    const [h] = await showOpenFilePicker({ id: 'protokol', types: JSON_TYPES });
     await attach(h);
   } catch (e) { if (e.name !== 'AbortError') alert('Nie udało się otworzyć pliku: ' + e.message); }
 }
@@ -617,6 +637,24 @@ function startEmbedded() {
   fileUi();
   fileStatus(SAVE_OK ? 'Kliknij „Zapisuj do pliku JSON” — cały mecz będzie zapisywany w pliku po każdej zmianie'
                      : 'Ta przeglądarka nie zapisuje do pliku — zapisuj mecz przyciskiem „Pobierz JSON”', true);
+  if (FS_OK) showGrant();
+}
+// zgoda na zapis: użytkownik wskazuje plik JSON meczu (przeglądarka nie pozwala otworzyć go bez tego), strona wczytuje z niego stan i zapisuje do niego zmiany
+function showGrant() {
+  if (!FS_OK) { connectJson(); return; }
+  $('gName').textContent = fileName || EMBEDDED_FILE;
+  $('gNew').hidden = $('gNewBtn').hidden = !SAVE_OK;
+  $('gov').classList.add('show');
+}
+function closeGrant() { $('gov').classList.remove('show'); }
+async function grantJson() {
+  const expected = fileName || EMBEDDED_FILE;
+  try {
+    const [h] = await showOpenFilePicker({ id: 'protokol', types: JSON_TYPES });
+    if (expected && h.name !== expected && !confirm(`Wybrany plik to ${h.name}, a ten mecz zapisuje się do ${expected}. Użyć wybranego pliku?`)) return;
+    await attach(h);
+    if (fileHandle) closeGrant();
+  } catch (e) { if (e.name !== 'AbortError') alert('Nie udało się otworzyć pliku: ' + e.message); }
 }
 
 // ---- zegar ----
