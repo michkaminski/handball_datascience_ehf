@@ -273,7 +273,6 @@
   <p>Otwórz plik JSON meczu — z niego wczytają się drużyny i składy, a każda zmiana zapisze się z powrotem do tego pliku.</p>
   <div class="stack">
     <button class="big" onclick="openFile()">Otwórz plik JSON</button>
-    <button id="resumeBtn" hidden onclick="resumeFile()"></button>
     <p id="startNote"></p>
   </div>
 </div>
@@ -321,7 +320,6 @@
 
 <footer>
   <button id="connectBtn" class="dirty" hidden onclick="connectJson()">Zapisuj do pliku JSON</button>
-  <button id="resumeFileBtn" hidden onclick="resumeFile()"></button>
   <button id="downloadBtn" onclick="downloadJson()">Pobierz JSON</button>
   <button onclick="openFile()">Otwórz inny mecz</button>
   <button id="endBtn" class="on" onclick="endMatch()">Koniec meczu</button>
@@ -526,12 +524,11 @@ function deletePlayer() {
 }
 
 // ---- odczyt i zapis pliku ----
-// Chrome/Edge: File System Access API — zapis automatycznie do otwartego pliku.
-// Inne przeglądarki: plik tylko do odczytu, zapis przyciskiem „Pobierz JSON”.
-// Zawsze: kopia stanu w pamięci przeglądarki (IndexedDB), przywracana po ponownym otwarciu tego meczu.
+// Cały mecz (składy i zdarzenia) zapisuje się tylko do pliku JSON; przeglądarka nic nie przechowuje.
+// Chrome/Edge (także Chrome na Androidzie): „Zapisuj do pliku JSON” albo otwarty plik — zapis automatyczny po każdej zmianie.
+// Inne przeglądarki: zapis przyciskiem „Pobierz JSON”.
 const FS_OK = 'showOpenFilePicker' in window;
 const SAVE_OK = 'showSaveFilePicker' in window;
-let backupKey = null;
 const JSON_TYPES = [{ description: 'Protokół JSON', accept: { 'application/json': ['.json'] } }];
 let fileHandle = null, fileName = '', writeQ = Promise.resolve(), dirty = false;
 
@@ -541,24 +538,16 @@ function fileStatus(msg, err) {
 }
 function setDirty(v) {
   dirty = v;
-  $('downloadBtn').classList.toggle('dirty', v && !fileHandle);
+  $('downloadBtn').classList.toggle('dirty', v && !fileHandle && !SAVE_OK);
 }
 function fileUi() {
   $('connectBtn').hidden = !SAVE_OK || !!fileHandle;
-  if (fileHandle) $('resumeFileBtn').hidden = true;
-}
-function backup() {
-  if (!backupKey) return;
-  idbSet(backupKey, doc()).catch(() => {});
 }
 function save() {
   S.updatedAt = Date.now();
-  backup();
   if (!fileHandle) {
     setDirty(true);
-    const t = new Date().toLocaleTimeString('pl-PL');
-    fileStatus(SAVE_OK ? `Zapamiętano na tym urządzeniu ${t} — plik JSON nie jest podłączony: kliknij „Zapisuj do pliku JSON”`
-                       : `Zapamiętano na tym urządzeniu ${t} — kopię pliku zrób przyciskiem „Pobierz JSON”`, true);
+    fileStatus(SAVE_OK ? 'Niezapisane zmiany — kliknij „Zapisuj do pliku JSON”' : 'Niezapisane zmiany — kliknij „Pobierz JSON”', true);
     return;
   }
   writeQ = writeQ.then(async () => {
@@ -574,17 +563,15 @@ function loadText(text, name) {
   try { applyDoc(JSON.parse(text)); }
   catch (e) { alert('To nie jest poprawny plik protokołu: ' + e.message); return false; }
   fileName = name;
-  backupKey = 'doc:' + name;
   setDirty(false);
   return true;
 }
-// tworzy (albo nadpisuje) plik JSON i od tej chwili każda zmiana zapisuje się do niego
+// tworzy (albo nadpisuje) plik JSON z całym meczem i od tej chwili każda zmiana zapisuje się do niego
 async function connectJson() {
   try {
     const h = await showSaveFilePicker({ suggestedName: fileName || EMBEDDED_FILE || 'protokol.json', types: JSON_TYPES });
     fileHandle = h; fileName = h.name;
     setDirty(false); fileUi();
-    try { await idbSet('handle', h); } catch (e) {}
     save();
   } catch (e) { if (e.name !== 'AbortError') alert('Nie udało się zapisać pliku: ' + e.message); }
 }
@@ -601,7 +588,6 @@ async function attach(h) {
   if (!loadText(await (await h.getFile()).text(), h.name)) return;
   fileHandle = h; fileUi();
   fileStatus(`${h.name}: otwarty, zapis automatyczny`);
-  try { await idbSet('handle', h); } catch (e) {}
 }
 function readPicked(inp) {
   const f = inp.files[0]; if (!f) return;
@@ -619,57 +605,18 @@ function downloadJson() {
 }
 window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
 
-// przeglądarka pamięta wskazanie na ostatni plik (wznowienie jednym kliknięciem) i kopię stanu każdego meczu (klucz doc:<plik>)
-function idb() {
-  return new Promise((res, rej) => {
-    const r = indexedDB.open('protokol_live', 1);
-    r.onupgradeneeded = () => r.result.createObjectStore('kv');
-    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
-  });
+function initStart() {
+  // usuń dane zostawione w przeglądarce przez wcześniejszą wersję strony
+  try { indexedDB.deleteDatabase('protokol_live'); } catch (e) {}
+  if (EMBEDDED) { startEmbedded(); return; }
+  if (!FS_OK) $('startNote').textContent = 'Ta przeglądarka nie zapisuje bezpośrednio do pliku — po zmianach używaj „Pobierz JSON”.';
 }
-async function idbSet(k, v) {
-  const db = await idb();
-  return new Promise((res, rej) => { const tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(v, k); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
-}
-async function idbGet(k) {
-  const db = await idb();
-  return new Promise((res, rej) => { const r = db.transaction('kv').objectStore('kv').get(k); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
-}
-async function resumeFile() {
-  try { const h = await idbGet('handle'); if (h) await attach(h); }
-  catch (e) { alert('Nie udało się otworzyć pliku: ' + e.message); }
-}
-async function initStart() {
-  if (EMBEDDED) { await startEmbedded(); return; }
-  if (!FS_OK) {
-    $('startNote').textContent = 'Ta przeglądarka nie zapisuje bezpośrednio do pliku — po zmianach używaj „Pobierz JSON”.';
-    return;
-  }
-  try {
-    const h = await idbGet('handle');
-    if (h) { $('resumeBtn').textContent = 'Wznów: ' + h.name; $('resumeBtn').hidden = false; }
-  } catch (e) {}
-}
-// dane wbudowane w HTML pokazują się od razu; jeśli to urządzenie ma zapis tego meczu — propozycja przywrócenia
-async function startEmbedded() {
+// dane wbudowane w HTML pokazują się od razu; zapis do pliku JSON po wskazaniu pliku
+function startEmbedded() {
   if (!loadText(JSON.stringify(EMBEDDED), EMBEDDED_FILE)) return;
   fileUi();
-  const how = SAVE_OK ? 'kliknij „Zapisuj do pliku JSON”, aby każda zmiana zapisywała się w pliku'
-                      : 'ta przeglądarka nie zapisuje do pliku — zmiany są zapamiętywane na tym urządzeniu, kopię pliku zrób przyciskiem „Pobierz JSON”';
-  fileStatus('Dane wbudowane — ' + how, true);
-  try {
-    const b = await idbGet('doc:' + EMBEDDED_FILE);
-    if (b && b.state && b.state.updatedAt &&
-        confirm(`Na tym urządzeniu jest zapis tego meczu z ${new Date(b.state.updatedAt).toLocaleString('pl-PL')}. Przywrócić go?`) &&
-        loadText(JSON.stringify(b), EMBEDDED_FILE)) {
-      fileStatus('Przywrócono zapis z tego urządzenia — ' + how, true);
-    }
-  } catch (e) {}
-  if (!FS_OK) return;
-  try {
-    const h = await idbGet('handle');
-    if (h && h.name === EMBEDDED_FILE) { $('resumeFileBtn').textContent = 'Wznów z pliku ' + h.name; $('resumeFileBtn').hidden = false; }
-  } catch (e) {}
+  fileStatus(SAVE_OK ? 'Kliknij „Zapisuj do pliku JSON” — cały mecz będzie zapisywany w pliku po każdej zmianie'
+                     : 'Ta przeglądarka nie zapisuje do pliku — zapisuj mecz przyciskiem „Pobierz JSON”', true);
 }
 
 // ---- zegar ----
