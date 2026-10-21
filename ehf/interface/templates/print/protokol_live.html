@@ -347,13 +347,22 @@
 <div class="ov" id="gov">
   <div class="sheet">
     <h3>Zapis meczu do pliku</h3>
-    <p>Wskaż plik <span class="fname" id="gName"></span> — jest w tym samym katalogu co ten plik HTML.
-       Strona wczyta z niego zapisany stan meczu i będzie zapisywać do niego każdą zmianę.</p>
-    <p id="gNew">Nie masz tego pliku? Wybierz „Utwórz nowy plik”.</p>
-    <div class="actions">
-      <button onclick="closeGrant()">Bez zapisu do pliku</button>
-      <button id="gNewBtn" onclick="closeGrant();connectJson()">Utwórz nowy plik</button>
-      <button class="primary" onclick="grantJson()">Udzielam zgody na zapis do pliku</button>
+    <div id="gStep1">
+      <p>Wskaż plik <span class="fname" id="gName"></span> — jest w tym samym katalogu co ten plik HTML.
+         Strona wczyta z niego zapisany stan meczu.</p>
+      <p id="gNew">Nie masz tego pliku? Wybierz „Utwórz nowy plik”.</p>
+      <div class="actions">
+        <button onclick="closeGrant()">Bez zapisu do pliku</button>
+        <button id="gNewBtn" onclick="closeGrant();connectJson()">Utwórz nowy plik</button>
+        <button class="primary" onclick="pickJson()">Wskaż plik meczu</button>
+      </div>
+    </div>
+    <div id="gStep2" hidden>
+      <p>Wczytano plik <span class="fname" id="gName2"></span>. Udziel zgody, aby strona zapisywała do niego każdą zmianę meczu.</p>
+      <div class="actions">
+        <button onclick="closeGrant()">Bez zapisu do pliku</button>
+        <button class="primary" onclick="grantWrite()">Udzielam zgody na zapis do pliku</button>
+      </div>
     </div>
   </div>
 </div>
@@ -603,11 +612,29 @@ async function openFile() {
     await attach(h);
   } catch (e) { if (e.name !== 'AbortError') alert('Nie udało się otworzyć pliku: ' + e.message); }
 }
+// wczytanie pliku nie wymaga zgody; zgoda na zapis tylko osobnym kliknięciem (wybór pliku zużywa gest użytkownika, np. na Androidzie)
+let pendingHandle = null;
 async function attach(h) {
-  if (await h.requestPermission({ mode: 'readwrite' }) !== 'granted') { alert('Brak zgody na zapis do pliku'); return; }
   if (!loadText(await (await h.getFile()).text(), h.name)) return;
-  fileHandle = h; fileUi();
+  fileHandle = null; fileUi();
+  if (await h.queryPermission({ mode: 'readwrite' }) === 'granted') { useHandle(h); return; }
+  pendingHandle = h;
+  fileStatus(`${h.name}: wczytany — udziel zgody na zapis do pliku`, true);
+  showConsent(h.name);
+}
+function useHandle(h) {
+  fileHandle = h; pendingHandle = null;
+  setDirty(false); fileUi(); closeGrant();
   fileStatus(`${h.name}: otwarty, zapis automatyczny`);
+}
+async function grantWrite() {
+  const h = pendingHandle; if (!h) return;
+  try {
+    if (await h.requestPermission({ mode: 'readwrite' }) !== 'granted') { alert('Bez zgody strona nie zapisze meczu do pliku.'); return; }
+    const wasDirty = dirty;
+    useHandle(h);
+    if (wasDirty) save();
+  } catch (e) { alert('Nie udało się uzyskać zgody na zapis: ' + e.message); }
 }
 function readPicked(inp) {
   const f = inp.files[0]; if (!f) return;
@@ -642,18 +669,24 @@ function startEmbedded() {
 // zgoda na zapis: użytkownik wskazuje plik JSON meczu (przeglądarka nie pozwala otworzyć go bez tego), strona wczytuje z niego stan i zapisuje do niego zmiany
 function showGrant() {
   if (!FS_OK) { connectJson(); return; }
+  if (pendingHandle) { showConsent(pendingHandle.name); return; }
   $('gName').textContent = fileName || EMBEDDED_FILE;
   $('gNew').hidden = $('gNewBtn').hidden = !SAVE_OK;
+  $('gStep1').hidden = false; $('gStep2').hidden = true;
+  $('gov').classList.add('show');
+}
+function showConsent(name) {
+  $('gName2').textContent = name;
+  $('gStep1').hidden = true; $('gStep2').hidden = false;
   $('gov').classList.add('show');
 }
 function closeGrant() { $('gov').classList.remove('show'); }
-async function grantJson() {
+async function pickJson() {
   const expected = fileName || EMBEDDED_FILE;
   try {
     const [h] = await showOpenFilePicker({ id: 'protokol', types: JSON_TYPES });
     if (expected && h.name !== expected && !confirm(`Wybrany plik to ${h.name}, a ten mecz zapisuje się do ${expected}. Użyć wybranego pliku?`)) return;
     await attach(h);
-    if (fileHandle) closeGrant();
   } catch (e) { if (e.name !== 'AbortError') alert('Nie udało się otworzyć pliku: ' + e.message); }
 }
 
