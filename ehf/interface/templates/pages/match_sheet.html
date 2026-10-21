@@ -47,11 +47,12 @@
 </select>
 </label>
 <label class="filter-checkbox" title="Add players from the previous season who have not played in this one"><input type="checkbox" name="previous" value="1"{% if sheet_request.previous_season %} checked{% endif %}> Add previous season squad</label>
-<div class="pole-przycisku"><button class="btn small" type="submit">Print match sheet</button></div>
+<div class="pole-przycisku"><button class="btn small" type="submit">Print match sheet</button>
+<button class="btn secondary small" type="submit" formaction="{{ url_for('panel.match_sheet_offline') }}" formtarget="_self" title="ZIP with the live protocol (HTML with the data built in) and its JSON, named date_home_away; works offline in the browser">Print HTML protocol offline</button></div>
 </form>
 <div class="panel-body">
 <p class="note" data-sheet-same hidden>Choose two different teams.</p>
-<p class="note">The sheet opens in a new tab; use the browser's Print (Ctrl+P) to print it or save it as PDF (A4, portrait, margins: none or default). Squads come from the team's lineups in the chosen season (all competitions), before the match date when one is given; a team without lineups gets its registered roster. Stats (M, G, Avg, GK save%) are for the same matches.</p>
+<p class="note">The sheet opens in a new tab; use the browser's Print (Ctrl+P) to print it or save it as PDF (A4, portrait, margins: none or default). Squads come from the team's lineups in the chosen season (all competitions), before the match date when one is given; a team without lineups gets its registered roster. Stats (M, G, Avg, GK save%) are for the same matches. <b>Print HTML protocol offline</b> downloads a ZIP with the live protocol (open the HTML in the browser, no connection needed) and the same data as JSON; date and teams name the files (the date is today when none is given). Nothing is kept on the server.</p>
 </div>
 </section>
 {% endblock %}

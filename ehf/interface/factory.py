@@ -52,7 +52,7 @@ from ehf.interface.referee_views import RefereeDetailView, RefereeListView
 from ehf.interface.scorer_views import ScorerListView
 from ehf.interface.season_views import SeasonListView
 from ehf.interface.start_views import StartView
-from ehf.interface.match_sheet_views import MatchSheetFormView, MatchSheetPrintView
+from ehf.interface.match_sheet_views import MatchSheetFormView, MatchSheetOfflineView, MatchSheetPrintView
 from ehf.interface.match_summary_views import MatchStatisticsView, MatchSummaryPrintView
 from ehf.interface.team_report_views import SeasonSheetsPrintView, TeamReportFormView, TeamReportPrintView
 from ehf.interface.team_views import TeamDetailView, TeamListView
@@ -195,6 +195,10 @@ def create_app() -> Flask:
     blueprint.add_url_rule(
         "/protokol/druk",
         view_func=MatchSheetPrintView.as_view("match_sheet_print", service=match_sheet_service),
+    )
+    blueprint.add_url_rule(
+        "/protokol/offline",
+        view_func=MatchSheetOfflineView.as_view("match_sheet_offline", service=match_sheet_service),
     )
     blueprint.add_url_rule(
         "/raport-druzyny",

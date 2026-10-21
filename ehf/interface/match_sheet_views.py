@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from flask import abort, render_template, request
+import json
+import zipfile
+from io import BytesIO
+
+from flask import Response, abort, render_template, request
 from flask.views import MethodView
 
 from ehf.domain.errors import DataReadError
@@ -54,3 +58,29 @@ class MatchSheetPrintView(MethodView):
         except DataReadError as exc:
             abort(503, description=str(exc))
         return render_template("print/match_sheet.html", sheet=sheet, top_scorers=TOP_SCORERS)
+
+
+class MatchSheetOfflineView(MethodView):
+    """The live protocol HTML with its JSON, zipped in memory: nothing is stored on the server."""
+
+    def __init__(self, service: MatchSheetService) -> None:
+        self._service = service
+
+    def get(self) -> Response:
+        sheet_request = _request_or_400()
+        try:
+            protocol = self._service.live_protocol(sheet_request)
+        except ValueError as exc:
+            abort(400, description=str(exc))
+        except DataReadError as exc:
+            abort(503, description=str(exc))
+        html = render_template("print/protokol_live.html", dokument=protocol.document, plik_json=protocol.json_name)
+        archive = BytesIO()
+        with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zipped:
+            zipped.writestr(f"{protocol.base_name}/{protocol.html_name}", html)
+            zipped.writestr(f"{protocol.base_name}/{protocol.json_name}", json.dumps(protocol.document, ensure_ascii=False, indent=1))
+        return Response(
+            archive.getvalue(),
+            mimetype="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{protocol.zip_name}"', "Cache-Control": "no-store"},
+        )

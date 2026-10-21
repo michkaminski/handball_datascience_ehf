@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import Protocol
+
+from ehf.domain.live_protocol import LiveProtocol, build_live_protocol
 
 from ehf.domain.match_sheet import (
     MatchSheet,
@@ -25,8 +28,14 @@ class MatchSheetService:
         return self._reader.options(request.season_id, request.competition_id)
 
     def build(self, request: MatchSheetRequest) -> MatchSheet:
+        return build_match_sheet(self._fetch(request), request)
+
+    def live_protocol(self, request: MatchSheetRequest) -> LiveProtocol:
+        return build_live_protocol(self._fetch(request), request, date.today())
+
+    def _fetch(self, request: MatchSheetRequest) -> MatchSheetData:
         if not request.is_complete:
             raise ValueError("Choose a season and both teams")
         if request.home_id == request.away_id:
             raise ValueError("Home and away team must be different")
-        return build_match_sheet(self._reader.fetch(request), request)
+        return self._reader.fetch(request)
