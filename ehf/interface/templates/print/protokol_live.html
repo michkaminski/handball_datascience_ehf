@@ -132,6 +132,8 @@
            border-radius: 14px 14px 0 0; padding: 10px 14px 10px; }
   .sheet h3 { margin: 0 0 4px; font-size: 17px; flex: none; }
   /* okno zgody na zapis do pliku JSON */
+  #ov { align-items: flex-start; padding-top: 4vh; padding-top: 4dvh; }
+  #ov .sheet { border-radius: 14px; max-height: 92vh; max-height: 92dvh; }
   #gov { align-items: center; }
   #gov .sheet { width: min(560px, 100%); border-radius: 14px; padding: 18px 20px 14px; }
   #gov p { margin: 6px 0; color: var(--muted); }
@@ -759,6 +761,15 @@ function openGoal(team, nr = null) {
   edit = { kind: 'goal', id: null, team, nr, pen: false, miss: false, note: '', ...suggestTime() };
   openSheet();
 }
+let quickGoalAt = 0;
+function openGoalQuick(team, nr) { openGoal(team, nr); quickGoalAt = Date.now(); }
+window.addEventListener('click', e => {
+  const quick = quickGoalAt && Date.now() - quickGoalAt < 400 && edit;
+  quickGoalAt = 0;
+  if (!quick) return;
+  e.stopPropagation(); e.preventDefault();
+  saveItem();
+}, true);
 function setShot(pen, miss) { edit.pen = pen; edit.miss = miss; renderSheet(); }
 function openPen(team, nr) {
   edit = { kind: 'pen', id: null, team, nr, type: '2', note: '', ...suggestTime() };
@@ -798,7 +809,8 @@ function renderSheet() {
     const b = document.createElement('button');
     b.innerHTML = `<b>${big}</b><span>${esc(small)}</span>`;
     b.className = edit.nr === v ? 'sel' : '';
-    b.onclick = () => { edit.nr = v; renderSheet(); };
+    b.onclick = () => { edit.nr = v; $('pgrid').querySelectorAll('button').forEach(x => x.classList.toggle('sel', x === b)); };
+    b.ondblclick = () => { edit.nr = v; saveItem(); };
     $('pgrid').appendChild(b);
   });
 
@@ -892,7 +904,7 @@ function render() {
         ${saves ? `<td class="st" title="${st.rz ? `obrony / rzuty: ${sv(st.ob)}/${sv(st.rz)}` : ''}">${st.sk == null ? '' : esc(st.sk) + '%'}</td>` : ''}
         <td class="g${g ? '' : 'zero'}">${g}</td><td class="g7">${g7}</td>
         ${kc(k(['W']), 'kW')}${kc(k2, k2 >= 3 ? 'kD' : 'k2')}${kc(k(['D', 'N']), 'kD')}
-        <td class="act"><button class="bg ${t}" onclick="openGoal('${team}',${p[0]})">+G</button>
+        <td class="act"><button class="bg ${t}" onclick="openGoalQuick('${team}',${p[0]})">+G</button>
         <button class="bk" onclick="openPen('${team}',${p[0]})">K<span class="opt">ara</span></button></td></tr>`;
     }).join('');
     const unk = cnt(team, x => x.nr == null);
