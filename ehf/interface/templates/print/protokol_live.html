@@ -1274,8 +1274,29 @@ th { font-size: 11px; color: var(--mu); font-weight: 600; }
 .chip.cD, .chip.cN { background: #fde8e8; color: var(--b); } .chip.cW { background: #fff9c4; color: #8a6d00; }
 .sig { text-align: right; color: var(--mu); font-size: 12px; margin-top: 6px; }
 @media (max-width: 760px) { .two { grid-template-columns: 1fr; } .score .r { font-size: 40px; } .score .t { font-size: 18px; } .cmp { grid-template-columns: 40px 1fr 110px 1fr 40px; } }
-@page { size: A4; margin: 10mm; }
-@media print { body { background: #fff; font-size: 11px; } .tools { display: none; } .page { padding: 0; max-width: none; } .card { border-color: #d5d9de; padding: 8px 10px; margin-bottom: 8px; } .score .r { font-size: 40px; } .ev { font-size: 10.5px; } th, td { padding: 2px 4px; } }
+@page { size: A4 portrait; margin: 8mm; }
+@media print { body { background: #fff; } .tools { display: none; } }
+body.pdf { background: #fff; font-size: 10px; line-height: 1.25; }
+body.pdf .tools { display: none; }
+body.pdf .page { padding: 0; margin: 0; max-width: none; }
+body.pdf .card { border-color: #d5d9de; border-radius: 7px; padding: 5px 8px; margin-bottom: 5px; }
+body.pdf h2 { font-size: 10px; margin-bottom: 3px; }
+body.pdf .score { margin-top: 0; gap: 10px; } body.pdf .score .t { font-size: 17px; }
+body.pdf .score .r { font-size: 32px; } body.pdf .score .r small { font-size: 10px; margin-top: 2px; }
+body.pdf .facts { grid-template-columns: repeat(4, 1fr); gap: 4px; } body.pdf .fact { padding: 3px 6px; border-radius: 6px; }
+body.pdf .fact span { font-size: 9px; }
+body.pdf .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; } body.pdf .duo .card:last-child { margin-bottom: 0; }
+body.pdf .duo > .card, body.pdf .duo > div { margin-bottom: 5px; }
+body.pdf .cmp { grid-template-columns: 30px 1fr 112px 1fr 30px; gap: 4px; padding: 1px 0; } body.pdf .cmp span { font-size: 9.5px; }
+body.pdf .bar { height: 7px; }
+body.pdf .two { grid-template-columns: 1fr 1fr; gap: 5px; }
+body.pdf th, body.pdf td { padding: 1px 3px; } body.pdf th { font-size: 9px; }
+body.pdf .nr { width: 22px; } body.pdf .num { width: 26px; }
+body.pdf .half h3 { font-size: 10.5px; margin-bottom: 2px; }
+body.pdf .ev { font-size: 9px; } body.pdf .ev .min { width: 24px; } body.pdf .ev .sc { width: 40px; }
+body.pdf .ev .df { display: inline; margin-left: 3px; font-size: 8px; }
+body.pdf .tag, body.pdf .chip { font-size: 8px; padding: 0 3px; } body.pdf .ev .note { font-size: 8px; }
+body.pdf .legend { font-size: 9px; margin-top: 0; } body.pdf .sig { font-size: 9px; margin-top: 2px; }
 `;
   const sevenTxt = s => `${s.s7g}/${s.s7}`;
   return `<!doctype html>
@@ -1293,6 +1314,7 @@ th { font-size: 11px; color: var(--mu); font-weight: 600; }
   <div class="fact"><span>Najdłuższa seria bramek</span><div class="ab"><b class="a">${runTxt(st.A)}</b><b class="b">${runTxt(st.B)}</b></div></div>
   <div class="fact"><span>Remisy · zmiany prowadzenia</span><div class="ab"><b>${R.ties} · ${R.changes}</b></div></div>
 </div></section>
+<div class="duo">
 <section class="card"><h2>Porównanie drużyn</h2>
   ${cmp('Bramki', st.A.goals, st.B.goals)}
   ${cmp('I połowa', st.A.h1, st.B.h1)}
@@ -1304,9 +1326,12 @@ th { font-size: 11px; color: var(--mu); font-weight: 600; }
   ${cmp('Największa przewaga', st.A.lead, st.B.lead)}
   ${cmp('Najdłuższa seria', st.A.run, st.B.run)}
 </section>
+<div>
 <section class="card"><h2>Przebieg meczu — przewaga</h2>${reportLeadChart(goals)}</section>
 <section class="card"><h2>Bramki w odcinkach 10 minut</h2>${reportSegChart(R.seg)}
   <div class="legend"><span><i style="background:var(--a)"></i>${esc(m.A.short)}</span><span><i style="background:var(--b)"></i>${esc(m.B.short)}</span></div></section>
+</div>
+</div>
 <div class="two">
   <section class="card team a"><h2>A — ${esc(m.A.name)}</h2>${players('A')}</section>
   <section class="card team b"><h2>B — ${esc(m.B.name)}</h2>${players('B')}</section>
@@ -1315,6 +1340,25 @@ th { font-size: 11px; color: var(--mu); font-weight: 600; }
 <div class="sig">Sportomatyka „Bawimy się danymi”</div>
 </div>
 <script>
+// wydruk na jednej stronie A4: zwarty układ (body.pdf) i skala dopasowana do wysokości strony (194 × 281 mm przy 96 dpi)
+const PDF_W = 733, PDF_H = 1062 * 0.97;
+function fitPage() {
+  const pg = document.querySelector('.page');
+  document.body.classList.add('pdf');
+  pg.style.zoom = 1;
+  let s = 1;
+  for (let i = 0; i < 6; i++) { pg.style.width = PDF_W / s + 'px'; s = Math.min(1, PDF_H / pg.offsetHeight); }
+  pg.style.width = PDF_W / s + 'px';
+  while (pg.offsetHeight * s > PDF_H && s > 0.2) { s *= 0.97; pg.style.width = PDF_W / s + 'px'; }
+  pg.style.zoom = s;
+}
+function unfitPage() {
+  const pg = document.querySelector('.page');
+  document.body.classList.remove('pdf');
+  pg.style.zoom = ''; pg.style.width = '';
+}
+window.addEventListener('beforeprint', fitPage);
+window.addEventListener('afterprint', unfitPage);
 function saveReport() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob(['<!doctype html>' + document.documentElement.outerHTML], { type: 'text/html' }));
