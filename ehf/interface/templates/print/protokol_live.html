@@ -77,6 +77,7 @@
   .act { width: 1%; white-space: nowrap; text-align: right; }
   .act button { padding: 6px 10px; font-size: 13px; font-weight: 700; }
   .act .bg.a { color: var(--a); border-color: var(--a); } .act .bg.b { color: var(--b); border-color: var(--b); }
+  .act .bg { touch-action: manipulation; } .act .bg.arm.a { background: var(--a-soft); } .act .bg.arm.b { background: var(--b-soft); }
   .act .bk { color: var(--warn); border-color: var(--warn); }
   .chips { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
   .chip { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 10px; background: #fff4e0; color: var(--warn); cursor: pointer; border: 1px solid #f1d9a8; }
@@ -185,6 +186,9 @@
   .tl .min { width: 40px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .tl .sc { width: 64px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .tl .df { font-size: 13px; width: 36px; }
+  .df.mx { border-radius: 4px; box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 40%, transparent); }
+  .df.mx.a { background: var(--a-soft); } .df.mx.b { background: var(--b-soft); }
+  .ts { background: rgba(255, 200, 0, .2); border-radius: 3px; padding: 0 2px; }
   .tl .tteam { width: 30px; }
   .tbadge { display: inline-block; width: 22px; text-align: center; border-radius: 5px; color: #fff; font-size: 12px; font-weight: 800; }
   .tbadge.a { background: var(--a); } .tbadge.b { background: var(--b); }
@@ -768,15 +772,19 @@ function openGoal(team, nr = null) {
   edit = { kind: 'goal', id: null, team, nr, pen: false, miss: false, note: '', ...suggestTime() };
   openSheet();
 }
-let quickGoalAt = 0;
-function openGoalQuick(team, nr) { openGoal(team, nr); quickGoalAt = Date.now(); }
-window.addEventListener('click', e => {
-  const quick = quickGoalAt && Date.now() - quickGoalAt < 400 && edit;
-  quickGoalAt = 0;
-  if (!quick) return;
-  e.stopPropagation(); e.preventDefault();
-  saveItem();
-}, true);
+// „+G” przy składzie: tylko podwójne stuknięcie (≤ 450 ms) — gol od razu, minuta z zegara lub ostatniego zdarzenia
+let goalTap = null;
+function tapGoal(btn, team, nr) {
+  const now = Date.now(), key = team + nr;
+  if (goalTap && goalTap.key === key && now - goalTap.t < 450) { goalTap = null; quickGoal(team, nr); return; }
+  goalTap = { key, t: now };
+  btn.classList.add('arm');
+  setTimeout(() => btn.classList.remove('arm'), 450);
+}
+function quickGoal(team, nr) {
+  S.goals.push({ id: ++S.seq, team, nr, pen: false, miss: false, note: '', ...suggestTime(), ord: S.goals.length + 1 });
+  save(); render();
+}
 function setShot(pen, miss) { edit.pen = pen; edit.miss = miss; renderSheet(); }
 function openPen(team, nr) {
   edit = { kind: 'pen', id: null, team, nr, type: '2', note: '', ...suggestTime() };
@@ -932,7 +940,7 @@ function render() {
         ${saves ? `<td class="st" title="${st.rz ? `obrony / rzuty: ${sv(st.ob)}/${sv(st.rz)}` : ''}">${st.sk == null ? '' : esc(st.sk) + '%'}</td>` : ''}
         <td class="g${g ? '' : 'zero'}">${g}</td><td class="g7">${g7}</td>
         ${kc(k(['W']), 'kW')}${kc(k2, k2 >= 3 ? 'kD' : 'k2')}${kc(k(['D', 'N']), 'kD')}
-        <td class="act"><button class="bg ${t}" onclick="openGoalQuick('${team}',${p[0]})">+G</button>
+        <td class="act"><button class="bg ${t}" title="dwuklik: gol" onclick="tapGoal(this,'${team}',${p[0]})">+G</button>
         <button class="bk" onclick="openPen('${team}',${p[0]})">K<span class="opt">ara</span></button></td></tr>`;
     }).join('');
     const unk = cnt(team, x => x.nr == null);
@@ -956,11 +964,11 @@ function render() {
   [1, 2].forEach(h => {
     $('ev' + h).innerHTML = evHead + (T.events.filter(e => e.half === h).map(e => {
       const p = e.p, tc = e.team.toLowerCase(), click = `onclick="editItem('${e.kind}',${e.id})"`;
-      const who = p ? `<b>${p[0]}</b> ${esc(surname(p))}${e.nth ? ` <span class="nth">(${e.nth})</span>` : ''}`
+      const who = p ? topWrap(e, `<b>${p[0]}</b> ${esc(surname(p))}${e.nth ? ` <span class="nth">(${e.nth})</span>` : ''}`)
                     : `<span class="none">strzelec?</span>`;
       const note = e.note ? `<span class="note">${esc(e.note)}</span>` : '';
       const min = `<td class="min">${e.min != null ? e.min + "'" : '—'}</td>`;
-      let what = who, sc = `${e.a}:${e.b}`, cls = tc, df = diffTd(e.a - e.b);
+      let what = who, sc = `${e.a}:${e.b}`, cls = tc, df = diffTd(e.a - e.b, e.mx);
       if (e.kind === 'pen') { what = `<span class="chip ${e.type}">${penLabel(e.type)}</span> ${who}`; sc = ''; df = '<td class="df"></td>'; cls = 'kara ' + tc; }
       else if (e.miss) { what = `${who}<span class="tag x">7m ✗</span>`; df = '<td class="df"></td>'; cls = 'miss ' + tc; }
       else if (e.pen) what += '<span class="tag">7m</span>';
@@ -1001,11 +1009,26 @@ function timeline() {
     end[e.half] = `${a} : ${b}`;
     return r;
   });
+  markLeaders(events);
   return { events, end };
+}
+// najwyższa przewaga każdej drużyny (mx) i gole najlepszych strzelców drużyn (top, od 2 bramek)
+function markLeaders(events) {
+  const gs = events.filter(e => e.kind === 'goal' && !e.miss), cnt = {};
+  const lead = { A: Math.max(0, ...gs.map(e => e.a - e.b)), B: Math.max(0, ...gs.map(e => e.b - e.a)) };
+  gs.forEach(e => { if (e.p) cnt[e.team + e.nr] = (cnt[e.team + e.nr] || 0) + 1; });
+  const top = t => Math.max(0, ...Object.entries(cnt).filter(([k]) => k[0] === t).map(([, v]) => v));
+  const best = { A: top('A'), B: top('B') };
+  gs.forEach(e => {
+    const d = e.a - e.b;
+    e.mx = d > 0 ? d === lead.A : d < 0 ? -d === lead.B : false;
+    e.top = !!e.p && best[e.team] >= 2 && cnt[e.team + e.nr] === best[e.team];
+  });
 }
 // przewaga: +n gospodarze (A), -n goście (B), 0 remis
 const diffTxt = d => d > 0 ? '+' + d : String(d);
-const diffTd = d => `<td class="df ${d > 0 ? 'a' : d < 0 ? 'b' : ''}">${diffTxt(d)}</td>`;
+const diffTd = (d, mx) => `<td class="df ${d > 0 ? 'a' : d < 0 ? 'b' : ''}${mx ? ' mx" title="najwyższa przewaga' : ''}">${diffTxt(d)}</td>`;
+const topWrap = (e, html) => e.top ? `<span class="ts" title="najlepszy strzelec drużyny">${html}</span>` : html;
 // oś wykresu przewagi: minuty, a gdy którykolwiek gol nie ma minuty — kolejne bramki (1, 2, 3…)
 function chartAxis(goals) {
   const seq = goals.some(g => g.min == null), n = Math.max(goals.length, 1), h2 = goals.findIndex(g => g.half === 2);
@@ -1031,7 +1054,7 @@ function renderTimeline() {
     $('tH' + h).innerHTML = `<h4><span>${h === 1 ? 'I' : 'II'} połowa</span><span>${T.end[h] || ''}</span></h4><table class="tl">` +
       (T.events.filter(e => e.half === h).map(e => {
         const p = e.p, tc = e.team.toLowerCase();
-        const who = p ? `<b>${p[0]}</b> ${esc(p[1])}${e.nth ? ` <span class="nth">(${e.nth})</span>` : ''}` : '<span class="none">strzelec?</span>';
+        const who = p ? topWrap(e, `<b>${p[0]}</b> ${esc(p[1])}${e.nth ? ` <span class="nth">(${e.nth})</span>` : ''}`) : '<span class="none">strzelec?</span>';
         const note = e.note ? `<div class="note">${esc(e.note)}</div>` : '';
         const tm = `<td class="tteam"><span class="tbadge ${tc}">${e.team}</span></td>`;
         const min = `<td class="min">${e.min != null ? e.min + "'" : '—'}</td>`;
@@ -1039,7 +1062,7 @@ function renderTimeline() {
           return `<tr class="kara">${min}<td class="sc"><span class="chip ${e.type}">${penLabel(e.type)}</span></td><td></td>${tm}<td>${who}${note}</td></tr>`;
         if (e.miss)
           return `<tr class="miss">${min}<td class="sc">${e.a} : ${e.b}</td><td></td>${tm}<td>${who} <span class="tag x">7m ✗ pudło</span>${note}</td></tr>`;
-        return `<tr class="${tc}">${min}<td class="sc">${e.a} : ${e.b}</td>${diffTd(e.a - e.b)}${tm}<td>${who}${e.pen ? ' <span class="tag">7m</span>' : ''}${note}</td></tr>`;
+        return `<tr class="${tc}">${min}<td class="sc">${e.a} : ${e.b}</td>${diffTd(e.a - e.b, e.mx)}${tm}<td>${who}${e.pen ? ' <span class="tag">7m</span>' : ''}${note}</td></tr>`;
       }).join('') || '<tr><td class="empty">brak zdarzeń</td></tr>') + '</table>';
   });
   $('tSummary').innerHTML = $('summary').innerHTML;
@@ -1205,14 +1228,14 @@ function reportHtml(name) {
 
   const evRows = h => T.events.filter(e => e.half === h).map(e => {
     const p = e.p, tc = e.team.toLowerCase();
-    let what = p ? `<b>${p[0]}</b> ${esc(OFFICIALS.includes(p[0]) ? 'osoba towarzysząca' : p[1])}${e.nth ? ` <small>(${e.nth})</small>` : ''}` : '<i>strzelec nieznany</i>';
+    let what = p ? topWrap(e, `<b>${p[0]}</b> ${esc(OFFICIALS.includes(p[0]) ? 'osoba towarzysząca' : p[1])}${e.nth ? ` <small>(${e.nth})</small>` : ''}`) : '<i>strzelec nieznany</i>';
     let sc = `${e.a}:${e.b}`, cls = tc, df = '';
     if (e.kind === 'pen') { what = `<span class="chip c${e.type}">${penLabel(e.type)}</span> ${what}`; sc = ''; cls += ' pen'; }
     else if (e.miss) { what += ' <span class="tag x">7m niewykorzystany</span>'; cls += ' miss'; }
     else {
       if (e.pen) what += ' <span class="tag">7m</span>';
       const d = e.a - e.b;
-      df = `<small class="df ${d > 0 ? 'a' : d < 0 ? 'b' : ''}">${d > 0 ? '+' + d : d}</small>`;
+      df = `<small class="df ${d > 0 ? 'a' : d < 0 ? 'b' : ''}${e.mx ? ' mx' : ''}">${d > 0 ? '+' + d : d}</small>`;
     }
     if (e.note) what += `<div class="note">${esc(e.note)}</div>`;
     const side = `<td class="side ${tc}">${what}</td>`;
@@ -1268,6 +1291,9 @@ th { font-size: 11px; color: var(--mu); font-weight: 600; }
 .ev td.side.a { background: var(--a2); } .ev td.side.b { background: var(--b2); text-align: right; }
 .ev .side.a b { color: var(--a); } .ev .side.b b { color: var(--b); }
 .ev tr.miss td { color: var(--mu); } .ev .df { display: block; font-size: 10px; font-weight: 700; color: var(--mu); } .ev .df.a { color: var(--a); } .ev .df.b { color: var(--b); }
+.ev .df.mx { display: table; margin: 1px auto 0; padding: 0 4px; border-radius: 4px; box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 40%, transparent); }
+.ev .df.mx.a { background: var(--a2); } .ev .df.mx.b { background: var(--b2); }
+.ts { background: rgba(255, 200, 0, .2); border-radius: 3px; padding: 0 2px; }
 .ev .note { font-size: 11px; color: var(--mu); } .empty { text-align: center; color: var(--mu); }
 .tag { font-size: 10px; font-weight: 700; padding: 0 5px; border-radius: 8px; background: #f3e5f5; color: #8e44ad; } .tag.x { background: #eceff1; color: #546e7a; }
 .chip { font-size: 10px; font-weight: 700; padding: 0 5px; border-radius: 8px; background: #fff4e0; color: #b7791f; }
@@ -1295,6 +1321,7 @@ body.pdf .nr { width: 22px; } body.pdf .num { width: 26px; }
 body.pdf .half h3 { font-size: 10.5px; margin-bottom: 2px; }
 body.pdf .ev { font-size: 9px; } body.pdf .ev .min { width: 24px; } body.pdf .ev .sc { width: 40px; }
 body.pdf .ev .df { display: inline; margin-left: 3px; font-size: 8px; }
+body.pdf .ev .df.mx { display: inline-block; margin: 0 0 0 3px; padding: 0 3px; }
 body.pdf .tag, body.pdf .chip { font-size: 8px; padding: 0 3px; } body.pdf .ev .note { font-size: 8px; }
 body.pdf .legend { font-size: 9px; margin-top: 0; } body.pdf .sig { font-size: 9px; margin-top: 2px; }
 `;
