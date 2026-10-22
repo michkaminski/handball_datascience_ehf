@@ -77,6 +77,10 @@
   .act { width: 1%; white-space: nowrap; text-align: right; }
   .act button { padding: 6px 10px; font-size: 13px; font-weight: 700; }
   .act .bg.a { color: var(--a); border-color: var(--a); } .act .bg.b { color: var(--b); border-color: var(--b); }
+  .card.a tr.top .pname .sn, .card.a tr.top td.g { color: var(--a); } .card.b tr.top .pname .sn, .card.b tr.top td.g { color: var(--b); }
+  tr.top .pname .sn { font-weight: 800; }
+  .card.a tr.top td.g { background: var(--a-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--a) 35%, transparent); }
+  .card.b tr.top td.g { background: var(--b-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--b) 35%, transparent); }
   .act .bg { touch-action: manipulation; } .act .bg.arm.a { background: var(--a-soft); } .act .bg.arm.b { background: var(--b-soft); }
   .act .bk { color: var(--warn); border-color: var(--warn); }
   .chips { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
@@ -924,6 +928,7 @@ function render() {
   const saves = hasSaves();
   ['A', 'B'].forEach(team => {
     const t = team.toLowerCase();
+    const best = Math.max(0, ...ROSTER[team].map(p => cnt(team, x => x.nr === p[0])));
     const rows = sortedRoster(team).map(p => {
       const g = cnt(team, x => x.nr === p[0]), g7 = sevens(team, x => x.nr === p[0]);
       const ch = chips(team, p[0]);
@@ -933,7 +938,8 @@ function render() {
       const st = p[3], sv = v => v == null ? '' : esc(v);
       const sn = surname(p), fn = p[1].startsWith(sn) ? p[1].slice(sn.length).trim() : '';
       const nm = fn ? `<span class="sn">${esc(sn)}</span> <span class="fn">${esc(fn)}</span>` : `<span class="sn">${esc(p[1])}</span>`;
-      return `<tr class="p${esc(p[2] || '')}"><td class="nr">${p[0]}</td><td class="pname" onclick="openPlayer('${team}',${p[0]})">${nm}${ch ? `<div class="chips">${ch}</div>` : ''}</td>
+      const top = best >= 2 && g === best;
+      return `<tr class="p${esc(p[2] || '')}${top ? ' top' : ''}"${top ? ' title="najlepszy strzelec drużyny"' : ''}><td class="nr">${p[0]}</td><td class="pname" onclick="openPlayer('${team}',${p[0]})">${nm}${ch ? `<div class="chips">${ch}</div>` : ''}</td>
         <td class="pos">${esc(p[2] || '')}</td>
         <td class="st opt">${sv(st.ur)}</td><td class="st opt">${sv(st.m)}</td><td class="st ${st.top ? 'top' : ''}">${sv(st.br)}</td>
         <td class="st opt2">${st.sr == null ? '' : Number(st.sr).toFixed(1)}</td>
