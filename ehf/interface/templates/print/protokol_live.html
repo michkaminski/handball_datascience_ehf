@@ -93,6 +93,7 @@
   .ev .min { white-space: nowrap; width: 30px; font-variant-numeric: tabular-nums; }
   .ev .sc { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; width: 40px; }
   .ev .none { color: var(--b); font-style: italic; }
+  .ev .df { width: 26px; padding-left: 2px; padding-right: 2px; text-align: center; }
   /* przebieg jak na protokole: zawodnik A po lewej, wynik w środku, zawodnik B po prawej */
   .ev { table-layout: fixed; }
   .ev .sc { text-align: center; }
@@ -228,6 +229,7 @@
     .ev td { font-size: 11px; padding: 3px 4px; }
     .ev tr.kara td { font-size: 11px; }
     .ev td.side, .ev tr.kara td.side { font-size: 9px; }
+    .ev .df { width: 22px; font-size: 10px; }
     footer { flex: none; padding: 4px 12px 6px; gap: 6px; }
     footer button { padding: 4px 10px; font-size: 13px; }
     #statsNote { display: none; }
@@ -256,7 +258,7 @@
     .officials { font-size: 10px; padding: 3px 4px; gap: 3px; }
     .officials button { padding: 1px 4px; font-size: 10px; }
     .ev td { font-size: 10px; padding: 2px 3px; }
-    .ev .min { width: 24px; } .ev .sc { width: 34px; }
+    .ev .min { width: 24px; } .ev .sc { width: 34px; } .ev .df { width: 19px; font-size: 9px; }
     .ev td.side, .ev tr.kara td.side { font-size: 8px; }
     .ev .evh th { font-size: 10px; padding: 2px 3px; }
     #fileStatus { font-size: 11px; }
@@ -406,6 +408,10 @@
             <button id="shot7x" onclick="setShot(true,true)">7m — pudło</button>
           </div>
         </div>
+        <div id="ordBox">
+          <div class="lbl" title="kolejność bramki w meczu; ułamek wstawia pomiędzy, np. 2.5 = między 2. a 3.">Nr gola w meczu</div>
+          <input id="fOrd" inputmode="decimal" autocomplete="off" style="width:84px">
+        </div>
         <div>
           <div class="lbl">Połowa</div>
           <div class="seg">
@@ -463,6 +469,7 @@ function applyDoc(d) {
   S = d.state && Array.isArray(d.state.goals) ? d.state : blank();
   S.pens = S.pens || [];
   S.clock = S.clock || { acc: 0, runningSince: null };
+  renumberGoals();
   $('startScreen').hidden = true;
   $('app').hidden = false;
   renderTitles(); render();
@@ -782,6 +789,11 @@ function editItem(kind, id) {
 }
 function openSheet() {
   $('fNote').value = edit.note || '';
+  if (edit.kind === 'goal') {
+    if (!edit.id) edit.ord = S.goals.length + 1;
+    edit.ordShown = String(edit.ord);
+    $('fOrd').value = edit.ordShown;
+  }
   renderSheet();
   $('ov').classList.add('show');
 }
@@ -797,6 +809,7 @@ function renderSheet() {
   $('pLbl').textContent = !isGoal ? 'Zawodnik / osoba' : edit.pen ? 'Wykonawca' : 'Strzelec';
   $('goalBox').style.display = isGoal ? '' : 'none';
   $('penBox').style.display = isGoal ? 'none' : '';
+  $('ordBox').style.display = isGoal && edit.id ? '' : 'none';
   $('shotN').classList.toggle('on', !edit.pen);
   $('shot7').classList.toggle('on', !!edit.pen && !edit.miss);
   $('shot7x').classList.toggle('on', !!edit.miss);
@@ -839,16 +852,31 @@ function closeSheet() { $('ov').classList.remove('show'); edit = null; }
 function saveItem() {
   if (edit.kind === 'pen' && edit.nr == null) { alert('Wybierz zawodnika'); return; }
   edit.note = $('fNote').value.trim();
-  const { kind, ...item } = edit;
+  const ordTxt = edit.kind === 'goal' ? $('fOrd').value.trim().replace(',', '.') : '';
+  const ordNew = ordTxt !== edit.ordShown ? Number(ordTxt) : null;
+  if (ordNew != null && !(ordNew > 0)) { alert('Nr gola musi być liczbą dodatnią, np. 3 albo 2.5'); return; }
+  const { kind, ordShown, ...item } = edit;
   const key = kind === 'goal' ? 'goals' : 'pens';
   if (item.id) S[key] = S[key].map(e => e.id === item.id ? item : e);
   else { item.id = ++S.seq; S[key].push(item); }
+  if (kind === 'goal') placeGoal(item, ordNew);
   save(); closeSheet(); render();
+}
+// kolejność goli: pole ord (1..n); nowy gol zawsze ostatni, numer zmienia się tylko w edycji; liczba całkowita = docelowy numer, ułamek = wstawienie pomiędzy (2.5 między 2. a 3.)
+function goalsInOrder() { return [...S.goals].sort((x, y) => (x.ord ?? Infinity) - (y.ord ?? Infinity) || byTime(x, y)); }
+function renumberGoals() { goalsInOrder().forEach((g, i) => g.ord = i + 1); }
+function placeGoal(item, ordNew) {
+  const others = goalsInOrder().filter(g => g.id !== item.id);
+  const pos = ordNew != null ? (Number.isInteger(ordNew) ? ordNew - 1 : others.filter(g => g.ord < ordNew).length)
+    : others.filter(g => g.ord < item.ord).length;
+  others.splice(Math.max(0, Math.min(others.length, pos)), 0, item);
+  others.forEach((g, i) => g.ord = i + 1);
 }
 function deleteItem() {
   if (!confirm('Usunąć?')) return;
   const key = edit.kind === 'goal' ? 'goals' : 'pens';
   S[key] = S[key].filter(e => e.id !== edit.id);
+  renumberGoals();
   save(); closeSheet(); render();
 }
 function resetAll() {
@@ -924,7 +952,7 @@ function render() {
   // przebieg w panelu
   const T = timeline();
   // przebieg w panelu: zawodnik A po lewej, wynik w środku, zawodnik B po prawej
-  const evHead = `<tr class="evh"><th class="min"></th><th class="side a">A · ${esc(MATCH.A.short)}</th><th class="sc"></th><th class="side b">${esc(MATCH.B.short)} · B</th></tr>`;
+  const evHead = `<tr class="evh"><th class="min"></th><th class="side a">A · ${esc(MATCH.A.short)}</th><th class="sc"></th><th class="df" title="przewaga: + A, − B">±</th><th class="side b">${esc(MATCH.B.short)} · B</th></tr>`;
   [1, 2].forEach(h => {
     $('ev' + h).innerHTML = evHead + (T.events.filter(e => e.half === h).map(e => {
       const p = e.p, tc = e.team.toLowerCase(), click = `onclick="editItem('${e.kind}',${e.id})"`;
@@ -932,13 +960,13 @@ function render() {
                     : `<span class="none">strzelec?</span>`;
       const note = e.note ? `<span class="note">${esc(e.note)}</span>` : '';
       const min = `<td class="min">${e.min != null ? e.min + "'" : '—'}</td>`;
-      let what = who, sc = `${e.a}:${e.b}`, cls = tc;
-      if (e.kind === 'pen') { what = `<span class="chip ${e.type}">${penLabel(e.type)}</span> ${who}`; sc = ''; cls = 'kara ' + tc; }
-      else if (e.miss) { what = `${who}<span class="tag x">7m ✗</span>`; cls = 'miss ' + tc; }
+      let what = who, sc = `${e.a}:${e.b}`, cls = tc, df = diffTd(e.a - e.b);
+      if (e.kind === 'pen') { what = `<span class="chip ${e.type}">${penLabel(e.type)}</span> ${who}`; sc = ''; df = '<td class="df"></td>'; cls = 'kara ' + tc; }
+      else if (e.miss) { what = `${who}<span class="tag x">7m ✗</span>`; df = '<td class="df"></td>'; cls = 'miss ' + tc; }
       else if (e.pen) what += '<span class="tag">7m</span>';
       const side = `<td class="side ${tc}">${what}${note}</td>`, empty = '<td class="side"></td>';
-      return `<tr class="${cls}" ${click}>${min}${e.team === 'A' ? side : empty}<td class="sc">${sc}</td>${e.team === 'B' ? side : empty}</tr>`;
-    }).join('') || '<tr><td class="empty" colspan="4">brak zdarzeń</td></tr>');
+      return `<tr class="${cls}" ${click}>${min}${e.team === 'A' ? side : empty}<td class="sc">${sc}</td>${df}${e.team === 'B' ? side : empty}</tr>`;
+    }).join('') || '<tr><td class="empty" colspan="5">brak zdarzeń</td></tr>');
     $('sumH' + h).textContent = T.end[h] || '';
   });
 
@@ -952,9 +980,15 @@ function render() {
   if ($('tov').classList.contains('show')) renderTimeline();
 }
 
-// zdarzenia chronologicznie z wynikiem narastająco i numerem gola strzelca
+// zdarzenia: gole w kolejności numerów, kary wg czasu; wynik narastająco i numerem gola strzelca
 function timeline() {
-  const ev = [...S.goals.map(g => ({ ...g, kind: 'goal' })), ...S.pens.map(p => ({ ...p, kind: 'pen' }))].sort(byTime);
+  const pens = [...S.pens].sort(byTime).map(p => ({ ...p, kind: 'pen' })), ev = [];
+  let pi = 0;
+  goalsInOrder().forEach(g => {
+    while (pi < pens.length && byTime(pens[pi], g) < 0) ev.push(pens[pi++]);
+    ev.push({ ...g, kind: 'goal' });
+  });
+  ev.push(...pens.slice(pi));
   let a = 0, b = 0;
   const nth = {}, end = {};
   const events = ev.map(e => {
@@ -972,6 +1006,13 @@ function timeline() {
 // przewaga: +n gospodarze (A), -n goście (B), 0 remis
 const diffTxt = d => d > 0 ? '+' + d : String(d);
 const diffTd = d => `<td class="df ${d > 0 ? 'a' : d < 0 ? 'b' : ''}">${diffTxt(d)}</td>`;
+// oś wykresu przewagi: minuty, a gdy którykolwiek gol nie ma minuty — kolejne bramki (1, 2, 3…)
+function chartAxis(goals) {
+  const seq = goals.some(g => g.min == null), n = Math.max(goals.length, 1), h2 = goals.findIndex(g => g.half === 2);
+  const step = n <= 10 ? 1 : n <= 40 ? 5 : 10, ticks = [];
+  if (seq) for (let k = step; k <= goals.length; k += step) ticks.push([k - 1, String(k)]);
+  return { seq, D: seq ? n : 60, ht: seq ? (h2 > 0 ? h2 : null) : 30, ticks };
+}
 
 // ---- przebieg na pełny ekran ----
 // najpierw pokaż okno — wykres rysowany w rzeczywistej szerokości (bez rozciągania napisów)
@@ -1006,18 +1047,22 @@ function renderTimeline() {
 // wykres przewagi w czasie: nad osią gospodarze, pod osią goście
 function leadChart(goals) {
   const W = Math.max(300, ($('tChart').clientWidth || 612) - 12), H = 130, mid = H / 2;
-  const maxAbs = Math.max(3, ...goals.map(g => Math.abs(g.a - g.b)));
-  const x = min => (Math.min(60, Math.max(0, min)) / 60) * W, y = d => mid - (d / maxAbs) * (mid - 8);
+  const maxAbs = Math.max(3, ...goals.map(g => Math.abs(g.a - g.b))), ax = chartAxis(goals);
+  const x = min => (Math.min(ax.D, Math.max(0, min)) / ax.D) * W, y = d => mid - (d / maxAbs) * (mid - 8);
   let path = `M0,${mid}`, lastMin = 0;
-  goals.forEach(g => {
-    const mn = g.min != null ? g.min - 0.5 : lastMin;
+  goals.forEach((g, i) => {
+    const mn = ax.seq ? i : g.min != null ? g.min - 0.5 : lastMin;
     lastMin = Math.max(lastMin, mn);
     path += ` H${x(lastMin).toFixed(1)} V${y(g.a - g.b).toFixed(1)}`;
   });
-  const endMin = Math.max(lastMin, Math.min(60, Math.floor(clockSec() / 60)));
+  const endMin = ax.seq ? ax.D : Math.max(lastMin, Math.min(60, Math.floor(clockSec() / 60)));
   path += ` H${x(endMin).toFixed(1)}`;
   const area = `${path} V${mid} Z`;
-  const grid = [10, 20, 30, 40, 50].map(mn =>
+  const grid = ax.seq
+    ? ax.ticks.map(([v, t]) => `<line x1="${x(v)}" x2="${x(v)}" y1="0" y2="${H}" class="gl"/><text x="${x(v) + 3}" y="${H - 3}">${t}</text>`).join('') +
+      (ax.ht != null ? `<line x1="${x(ax.ht)}" x2="${x(ax.ht)}" y1="0" y2="${H}" class="ht"/>` : '') +
+      `<text x="${W - 4}" y="12" text-anchor="end">kolejne bramki (brak minut)</text>`
+    : [10, 20, 30, 40, 50].map(mn =>
     `<line x1="${x(mn)}" x2="${x(mn)}" y1="0" y2="${H}" class="${mn === 30 ? 'ht' : 'gl'}"/><text x="${x(mn) + 3}" y="${H - 3}">${mn}'</text>`).join('');
   return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
     <defs><clipPath id="cA"><rect x="0" y="0" width="${W}" height="${mid}"/></clipPath>
@@ -1071,24 +1116,28 @@ function matchStats(goals) {
 
 function reportLeadChart(goals) {
   const W = 1000, H = 240, L = 34, Rr = 12, mid = H / 2;
-  const maxAbs = Math.max(3, ...goals.map(g => Math.abs(g.a - g.b)));
-  const x = m => L + (Math.min(60, Math.max(0, m)) / 60) * (W - L - Rr), y = d => mid - (d / maxAbs) * (mid - 18);
+  const maxAbs = Math.max(3, ...goals.map(g => Math.abs(g.a - g.b))), ax = chartAxis(goals);
+  const x = m => L + (Math.min(ax.D, Math.max(0, m)) / ax.D) * (W - L - Rr), y = d => mid - (d / maxAbs) * (mid - 18);
   let path = `M${x(0)},${mid}`, lastMin = 0;
-  const dots = goals.map(g => {
-    const mn = g.min != null ? g.min - 0.5 : lastMin;
+  const dots = goals.map((g, i) => {
+    const mn = ax.seq ? i : g.min != null ? g.min - 0.5 : lastMin;
     lastMin = Math.max(lastMin, mn);
     path += ` H${x(lastMin).toFixed(1)} V${y(g.a - g.b).toFixed(1)}`;
     return `<circle cx="${x(lastMin).toFixed(1)}" cy="${y(g.a - g.b).toFixed(1)}" r="3.2" class="d${g.team.toLowerCase()}"/>`;
   }).join('');
-  path += ` H${x(S.finished ? 60 : Math.max(lastMin, Math.min(60, Math.floor(clockSec() / 60)))).toFixed(1)}`;
+  path += ` H${x(ax.seq ? ax.D : S.finished ? 60 : Math.max(lastMin, Math.min(60, Math.floor(clockSec() / 60)))).toFixed(1)}`;
   const area = `${path} V${mid} Z`;
-  const grid = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60].map(mn =>
+  const grid = ax.seq
+    ? ax.ticks.map(([v, t]) => `<line x1="${x(v)}" x2="${x(v)}" y1="6" y2="${H - 16}" class="gl"/><text x="${x(v)}" y="${H - 3}" text-anchor="middle">${t}</text>`).join('') +
+      (ax.ht != null ? `<line x1="${x(ax.ht)}" x2="${x(ax.ht)}" y1="6" y2="${H - 16}" class="ht"/>` : '') +
+      `<text x="${W - Rr}" y="${H - 3}" text-anchor="end">kolejne bramki (brak minut)</text>`
+    : [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60].map(mn =>
     `<line x1="${x(mn)}" x2="${x(mn)}" y1="6" y2="${H - 16}" class="${mn === 30 ? 'ht' : mn % 10 ? 'g5' : 'gl'}"/>` +
     (mn % 10 ? '' : `<text x="${x(mn)}" y="${H - 3}" text-anchor="middle">${mn}'</text>`)).join('');
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Przewaga w czasie meczu">
     <defs><clipPath id="rA"><rect x="0" y="0" width="${W}" height="${mid}"/></clipPath><clipPath id="rB"><rect x="0" y="${mid}" width="${W}" height="${mid}"/></clipPath></defs>
     ${grid}<line x1="${L}" x2="${W - Rr}" y1="${mid}" y2="${mid}" class="zero"/>
-    <text x="${x(30) + 4}" y="16" class="htl">przerwa</text>
+    ${ax.ht != null ? `<text x="${x(ax.ht) + 4}" y="16" class="htl">przerwa</text>` : ''}
     <path d="${area}" clip-path="url(#rA)" class="fa"/><path d="${area}" clip-path="url(#rB)" class="fb"/>
     <path d="${path}" class="ln"/>${dots}
     <text x="${L - 6}" y="${y(maxAbs) + 4}" text-anchor="end" class="la">+${maxAbs}</text>
