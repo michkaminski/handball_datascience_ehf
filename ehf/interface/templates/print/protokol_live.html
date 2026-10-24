@@ -119,7 +119,18 @@
   .fld { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--muted); font-weight: 600; }
   .fld.grow { flex: 1; } .w90 { width: 90px; }
   .tag.x { background: #eceff1; color: #546e7a; }
+  .tag.sv { background: #e8f5e9; color: var(--ok); }
   .ev tr.miss td { color: var(--muted); } .ev tr.miss .sc { font-weight: 400; }
+  .ev tr.save td, .tl tr.save td { color: #2f5d34; }
+  .card h2.rh { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .gkh { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ok); white-space: nowrap; }
+  .gkh .bo { color: #fff; background: var(--ok); border-color: var(--ok); font-weight: 800; padding: 4px 12px; touch-action: manipulation; }
+  .gkh .bo.arm { background: #1b5e20; }
+  .gkt { padding: 0 3px; font-size: 13px; line-height: 1.2; border-radius: 5px; opacity: .35; background: transparent; }
+  .gkt.on { opacity: 1; background: #e8f5e9 !important; border-color: var(--ok) !important; color: inherit !important; }
+  tr.gk td.nr { box-shadow: inset 4px 0 0 var(--ok); }
+  .gks { display: block; font-size: 10px; font-weight: 700; color: var(--ok); }
+  .gkl { color: var(--muted); font-size: 12px; }
   .clockbar .t { cursor: pointer; }
   #clockBtn { font-size: 26px; line-height: 1; padding: 10px 26px; min-width: 84px; margin-left: 10px; background: #2e7d32; color: #fff; border-color: #2e7d32; }
   #clockBtn.run { background: #c62828; border-color: #c62828; }
@@ -272,6 +283,8 @@
     .ev td.side, .ev tr.kara td.side { font-size: 8px; }
     .ev .evh th { font-size: 10px; padding: 2px 3px; }
     #fileStatus { font-size: 11px; }
+    .gkh .gkn { display: none; }
+    .gkh .bo { padding: 3px 8px; font-size: 11px; }
   }
   @media (min-width: 1500px) { main { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 470px; } }
   /* niski ekran (np. 1024×700): bez linii z opisem meczu (jest w pełnoekranowym przebiegu), ciaśniejsze odstępy */
@@ -325,8 +338,8 @@
 
 <main>
   <div class="col">
-    <section class="card a"><h2 id="rosterTitleA"></h2><table id="rosterA"></table><div class="officials" id="offA"></div></section>
-    <section class="card b"><h2 id="rosterTitleB"></h2><table id="rosterB"></table><div class="officials" id="offB"></div></section>
+    <section class="card a"><h2 class="rh"><span id="rosterTitleA"></span><span class="gkh" id="gkA"></span></h2><table id="rosterA"></table><div class="officials" id="offA"></div></section>
+    <section class="card b"><h2 class="rh"><span id="rosterTitleB"></span><span class="gkh" id="gkB"></span></h2><table id="rosterB"></table><div class="officials" id="offB"></div></section>
   </div>
   <section class="card">
     <h2 class="evhead" onclick="openTimeline()"><span>Przebieg zawodów</span><span class="open">⤢<span class="opt"> pełny ekran</span></span></h2>
@@ -418,6 +431,17 @@
             <button id="shot7x" onclick="setShot(true,true)">7m — pudło</button>
           </div>
         </div>
+        <div id="saveBox">
+          <div class="lbl">Obrona</div>
+          <div class="seg">
+            <button id="svN" onclick="edit.pen=false;renderSheet()">z gry</button>
+            <button id="sv7" onclick="edit.pen=true;renderSheet()">7m</button>
+          </div>
+        </div>
+        <div id="gkBox">
+          <div class="lbl">Bramkarz, który puścił gola</div>
+          <div class="seg" id="gkSeg"></div>
+        </div>
         <div id="ordBox">
           <div class="lbl" title="kolejność zdarzenia w przebiegu (tylko do sortowania); ułamek wstawia pomiędzy, np. 2.5 = między 2. a 3.">Nr zdarzenia</div>
           <input id="fOrd" inputmode="decimal" autocomplete="off" style="width:84px">
@@ -452,7 +476,9 @@
                 // zawodnik może być też tablicą [nr, "NAZWISKO Imię", "poz"]; ur/m/br/sr (statystyki przedmeczowe) opcjonalne
                 // bramkarz: "ob" (obrony), "rz" (rzuty na bramkę), "sk" (skuteczność w %) — opcjonalne
                 "B": { ... } },
-     "state": { "goals": [...], "pens": [...], "half", "clock", "seq", "updatedAt", "finished" } }   // "state" opcjonalny
+     "state": { "goals": [...], "pens": [...], "half", "clock", "seq", "updatedAt", "finished",
+                "saves": [...], "gk": { "A": nr|null, "B": nr|null } } }   // "state" opcjonalny; "saves" i "gk" opcjonalne
+   gol: "gk" — numer bramkarza rywala, który puścił bramkę (opcjonalny); obrona: { id, team, nr (bramkarz), pen, half, min, ord, note }
    Plik HTML pobrany z serwisu ma ten dokument wbudowany (EMBEDDED) i otwiera go od razu. */
 
 const EMBEDDED = {{ dokument|tojson }};
@@ -469,7 +495,7 @@ const $ = id => document.getElementById(id);
 let MATCH = null, ROSTER = null, S = null;
 
 // ---- dokument JSON ----
-function blank() { return { goals: [], pens: [], half: 1, clock: { acc: 0, runningSince: null }, seq: 0, updatedAt: 0 }; }
+function blank() { return { goals: [], pens: [], saves: [], gk: { A: null, B: null }, half: 1, clock: { acc: 0, runningSince: null }, seq: 0, updatedAt: 0 }; }
 function doc() { return { format: 'protokol_live', version: 1, savedAt: new Date().toISOString(), match: MATCH, state: S }; }
 function applyDoc(d) {
   if (!d || !d.match || !d.match.A || !d.match.B) throw new Error('brak sekcji „match” z drużynami A i B');
@@ -478,6 +504,8 @@ function applyDoc(d) {
   buildRoster();
   S = d.state && Array.isArray(d.state.goals) ? d.state : blank();
   S.pens = S.pens || [];
+  S.saves = S.saves || [];
+  S.gk = S.gk || { A: null, B: null };
   S.clock = S.clock || { acc: 0, runningSince: null };
   renumberEvents();
   $('startScreen').hidden = true;
@@ -556,17 +584,22 @@ function savePlayer() {
   else {
     Object.assign(list.find(p => Number(p.nr) === orig), { nr, name, pos: pedit.pos, ur });
     // zmiana numeru — gole i kary idą za zawodnikiem
-    if (nr !== orig) [...S.goals, ...S.pens].forEach(e => { if (e.team === team && e.nr === orig) e.nr = nr; });
+    if (nr !== orig) {
+      [...S.goals, ...S.pens, ...S.saves].forEach(e => { if (e.team === team && e.nr === orig) e.nr = nr; });
+      S.goals.forEach(g => { if (g.team !== team && g.gk === orig) g.gk = nr; });
+      if (S.gk[team] === orig) S.gk[team] = nr;
+    }
   }
   buildRoster(); save(); closePlayer(); render();
 }
 function deletePlayer() {
   const { team, orig } = pedit;
-  if ([...S.goals, ...S.pens].some(e => e.team === team && e.nr === orig)) {
-    alert('Zawodnik ma gole lub kary — najpierw je usuń albo przypisz innemu zawodnikowi.');
+  if ([...S.goals, ...S.pens, ...S.saves].some(e => e.team === team && e.nr === orig) || S.goals.some(g => g.team !== team && g.gk === orig)) {
+    alert('Zawodnik ma gole, kary, obrony lub puszczone bramki — najpierw je usuń albo przypisz innemu zawodnikowi.');
     return;
   }
   if (!confirm('Usunąć zawodnika z protokołu?')) return;
+  if (S.gk[team] === orig) S.gk[team] = null;
   MATCH[team].players = playerObjs(team).filter(p => Number(p.nr) !== orig);
   buildRoster(); save(); closePlayer(); render();
 }
@@ -769,28 +802,57 @@ function suggestTime() {
     const min = Math.min(60, Math.floor(sec / 60) + 1);
     return { half: min > 30 ? 2 : 1, min };
   }
-  const mins = [...S.goals, ...S.pens].filter(e => e.half === S.half && e.min != null).map(e => e.min);
+  const mins = [...S.goals, ...S.pens, ...S.saves].filter(e => e.half === S.half && e.min != null).map(e => e.min);
   return { half: S.half, min: mins.length ? Math.max(...mins) : null };
 }
 
 // ---- okno: gol / kara ----
 let edit = null;
+const KEYS = { goal: 'goals', pen: 'pens', save: 'saves' };
+const opp = t => t === 'A' ? 'B' : 'A';
+const nextOrd = () => S.goals.length + S.pens.length + S.saves.length + 1;
 function openGoal(team, nr = null) {
-  edit = { kind: 'goal', id: null, team, nr, pen: false, miss: false, note: '', ...suggestTime() };
+  edit = { kind: 'goal', id: null, team, nr, pen: false, miss: false, gk: S.gk[opp(team)], note: '', ...suggestTime() };
   openSheet();
 }
-// „+G” przy składzie: tylko podwójne stuknięcie (≤ 450 ms) — gol od razu, minuta z zegara lub ostatniego zdarzenia
-let goalTap = null;
-function tapGoal(btn, team, nr) {
-  const now = Date.now(), key = team + nr;
-  if (goalTap && goalTap.key === key && now - goalTap.t < 450) { goalTap = null; quickGoal(team, nr); return; }
-  goalTap = { key, t: now };
+// „+G” i „+O” przy składzie: tylko podwójne stuknięcie (≤ 450 ms) — zdarzenie od razu, minuta z zegara lub ostatniego zdarzenia
+let lastTap = null;
+function tapTwice(btn, key, fn) {
+  const now = Date.now();
+  if (lastTap && lastTap.key === key && now - lastTap.t < 450) { lastTap = null; fn(); return; }
+  lastTap = { key, t: now };
   btn.classList.add('arm');
   setTimeout(() => btn.classList.remove('arm'), 450);
 }
+function tapGoal(btn, team, nr) { tapTwice(btn, 'G' + team + nr, () => quickGoal(team, nr)); }
+function tapSave(btn, team) { tapTwice(btn, 'O' + team, () => quickSave(team)); }
 function quickGoal(team, nr) {
-  S.goals.push({ id: ++S.seq, team, nr, pen: false, miss: false, note: '', ...suggestTime(), ord: S.goals.length + S.pens.length + 1 });
+  S.goals.push({ id: ++S.seq, team, nr, pen: false, miss: false, gk: S.gk[opp(team)], note: '', ...suggestTime(), ord: nextOrd() });
   save(); render();
+}
+
+// ---- bramkarz w bramce i obrony: gol zapamiętuje bramkarza rywala (pole gk), liczą się tylko celne rzuty ----
+const gkOn = () => S.saves.length > 0 || S.goals.some(g => g.gk != null) || S.gk.A != null || S.gk.B != null;
+function setKeeper(team, nr) { S.gk[team] = S.gk[team] === nr ? null : nr; save(); render(); }
+function quickSave(team) {
+  if (S.gk[team] == null) return;
+  S.saves.push({ id: ++S.seq, team, nr: S.gk[team], pen: false, note: '', ...suggestTime(), ord: nextOrd() });
+  save(); render();
+}
+function keeperStats(team) {
+  const m = new Map(), get = nr => { if (!m.has(nr)) m.set(nr, { nr, sv: 0, ga: 0 }); return m.get(nr); };
+  if (S.gk[team] != null) get(S.gk[team]);
+  S.saves.filter(s => s.team === team && s.nr != null).forEach(s => get(s.nr).sv++);
+  S.goals.filter(g => g.team === opp(team) && !g.miss && g.gk != null).forEach(g => get(g.gk).ga++);
+  return [...m.values()].sort((x, y) => x.nr - y.nr);
+}
+const svPct = (sv, ga) => sv + ga ? Math.round(sv / (sv + ga) * 100) : 0;
+const svTxt = (sv, ga) => `${sv}/${sv + ga} (${svPct(sv, ga)}%)`;
+function keepersTxt(team, html = true) {
+  return keeperStats(team).filter(x => x.sv + x.ga).map(x => {
+    const p = person(team, x.nr);
+    return `<b>${x.nr}</b> ${esc(html ? surname(p) : p[1])} <b>${svTxt(x.sv, x.ga)}</b>`;
+  }).join(', ');
 }
 function setShot(pen, miss) { edit.pen = pen; edit.miss = miss; renderSheet(); }
 function openPen(team, nr) {
@@ -798,13 +860,12 @@ function openPen(team, nr) {
   openSheet();
 }
 function editItem(kind, id) {
-  const src = kind === 'goal' ? S.goals : S.pens;
-  edit = { kind, ...src.find(e => e.id === id) };
+  edit = { kind, ...S[KEYS[kind]].find(e => e.id === id) };
   openSheet();
 }
 function openSheet() {
   $('fNote').value = edit.note || '';
-  if (!edit.id) edit.ord = S.goals.length + S.pens.length + 1;
+  if (!edit.id) edit.ord = nextOrd();
   edit.ordShown = String(edit.ord);
   $('fOrd').value = edit.ordShown;
   renderSheet();
@@ -815,21 +876,37 @@ function sheetHalf(h) {
   edit.half = h; renderSheet();
 }
 function renderSheet() {
-  const tm = MATCH[edit.team], isGoal = edit.kind === 'goal';
+  const tm = MATCH[edit.team], isGoal = edit.kind === 'goal', isSave = edit.kind === 'save';
   $('sheet').className = 'sheet ' + edit.team.toLowerCase();
-  const what = !isGoal ? 'Kara' : edit.miss ? 'Karny niewykorzystany' : edit.pen ? 'Gol z 7m' : 'Gol';
+  const what = isSave ? (edit.pen ? 'Obrona 7m' : 'Obrona') : !isGoal ? 'Kara' : edit.miss ? 'Karny niewykorzystany' : edit.pen ? 'Gol z 7m' : 'Gol';
   $('sheetTitle').textContent = (edit.id ? 'Edycja — ' : '') + what + ' — ' + tm.short;
-  $('pLbl').textContent = !isGoal ? 'Zawodnik / osoba' : edit.pen ? 'Wykonawca' : 'Strzelec';
+  $('pLbl').textContent = isSave ? 'Bramkarz' : !isGoal ? 'Zawodnik / osoba' : edit.pen ? 'Wykonawca' : 'Strzelec';
   $('goalBox').style.display = isGoal ? '' : 'none';
-  $('penBox').style.display = isGoal ? 'none' : '';
+  $('penBox').style.display = edit.kind === 'pen' ? '' : 'none';
+  $('saveBox').style.display = isSave ? '' : 'none';
   $('ordBox').style.display = edit.id ? '' : 'none';
   $('shotN').classList.toggle('on', !edit.pen);
   $('shot7').classList.toggle('on', !!edit.pen && !edit.miss);
   $('shot7x').classList.toggle('on', !!edit.miss);
+  $('svN').classList.toggle('on', !edit.pen);
+  $('sv7').classList.toggle('on', !!edit.pen);
 
-  const opts = [[null, '?', isGoal ? 'później' : 'nieznany']];
-  [...ROSTER[edit.team]].sort((x, y) => x[0] - y[0]).forEach(p => opts.push([p[0], p[0], p[1]]));
-  if (!isGoal) OFFICIALS.forEach(o => opts.push([o, o, 'osoba tow.']));
+  const showGk = isGoal && !edit.miss && (gkOn() || edit.gk != null);
+  $('gkBox').style.display = showGk ? '' : 'none';
+  if (showGk) {
+    const rival = opp(edit.team), keepers = ROSTER[rival].filter(p => p[2] === 'B' || p[0] === edit.gk).sort((x, y) => x[0] - y[0]);
+    $('gkSeg').innerHTML = '';
+    [[null, 'brak / pusta bramka'], ...keepers.map(p => [p[0], `${p[0]} ${surname(p)}`])].forEach(([v, label]) => {
+      const b = document.createElement('button');
+      b.textContent = label; b.className = (edit.gk ?? null) === v ? 'on' : '';
+      b.onclick = () => { edit.gk = v; renderSheet(); };
+      $('gkSeg').appendChild(b);
+    });
+  }
+
+  const opts = isSave ? [] : [[null, '?', isGoal ? 'później' : 'nieznany']];
+  [...ROSTER[edit.team]].sort((x, y) => isSave ? (x[2] !== 'B') - (y[2] !== 'B') || x[0] - y[0] : x[0] - y[0]).forEach(p => opts.push([p[0], p[0], p[1]]));
+  if (edit.kind === 'pen') OFFICIALS.forEach(o => opts.push([o, o, 'osoba tow.']));
   $('pgrid').innerHTML = '';
   opts.forEach(([v, big, small]) => {
     const b = document.createElement('button');
@@ -867,8 +944,9 @@ function saveItem() {
   const ordTxt = $('fOrd').value.trim().replace(',', '.');
   const ordNew = ordTxt !== edit.ordShown ? Number(ordTxt) : null;
   if (ordNew != null && !(ordNew > 0)) { alert('Nr zdarzenia musi być liczbą dodatnią, np. 3 albo 2.5'); return; }
+  if (edit.kind === 'save' && edit.nr == null) { alert('Wybierz bramkarza'); return; }
   const { kind, ordShown, ...item } = edit;
-  const key = kind === 'goal' ? 'goals' : 'pens';
+  const key = KEYS[kind];
   if (item.id) S[key] = S[key].map(e => e.id === item.id ? item : e);
   else { item.id = ++S.seq; S[key].push(item); }
   placeEvent(item, ordNew);
@@ -876,7 +954,7 @@ function saveItem() {
 }
 // kolejność zdarzeń (gole i kary razem): pole ord (1..n), służy tylko sortowaniu przebiegu; nowe zdarzenie zawsze ostatnie, numer zmienia się tylko w edycji; liczba całkowita = docelowy numer, ułamek = wstawienie pomiędzy (2.5 między 2. a 3.)
 const byOrd = (x, y) => (x.ord ?? Infinity) - (y.ord ?? Infinity) || byTime(x, y);
-function eventsInOrder() { return [...S.goals, ...S.pens].sort(byOrd); }
+function eventsInOrder() { return [...S.goals, ...S.pens, ...S.saves].sort(byOrd); }
 function renumberEvents() {
   // starsze pliki: kary bez ord — wstawiane między gole wg czasu
   if (S.pens.some(p => p.ord == null)) {
@@ -900,13 +978,13 @@ function placeEvent(item, ordNew) {
 }
 function deleteItem() {
   if (!confirm('Usunąć?')) return;
-  const key = edit.kind === 'goal' ? 'goals' : 'pens';
+  const key = KEYS[edit.kind];
   S[key] = S[key].filter(e => e.id !== edit.id);
   renumberEvents();
   save(); closeSheet(); render();
 }
 function resetAll() {
-  if (!confirm('Wyczyścić wszystkie gole, kary, zegar i zakończenie meczu? Zmiana zapisze się do pliku.')) return;
+  if (!confirm('Wyczyścić wszystkie gole, kary, obrony, bramkarzy w bramce, zegar i zakończenie meczu? Zmiana zapisze się do pliku.')) return;
   S = blank(); save(); render();
 }
 
@@ -943,6 +1021,7 @@ function render() {
   ['A', 'B'].forEach(team => {
     const t = team.toLowerCase();
     const best = Math.max(0, ...ROSTER[team].map(p => cnt(team, x => x.nr === p[0])));
+    const kst = new Map(keeperStats(team).map(x => [x.nr, x]));
     const rows = sortedRoster(team).map(p => {
       const g = cnt(team, x => x.nr === p[0]), g7 = sevens(team, x => x.nr === p[0]);
       const ch = chips(team, p[0]);
@@ -953,8 +1032,13 @@ function render() {
       const sn = surname(p), fn = p[1].startsWith(sn) ? p[1].slice(sn.length).trim() : '';
       const nm = fn ? `<span class="sn">${esc(sn)}</span> <span class="fn">${esc(fn)}</span>` : `<span class="sn">${esc(p[1])}</span>`;
       const top = best >= 2 && g === best;
-      return `<tr class="p${esc(p[2] || '')}${top ? ' top' : ''}"${top ? ' title="najlepszy strzelec drużyny"' : ''}><td class="nr">${p[0]}</td><td class="pname" onclick="openPlayer('${team}',${p[0]})">${nm}${ch ? `<div class="chips">${ch}</div>` : ''}</td>
-        <td class="pos">${esc(p[2] || '')}</td>
+      const inGoal = S.gk[team] === p[0], ks = kst.get(p[0]);
+      const ksTxt = ks ? `<span class="gks" title="obrony / celne rzuty (skuteczność)">obr. ${svTxt(ks.sv, ks.ga)}</span>` : '';
+      const pos = p[2] === 'B' || inGoal
+        ? `<button class="gkt${inGoal ? ' on' : ''}" title="${inGoal ? 'w bramce — kliknij, aby wyłączyć' : 'kliknij: ten bramkarz w bramce'}" onclick="setKeeper('${team}',${p[0]})">🧤</button>`
+        : esc(p[2] || '');
+      return `<tr class="p${esc(p[2] || '')}${top ? ' top' : ''}${inGoal ? ' gk' : ''}"${top ? ' title="najlepszy strzelec drużyny"' : ''}><td class="nr">${p[0]}</td><td class="pname" onclick="openPlayer('${team}',${p[0]})">${nm}${ksTxt}${ch ? `<div class="chips">${ch}</div>` : ''}</td>
+        <td class="pos">${pos}</td>
         <td class="st opt">${sv(st.ur)}</td><td class="st opt">${sv(st.m)}</td><td class="st ${st.top ? 'top' : ''}">${sv(st.br)}</td>
         <td class="st opt2">${st.sr == null ? '' : Number(st.sr).toFixed(1)}</td>
         ${saves ? `<td class="st" title="${st.rz ? `obrony / rzuty: ${sv(st.ob)}/${sv(st.rz)}` : ''}">${st.sk == null ? '' : esc(st.sk) + '%'}</td>` : ''}
@@ -973,6 +1057,10 @@ function render() {
       `<th class="g">Gol</th><th class="g7" title="rzuty karne: liczba / bramki">7m</th>` +
       `<th class="k">W</th><th class="k">2'</th><th class="k">D</th><th></th></tr>${rows}` +
       (unk ? `<tr><td class="nr">?</td><td colspan="${saves ? 7 : 6}" style="color:var(--b);font-style:italic">bez strzelca</td><td class="g">${unk}</td><td colspan="5"></td></tr>` : '');
+    const cur = S.gk[team] != null ? kst.get(S.gk[team]) : null;
+    $('gk' + team).innerHTML = cur
+      ? `<span class="gkn" title="bramkarz w bramce: obrony / celne rzuty">🧤 ${cur.nr} · ${svTxt(cur.sv, cur.ga)}</span><button class="bo" title="dwuklik: obrona bramkarza ${cur.nr}" onclick="tapSave(this,'${team}')">+ OBRONA</button>`
+      : '';
     $('off' + team).innerHTML = `<button onclick="openPlayer('${team}')"><b>+ Zawodnik</b></button><span style="width:10px"></span>Osoby tow.: ` + OFFICIALS.map(o =>
       `<button onclick="openPen('${team}','${o}')">${o}</button>${chips(team, o)}`).join(' ') +
       ` <button onclick="openPen('${team}',null)" title="kara bez wskazania zawodnika">Kara ?</button>${chips(team, null)}`;
@@ -991,6 +1079,7 @@ function render() {
       const min = `<td class="min">${e.min != null ? e.min + "'" : '—'}</td>`;
       let what = who, sc = `${e.a}:${e.b}`, cls = tc, df = diffTd(e.a - e.b, e.mx);
       if (e.kind === 'pen') { what = `<span class="chip ${e.type}">${penLabel(e.type)}</span> ${who}`; sc = ''; df = '<td class="df"></td>'; cls = 'kara ' + tc; }
+      else if (e.kind === 'save') { what = `<b>${e.nr}</b> <span class="tag sv">obr.${e.pen ? ' 7m' : ''} ${e.ks}</span>`; sc = ''; df = '<td class="df"></td>'; cls = 'save ' + tc; }
       else if (e.miss) { what = `${who}<span class="tag x">7m ✗</span>`; df = '<td class="df"></td>'; cls = 'miss ' + tc; }
       else if (e.pen) what += '<span class="tag">7m</span>';
       const side = `<td class="side ${tc}">${what}${note}</td>`, empty = '<td class="side"></td>';
@@ -1003,7 +1092,8 @@ function render() {
   $('summary').innerHTML =
     `<span>Rzuty karne (liczba / bramki): A <b>${sevens('A') || '0/0'}</b> · B <b>${sevens('B') || '0/0'}</b></span>` +
     `<span>Wykluczenia 2': A <b>${k2('A')}</b> · B <b>${k2('B')}</b></span>` +
-    `<span>Bez strzelca: <b>${cnt('A', g => g.nr == null) + cnt('B', g => g.nr == null)}</b></span>`;
+    `<span>Bez strzelca: <b>${cnt('A', g => g.nr == null) + cnt('B', g => g.nr == null)}</b></span>` +
+    (gkOn() ? `<span>Obrony bramkarzy (obrony / celne rzuty): A ${keepersTxt('A') || '—'} · B ${keepersTxt('B') || '—'}</span>` : '');
   $('endBtn').textContent = S.finished ? 'Raport meczu' : 'Koniec meczu';
   renderClock();
   if ($('tov').classList.contains('show')) renderTimeline();
@@ -1011,14 +1101,21 @@ function render() {
 
 // zdarzenia: gole w kolejności numerów, kary wg czasu; wynik narastająco i numerem gola strzelca
 function timeline() {
-  const ev = eventsInOrder().map(e => ({ ...e, kind: S.pens.includes(e) ? 'pen' : 'goal' }));
+  const ev = eventsInOrder().map(e => ({ ...e, kind: S.pens.includes(e) ? 'pen' : S.saves.includes(e) ? 'save' : 'goal' }));
   let a = 0, b = 0;
-  const nth = {}, end = {};
+  const nth = {}, end = {}, kp = {};
+  const keeper = (t, nr) => kp[t + nr] = kp[t + nr] || { sv: 0, ga: 0 };
   const events = ev.map(e => {
     const p = person(e.team, e.nr), r = { ...e, p };
     if (e.kind === 'goal' && !e.miss) {
       e.team === 'A' ? a++ : b++;
       if (p) r.nth = nth[e.team + e.nr] = (nth[e.team + e.nr] || 0) + 1;
+      if (e.gk != null) { keeper(opp(e.team), e.gk).ga++; r.gkp = person(opp(e.team), e.gk); }
+    }
+    if (e.kind === 'save') {
+      const k = keeper(e.team, e.nr);
+      k.sv++;
+      r.ks = svTxt(k.sv, k.ga);
     }
     r.a = a; r.b = b;
     end[e.half] = `${a} : ${b}`;
@@ -1075,9 +1172,12 @@ function renderTimeline() {
         const min = `<td class="min">${e.min != null ? e.min + "'" : '—'}</td>`;
         if (e.kind === 'pen')
           return `<tr class="kara">${min}<td class="sc"><span class="chip ${e.type}">${penLabel(e.type)}</span></td><td></td>${tm}<td>${who}${note}</td></tr>`;
+        if (e.kind === 'save')
+          return `<tr class="save">${min}<td class="sc"><span class="tag sv">obrona${e.pen ? ' 7m' : ''}</span></td><td></td>${tm}<td>${who} <span class="gkl">obrony / celne rzuty: <b>${e.ks}</b></span>${note}</td></tr>`;
         if (e.miss)
           return `<tr class="miss">${min}<td class="sc">${e.a} : ${e.b}</td><td></td>${tm}<td>${who} <span class="tag x">7m ✗ pudło</span>${note}</td></tr>`;
-        return `<tr class="${tc}">${min}<td class="sc">${e.a} : ${e.b}</td>${diffTd(e.a - e.b, e.mx)}${tm}<td>${who}${e.pen ? ' <span class="tag">7m</span>' : ''}${note}</td></tr>`;
+        const gkl = e.gkp ? `<div class="gkl">bramkarz: <b>${e.gkp[0]}</b> ${esc(e.gkp[1])}</div>` : '';
+        return `<tr class="${tc}">${min}<td class="sc">${e.a} : ${e.b}</td>${diffTd(e.a - e.b, e.mx)}${tm}<td>${who}${e.pen ? ' <span class="tag">7m</span>' : ''}${gkl}${note}</td></tr>`;
       }).join('') || '<tr><td class="empty">brak zdarzeń</td></tr>') + '</table>';
   });
   $('tSummary').innerHTML = $('summary').innerHTML;
@@ -1249,6 +1349,7 @@ function reportHtml(name) {
     let what = p ? topWrap(e, `<b>${p[0]}</b> ${esc(OFFICIALS.includes(p[0]) ? 'osoba towarzysząca' : p[1])}${e.nth ? ` <small>(${e.nth})</small>` : ''}`) : '<i>strzelec nieznany</i>';
     let sc = `${e.a}:${e.b}`, cls = tc, df = '';
     if (e.kind === 'pen') { what = `<span class="chip c${e.type}">${penLabel(e.type)}</span> ${what}`; sc = ''; cls += ' pen'; }
+    else if (e.kind === 'save') { what += ` <span class="tag sv">obrona${e.pen ? ' 7m' : ''}</span> <small>${e.ks}</small>`; sc = ''; cls += ' sv'; }
     else if (e.miss) { what += ' <span class="tag x">7m niewykorzystany</span>'; cls += ' miss'; }
     else {
       if (e.pen) what += ' <span class="tag">7m</span>';
@@ -1314,6 +1415,7 @@ th { font-size: 11px; color: var(--mu); font-weight: 600; }
 .ts { background: rgba(255, 200, 0, .2); border-radius: 3px; padding: 0 2px; }
 .ev .note { font-size: 11px; color: var(--mu); } .empty { text-align: center; color: var(--mu); }
 .tag { font-size: 10px; font-weight: 700; padding: 0 5px; border-radius: 8px; background: #f3e5f5; color: #8e44ad; } .tag.x { background: #eceff1; color: #546e7a; }
+.tag.sv { background: #e8f5e9; color: #2e7d32; } .ev tr.sv td { color: #2f5d34; } .gkl { font-size: 12px; color: var(--mu); margin-top: 6px; }
 .chip { font-size: 10px; font-weight: 700; padding: 0 5px; border-radius: 8px; background: #fff4e0; color: #b7791f; }
 .chip.cD, .chip.cN { background: #fde8e8; color: var(--b); } .chip.cW { background: #fff9c4; color: #8a6d00; }
 .sig { text-align: right; color: var(--mu); font-size: 12px; margin-top: 6px; }
@@ -1344,6 +1446,10 @@ body.pdf .tag, body.pdf .chip { font-size: 8px; padding: 0 3px; } body.pdf .ev .
 body.pdf .legend { font-size: 9px; margin-top: 0; } body.pdf .sig { font-size: 9px; margin-top: 2px; }
 `;
   const sevenTxt = s => `${s.s7g}/${s.s7}`;
+  const kt = t => keeperStats(t).reduce((s, x) => ({ sv: s.sv + x.sv, ga: s.ga + x.ga }), { sv: 0, ga: 0 }), kA = kt('A'), kB = kt('B');
+  const keepers = t => { const k = keepersTxt(t, false); return k ? `<div class="gkl">Bramkarze (obrony / celne rzuty): ${k}</div>` : ''; };
+  const gkCmp = gkOn() ? cmp('Obrony bramkarzy', `${kA.sv}/${kA.sv + kA.ga}`, `${kB.sv}/${kB.sv + kB.ga}`, kA.sv, kB.sv) +
+    cmp('Skuteczność bramkarzy', svPct(kA.sv, kA.ga) + '%', svPct(kB.sv, kB.ga) + '%', svPct(kA.sv, kA.ga), svPct(kB.sv, kB.ga)) : '';
   return `<!doctype html>
 <html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Raport: ${esc(m.A.short)} ${last.a}:${last.b} ${esc(m.B.short)}</title><style>${css}</style></head>
@@ -1368,6 +1474,7 @@ body.pdf .legend { font-size: 9px; margin-top: 0; } body.pdf .sig { font-size: 9
   ${cmp('Ostrzeżenia', st.A.W, st.B.W)}
   ${cmp("Wykluczenia 2'", st.A.two, st.B.two)}
   ${cmp('Dyskwalifikacje', st.A.D, st.B.D)}
+  ${gkCmp}
   ${cmp('Największa przewaga', st.A.lead, st.B.lead)}
   ${cmp('Najdłuższa seria', st.A.run, st.B.run)}
 </section>
@@ -1378,8 +1485,8 @@ body.pdf .legend { font-size: 9px; margin-top: 0; } body.pdf .sig { font-size: 9
 </div>
 </div>
 <div class="two">
-  <section class="card team a"><h2>A — ${esc(m.A.name)}</h2>${players('A')}</section>
-  <section class="card team b"><h2>B — ${esc(m.B.name)}</h2>${players('B')}</section>
+  <section class="card team a"><h2>A — ${esc(m.A.name)}</h2>${players('A')}${keepers('A')}</section>
+  <section class="card team b"><h2>B — ${esc(m.B.name)}</h2>${players('B')}${keepers('B')}</section>
 </div>
 <section class="card"><h2>Przebieg zawodów</h2><div class="two">${half(1, 'I połowa')}${half(2, 'II połowa')}</div></section>
 <div class="sig">Sportomatyka „Bawimy się danymi”</div>

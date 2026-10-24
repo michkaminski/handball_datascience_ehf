@@ -10,6 +10,8 @@
 
 Modelled on the ZPRP match protocol in `handball_datascience` (`/administracja/terminarz/<id>/protokol`), but the user picks any two teams instead of a scheduled match. Standalone HTML, printed or saved as PDF from the browser (no WeasyPrint here).
 
+The live HTML protocol (`print/protokol_live.html`, ZIP with HTML + JSON) is a copy of `src/handball/interface/templates/admin/schedule/protocol_live.html` in `handball_datascience`; its behaviour (including goalkeeper saves: goalkeeper in goal, "+ OBRONA", goalkeeper credited with each conceded goal, saves / on-target shots and %) is described there in `protocol_live.md`. Keep both files identical.
+
 Parameters of `/protokol/druk`: `season_id`, `home_id`, `away_id` (required, different), `competition_id`, `date`, `time`, `venue_id` (default: the home team's usual venue), `order=positions|numbers`, `previous=1`. Missing/invalid → 400.
 
 Rules:
