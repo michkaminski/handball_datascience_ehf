@@ -121,6 +121,8 @@
   .tag.x { background: #eceff1; color: #546e7a; }
   .ev tr.miss td { color: var(--muted); } .ev tr.miss .sc { font-weight: 400; }
   .clockbar .t { cursor: pointer; }
+  #clockBtn { font-size: 26px; line-height: 1; padding: 10px 26px; min-width: 84px; margin-left: 10px; background: #2e7d32; color: #fff; border-color: #2e7d32; }
+  #clockBtn.run { background: #c62828; border-color: #c62828; }
   .note { display: block; color: var(--muted); font-size: 12px; }
   .empty { padding: 16px; text-align: center; color: var(--muted); font-size: 13px; }
   .summary { padding: 8px 12px; font-size: 13px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; border-top: 1px solid var(--line); }
@@ -417,7 +419,7 @@
           </div>
         </div>
         <div id="ordBox">
-          <div class="lbl" title="kolejność bramki w meczu; ułamek wstawia pomiędzy, np. 2.5 = między 2. a 3.">Nr gola w meczu</div>
+          <div class="lbl" title="kolejność zdarzenia w przebiegu (tylko do sortowania); ułamek wstawia pomiędzy, np. 2.5 = między 2. a 3.">Nr zdarzenia</div>
           <input id="fOrd" inputmode="decimal" autocomplete="off" style="width:84px">
         </div>
         <div>
@@ -477,7 +479,7 @@ function applyDoc(d) {
   S = d.state && Array.isArray(d.state.goals) ? d.state : blank();
   S.pens = S.pens || [];
   S.clock = S.clock || { acc: 0, runningSince: null };
-  renumberGoals();
+  renumberEvents();
   $('startScreen').hidden = true;
   $('app').hidden = false;
   renderTitles(); render();
@@ -741,6 +743,7 @@ function setHalf(h) {
 function renderClock() {
   $('clock').textContent = fmt(clockSec());
   $('clockBtn').textContent = S.clock.runningSince ? '⏸' : '▶';
+  $('clockBtn').classList.toggle('run', !!S.clock.runningSince);
   $('h1').classList.toggle('on', S.half === 1);
   $('h2').classList.toggle('on', S.half === 2);
 }
@@ -786,7 +789,7 @@ function tapGoal(btn, team, nr) {
   setTimeout(() => btn.classList.remove('arm'), 450);
 }
 function quickGoal(team, nr) {
-  S.goals.push({ id: ++S.seq, team, nr, pen: false, miss: false, note: '', ...suggestTime(), ord: S.goals.length + 1 });
+  S.goals.push({ id: ++S.seq, team, nr, pen: false, miss: false, note: '', ...suggestTime(), ord: S.goals.length + S.pens.length + 1 });
   save(); render();
 }
 function setShot(pen, miss) { edit.pen = pen; edit.miss = miss; renderSheet(); }
@@ -801,11 +804,9 @@ function editItem(kind, id) {
 }
 function openSheet() {
   $('fNote').value = edit.note || '';
-  if (edit.kind === 'goal') {
-    if (!edit.id) edit.ord = S.goals.length + 1;
-    edit.ordShown = String(edit.ord);
-    $('fOrd').value = edit.ordShown;
-  }
+  if (!edit.id) edit.ord = S.goals.length + S.pens.length + 1;
+  edit.ordShown = String(edit.ord);
+  $('fOrd').value = edit.ordShown;
   renderSheet();
   $('ov').classList.add('show');
 }
@@ -821,12 +822,12 @@ function renderSheet() {
   $('pLbl').textContent = !isGoal ? 'Zawodnik / osoba' : edit.pen ? 'Wykonawca' : 'Strzelec';
   $('goalBox').style.display = isGoal ? '' : 'none';
   $('penBox').style.display = isGoal ? 'none' : '';
-  $('ordBox').style.display = isGoal && edit.id ? '' : 'none';
+  $('ordBox').style.display = edit.id ? '' : 'none';
   $('shotN').classList.toggle('on', !edit.pen);
   $('shot7').classList.toggle('on', !!edit.pen && !edit.miss);
   $('shot7x').classList.toggle('on', !!edit.miss);
 
-  const opts = isGoal ? [[null, '?', 'później']] : [];
+  const opts = [[null, '?', isGoal ? 'później' : 'nieznany']];
   [...ROSTER[edit.team]].sort((x, y) => x[0] - y[0]).forEach(p => opts.push([p[0], p[0], p[1]]));
   if (!isGoal) OFFICIALS.forEach(o => opts.push([o, o, 'osoba tow.']));
   $('pgrid').innerHTML = '';
@@ -862,33 +863,46 @@ function renderSheet() {
 }
 function closeSheet() { $('ov').classList.remove('show'); edit = null; }
 function saveItem() {
-  if (edit.kind === 'pen' && edit.nr == null) { alert('Wybierz zawodnika'); return; }
   edit.note = $('fNote').value.trim();
-  const ordTxt = edit.kind === 'goal' ? $('fOrd').value.trim().replace(',', '.') : '';
+  const ordTxt = $('fOrd').value.trim().replace(',', '.');
   const ordNew = ordTxt !== edit.ordShown ? Number(ordTxt) : null;
-  if (ordNew != null && !(ordNew > 0)) { alert('Nr gola musi być liczbą dodatnią, np. 3 albo 2.5'); return; }
+  if (ordNew != null && !(ordNew > 0)) { alert('Nr zdarzenia musi być liczbą dodatnią, np. 3 albo 2.5'); return; }
   const { kind, ordShown, ...item } = edit;
   const key = kind === 'goal' ? 'goals' : 'pens';
   if (item.id) S[key] = S[key].map(e => e.id === item.id ? item : e);
   else { item.id = ++S.seq; S[key].push(item); }
-  if (kind === 'goal') placeGoal(item, ordNew);
+  placeEvent(item, ordNew);
   save(); closeSheet(); render();
 }
-// kolejność goli: pole ord (1..n); nowy gol zawsze ostatni, numer zmienia się tylko w edycji; liczba całkowita = docelowy numer, ułamek = wstawienie pomiędzy (2.5 między 2. a 3.)
-function goalsInOrder() { return [...S.goals].sort((x, y) => (x.ord ?? Infinity) - (y.ord ?? Infinity) || byTime(x, y)); }
-function renumberGoals() { goalsInOrder().forEach((g, i) => g.ord = i + 1); }
-function placeGoal(item, ordNew) {
-  const others = goalsInOrder().filter(g => g.id !== item.id);
-  const pos = ordNew != null ? (Number.isInteger(ordNew) ? ordNew - 1 : others.filter(g => g.ord < ordNew).length)
-    : others.filter(g => g.ord < item.ord).length;
+// kolejność zdarzeń (gole i kary razem): pole ord (1..n), służy tylko sortowaniu przebiegu; nowe zdarzenie zawsze ostatnie, numer zmienia się tylko w edycji; liczba całkowita = docelowy numer, ułamek = wstawienie pomiędzy (2.5 między 2. a 3.)
+const byOrd = (x, y) => (x.ord ?? Infinity) - (y.ord ?? Infinity) || byTime(x, y);
+function eventsInOrder() { return [...S.goals, ...S.pens].sort(byOrd); }
+function renumberEvents() {
+  // starsze pliki: kary bez ord — wstawiane między gole wg czasu
+  if (S.pens.some(p => p.ord == null)) {
+    const pens = [...S.pens].sort(byTime), ev = [];
+    let pi = 0;
+    [...S.goals].sort(byOrd).forEach(g => {
+      while (pi < pens.length && byTime(pens[pi], g) < 0) ev.push(pens[pi++]);
+      ev.push(g);
+    });
+    ev.push(...pens.slice(pi));
+    ev.forEach((e, i) => e.ord = i + 1);
+  }
+  eventsInOrder().forEach((e, i) => e.ord = i + 1);
+}
+function placeEvent(item, ordNew) {
+  const others = eventsInOrder().filter(e => e.id !== item.id);
+  const pos = ordNew != null ? (Number.isInteger(ordNew) ? ordNew - 1 : others.filter(e => e.ord < ordNew).length)
+    : others.filter(e => e.ord < item.ord).length;
   others.splice(Math.max(0, Math.min(others.length, pos)), 0, item);
-  others.forEach((g, i) => g.ord = i + 1);
+  others.forEach((e, i) => e.ord = i + 1);
 }
 function deleteItem() {
   if (!confirm('Usunąć?')) return;
   const key = edit.kind === 'goal' ? 'goals' : 'pens';
   S[key] = S[key].filter(e => e.id !== edit.id);
-  renumberGoals();
+  renumberEvents();
   save(); closeSheet(); render();
 }
 function resetAll() {
@@ -900,7 +914,7 @@ function resetAll() {
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 const byTime = (x, y) => x.half - y.half || (x.min ?? 99) - (y.min ?? 99) || x.id - y.id;
 function chips(team, nr) {
-  return S.pens.filter(p => p.team === team && p.nr === nr).sort(byTime).map(p =>
+  return S.pens.filter(p => p.team === team && (nr == null ? p.nr == null : p.nr === nr)).sort(byTime).map(p =>
     `<span class="chip ${p.type}" onclick="event.stopPropagation();editItem('pen',${p.id})">${penLabel(p.type)}${p.min != null ? ' ' + p.min + "'" : ''}</span>`).join('');
 }
 function renderTitles() {
@@ -960,7 +974,8 @@ function render() {
       `<th class="k">W</th><th class="k">2'</th><th class="k">D</th><th></th></tr>${rows}` +
       (unk ? `<tr><td class="nr">?</td><td colspan="${saves ? 7 : 6}" style="color:var(--b);font-style:italic">bez strzelca</td><td class="g">${unk}</td><td colspan="5"></td></tr>` : '');
     $('off' + team).innerHTML = `<button onclick="openPlayer('${team}')"><b>+ Zawodnik</b></button><span style="width:10px"></span>Osoby tow.: ` + OFFICIALS.map(o =>
-      `<button onclick="openPen('${team}','${o}')">${o}</button>${chips(team, o)}`).join(' ');
+      `<button onclick="openPen('${team}','${o}')">${o}</button>${chips(team, o)}`).join(' ') +
+      ` <button onclick="openPen('${team}',null)" title="kara bez wskazania zawodnika">Kara ?</button>${chips(team, null)}`;
   });
 
   // przebieg w panelu
@@ -971,7 +986,7 @@ function render() {
     $('ev' + h).innerHTML = evHead + (T.events.filter(e => e.half === h).map(e => {
       const p = e.p, tc = e.team.toLowerCase(), click = `onclick="editItem('${e.kind}',${e.id})"`;
       const who = p ? topWrap(e, `<b>${p[0]}</b> ${esc(surname(p))}${e.nth ? ` <span class="nth">(${e.nth})</span>` : ''}`)
-                    : `<span class="none">strzelec?</span>`;
+                    : `<span class="none">${e.kind === 'pen' ? 'kto?' : 'strzelec?'}</span>`;
       const note = e.note ? `<span class="note">${esc(e.note)}</span>` : '';
       const min = `<td class="min">${e.min != null ? e.min + "'" : '—'}</td>`;
       let what = who, sc = `${e.a}:${e.b}`, cls = tc, df = diffTd(e.a - e.b, e.mx);
@@ -979,7 +994,7 @@ function render() {
       else if (e.miss) { what = `${who}<span class="tag x">7m ✗</span>`; df = '<td class="df"></td>'; cls = 'miss ' + tc; }
       else if (e.pen) what += '<span class="tag">7m</span>';
       const side = `<td class="side ${tc}">${what}${note}</td>`, empty = '<td class="side"></td>';
-      return `<tr class="${cls}" ${click}>${min}${e.team === 'A' ? side : empty}<td class="sc">${sc}</td>${df}${e.team === 'B' ? side : empty}</tr>`;
+      return `<tr class="${cls}" title="zdarzenie nr ${e.ord}" ${click}>${min}${e.team === 'A' ? side : empty}<td class="sc">${sc}</td>${df}${e.team === 'B' ? side : empty}</tr>`;
     }).join('') || '<tr><td class="empty" colspan="5">brak zdarzeń</td></tr>');
     $('sumH' + h).textContent = T.end[h] || '';
   });
@@ -996,13 +1011,7 @@ function render() {
 
 // zdarzenia: gole w kolejności numerów, kary wg czasu; wynik narastająco i numerem gola strzelca
 function timeline() {
-  const pens = [...S.pens].sort(byTime).map(p => ({ ...p, kind: 'pen' })), ev = [];
-  let pi = 0;
-  goalsInOrder().forEach(g => {
-    while (pi < pens.length && byTime(pens[pi], g) < 0) ev.push(pens[pi++]);
-    ev.push({ ...g, kind: 'goal' });
-  });
-  ev.push(...pens.slice(pi));
+  const ev = eventsInOrder().map(e => ({ ...e, kind: S.pens.includes(e) ? 'pen' : 'goal' }));
   let a = 0, b = 0;
   const nth = {}, end = {};
   const events = ev.map(e => {
@@ -1060,7 +1069,7 @@ function renderTimeline() {
     $('tH' + h).innerHTML = `<h4><span>${h === 1 ? 'I' : 'II'} połowa</span><span>${T.end[h] || ''}</span></h4><table class="tl">` +
       (T.events.filter(e => e.half === h).map(e => {
         const p = e.p, tc = e.team.toLowerCase();
-        const who = p ? topWrap(e, `<b>${p[0]}</b> ${esc(p[1])}${e.nth ? ` <span class="nth">(${e.nth})</span>` : ''}`) : '<span class="none">strzelec?</span>';
+        const who = p ? topWrap(e, `<b>${p[0]}</b> ${esc(p[1])}${e.nth ? ` <span class="nth">(${e.nth})</span>` : ''}`) : `<span class="none">${e.kind === 'pen' ? 'kto?' : 'strzelec?'}</span>`;
         const note = e.note ? `<div class="note">${esc(e.note)}</div>` : '';
         const tm = `<td class="tteam"><span class="tbadge ${tc}">${e.team}</span></td>`;
         const min = `<td class="min">${e.min != null ? e.min + "'" : '—'}</td>`;
@@ -1214,8 +1223,11 @@ function reportHtml(name) {
       return ps.length ? `<tr><td class="nr">${o}</td><td>osoba towarzysząca</td><td></td><td class="num"></td><td class="num"></td>` +
         `<td class="num">${nz(ps.filter(x => x.type === 'W').length)}</td><td class="num">${nz(ps.filter(x => x.type === '2').length)}</td><td class="num">${nz(ps.filter(x => x.type === 'D' || x.type === 'N').length)}</td></tr>` : '';
     }).join('');
+    const psU = S.pens.filter(x => x.team === t && x.nr == null);
+    const offU = psU.length ? `<tr><td class="nr">?</td><td><i>kara bez wskazania osoby</i></td><td></td><td class="num"></td><td class="num"></td>` +
+      `<td class="num">${nz(psU.filter(x => x.type === 'W').length)}</td><td class="num">${nz(psU.filter(x => x.type === '2').length)}</td><td class="num">${nz(psU.filter(x => x.type === 'D' || x.type === 'N').length)}</td></tr>` : '';
     return `<table class="pl"><thead><tr><th class="nr">Nr</th><th>Zawodnik</th><th class="pos">P</th><th class="num">Gole</th><th class="num" title="rzuty karne: bramki / rzuty">7m</th><th class="num">W</th><th class="num">2'</th><th class="num">D</th></tr></thead>
-      <tbody>${body}${unk ? `<tr><td class="nr">?</td><td><i>strzelec nieznany</i></td><td></td><td class="num gl">${unk}</td><td colspan="4"></td></tr>` : ''}${off}</tbody>
+      <tbody>${body}${unk ? `<tr><td class="nr">?</td><td><i>strzelec nieznany</i></td><td></td><td class="num gl">${unk}</td><td colspan="4"></td></tr>` : ''}${off}${offU}</tbody>
       <tfoot><tr><td></td><td>Razem</td><td></td><td class="num gl">${st[t].goals}</td><td class="num">${st[t].s7g}/${st[t].s7}</td><td class="num">${st[t].W}</td><td class="num">${st[t].two}</td><td class="num">${st[t].D}</td></tr></tfoot></table>`;
   };
   const best = t => {
