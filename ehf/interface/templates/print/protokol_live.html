@@ -431,6 +431,13 @@
             <button id="shot7x" onclick="setShot(true,true)">7m — pudło</button>
           </div>
         </div>
+        <div id="missBox">
+          <div class="lbl">Niewykorzystany 7m</div>
+          <div class="seg">
+            <button id="msSv" onclick="edit.saved=true;renderSheet()">obronił bramkarz</button>
+            <button id="msOut" onclick="edit.saved=false;renderSheet()">obok / słupek</button>
+          </div>
+        </div>
         <div id="saveBox">
           <div class="lbl">Obrona</div>
           <div class="seg">
@@ -439,7 +446,7 @@
           </div>
         </div>
         <div id="gkBox">
-          <div class="lbl">Bramkarz, który puścił gola</div>
+          <div class="lbl" id="gkLbl">Bramkarz, który puścił gola</div>
           <div class="seg" id="gkSeg"></div>
         </div>
         <div id="ordBox">
@@ -478,7 +485,7 @@
                 "B": { ... } },
      "state": { "goals": [...], "pens": [...], "half", "clock", "seq", "updatedAt", "finished",
                 "saves": [...], "gk": { "A": nr|null, "B": nr|null } } }   // "state" opcjonalny; "saves" i "gk" opcjonalne
-   gol: "gk" — numer bramkarza rywala, który puścił bramkę (opcjonalny); obrona: { id, team, nr (bramkarz), pen, half, min, ord, note }
+   gol: "gk" — numer bramkarza rywala, który puścił bramkę albo obronił 7m; "saved" — niewykorzystany 7m obroniony przez bramkarza (opcjonalne); obrona: { id, team, nr (bramkarz), pen, half, min, ord, note }
    Plik HTML pobrany z serwisu ma ten dokument wbudowany (EMBEDDED) i otwiera go od razu. */
 
 const EMBEDDED = {{ dokument|tojson }};
@@ -844,6 +851,7 @@ function keeperStats(team) {
   if (S.gk[team] != null) get(S.gk[team]);
   S.saves.filter(s => s.team === team && s.nr != null).forEach(s => get(s.nr).sv++);
   S.goals.filter(g => g.team === opp(team) && !g.miss && g.gk != null).forEach(g => get(g.gk).ga++);
+  S.goals.filter(g => g.team === opp(team) && g.miss && g.saved && g.gk != null).forEach(g => get(g.gk).sv++);
   return [...m.values()].sort((x, y) => x.nr - y.nr);
 }
 const svPct = (sv, ga) => sv + ga ? Math.round(sv / (sv + ga) * 100) : 0;
@@ -854,7 +862,11 @@ function keepersTxt(team, html = true) {
     return `<b>${x.nr}</b> ${esc(html ? surname(p) : p[1])} <b>${svTxt(x.sv, x.ga)}</b>`;
   }).join(', ');
 }
-function setShot(pen, miss) { edit.pen = pen; edit.miss = miss; renderSheet(); }
+function setShot(pen, miss) {
+  edit.pen = pen; edit.miss = miss;
+  if (miss && edit.saved == null) edit.saved = edit.gk != null;
+  renderSheet();
+}
 function openPen(team, nr) {
   edit = { kind: 'pen', id: null, team, nr, type: '2', note: '', ...suggestTime() };
   openSheet();
@@ -878,7 +890,7 @@ function sheetHalf(h) {
 function renderSheet() {
   const tm = MATCH[edit.team], isGoal = edit.kind === 'goal', isSave = edit.kind === 'save';
   $('sheet').className = 'sheet ' + edit.team.toLowerCase();
-  const what = isSave ? (edit.pen ? 'Obrona 7m' : 'Obrona') : !isGoal ? 'Kara' : edit.miss ? 'Karny niewykorzystany' : edit.pen ? 'Gol z 7m' : 'Gol';
+  const what = isSave ? (edit.pen ? 'Obrona 7m' : 'Obrona') : !isGoal ? 'Kara' : edit.miss ? (edit.saved ? 'Karny obroniony' : 'Karny niewykorzystany') : edit.pen ? 'Gol z 7m' : 'Gol';
   $('sheetTitle').textContent = (edit.id ? 'Edycja — ' : '') + what + ' — ' + tm.short;
   $('pLbl').textContent = isSave ? 'Bramkarz' : !isGoal ? 'Zawodnik / osoba' : edit.pen ? 'Wykonawca' : 'Strzelec';
   $('goalBox').style.display = isGoal ? '' : 'none';
@@ -891,8 +903,12 @@ function renderSheet() {
   $('svN').classList.toggle('on', !edit.pen);
   $('sv7').classList.toggle('on', !!edit.pen);
 
-  const showGk = isGoal && !edit.miss && (gkOn() || edit.gk != null);
+  $('missBox').style.display = isGoal && edit.miss ? '' : 'none';
+  $('msSv').classList.toggle('on', !!edit.saved);
+  $('msOut').classList.toggle('on', !edit.saved);
+  const showGk = isGoal && (!edit.miss || edit.saved) && (gkOn() || edit.gk != null || edit.saved);
   $('gkBox').style.display = showGk ? '' : 'none';
+  $('gkLbl').textContent = edit.miss ? 'Bramkarz, który obronił' : 'Bramkarz, który puścił gola';
   if (showGk) {
     const rival = opp(edit.team), keepers = ROSTER[rival].filter(p => p[2] === 'B' || p[0] === edit.gk).sort((x, y) => x[0] - y[0]);
     $('gkSeg').innerHTML = '';
@@ -946,6 +962,7 @@ function saveItem() {
   if (ordNew != null && !(ordNew > 0)) { alert('Nr zdarzenia musi być liczbą dodatnią, np. 3 albo 2.5'); return; }
   if (edit.kind === 'save' && edit.nr == null) { alert('Wybierz bramkarza'); return; }
   const { kind, ordShown, ...item } = edit;
+  if (!item.miss) delete item.saved;
   const key = KEYS[kind];
   if (item.id) S[key] = S[key].map(e => e.id === item.id ? item : e);
   else { item.id = ++S.seq; S[key].push(item); }
@@ -1080,7 +1097,7 @@ function render() {
       let what = who, sc = `${e.a}:${e.b}`, cls = tc, df = diffTd(e.a - e.b, e.mx);
       if (e.kind === 'pen') { what = `<span class="chip ${e.type}">${penLabel(e.type)}</span> ${who}`; sc = ''; df = '<td class="df"></td>'; cls = 'kara ' + tc; }
       else if (e.kind === 'save') { what = `<b>${e.nr}</b> <span class="tag sv">obr.${e.pen ? ' 7m' : ''} ${e.ks}</span>`; sc = ''; df = '<td class="df"></td>'; cls = 'save ' + tc; }
-      else if (e.miss) { what = `${who}<span class="tag x">7m ✗</span>`; df = '<td class="df"></td>'; cls = 'miss ' + tc; }
+      else if (e.miss) { what = `${who}<span class="tag x">7m ✗</span>${e.ks ? `<span class="tag sv">obr. ${e.gk}: ${e.ks}</span>` : ''}`; df = '<td class="df"></td>'; cls = 'miss ' + tc; }
       else if (e.pen) what += '<span class="tag">7m</span>';
       const side = `<td class="side ${tc}">${what}${note}</td>`, empty = '<td class="side"></td>';
       return `<tr class="${cls}" title="zdarzenie nr ${e.ord}" ${click}>${min}${e.team === 'A' ? side : empty}<td class="sc">${sc}</td>${df}${e.team === 'B' ? side : empty}</tr>`;
@@ -1111,6 +1128,12 @@ function timeline() {
       e.team === 'A' ? a++ : b++;
       if (p) r.nth = nth[e.team + e.nr] = (nth[e.team + e.nr] || 0) + 1;
       if (e.gk != null) { keeper(opp(e.team), e.gk).ga++; r.gkp = person(opp(e.team), e.gk); }
+    }
+    if (e.kind === 'goal' && e.miss && e.saved && e.gk != null) {
+      const k = keeper(opp(e.team), e.gk);
+      k.sv++;
+      r.ks = svTxt(k.sv, k.ga);
+      r.gkp = person(opp(e.team), e.gk);
     }
     if (e.kind === 'save') {
       const k = keeper(e.team, e.nr);
@@ -1175,7 +1198,8 @@ function renderTimeline() {
         if (e.kind === 'save')
           return `<tr class="save">${min}<td class="sc"><span class="tag sv">obrona${e.pen ? ' 7m' : ''}</span></td><td></td>${tm}<td>${who} <span class="gkl">obrony / celne rzuty: <b>${e.ks}</b></span>${note}</td></tr>`;
         if (e.miss)
-          return `<tr class="miss">${min}<td class="sc">${e.a} : ${e.b}</td><td></td>${tm}<td>${who} <span class="tag x">7m ✗ pudło</span>${note}</td></tr>`;
+          return `<tr class="miss">${min}<td class="sc">${e.a} : ${e.b}</td><td></td>${tm}<td>${who} <span class="tag x">7m ✗ ${e.saved ? 'obroniony' : 'pudło'}</span>` +
+            (e.ks ? `<div class="gkl">obronił: <b>${e.gkp[0]}</b> ${esc(e.gkp[1])} · obrony / celne rzuty: <b>${e.ks}</b></div>` : '') + `${note}</td></tr>`;
         const gkl = e.gkp ? `<div class="gkl">bramkarz: <b>${e.gkp[0]}</b> ${esc(e.gkp[1])}</div>` : '';
         return `<tr class="${tc}">${min}<td class="sc">${e.a} : ${e.b}</td>${diffTd(e.a - e.b, e.mx)}${tm}<td>${who}${e.pen ? ' <span class="tag">7m</span>' : ''}${gkl}${note}</td></tr>`;
       }).join('') || '<tr><td class="empty">brak zdarzeń</td></tr>') + '</table>';
@@ -1350,7 +1374,7 @@ function reportHtml(name) {
     let sc = `${e.a}:${e.b}`, cls = tc, df = '';
     if (e.kind === 'pen') { what = `<span class="chip c${e.type}">${penLabel(e.type)}</span> ${what}`; sc = ''; cls += ' pen'; }
     else if (e.kind === 'save') { what += ` <span class="tag sv">obrona${e.pen ? ' 7m' : ''}</span> <small>${e.ks}</small>`; sc = ''; cls += ' sv'; }
-    else if (e.miss) { what += ' <span class="tag x">7m niewykorzystany</span>'; cls += ' miss'; }
+    else if (e.miss) { what += e.ks ? ` <span class="tag sv">7m obroniony</span> <small>(${e.gk}: ${e.ks})</small>` : ' <span class="tag x">7m niewykorzystany</span>'; cls += ' miss'; }
     else {
       if (e.pen) what += ' <span class="tag">7m</span>';
       const d = e.a - e.b;
