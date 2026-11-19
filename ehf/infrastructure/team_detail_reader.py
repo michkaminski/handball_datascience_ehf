@@ -15,6 +15,7 @@ from ehf.domain.team_detail import (
     TeamProfile,
 )
 from ehf.infrastructure.kickoff import KICKOFF_AT_SQL
+from ehf.infrastructure.nationalities import read_nationalities
 from ehf.infrastructure.played import (
     AWAY_NAME,
     EDITION_JOINS,
@@ -177,6 +178,8 @@ class PsycopgTeamDetailReader:
                     matches = tuple(TeamMatch(**row) for row in cursor.fetchall())
                     cursor.execute(ENTRY_SQL, params)
                     entries = tuple(LineupEntry(**row) for row in cursor.fetchall())
+                    people = sorted({entry.person_id for entry in entries if entry.own and entry.person_id is not None})
+                    nationalities = read_nationalities(cursor, people)
         except TeamNotFound:
             raise
         except Error as exc:
@@ -187,4 +190,5 @@ class PsycopgTeamDetailReader:
             venues=venues,
             matches=matches,
             entries=entries,
+            nationalities=nationalities,
         )

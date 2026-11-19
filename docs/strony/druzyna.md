@@ -44,7 +44,8 @@ Team card #id · gender · seasons X – Y
   Date | Season/competition | Phase | H/A | Opponent → team | Team score | Result | Match score | GK save% | Opp. GK save% | Spectators | Details
 
 [ Players ]  filters + player name; client-side sort
-  # | Player → card | Pos | M G Avg Sh Shot% Y 2' R Saves Faced Save% | Seasons | Last match
+  # | Player → card | Nat (PL) | Pos | M G Avg Sh Shot% Y 2' R Saves Faced Save% | Seasons | Last match
+  Nat: two-letter code (PL); superscript + = another nationality
 
 [ Goalkeepers ]  filters: season, competition, opponent
   KPI: matches with GK data, saves/faced, save%, opponents' save%, difference, saves per match

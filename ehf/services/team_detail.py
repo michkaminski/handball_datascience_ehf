@@ -60,7 +60,7 @@ class TeamDetailService:
             matches=matches,
             match_attendance=team_attendance(matches),
             match_record=team_record(matches),
-            players=player_rows(entries, matches, filters.player),
+            players=player_rows(entries, matches, filters.player, data.nationalities),
             goalkeeping=replace(
                 team_goalkeeping(entries, matches),
                 missing_matches=sum(match.match_id in missing_saves for match in matches),

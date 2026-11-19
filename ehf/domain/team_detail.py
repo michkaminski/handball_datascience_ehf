@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from statistics import mean, median
 
@@ -516,6 +516,7 @@ class TeamPlayerRow:
     seasons: tuple[str, ...]
     last_match: TeamMatch | None
     birth_year: int | None = None
+    nationalities: tuple[str, ...] = ()
 
     @property
     def average_text(self) -> str:
@@ -560,7 +561,10 @@ def _numbers(entries: Sequence[LineupEntry]) -> tuple[str, ...]:
 
 
 def player_rows(
-    entries: Sequence[LineupEntry], matches: Sequence[TeamMatch], player: str | None = None
+    entries: Sequence[LineupEntry],
+    matches: Sequence[TeamMatch],
+    player: str | None = None,
+    nationalities: dict[int, tuple[str, ...]] | None = None,
 ) -> tuple[TeamPlayerRow, ...]:
     by_id = {match.match_id: match for match in matches}
     own = [entry for entry in entries if entry.own and entry.match_id in by_id]
@@ -588,6 +592,7 @@ def player_rows(
                 seasons=tuple(dict.fromkeys(match.season_code for match in reversed(played))),
                 last_match=played[-1] if played and played[-1].kickoff_at else None,
                 birth_year=next((entry.birth_year for entry in group if entry.birth_year), None),
+                nationalities=(nationalities or {}).get(group[-1].person_id, ()) if group[-1].person_id else (),
             )
         )
     rows.sort(key=lambda row: (-(row.goals or 0), row.name.casefold()))
@@ -938,6 +943,7 @@ class TeamCardData:
     venues: tuple[TeamHostVenue, ...]
     matches: tuple[TeamMatch, ...]
     entries: tuple[LineupEntry, ...]
+    nationalities: dict[int, tuple[str, ...]] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

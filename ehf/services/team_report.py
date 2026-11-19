@@ -46,8 +46,6 @@ class TeamReportReader(Protocol):
 
     def previous_stints(self, people: Sequence[int], season_id: int) -> tuple[PreviousStint, ...]: ...
 
-    def nationalities(self, people: Sequence[int]) -> dict[int, tuple[str, ...]]: ...
-
     def match_stats(self, club_id: int, matches: Sequence[int]) -> dict[int, MatchTeamStats]: ...
 
 
@@ -94,7 +92,7 @@ class TeamReportService:
             goalkeeping=team_goalkeeping(entries, season_matches),
             seasons=season_rows(history, [e for e in data.editions if e.year_start <= year]),
             players=report_players(
-                players, stints, request.club_id, competitions, self._reports.nationalities(people)
+                players, stints, request.club_id, competitions, data.nationalities
             ),
             last_matches=tuple(
                 ReportMatch(
@@ -121,11 +119,7 @@ class TeamReportService:
         pages = [self._sheet_page(data, entries, request.season_id, season_code)]
         if previous_id is not None and previous_code is not None:
             pages.append(self._sheet_page(data, entries, previous_id, previous_code))
-        people = sorted(
-            {row.person_id for page in pages if page.sheet for row in page.sheet.rows if row.person_id is not None}
-        )
-        nationalities = self._reports.nationalities(people)
-        pages = [replace(page, nationalities=nationalities) for page in pages]
+        pages = [replace(page, nationalities=data.nationalities) for page in pages]
         return SeasonSheets(profile=data.profile, pages=tuple(pages), generated=today or date.today())
 
     @staticmethod

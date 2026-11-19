@@ -25,6 +25,7 @@ from ehf.infrastructure.team_report_reader import PsycopgTeamReportReader
 from ehf.infrastructure.team_list_reader import PsycopgTeamListReader
 from ehf.infrastructure.venue_detail_reader import PsycopgVenueDetailReader
 from ehf.infrastructure.venue_list_reader import PsycopgVenueListReader
+from ehf.domain.nationality import short_nationality
 from ehf.interface.attendance_analytics_views import AttendanceAnalyticsView
 from ehf.interface.attendance_appeal_views import (
     AppealClubView,
@@ -99,6 +100,7 @@ def create_app() -> Flask:
     app.add_template_filter(hue_for_player, "position_hue")
     app.add_template_filter(code_for_player, "position_code")
     app.add_template_filter(code_for_position, "position_abbr")
+    app.add_template_filter(short_nationality, "short_nationality")
     app.add_template_filter(polish_count, "polish_count")
     app.add_template_global(expand_href, "expand_href")
     zarejestruj_kontekst_nawigacji(app)
